@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RT-Lab | 放射線技師のためのWebツール集</title>
+<meta name="description" content="放射線技師向けの無料Webツール集。DRL比較・MTF計算・NPS計算など、インストール不要でブラウザから使えます。Japan DRLs 2025対応。">
+<meta name="keywords" content="放射線技師,DRL,MTF,NPS,CNR,線量管理,画質評価,診断参考レベル,CT,一般撮影">
+<meta property="og:title" content="RT-Lab | 放射線技師のためのWebツール集">
+<meta property="og:description" content="インストール不要・完全無料。現場で使える放射線技師向けWebツール集。">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --main: #1a5f9e;
+  --main-light: #2980b9;
+  --accent: #2ecc71;
+  --warning: #e74c3c;
+  --bg: #f8f9fa;
+  --text: #2c3e50;
+  --gray: #95a5a6;
+  --white: #ffffff;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Header ===== */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--main);
+  color: var(--white);
+  padding: 0 2rem;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.header-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: var(--white);
+}
+
+.header-logo-text {
+  font-size: 1.5rem;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+}
+
+.header-logo-sub {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.header-nav {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.header-nav a {
+  color: var(--white);
+  text-decoration: none;
+  font-size: 0.875rem;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+}
+
+.header-nav a:hover {
+  opacity: 1;
+}
+
+/* ===== Hero ===== */
+.hero {
+  background: linear-gradient(135deg, var(--main) 0%, var(--main-light) 100%);
+  color: var(--white);
+  text-align: center;
+  padding: 5rem 2rem;
+}
+
+.hero-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.02em;
+}
+
+.hero-sub {
+  font-size: 1.05rem;
+  font-weight: 400;
+  max-width: 640px;
+  margin: 0 auto 2.5rem;
+  opacity: 0.92;
+  line-height: 1.9;
+}
+
+.hero-cta {
+  display: inline-block;
+  background: var(--white);
+  color: var(--main);
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.85rem 2.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.hero-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+/* ===== Sections ===== */
+.section {
+  padding: 4rem 2rem;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 3px;
+  background: var(--main);
+  margin: 0.75rem auto 0;
+  border-radius: 2px;
+}
+
+/* ===== Features ===== */
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.feature-card {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  background: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.feature-icon {
+  font-size: 2.25rem;
+  margin-bottom: 1rem;
+}
+
+.feature-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.feature-desc {
+  font-size: 0.875rem;
+  color: #555;
+  line-height: 1.7;
+}
+
+/* ===== Tools ===== */
+.tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.tool-card {
+  background: var(--white);
+  border-radius: 8px;
+  padding: 1.75rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.tool-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+
+.tool-icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.tool-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.tool-desc {
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+  flex: 1;
+}
+
+.tool-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.badge-live {
+  background: #e8f8f0;
+  color: #1a9a54;
+}
+
+.badge-dev {
+  background: #eee;
+  color: #888;
+}
+
+.tool-link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--main);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.tool-link:hover {
+  opacity: 0.7;
+}
+
+/* ===== News ===== */
+.news-list {
+  list-style: none;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.news-item {
+  display: flex;
+  gap: 1.25rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #e8e8e8;
+  font-size: 0.9rem;
+}
+
+.news-date {
+  color: var(--gray);
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
+/* ===== Footer ===== */
+.footer {
+  background: var(--text);
+  color: rgba(255,255,255,0.8);
+  text-align: center;
+  padding: 2.5rem 2rem;
+  font-size: 0.8rem;
+  line-height: 1.9;
+}
+
+.footer-title {
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  color: var(--white);
+}
+
+.footer-links {
+  margin: 1rem 0;
+}
+
+.footer-links a {
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  margin: 0 0.5rem;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover {
+  color: var(--white);
+}
+
+.footer-disclaimer {
+  max-width: 640px;
+  margin: 1.25rem auto 0;
+  font-size: 0.7rem;
+  opacity: 0.65;
+  line-height: 1.8;
+}
+
+.footer-copy {
+  margin-top: 1.25rem;
+  opacity: 0.6;
+  font-size: 0.75rem;
+}
+
+/* ===== Modal ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal {
+  background: var(--white);
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 560px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.modal p {
+  font-size: 0.85rem;
+  line-height: 1.9;
+  color: #555;
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--gray);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 1rem;
+  }
+
+  .header-logo-sub {
+    display: none;
+  }
+
+  .hero {
+    padding: 3.5rem 1.5rem;
+  }
+
+  .hero-title {
+    font-size: 1.6rem;
+  }
+
+  .hero-sub {
+    font-size: 0.95rem;
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .tools {
+    grid-template-columns: 1fr;
+  }
+
+  .section {
+    padding: 3rem 1.25rem;
+  }
+
+  .news-item {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header class="header">
+  <a href="/" class="header-logo">
+    <span class="header-logo-text">RT-Lab</span>
+    <span class="header-logo-sub">放射線技師のためのWebツール</span>
+  </a>
+  <nav class="header-nav">
+    <a href="#tools">ツール一覧</a>
+  </nav>
+</header>
+
+<!-- ===== Hero ===== -->
+<section class="hero">
+  <h1 class="hero-title">放射線技師の業務を、ブラウザひとつで。</h1>
+  <p class="hero-sub">インストール不要・完全無料。CT線量評価、画質指標の計算など、現場で使えるツールを提供します。</p>
+  <a href="#tools" class="hero-cta">ツールを使う ↓</a>
+</section>
+
+<!-- ===== Features ===== -->
+<section class="section">
+  <h2 class="section-title">RT-Labの特徴</h2>
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon">💻</div>
+      <h3 class="feature-title">インストール不要</h3>
+      <p class="feature-desc">ブラウザを開くだけ。院内PCへのソフトウェア導入不要。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <h3 class="feature-title">データは外部送信なし</h3>
+      <p class="feature-desc">アップロードしたデータはブラウザ内のみで処理。院内情報が外部に出ません。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3 class="feature-title">無料・広告なし</h3>
+      <p class="feature-desc">全ツール無料で使用可能。業務を妨げる広告もありません。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Tools ===== -->
+<section class="section" id="tools">
+  <h2 class="section-title">ツール一覧</h2>
+  <div class="tools">
+
+    <div class="tool-card">
+      <div class="tool-icon">📊</div>
+      <h3 class="tool-name">DRL比較ツール</h3>
+      <p class="tool-desc">施設の検査データをCSVで読み込み、Japan DRLs 2025と自施設の中央値を自動比較。現在はCT対応。一般撮影・IVR・核医学など他モダリティも順次実装予定。</p>
+      <div class="tool-footer">
+        <span class="badge badge-live">✅ 公開中</span>
+        <a href="/drl-comparison/" class="tool-link">使ってみる →</a>
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-icon">📈</div>
+      <h3 class="tool-name">MTF計算ツール</h3>
+      <p class="tool-desc">Circular Edge法によるCT・DR装置の空間分解能（MTF）を定量評価。DICOM/PNG対応。DICOMならPixelSpacing自動取得・16bit解析。</p>
+      <div class="tool-footer">
+        <span class="badge badge-live">✅ 公開中</span>
+        <a href="/mtf-calculator/" class="tool-link">使ってみる →</a>
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-icon">📉</div>
+      <h3 class="tool-name">NPS計算ツール</h3>
+      <p class="tool-desc">2D-NPS法によるノイズパワースペクトル計算。DICOM対応。均一ファントム画像からROIを自動分割し、2D-FFT→Radial Averageで1D-NPSを算出。</p>
+      <div class="tool-footer">
+        <span class="badge badge-live">✅ 公開中</span>
+        <a href="/nps-calculator/" class="tool-link">使ってみる →</a>
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-icon">💉</div>
+      <h3 class="tool-name">造影CT薬物動態シミュレータ</h3>
+      <p class="tool-desc">Baeの薬物動態モデルに基づき、患者体格・心拍出量・注入プロトコルから各臓器のTime-Density Curveをリアルタイムにシミュレーション。スキャンタイミングの最適化に。</p>
+      <div class="tool-footer">
+        <span class="badge badge-live">✅ 公開中</span>
+        <a href="/contrast-simulator/" class="tool-link">使ってみる →</a>
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-icon">🎯</div>
+      <h3 class="tool-name">CNR計算ツール</h3>
+      <p class="tool-desc">コントラスト対ノイズ比（CNR）を計算。ROIを指定してCNR値を即時算出。</p>
+      <div class="tool-footer">
+        <span class="badge badge-dev">🚧 開発中</span>
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-icon">🦴</div>
+      <h3 class="tool-name">一般撮影条件参照</h3>
+      <p class="tool-desc">部位を選ぶだけで標準的な撮影条件（kVp・mAs・グリッド）を確認。新人教育・条件見直しに。</p>
+      <div class="tool-footer">
+        <span class="badge badge-dev">🚧 開発中</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== News ===== -->
+<section class="section">
+  <h2 class="section-title">更新情報</h2>
+  <ul class="news-list">
+    <li class="news-item">
+      <span class="news-date">2026.03.26</span>
+      <span>CT Contrast Simulator（造影CT薬物動態シミュレータ） 公開</span>
+    </li>
+    <li class="news-item">
+      <span class="news-date">2026.03.25</span>
+      <span>NPS計算ツール（2D-NPS） 公開</span>
+    </li>
+    <li class="news-item">
+      <span class="news-date">2026.03.24</span>
+      <span>MTF計算ツール（Circular Edge法） 公開</span>
+    </li>
+    <li class="news-item">
+      <span class="news-date">2026.03.23</span>
+      <span>DRL比較ツール 公開</span>
+    </li>
+    <li class="news-item">
+      <span class="news-date">2026.03.23</span>
+      <span>RT-Lab オープン</span>
+    </li>
+  </ul>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+  <div class="footer-title">RT-Lab | 放射線技師のためのWebツール集</div>
+  <div class="footer-links">
+    <a href="#" id="disclaimer-link">免責事項</a>
+  </div>
+  <p class="footer-disclaimer">本サイトのツールは医療機器ではありません。計算結果はあくまで参考値であり、臨床判断の根拠としての使用はご自身の責任においてご判断ください。Japan DRLs 2025（J-RIME）の数値を参照していますが、最新情報は必ず公式文書をご確認ください。</p>
+  <p class="footer-copy">&copy; 2025 RT-Lab</p>
+</footer>
+
+<!-- ===== Disclaimer Modal ===== -->
+<div class="modal-overlay" id="disclaimer-modal">
+  <div class="modal">
+    <button class="modal-close" id="modal-close">&times;</button>
+    <h3>免責事項</h3>
+    <p>本サイトのツールは医療機器ではありません。計算結果はあくまで参考値であり、臨床判断の根拠としての使用はご自身の責任においてご判断ください。</p>
+    <br>
+    <p>Japan DRLs 2025（J-RIME）の数値を参照していますが、最新情報は必ず公式文書をご確認ください。</p>
+    <br>
+    <p>本サイトの利用により生じた損害について、運営者は一切の責任を負いかねます。</p>
+  </div>
+</div>
+
+<script>
+// Disclaimer modal
+const disclaimerLink = document.getElementById('disclaimer-link');
+const modal = document.getElementById('disclaimer-modal');
+const modalClose = document.getElementById('modal-close');
+
+disclaimerLink.addEventListener('click', function(e) {
+  e.preventDefault();
+  modal.classList.add('active');
+});
+
+modalClose.addEventListener('click', function() {
+  modal.classList.remove('active');
+});
+
+modal.addEventListener('click', function(e) {
+  if (e.target === modal) {
+    modal.classList.remove('active');
+  }
+});
+</script>
+
+</body>
+</html>

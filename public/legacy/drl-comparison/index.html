@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DRL比較ツール | RT-Lab</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #1a56db;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+    }
+    .tool-name {
+      font-size: 0.95rem;
+      opacity: 0.88;
+      padding-left: 16px;
+      border-left: 2px solid rgba(255,255,255,0.35);
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a56db;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* ── Steps ── */
+    .steps {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .step {
+      flex: 1;
+      min-width: 200px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px;
+      background: #f7fafc;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    .step-num {
+      width: 26px;
+      height: 26px;
+      background: #1a56db;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+    .step-body strong {
+      display: block;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 3px;
+    }
+    .step-body span {
+      color: #4a5568;
+      font-size: 0.82rem;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      text-decoration: none;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: #1a56db; color: #fff; }
+    .btn-primary:hover { background: #1648c0; }
+    .btn-secondary { background: #edf2f7; color: #2d3748; border: 1px solid #e2e8f0; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+    /* ── Upload area ── */
+    .upload-area {
+      border: 2px dashed #a0aec0;
+      border-radius: 8px;
+      padding: 42px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+      user-select: none;
+    }
+    .upload-area:hover, .upload-area.dragover {
+      border-color: #1a56db;
+      background: #ebf4ff;
+    }
+    .upload-area input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-icon { font-size: 2.2rem; margin-bottom: 10px; }
+    .upload-text { font-size: 0.9rem; color: #4a5568; }
+    .upload-text strong { color: #1a56db; }
+    .upload-hint { font-size: 0.75rem; color: #718096; margin-top: 6px; }
+    .upload-filename {
+      display: none;
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: #276749;
+      font-weight: 600;
+    }
+
+    /* ── Messages ── */
+    .msg { padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; margin-top: 10px; }
+    .msg-error   { background: #fff5f5; border: 1px solid #fc8181; color: #c53030; }
+    .msg-warning { background: #fffbeb; border: 1px solid #f6ad55; color: #c05621; }
+    .msg-info    { background: #ebf8ff; border: 1px solid #63b3ed; color: #2b6cb0; }
+
+    /* ── Action bar ── */
+    .action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .record-count { font-size: 0.82rem; color: #4a5568; }
+    .record-count strong { color: #2d3748; }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th {
+      background: #f7fafc;
+      padding: 9px 11px;
+      text-align: center;
+      font-weight: 700;
+      color: #4a5568;
+      border-bottom: 2px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    th:first-child { text-align: left; }
+    td { padding: 9px 11px; border-bottom: 1px solid #edf2f7; text-align: center; vertical-align: middle; }
+    td:first-child { text-align: left; font-weight: 500; }
+    tbody tr:hover td { background: #f7fafc; }
+    tbody tr.row-exceeded td { background: #fff5f5 !important; }
+    tbody tr.row-exceeded:hover td { background: #fed7d7 !important; }
+
+    .badge-ok { color: #276749; font-weight: 600; white-space: nowrap; }
+    .badge-ng { color: #c53030; font-weight: 600; white-space: nowrap; }
+    .ratio-ok { color: #276749; font-weight: 500; }
+    .ratio-ng { color: #c53030; font-weight: 700; }
+    .na-cell  { color: #a0aec0; font-style: italic; }
+    .count-warn { color: #c05621; }
+
+    /* ── Chart tabs ── */
+    .tab-bar {
+      display: flex;
+      gap: 2px;
+      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      padding: 8px 22px;
+      border: none;
+      background: none;
+      color: #718096;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s;
+    }
+    .tab-btn.active { color: #1a56db; border-bottom-color: #1a56db; }
+    .chart-panel { display: none; }
+    .chart-panel.active { display: block; }
+    .chart-container { position: relative; }
+
+    /* ── Notice ── */
+    .notice-box {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px 18px;
+      font-size: 0.8rem;
+      color: #4a5568;
+      line-height: 1.9;
+    }
+    .notice-box .notice-title {
+      font-weight: 700;
+      color: #2d3748;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+    }
+    .notice-box .source {
+      margin-top: 10px;
+      color: #718096;
+      font-size: 0.77rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.75rem;
+      color: #a0aec0;
+    }
+
+    /* ── Hidden ── */
+    .hidden { display: none !important; }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .steps { flex-direction: column; }
+      .action-bar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">RT-Lab</div>
+  <div class="tool-name">DRL比較ツール（Japan DRLs 2025）</div>
+</header>
+
+<main>
+
+  <!-- ① 手順説明 -->
+  <div class="card">
+    <div class="card-title">📋 使い方</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>テンプレートをダウンロード</strong>
+          <span>所定の列構成に従って施設のデータを入力してください</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>CSVをアップロード</strong>
+          <span>ファイルをドラッグ＆ドロップ、またはクリックして選択</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>結果を確認・エクスポート</strong>
+          <span>施設中央値と DRL 値を自動比較し、グラフで可視化します</span>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:18px;">
+      <button class="btn btn-secondary" id="btn-dl-template">
+        ⬇ CSVテンプレートをダウンロード
+      </button>
+    </div>
+  </div>
+
+  <!-- ② アップロード -->
+  <div class="card">
+    <div class="card-title">📂 CSVアップロード</div>
+    <div class="upload-area" id="upload-area">
+      <input type="file" id="file-input" accept=".csv">
+      <div class="upload-icon">📄</div>
+      <div class="upload-text">
+        <strong>クリックしてファイルを選択</strong>、またはここにドラッグ＆ドロップ
+      </div>
+      <div class="upload-hint">対応形式: CSV（UTF-8 または Shift-JIS）</div>
+      <div class="upload-filename" id="upload-filename"></div>
+    </div>
+    <div id="msg-area"></div>
+  </div>
+
+  <!-- ③ 集計結果テーブル -->
+  <div class="card hidden" id="section-table">
+    <div class="action-bar">
+      <div class="card-title" style="margin-bottom:0">📊 集計結果</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span class="record-count" id="record-count"></span>
+        <button class="btn btn-secondary btn-sm" id="btn-export">⬇ 結果CSVをエクスポート</button>
+      </div>
+    </div>
+    <div id="warn-area"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>プロトコール</th>
+            <th>件数</th>
+            <th>CTDIvol 中央値<br>(mGy)</th>
+            <th>CTDIvol DRL<br>(mGy)</th>
+            <th>CTDIvol<br>比率</th>
+            <th>DLP 中央値<br>(mGy·cm)</th>
+            <th>DLP DRL<br>(mGy·cm)</th>
+            <th>DLP<br>比率</th>
+            <th>判定</th>
+          </tr>
+        </thead>
+        <tbody id="result-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ④ グラフ -->
+  <div class="card hidden" id="section-chart">
+    <div class="card-title">📈 グラフ（施設中央値 vs DRL値）</div>
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="ctdi">CTDIvol</button>
+      <button class="tab-btn" data-tab="dlp">DLP</button>
+    </div>
+    <div class="chart-panel active" id="tab-ctdi">
+      <div class="chart-container" id="container-ctdi">
+        <canvas id="chart-ctdi"></canvas>
+      </div>
+    </div>
+    <div class="chart-panel" id="tab-dlp">
+      <div class="chart-container" id="container-dlp">
+        <canvas id="chart-dlp"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ 注意書き -->
+  <div class="card">
+    <div class="notice-box">
+      <div class="notice-title">注意事項・出典</div>
+      <p>・本ツールは Japan DRLs 2025（J-RIME）の成人 CT 基準値に基づいています。</p>
+      <p>・集計対象は年齢 20〜80 歳、体重 50〜70 kg のデータに限定されます。</p>
+      <p>・DRL は線量限度ではなく最適化の指標です。中央値が DRL 値を超えた場合はプロトコールの見直しを検討してください。</p>
+      <p>・アップロードされたデータはブラウザ内のみで処理され、外部サーバーには送信されません。</p>
+      <div class="source">
+        出典：医療被ばく研究情報ネットワーク（J-RIME）、日本の診断参考レベル（2025 年版）、2025-07、https://j-rime.qst.go.jp/report/JapanDRLs2025_ja.pdf
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>&copy; 2025 RT-Lab — ブラウザ完結型・無料 Web ツール for 放射線技師</footer>
+
+<script>
+'use strict';
+
+// ================================================================
+//  定数
+// ================================================================
+
+const DRL_TABLE = {
+  '頭部単純ルーチン':              { ctdi: 67,   dlp: 1260 },
+  '胸部Ⅰ相':                      { ctdi: 11,   dlp: 430  },
+  '胸部～骨盤Ⅰ相':                { ctdi: 13,   dlp: 940  },
+  '上腹部～骨盤Ⅰ相':              { ctdi: 14,   dlp: 720  },
+  '肝臓ダイナミック':              { ctdi: 13,   dlp: 1630 },
+  '冠動脈':                        { ctdi: 57,   dlp: 940  },
+  '急性肺塞栓症&深部静脈血栓症':  { ctdi: 12,   dlp: 2300 },
+  '外傷全身CT':                    { ctdi: null, dlp: 5290 },
+};
+
+const PROTOCOLS = Object.keys(DRL_TABLE);
+
+const REQUIRED_COLS = ['検査日','性別','年齢','身長','体重','検査プロトコール','造影有無','CTDIvol','DLP'];
+
+// ================================================================
+//  テンプレート CSV
+// ================================================================
+
+const TEMPLATE_ROWS = [
+  ['2025/04/01','男',65,170,62,'頭部単純ルーチン','なし',45,980],
+  ['2025/04/02','女',55,158,58,'胸部Ⅰ相','なし',9,380],
+  ['2025/04/03','男',60,168,65,'胸部～骨盤Ⅰ相','あり',12,850],
+  ['2025/04/04','女',45,162,52,'上腹部～骨盤Ⅰ相','なし',13,700],
+  ['2025/04/05','男',70,172,68,'肝臓ダイナミック','あり',14,1500],
+  ['2025/04/06','女',50,155,56,'冠動脈','なし',50,880],
+  ['2025/04/07','男',35,180,64,'急性肺塞栓症&深部静脈血栓症','あり',11,2100],
+  ['2025/04/08','男',40,175,64,'外傷全身CT','なし',20,4800],
+];
+
+function buildTemplateCsv() {
+  const header = REQUIRED_COLS.join(',');
+  const rows = TEMPLATE_ROWS.map(r => r.join(','));
+  return [header, ...rows].join('\r\n');
+}
+
+// ================================================================
+//  ユーティリティ
+// ================================================================
+
+function calcMedian(arr) {
+  if (!arr || arr.length === 0) return null;
+  const s = [...arr].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 !== 0 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function fmt1(v) {
+  return v === null || v === undefined ? null : Math.round(v * 10) / 10;
+}
+
+function downloadBlob(content, filename) {
+  const bom  = '\uFEFF';
+  const blob = new Blob([bom + content], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function addMsg(container, text, type) {
+  const d = document.createElement('div');
+  d.className = `msg msg-${type}`;
+  d.textContent = text;
+  container.appendChild(d);
+}
+
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ================================================================
+//  テンプレートダウンロード
+// ================================================================
+
+document.getElementById('btn-dl-template').addEventListener('click', () => {
+  downloadBlob(buildTemplateCsv(), 'drl_template.csv');
+});
+
+// ================================================================
+//  ファイルアップロード（ドラッグ＆ドロップ）
+// ================================================================
+
+const uploadArea = document.getElementById('upload-area');
+const fileInput  = document.getElementById('file-input');
+
+uploadArea.addEventListener('dragover',  e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+// ================================================================
+//  ファイル処理
+// ================================================================
+
+let currentStats = null;
+let chartCtdi    = null;
+let chartDlp     = null;
+
+function readAsText(file, enc) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload  = e => resolve(e.target.result);
+    r.onerror = () => reject(new Error('ファイルの読み込みに失敗しました'));
+    r.readAsText(file, enc);
+  });
+}
+
+async function handleFile(file) {
+  const msgArea = document.getElementById('msg-area');
+  msgArea.innerHTML = '';
+
+  // ファイル名表示
+  const fnEl = document.getElementById('upload-filename');
+  fnEl.textContent = '✓ ' + file.name;
+  fnEl.style.display = 'block';
+
+  // エンコーディング自動判別（UTF-8 → Shift-JIS フォールバック）
+  let text;
+  try {
+    text = await readAsText(file, 'UTF-8');
+    if (text.includes('\uFFFD')) {
+      text = await readAsText(file, 'Shift-JIS');
+    }
+  } catch (err) {
+    addMsg(msgArea, err.message, 'error');
+    return;
+  }
+
+  const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+
+  // 列名チェック
+  const fields = parsed.meta.fields || [];
+  const missing = REQUIRED_COLS.filter(c => !fields.includes(c));
+  if (missing.length > 0) {
+    addMsg(msgArea, 'CSVのフォーマットが正しくありません。テンプレートをご確認ください。', 'error');
+    hideResults();
+    return;
+  }
+
+  const rawRows = parsed.data;
+  let skipProtocol = 0;
+  const skippedNames = new Set();
+  let skipNumeric = 0;
+
+  // 行バリデーション・フィルタ
+  const validRows = [];
+  for (const row of rawRows) {
+    const proto  = (row['検査プロトコール'] || '').trim();
+    const age    = parseInt(row['年齢'],    10);
+    const weight = parseFloat(row['体重']);
+    const ctdi   = parseFloat(row['CTDIvol']);
+    const dlp    = parseFloat(row['DLP']);
+
+    // プロトコール名チェック
+    if (!PROTOCOLS.includes(proto)) {
+      skipProtocol++;
+      if (proto) skippedNames.add(proto);
+      continue;
+    }
+
+    // 数値チェック
+    if (isNaN(ctdi) || isNaN(dlp)) {
+      skipNumeric++;
+      continue;
+    }
+
+    // フィルタ（標準患者）
+    if (isNaN(age)    || age    < 20 || age    > 80) continue;
+    if (isNaN(weight) || weight < 50 || weight > 70) continue;
+
+    validRows.push({ proto, age, weight, ctdi, dlp });
+  }
+
+  // 警告
+  if (skipProtocol > 0) {
+    const names = skippedNames.size > 0 ? `（値: ${[...skippedNames].join('、')}）` : '';
+    addMsg(msgArea, `固定リスト外のプロトコール名が含まれていたため ${skipProtocol} 件をスキップしました${names}`, 'warning');
+  }
+  if (skipNumeric > 0) {
+    addMsg(msgArea, `CTDIvol / DLP が数値でない行が ${skipNumeric} 件あったためスキップしました。`, 'warning');
+  }
+
+  // 対象データ 0 件
+  if (validRows.length === 0) {
+    addMsg(msgArea, 'フィルタ条件（年齢20〜80歳・体重50〜70kg）に該当するデータがありません。', 'error');
+    hideResults();
+    return;
+  }
+
+  // プロトコール別集計
+  const stats = {};
+  for (const proto of PROTOCOLS) {
+    const rows = validRows.filter(r => r.proto === proto);
+    const ctdiVals = rows.map(r => r.ctdi);
+    const dlpVals  = rows.map(r => r.dlp);
+    stats[proto] = {
+      count:       rows.length,
+      ctdiMedian:  calcMedian(ctdiVals),
+      dlpMedian:   calcMedian(dlpVals),
+    };
+  }
+
+  currentStats = stats;
+
+  // 件数情報
+  document.getElementById('record-count').innerHTML =
+    `ファイル: <strong>${file.name}</strong> &nbsp;|&nbsp; フィルタ後: <strong>${validRows.length} 件</strong>`;
+
+  renderTable(stats);
+  renderCharts(stats);
+
+  // 5件未満警告
+  const warnArea = document.getElementById('warn-area');
+  warnArea.innerHTML = '';
+  for (const proto of PROTOCOLS) {
+    const c = stats[proto].count;
+    if (c > 0 && c < 5) {
+      addMsg(warnArea, `「${proto}」の件数が ${c} 件です。統計的信頼性が低いためご注意ください。`, 'warning');
+    }
+  }
+
+  showResults();
+}
+
+function showResults() {
+  document.getElementById('section-table').classList.remove('hidden');
+  document.getElementById('section-chart').classList.remove('hidden');
+  document.getElementById('section-table').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function hideResults() {
+  document.getElementById('section-table').classList.add('hidden');
+  document.getElementById('section-chart').classList.add('hidden');
+}
+
+// ================================================================
+//  テーブル描画
+// ================================================================
+
+function renderTable(stats) {
+  const tbody = document.getElementById('result-tbody');
+  tbody.innerHTML = '';
+
+  for (const proto of PROTOCOLS) {
+    const s   = stats[proto];
+    const drl = DRL_TABLE[proto];
+    if (s.count === 0) continue;
+
+    const ctdiMed = fmt1(s.ctdiMedian);
+    const dlpMed  = fmt1(s.dlpMedian);
+
+    const ctdiDrl = drl.ctdi;  // null for 外傷全身CT
+    const dlpDrl  = drl.dlp;
+
+    const ctdiExceeded = ctdiDrl !== null && ctdiMed !== null && ctdiMed > ctdiDrl;
+    const dlpExceeded  = dlpMed  !== null && dlpMed  > dlpDrl;
+    const anyExceeded  = ctdiExceeded || dlpExceeded;
+
+    const ctdiRatio = ctdiDrl !== null && ctdiMed !== null
+      ? Math.round((ctdiMed / ctdiDrl) * 100) : null;
+    const dlpRatio  = dlpMed !== null
+      ? Math.round((dlpMed  / dlpDrl)  * 100) : null;
+
+    const fmtRatio = (r, exceeded) =>
+      r === null ? '<span class="na-cell">−</span>'
+                 : `<span class="${exceeded ? 'ratio-ng' : 'ratio-ok'}">${r}%</span>`;
+
+    const countCell = s.count < 5
+      ? `${s.count} <span class="count-warn" title="件数が少なく統計的信頼性が低い">⚠</span>`
+      : String(s.count);
+
+    const ctdiMedCell = ctdiDrl === null
+      ? `<span class="na-cell">−（設定なし）</span>`
+      : ctdiMed !== null ? ctdiMed.toFixed(1) : '−';
+
+    const ctdiDrlCell = ctdiDrl !== null ? ctdiDrl : '<span class="na-cell">−</span>';
+
+    const judgement = anyExceeded
+      ? '<span class="badge-ng">⚠️ 超過</span>'
+      : '<span class="badge-ok">✅ 適正</span>';
+
+    const tr = document.createElement('tr');
+    if (anyExceeded) tr.classList.add('row-exceeded');
+    tr.innerHTML = `
+      <td>${proto}</td>
+      <td>${countCell}</td>
+      <td>${ctdiMedCell}</td>
+      <td>${ctdiDrlCell}</td>
+      <td>${fmtRatio(ctdiRatio, ctdiExceeded)}</td>
+      <td>${dlpMed !== null ? dlpMed.toFixed(1) : '−'}</td>
+      <td>${dlpDrl}</td>
+      <td>${fmtRatio(dlpRatio, dlpExceeded)}</td>
+      <td>${judgement}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+// ================================================================
+//  グラフ描画
+// ================================================================
+
+const COLOR_NORMAL  = 'rgba(66, 153, 225, 0.78)';
+const COLOR_EXCEED  = 'rgba(229, 62, 62, 0.78)';
+const COLOR_DRL     = 'rgba(160, 174, 192, 0.55)';
+const BORDER_NORMAL = 'rgba(66, 153, 225, 1)';
+const BORDER_EXCEED = 'rgba(229, 62, 62, 1)';
+const BORDER_DRL    = 'rgba(160, 174, 192, 0.9)';
+
+function renderCharts(stats) {
+  const activeProtos = PROTOCOLS.filter(p => stats[p].count > 0);
+
+  // ── CTDIvol（外傷全身CT は DRL = null のため除外） ──
+  const ctdiProtos  = activeProtos.filter(p => DRL_TABLE[p].ctdi !== null);
+  const ctdiMedVals = ctdiProtos.map(p => fmt1(stats[p].ctdiMedian));
+  const ctdiDrlVals = ctdiProtos.map(p => DRL_TABLE[p].ctdi);
+  const ctdiBgColors = ctdiProtos.map((p, i) =>
+    ctdiMedVals[i] > ctdiDrlVals[i] ? COLOR_EXCEED : COLOR_NORMAL);
+  const ctdiBorders  = ctdiProtos.map((p, i) =>
+    ctdiMedVals[i] > ctdiDrlVals[i] ? BORDER_EXCEED : BORDER_NORMAL);
+
+  setChartHeight('container-ctdi', ctdiProtos.length);
+  if (chartCtdi) chartCtdi.destroy();
+  chartCtdi = new Chart(document.getElementById('chart-ctdi').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ctdiProtos,
+      datasets: [
+        {
+          label: '施設中央値',
+          data:  ctdiMedVals,
+          backgroundColor: ctdiBgColors,
+          borderColor:     ctdiBorders,
+          borderWidth: 1,
+          borderRadius: 3,
+        },
+        {
+          label: 'DRL値',
+          data:  ctdiDrlVals,
+          backgroundColor: COLOR_DRL,
+          borderColor:     BORDER_DRL,
+          borderWidth: 1,
+          borderRadius: 3,
+        },
+      ],
+    },
+    options: chartOptions('CTDIvol 比較', 'CTDIvol (mGy)'),
+  });
+
+  // ── DLP ──
+  const dlpMedVals   = activeProtos.map(p => fmt1(stats[p].dlpMedian));
+  const dlpDrlVals   = activeProtos.map(p => DRL_TABLE[p].dlp);
+  const dlpBgColors  = activeProtos.map((p, i) =>
+    dlpMedVals[i] > dlpDrlVals[i] ? COLOR_EXCEED : COLOR_NORMAL);
+  const dlpBorders   = activeProtos.map((p, i) =>
+    dlpMedVals[i] > dlpDrlVals[i] ? BORDER_EXCEED : BORDER_NORMAL);
+
+  setChartHeight('container-dlp', activeProtos.length);
+  if (chartDlp) chartDlp.destroy();
+  chartDlp = new Chart(document.getElementById('chart-dlp').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: activeProtos,
+      datasets: [
+        {
+          label: '施設中央値',
+          data:  dlpMedVals,
+          backgroundColor: dlpBgColors,
+          borderColor:     dlpBorders,
+          borderWidth: 1,
+          borderRadius: 3,
+        },
+        {
+          label: 'DRL値',
+          data:  dlpDrlVals,
+          backgroundColor: COLOR_DRL,
+          borderColor:     BORDER_DRL,
+          borderWidth: 1,
+          borderRadius: 3,
+        },
+      ],
+    },
+    options: chartOptions('DLP 比較', 'DLP (mGy·cm)'),
+  });
+}
+
+function setChartHeight(containerId, numProtos) {
+  const h = Math.max(320, numProtos * 62 + 120);
+  document.getElementById(containerId).style.height = h + 'px';
+}
+
+function chartOptions(titleText, xLabel) {
+  return {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' },
+      title: {
+        display: true,
+        text: titleText,
+        font: { size: 14, weight: '600' },
+        padding: { bottom: 12 },
+        color: '#2d3748',
+      },
+      tooltip: {
+        callbacks: {
+          label: ctx => `${ctx.dataset.label}: ${ctx.parsed.x} ${xLabel.split('(')[1]?.replace(')','') ?? ''}`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        title: { display: true, text: xLabel, color: '#718096', font: { size: 12 } },
+        grid: { color: 'rgba(0,0,0,0.05)' },
+      },
+      y: {
+        ticks: { font: { size: 12 }, color: '#2d3748' },
+        grid: { display: false },
+      },
+    },
+  };
+}
+
+// ================================================================
+//  タブ切り替え
+// ================================================================
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.chart-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ================================================================
+//  エクスポート
+// ================================================================
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  if (!currentStats) return;
+
+  const header = ['プロトコール','件数','CTDIvol中央値(mGy)','CTDIvol DRL(mGy)',
+                  'CTDIvol比率(%)','DLP中央値(mGy·cm)','DLP DRL(mGy·cm)','DLP比率(%)','判定'];
+  const rows = [header];
+
+  for (const proto of PROTOCOLS) {
+    const s   = currentStats[proto];
+    const drl = DRL_TABLE[proto];
+    if (s.count === 0) continue;
+
+    const ctdiMed = fmt1(s.ctdiMedian);
+    const dlpMed  = fmt1(s.dlpMedian);
+    const ctdiDrl = drl.ctdi;
+    const dlpDrl  = drl.dlp;
+
+    const ctdiExceeded = ctdiDrl !== null && ctdiMed !== null && ctdiMed > ctdiDrl;
+    const dlpExceeded  = dlpMed  !== null && dlpMed  > dlpDrl;
+
+    const ctdiRatioStr = ctdiDrl !== null && ctdiMed !== null
+      ? Math.round((ctdiMed / ctdiDrl) * 100) + '%' : '−';
+    const dlpRatioStr  = dlpMed !== null
+      ? Math.round((dlpMed / dlpDrl) * 100) + '%' : '−';
+
+    const judgement = (ctdiExceeded || dlpExceeded) ? '超過' : '適正';
+
+    rows.push([
+      proto,
+      s.count,
+      ctdiDrl === null ? '−（設定なし）' : (ctdiMed !== null ? ctdiMed.toFixed(1) : '−'),
+      ctdiDrl !== null ? ctdiDrl : '−',
+      ctdiRatioStr,
+      dlpMed  !== null ? dlpMed.toFixed(1) : '−',
+      dlpDrl,
+      dlpRatioStr,
+      judgement,
+    ]);
+  }
+
+  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\r\n');
+  downloadBlob(csv, `drl_result_${today()}.csv`);
+});
+</script>
+</body>
+</html>

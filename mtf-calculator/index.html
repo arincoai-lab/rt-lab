@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MTF計算ツール（Circular Edge法） | RT-Lab</title>
+  <meta name="description" content="Circular Edge法によるMTF（空間分解能）計算ツール。DICOM/PNG/TIFF画像を読み込み、ESF→LSF→MTFを自動算出。50%値・10%値を数値表示。">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #1a56db;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.06em; }
+    .logo a { color: #fff; text-decoration: none; }
+    .tool-name {
+      font-size: 0.95rem;
+      opacity: 0.88;
+      padding-left: 16px;
+      border-left: 2px solid rgba(255,255,255,0.35);
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a56db;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* ── Steps ── */
+    .steps { display: flex; gap: 12px; flex-wrap: wrap; }
+    .step {
+      flex: 1; min-width: 180px;
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px; background: #f7fafc;
+      border-radius: 8px; border: 1px solid #e2e8f0;
+    }
+    .step-num {
+      width: 26px; height: 26px; background: #1a56db; color: #fff;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+    }
+    .step-body strong { display: block; font-weight: 600; color: #2d3748; margin-bottom: 3px; }
+    .step-body span { color: #4a5568; font-size: 0.82rem; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 18px; border: none; border-radius: 6px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      transition: background 0.15s, transform 0.1s; text-decoration: none;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: #1a56db; color: #fff; }
+    .btn-primary:hover { background: #1648c0; }
+    .btn-secondary { background: #edf2f7; color: #2d3748; border: 1px solid #e2e8f0; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+    /* ── Upload area ── */
+    .upload-area {
+      border: 2px dashed #a0aec0; border-radius: 8px;
+      padding: 42px 20px; text-align: center; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative; user-select: none;
+    }
+    .upload-area:hover, .upload-area.dragover {
+      border-color: #1a56db; background: #ebf4ff;
+    }
+    .upload-area input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-icon { font-size: 2.2rem; margin-bottom: 10px; }
+    .upload-text { font-size: 0.9rem; color: #4a5568; }
+    .upload-text strong { color: #1a56db; }
+    .upload-hint { font-size: 0.75rem; color: #718096; margin-top: 6px; }
+
+    /* ── Messages ── */
+    .msg { padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; margin-top: 10px; }
+    .msg-error   { background: #fff5f5; border: 1px solid #fc8181; color: #c53030; }
+    .msg-warning { background: #fffbeb; border: 1px solid #f6ad55; color: #c05621; }
+    .msg-info    { background: #ebf8ff; border: 1px solid #63b3ed; color: #2b6cb0; }
+    .msg-success { background: #f0fff4; border: 1px solid #68d391; color: #276749; }
+
+    /* ── Form controls ── */
+    .form-row {
+      display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;
+      margin-bottom: 12px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label {
+      font-size: 0.8rem; font-weight: 600; color: #4a5568;
+    }
+    .form-group input, .form-group select {
+      padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 5px;
+      font-size: 0.85rem; width: 140px; color: #2d3748;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none; border-color: #1a56db; box-shadow: 0 0 0 2px rgba(26,86,219,0.15);
+    }
+    .form-group .auto-badge {
+      display: inline-block;
+      background: #ebf4ff; color: #1a56db;
+      font-size: 0.7rem; font-weight: 700;
+      padding: 1px 6px; border-radius: 4px;
+      margin-left: 6px;
+    }
+
+    /* ── DICOM info ── */
+    .dicom-info {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .dicom-tag {
+      background: #edf2f7; border-radius: 5px;
+      padding: 4px 10px; font-size: 0.78rem; color: #4a5568;
+    }
+    .dicom-tag strong { color: #2d3748; }
+
+    /* ── Canvas area ── */
+    .canvas-container {
+      position: relative;
+      display: inline-block;
+      background: #1a202c;
+      border-radius: 8px;
+      overflow: hidden;
+      max-width: 100%;
+    }
+    .canvas-container canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    .canvas-info {
+      font-size: 0.78rem;
+      color: #718096;
+      margin-top: 8px;
+    }
+
+    /* ── Result cards ── */
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .result-item {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+    .result-item .result-label {
+      font-size: 0.78rem;
+      color: #718096;
+      margin-bottom: 4px;
+    }
+    .result-item .result-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a56db;
+    }
+    .result-item .result-unit {
+      font-size: 0.78rem;
+      color: #a0aec0;
+    }
+
+    /* ── Chart ── */
+    .chart-container {
+      position: relative;
+      height: 400px;
+    }
+
+    /* ── Tabs ── */
+    .tab-bar {
+      display: flex; gap: 2px;
+      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      padding: 8px 22px; border: none; background: none;
+      color: #718096; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -2px; transition: color 0.15s;
+    }
+    .tab-btn.active { color: #1a56db; border-bottom-color: #1a56db; }
+    .chart-panel { display: none; }
+    .chart-panel.active { display: block; }
+
+    /* ── ROI controls ── */
+    .roi-controls {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+      margin-top: 12px; padding: 12px;
+      background: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0;
+    }
+    .roi-controls label {
+      font-size: 0.8rem; font-weight: 600; color: #4a5568;
+    }
+    .roi-controls input[type="range"] {
+      width: 120px;
+    }
+    .roi-value {
+      font-size: 0.82rem;
+      color: #2d3748;
+      font-weight: 600;
+      min-width: 50px;
+    }
+
+    /* ── WW/WL controls ── */
+    .ww-wl-controls {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+      margin-top: 8px; padding: 10px 12px;
+      background: #fffbeb; border-radius: 8px; border: 1px solid #f6e05e;
+      font-size: 0.8rem;
+    }
+    .ww-wl-controls label { font-weight: 600; color: #744210; }
+    .ww-wl-controls input[type="range"] { width: 120px; }
+    .ww-wl-value { font-weight: 600; color: #744210; min-width: 50px; font-size: 0.82rem; }
+
+    /* ── Notice ── */
+    .notice-box {
+      background: #f7fafc; border: 1px solid #e2e8f0;
+      border-radius: 8px; padding: 16px 18px;
+      font-size: 0.8rem; color: #4a5568; line-height: 1.9;
+    }
+    .notice-box .notice-title {
+      font-weight: 700; color: #2d3748; margin-bottom: 8px; font-size: 0.85rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center; padding: 16px;
+      font-size: 0.75rem; color: #a0aec0;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .steps { flex-direction: column; }
+      .form-row { flex-direction: column; }
+      .form-group input { width: 100%; }
+      .result-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><a href="/">RT-Lab</a></div>
+  <div class="tool-name">MTF計算ツール（Circular Edge法）</div>
+</header>
+
+<main>
+
+  <!-- ① 手順説明 -->
+  <div class="card">
+    <div class="card-title">📋 使い方</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>画像をアップロード</strong>
+          <span>円形ファントムのCT画像（DICOM / PNG / TIFF）を読み込みます</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>ピクセルサイズを確認</strong>
+          <span>DICOMなら自動取得。PNGの場合は手入力してください</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>ROIを確認・補正</strong>
+          <span>自動検出されたエッジ円を必要に応じて調整します</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>MTF算出・確認</strong>
+          <span>ESF→LSF→MTFを計算し、50%/10%値を表示します</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② パラメータ設定 -->
+  <div class="card">
+    <div class="card-title">⚙️ パラメータ設定</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>ピクセルサイズ (mm) <span class="auto-badge hidden" id="ps-auto">DICOM自動</span></label>
+        <input type="number" id="pixel-size" value="0.5" step="0.001" min="0.01" max="10">
+      </div>
+      <div class="form-group">
+        <label>ESFサンプリング幅 (px)</label>
+        <input type="number" id="esf-width" value="30" step="1" min="5" max="100">
+      </div>
+      <div class="form-group">
+        <label>角度分割数</label>
+        <select id="angle-segments">
+          <option value="360">360（高精度）</option>
+          <option value="720" selected>720（推奨）</option>
+          <option value="1440">1440（最高精度）</option>
+        </select>
+      </div>
+    </div>
+    <div class="dicom-info hidden" id="dicom-info"></div>
+  </div>
+
+  <!-- ③ アップロード -->
+  <div class="card">
+    <div class="card-title">📂 画像アップロード</div>
+    <div class="upload-area" id="upload-area">
+      <input type="file" id="file-input" accept="image/png,image/tiff,image/tif,image/bmp,.dcm,.dicom,application/dicom">
+      <div class="upload-icon">🖼️</div>
+      <div class="upload-text">
+        <strong>クリックしてファイルを選択</strong>、またはここにドラッグ＆ドロップ
+      </div>
+      <div class="upload-hint">対応形式: DICOM (.dcm) / PNG / TIFF / BMP</div>
+    </div>
+    <div id="msg-area"></div>
+  </div>
+
+  <!-- ④ 画像表示 + ROI調整 -->
+  <div class="card hidden" id="section-image">
+    <div class="card-title">🔍 画像プレビュー・ROI調整</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+      <div>
+        <div class="canvas-container">
+          <canvas id="canvas-preview"></canvas>
+          <canvas id="canvas-overlay" style="position:absolute;top:0;left:0;cursor:crosshair;"></canvas>
+        </div>
+        <div class="canvas-info" id="image-info"></div>
+      </div>
+    </div>
+    <!-- WW/WL (DICOM only) -->
+    <div class="ww-wl-controls hidden" id="ww-wl-controls">
+      <label>WW:</label>
+      <input type="range" id="ww-slider" min="1" max="4000" value="400">
+      <span class="ww-wl-value" id="ww-val">400</span>
+      <label>WL:</label>
+      <input type="range" id="wl-slider" min="-1024" max="3000" value="40">
+      <span class="ww-wl-value" id="wl-val">40</span>
+      <button class="btn btn-sm btn-secondary" id="btn-ww-reset">リセット</button>
+    </div>
+    <div class="roi-controls">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <label>中心X:</label>
+        <input type="range" id="roi-cx" min="0" max="512" value="256">
+        <span class="roi-value" id="roi-cx-val">256</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <label>中心Y:</label>
+        <input type="range" id="roi-cy" min="0" max="512" value="256">
+        <span class="roi-value" id="roi-cy-val">256</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <label>半径:</label>
+        <input type="range" id="roi-r" min="10" max="256" value="100">
+        <span class="roi-value" id="roi-r-val">100</span>
+      </div>
+      <button class="btn btn-primary btn-sm" id="btn-detect">🔄 再検出</button>
+      <button class="btn btn-primary" id="btn-calc">📊 MTF算出</button>
+    </div>
+    <div id="roi-msg"></div>
+  </div>
+
+  <!-- ⑤ 結果 -->
+  <div class="card hidden" id="section-result">
+    <div class="card-title">📊 MTF算出結果</div>
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="result-label">MTF 50%</div>
+        <div class="result-value" id="mtf50-val">—</div>
+        <div class="result-unit">cycles/mm</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">MTF 10%</div>
+        <div class="result-value" id="mtf10-val">—</div>
+        <div class="result-unit">cycles/mm</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Nyquist周波数</div>
+        <div class="result-value" id="nyquist-val">—</div>
+        <div class="result-unit">cycles/mm</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">使用プロファイル数</div>
+        <div class="result-value" id="profile-count">—</div>
+        <div class="result-unit">本</div>
+      </div>
+    </div>
+
+    <!-- Tabs: MTF / ESF / LSF -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="mtf">MTFカーブ</button>
+      <button class="tab-btn" data-tab="esf">ESF</button>
+      <button class="tab-btn" data-tab="lsf">LSF</button>
+    </div>
+    <div class="chart-panel active" id="tab-mtf">
+      <div class="chart-container"><canvas id="chart-mtf"></canvas></div>
+    </div>
+    <div class="chart-panel" id="tab-esf">
+      <div class="chart-container"><canvas id="chart-esf"></canvas></div>
+    </div>
+    <div class="chart-panel" id="tab-lsf">
+      <div class="chart-container"><canvas id="chart-lsf"></canvas></div>
+    </div>
+
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-sm" id="btn-export-csv">⬇ CSV出力</button>
+      <button class="btn btn-secondary btn-sm" id="btn-export-png">⬇ グラフ画像保存</button>
+    </div>
+  </div>
+
+  <!-- ⑥ 注意書き -->
+  <div class="card">
+    <div class="notice-box">
+      <div class="notice-title">注意事項・アルゴリズム</div>
+      <p>・Circular Edge法により円形ファントムの境界からESF（Edge Spread Function）を算出し、微分してLSF（Line Spread Function）を得た後、FFTによりMTF（Modulation Transfer Function）を計算しています。</p>
+      <p>・DICOM画像を読み込むとPixelSpacingを自動取得し、16bitピクセルデータをそのまま解析に使用します。WW/WLスライダーは表示用であり、MTF計算には影響しません。</p>
+      <p>・円形エッジの自動検出にはグラジエント解析とHough変換に基づく処理を使用しています。検出精度が不十分な場合はスライダーで手動補正してください。</p>
+      <p>・ピクセルサイズの入力値がMTFの周波数軸に直接影響します。PNG画像の場合はDICOM情報から正確な値を入力してください。</p>
+      <p>・本ツールは研究・教育目的であり、医療機器としての認証を受けていません。</p>
+      <p>・アップロードされた画像はブラウザ内のみで処理され、外部サーバーには送信されません。DICOM画像の患者情報はツール内で使用・表示しません。</p>
+    </div>
+  </div>
+
+</main>
+
+<footer>&copy; 2025 RT-Lab — ブラウザ完結型・無料 Web ツール for 放射線技師</footer>
+
+<script>
+'use strict';
+
+// ================================================================
+//  グローバル状態
+// ================================================================
+let imageData = null;      // ImageData from canvas (RGBA 8bit — for display/detection)
+let rawPixelData = null;   // Float64Array of raw pixel values (16bit for DICOM, 8bit gray for PNG)
+let imgWidth = 0;
+let imgHeight = 0;
+let roiCx = 0, roiCy = 0, roiR = 0;
+let chartMtf = null, chartEsf = null, chartLsf = null;
+let lastMtfResult = null;
+let isDicom = false;
+let dicomWW = 400, dicomWL = 40;
+let dicomDefaultWW = 400, dicomDefaultWL = 40;
+
+// ================================================================
+//  ユーティリティ
+// ================================================================
+
+function addMsg(container, text, type) {
+  const d = document.createElement('div');
+  d.className = `msg msg-${type}`;
+  d.textContent = text;
+  container.appendChild(d);
+}
+
+function clearMsg(id) {
+  document.getElementById(id).innerHTML = '';
+}
+
+// Get raw pixel value (uses rawPixelData for MTF calculation)
+function getRawPixel(x, y) {
+  if (!rawPixelData) return 0;
+  return rawPixelData[y * imgWidth + x];
+}
+
+function getRawSubpixel(fx, fy) {
+  const x0 = Math.floor(fx);
+  const y0 = Math.floor(fy);
+  const x1 = Math.min(x0 + 1, imgWidth - 1);
+  const y1 = Math.min(y0 + 1, imgHeight - 1);
+  if (x0 < 0 || y0 < 0 || x0 >= imgWidth || y0 >= imgHeight) return 0;
+  const dx = fx - x0;
+  const dy = fy - y0;
+  const v00 = getRawPixel(x0, y0);
+  const v10 = getRawPixel(x1, y0);
+  const v01 = getRawPixel(x0, y1);
+  const v11 = getRawPixel(x1, y1);
+  return v00 * (1 - dx) * (1 - dy) + v10 * dx * (1 - dy) +
+         v01 * (1 - dx) * dy + v11 * dx * dy;
+}
+
+// Display-only gray from RGBA ImageData (for circle detection on display image)
+function getGrayPixel(data, w, x, y) {
+  const i = (y * w + x) * 4;
+  return 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+}
+
+// ================================================================
+//  DICOM → Canvas 表示（WW/WL適用）
+// ================================================================
+
+function applyWindowLevel(rawData, w, h, ww, wl) {
+  const canvas = document.getElementById('canvas-preview');
+  const ctx = canvas.getContext('2d');
+  const imgData = ctx.createImageData(w, h);
+  const d = imgData.data;
+  const lower = wl - ww / 2;
+  const upper = wl + ww / 2;
+
+  for (let i = 0; i < w * h; i++) {
+    let v = rawData[i];
+    if (v <= lower) v = 0;
+    else if (v >= upper) v = 255;
+    else v = ((v - lower) / ww) * 255;
+    v = Math.round(v);
+    d[i * 4] = v;
+    d[i * 4 + 1] = v;
+    d[i * 4 + 2] = v;
+    d[i * 4 + 3] = 255;
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  imageData = ctx.getImageData(0, 0, w, h);
+}
+
+// ================================================================
+//  円検出（Hough変換）— display imageから検出
+// ================================================================
+
+function detectCircle(data, w, h) {
+  // 1. Convert to grayscale float array
+  const gray = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      gray[y * w + x] = getGrayPixel(data, w, x, y);
+    }
+  }
+
+  // 2. Gaussian blur (sigma≈1.5, kernel 5x5) for noise suppression
+  const kernel = [1, 4, 6, 4, 1]; // binomial approximation
+  const kSum = 256; // 16*16
+  const blurred = new Float32Array(w * h);
+  const temp = new Float32Array(w * h);
+  // Horizontal pass
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let sum = 0;
+      for (let k = -2; k <= 2; k++) {
+        const sx = Math.max(0, Math.min(w - 1, x + k));
+        sum += gray[y * w + sx] * kernel[k + 2];
+      }
+      temp[y * w + x] = sum;
+    }
+  }
+  // Vertical pass
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let sum = 0;
+      for (let k = -2; k <= 2; k++) {
+        const sy = Math.max(0, Math.min(h - 1, y + k));
+        sum += temp[sy * w + x] * kernel[k + 2];
+      }
+      blurred[y * w + x] = sum / kSum;
+    }
+  }
+
+  // 3. Compute gradient magnitude on blurred image (Sobel 3x3)
+  const grad = new Float32Array(w * h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const gx = -blurred[(y-1)*w+(x-1)] - 2*blurred[y*w+(x-1)] - blurred[(y+1)*w+(x-1)]
+                 +blurred[(y-1)*w+(x+1)] + 2*blurred[y*w+(x+1)] + blurred[(y+1)*w+(x+1)];
+      const gy = -blurred[(y-1)*w+(x-1)] - 2*blurred[(y-1)*w+x] - blurred[(y-1)*w+(x+1)]
+                 +blurred[(y+1)*w+(x-1)] + 2*blurred[(y+1)*w+x] + blurred[(y+1)*w+(x+1)];
+      grad[y * w + x] = Math.sqrt(gx * gx + gy * gy);
+    }
+  }
+
+  // 4. Non-maximum suppression along gradient direction
+  const nms = new Float32Array(w * h);
+  for (let y = 2; y < h - 2; y++) {
+    for (let x = 2; x < w - 2; x++) {
+      const g = grad[y * w + x];
+      if (g < 1) continue;
+      const gx = blurred[y*w+(x+1)] - blurred[y*w+(x-1)];
+      const gy = blurred[(y+1)*w+x] - blurred[(y-1)*w+x];
+      const mag = Math.sqrt(gx*gx + gy*gy) || 1;
+      const dx = Math.round(gx / mag);
+      const dy = Math.round(gy / mag);
+      const g1 = grad[(y+dy)*w+(x+dx)];
+      const g2 = grad[(y-dy)*w+(x-dx)];
+      nms[y * w + x] = (g >= g1 && g >= g2) ? g : 0;
+    }
+  }
+
+  // 5. Threshold: top 3% of NMS pixels as edge
+  const nmsVals = [];
+  for (let i = 0; i < nms.length; i++) {
+    if (nms[i] > 0) nmsVals.push(nms[i]);
+  }
+  nmsVals.sort((a, b) => a - b);
+  const threshold = nmsVals.length > 0 ? nmsVals[Math.floor(nmsVals.length * 0.7)] : 5;
+  const edgePixels = [];
+  for (let y = 2; y < h - 2; y++) {
+    for (let x = 2; x < w - 2; x++) {
+      if (nms[y * w + x] >= threshold && nms[y * w + x] > 5) {
+        edgePixels.push([x, y]);
+      }
+    }
+  }
+
+  if (edgePixels.length < 20) {
+    return { cx: w / 2, cy: h / 2, r: Math.min(w, h) * 0.3 };
+  }
+
+  const maxEdge = 3000;
+  let sampledEdges = edgePixels;
+  if (edgePixels.length > maxEdge) {
+    sampledEdges = [];
+    const step = edgePixels.length / maxEdge;
+    for (let i = 0; i < maxEdge; i++) {
+      sampledEdges.push(edgePixels[Math.floor(i * step)]);
+    }
+  }
+
+  const rMin = Math.max(10, Math.min(w, h) * 0.05);
+  const rMax = Math.min(w, h) * 0.48;
+  const rStep = 2;
+  const cStep = 2;
+  let bestCx = w / 2, bestCy = h / 2, bestR = rMax * 0.6, bestScore = 0;
+
+  for (let r = rMin; r <= rMax; r += rStep) {
+    const accW = Math.ceil(w / cStep);
+    const accH = Math.ceil(h / cStep);
+    const acc = new Int32Array(accW * accH);
+
+    for (const [ex, ey] of sampledEdges) {
+      const gx = blurred[ey * w + Math.min(ex + 1, w - 1)] - blurred[ey * w + Math.max(ex - 1, 0)];
+      const gy = blurred[Math.min(ey + 1, h - 1) * w + ex] - blurred[Math.max(ey - 1, 0) * w + ex];
+      const gMag = Math.sqrt(gx * gx + gy * gy);
+      if (gMag < 1) continue;
+
+      const nx = gx / gMag;
+      const ny = gy / gMag;
+
+      for (const sign of [-1, 1]) {
+        const cx = Math.round(ex + sign * nx * r);
+        const cy = Math.round(ey + sign * ny * r);
+        const ax = Math.floor(cx / cStep);
+        const ay = Math.floor(cy / cStep);
+        if (ax >= 0 && ax < accW && ay >= 0 && ay < accH) {
+          acc[ay * accW + ax]++;
+        }
+      }
+    }
+
+    for (let i = 0; i < acc.length; i++) {
+      if (acc[i] > bestScore) {
+        bestScore = acc[i];
+        bestCx = (i % accW) * cStep + cStep / 2;
+        bestCy = Math.floor(i / accW) * cStep + cStep / 2;
+        bestR = r;
+      }
+    }
+  }
+
+  return { cx: Math.round(bestCx), cy: Math.round(bestCy), r: Math.round(bestR) };
+}
+
+// ================================================================
+//  ESF → LSF → MTF 算出（rawPixelDataを使用）
+// ================================================================
+
+function computeMTF(w, h, cx, cy, r, pixelSize, esfHalfWidth, numAngles) {
+  const profiles = [];
+  const angleStep = (2 * Math.PI) / numAngles;
+
+  for (let ai = 0; ai < numAngles; ai++) {
+    const angle = ai * angleStep;
+    const cosA = Math.cos(angle);
+    const sinA = Math.sin(angle);
+
+    const profile = [];
+    let valid = true;
+
+    for (let d = -esfHalfWidth; d <= esfHalfWidth; d++) {
+      const px = cx + (r + d) * cosA;
+      const py = cy + (r + d) * sinA;
+
+      if (px < 1 || px >= w - 1 || py < 1 || py >= h - 1) {
+        valid = false;
+        break;
+      }
+      profile.push(getRawSubpixel(px, py));
+    }
+
+    if (valid && profile.length === 2 * esfHalfWidth + 1) {
+      if (profile[0] < profile[profile.length - 1]) {
+        profile.reverse();
+      }
+      profiles.push(profile);
+    }
+  }
+
+  if (profiles.length < 10) {
+    return null;
+  }
+
+  const profileLen = profiles[0].length;
+
+  // Average ESF
+  const esf = new Float64Array(profileLen);
+  for (let i = 0; i < profileLen; i++) {
+    let sum = 0;
+    for (const p of profiles) sum += p[i];
+    esf[i] = sum / profiles.length;
+  }
+
+  // Normalize ESF to 0-1
+  const esfMin = Math.min(...esf);
+  const esfMax = Math.max(...esf);
+  const esfRange = esfMax - esfMin || 1;
+  const esfNorm = new Float64Array(profileLen);
+  for (let i = 0; i < profileLen; i++) {
+    esfNorm[i] = (esf[i] - esfMin) / esfRange;
+  }
+
+  // LSF = derivative of ESF
+  const lsfLen = profileLen - 1;
+  const lsf = new Float64Array(lsfLen);
+  for (let i = 0; i < lsfLen; i++) {
+    lsf[i] = esfNorm[i] - esfNorm[i + 1];
+  }
+
+  // Apply Hanning window
+  const lsfWindowed = new Float64Array(lsfLen);
+  for (let i = 0; i < lsfLen; i++) {
+    const w_h = 0.5 * (1 - Math.cos(2 * Math.PI * i / (lsfLen - 1)));
+    lsfWindowed[i] = lsf[i] * w_h;
+  }
+
+  // Zero-pad to next power of 2
+  let fftLen = 1;
+  while (fftLen < lsfLen * 2) fftLen *= 2;
+
+  const real = new Float64Array(fftLen);
+  const imag = new Float64Array(fftLen);
+  for (let i = 0; i < lsfLen; i++) {
+    real[i] = lsfWindowed[i];
+  }
+
+  fft(real, imag, fftLen);
+
+  const dc = Math.sqrt(real[0] * real[0] + imag[0] * imag[0]);
+  const mtfLen = Math.floor(fftLen / 2);
+  const mtf = new Float64Array(mtfLen);
+  const freq = new Float64Array(mtfLen);
+  const nyquist = 1 / (2 * pixelSize);
+
+  for (let i = 0; i < mtfLen; i++) {
+    const mag = Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
+    mtf[i] = dc > 0 ? mag / dc : 0;
+    freq[i] = (i / fftLen) * (1 / pixelSize);
+  }
+
+  let f50 = null, f10 = null;
+  for (let i = 1; i < mtfLen; i++) {
+    if (freq[i] > nyquist) break;
+    if (f50 === null && mtf[i] <= 0.5) {
+      const t = (0.5 - mtf[i]) / (mtf[i - 1] - mtf[i]);
+      f50 = freq[i] - t * (freq[i] - freq[i - 1]);
+    }
+    if (f10 === null && mtf[i] <= 0.1) {
+      const t = (0.1 - mtf[i]) / (mtf[i - 1] - mtf[i]);
+      f10 = freq[i] - t * (freq[i] - freq[i - 1]);
+    }
+  }
+
+  const esfPos = [];
+  for (let i = 0; i < profileLen; i++) esfPos.push((i - esfHalfWidth) * pixelSize);
+  const lsfPos = [];
+  for (let i = 0; i < lsfLen; i++) lsfPos.push((i - esfHalfWidth + 0.5) * pixelSize);
+
+  return {
+    esf: Array.from(esfNorm), esfPos,
+    lsf: Array.from(lsf), lsfPos,
+    mtf: Array.from(mtf), freq: Array.from(freq),
+    f50, f10, nyquist,
+    profileCount: profiles.length,
+  };
+}
+
+// ================================================================
+//  FFT (Radix-2 Cooley-Tukey, in-place)
+// ================================================================
+
+function fft(real, imag, n) {
+  let j = 0;
+  for (let i = 0; i < n - 1; i++) {
+    if (i < j) {
+      [real[i], real[j]] = [real[j], real[i]];
+      [imag[i], imag[j]] = [imag[j], imag[i]];
+    }
+    let k = n >> 1;
+    while (k <= j) { j -= k; k >>= 1; }
+    j += k;
+  }
+
+  for (let len = 2; len <= n; len <<= 1) {
+    const halfLen = len >> 1;
+    const angleStep = -2 * Math.PI / len;
+    const wR = Math.cos(angleStep);
+    const wI = Math.sin(angleStep);
+
+    for (let i = 0; i < n; i += len) {
+      let curR = 1, curI = 0;
+      for (let k = 0; k < halfLen; k++) {
+        const a = i + k;
+        const b = i + k + halfLen;
+        const tR = curR * real[b] - curI * imag[b];
+        const tI = curR * imag[b] + curI * real[b];
+        real[b] = real[a] - tR;
+        imag[b] = imag[a] - tI;
+        real[a] += tR;
+        imag[a] += tI;
+        const newR = curR * wR - curI * wI;
+        curI = curR * wI + curI * wR;
+        curR = newR;
+      }
+    }
+  }
+}
+
+// ================================================================
+//  ファイルアップロード
+// ================================================================
+
+const uploadArea = document.getElementById('upload-area');
+const fileInput = document.getElementById('file-input');
+
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  clearMsg('msg-area');
+  clearMsg('roi-msg');
+  const msgArea = document.getElementById('msg-area');
+
+  // Detect if DICOM
+  const fname = file.name.toLowerCase();
+  if (fname.endsWith('.dcm') || fname.endsWith('.dicom') || file.type === 'application/dicom') {
+    handleDicomFile(file);
+    return;
+  }
+
+  // PNG / TIFF / BMP
+  const validTypes = ['image/png', 'image/tiff', 'image/bmp'];
+  if (!validTypes.includes(file.type) && !fname.match(/\.(png|tiff?|bmp)$/)) {
+    addMsg(msgArea, 'DICOM (.dcm) / PNG / TIFF / BMP 形式の画像を選択してください。', 'error');
+    return;
+  }
+
+  isDicom = false;
+  document.getElementById('ps-auto').classList.add('hidden');
+  document.getElementById('dicom-info').classList.add('hidden');
+  document.getElementById('ww-wl-controls').classList.add('hidden');
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      imgWidth = img.width;
+      imgHeight = img.height;
+
+      setupCanvas(imgWidth, imgHeight);
+      const canvas = document.getElementById('canvas-preview');
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      imageData = ctx.getImageData(0, 0, imgWidth, imgHeight);
+
+      // Build rawPixelData from 8bit gray
+      rawPixelData = new Float64Array(imgWidth * imgHeight);
+      const d = imageData.data;
+      for (let i = 0; i < imgWidth * imgHeight; i++) {
+        rawPixelData[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+      }
+
+      updateSliderRanges();
+      document.getElementById('image-info').textContent =
+        `${file.name}　|　${imgWidth} × ${imgHeight} px　|　${(file.size / 1024).toFixed(1)} KB`;
+      detectAndSetROI();
+      document.getElementById('section-image').classList.remove('hidden');
+      document.getElementById('section-result').classList.add('hidden');
+    };
+    img.onerror = function() {
+      addMsg(msgArea, '画像の読み込みに失敗しました。', 'error');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ================================================================
+//  DICOM ファイル処理
+// ================================================================
+
+// ================================================================
+//  軽量DICOMパーサー（外部ライブラリ不要）
+// ================================================================
+
+function parseDicom(arrayBuffer) {
+  const dv = new DataView(arrayBuffer);
+  const len = arrayBuffer.byteLength;
+
+  // Check DICM magic at offset 128
+  if (len < 132) throw new Error('ファイルサイズが小さすぎます');
+  const magic = String.fromCharCode(dv.getUint8(128), dv.getUint8(129), dv.getUint8(130), dv.getUint8(131));
+  if (magic !== 'DICM') throw new Error('DICMヘッダが見つかりません。有効なDICOMファイルか確認してください。');
+
+  const tags = {};
+  let offset = 132;
+  let littleEndian = true;
+  let explicitVR = true;
+  let pixelDataOffset = -1;
+  let pixelDataLength = 0;
+
+  // VRs with 4-byte length field in explicit VR
+  const longVRs = new Set(['OB', 'OD', 'OF', 'OL', 'OW', 'SQ', 'UC', 'UN', 'UR', 'UT']);
+
+  function readTag() {
+    if (offset + 4 > len) return null;
+    const group = dv.getUint16(offset, littleEndian);
+    const element = dv.getUint16(offset + 2, littleEndian);
+    offset += 4;
+
+    const tagKey = ((group << 16) | element) >>> 0;
+
+    let vr = '';
+    let valueLength = 0;
+
+    if (explicitVR) {
+      if (offset + 2 > len) return null;
+      vr = String.fromCharCode(dv.getUint8(offset), dv.getUint8(offset + 1));
+      offset += 2;
+
+      if (longVRs.has(vr)) {
+        offset += 2; // skip 2 reserved bytes
+        if (offset + 4 > len) return null;
+        valueLength = dv.getUint32(offset, littleEndian);
+        offset += 4;
+      } else {
+        if (offset + 2 > len) return null;
+        valueLength = dv.getUint16(offset, littleEndian);
+        offset += 2;
+      }
+    } else {
+      // Implicit VR
+      if (offset + 4 > len) return null;
+      valueLength = dv.getUint32(offset, littleEndian);
+      offset += 4;
+    }
+
+    // Handle undefined length
+    if (valueLength === 0xFFFFFFFF) {
+      // Skip sequences with undefined length
+      // Search for sequence delimitation item
+      while (offset + 8 <= len) {
+        const g = dv.getUint16(offset, littleEndian);
+        const e = dv.getUint16(offset + 2, littleEndian);
+        if ((g === 0xFFFE && e === 0xE0DD) || (g === 0x7FE0 && e === 0x0010)) {
+          if (g === 0xFFFE) {
+            offset += 8; // skip delimitation item
+          }
+          break;
+        }
+        offset++;
+      }
+      return { tagKey, vr, value: null };
+    }
+
+    if (offset + valueLength > len) return null;
+
+    // Pixel Data tag
+    if (group === 0x7FE0 && element === 0x0010) {
+      pixelDataOffset = offset;
+      pixelDataLength = valueLength;
+      offset += valueLength;
+      return { tagKey, vr, value: 'PIXEL_DATA' };
+    }
+
+    // Read value
+    const valueBytes = new Uint8Array(arrayBuffer, offset, valueLength);
+    offset += valueLength;
+
+    // Decode based on VR
+    let value;
+    if (vr === 'US') {
+      value = valueLength >= 2 ? dv.getUint16(offset - valueLength, littleEndian) : 0;
+    } else if (vr === 'SS') {
+      value = valueLength >= 2 ? dv.getInt16(offset - valueLength, littleEndian) : 0;
+    } else if (vr === 'UL') {
+      value = valueLength >= 4 ? dv.getUint32(offset - valueLength, littleEndian) : 0;
+    } else if (vr === 'SL') {
+      value = valueLength >= 4 ? dv.getInt32(offset - valueLength, littleEndian) : 0;
+    } else if (vr === 'FL') {
+      value = valueLength >= 4 ? dv.getFloat32(offset - valueLength, littleEndian) : 0;
+    } else if (vr === 'FD') {
+      value = valueLength >= 8 ? dv.getFloat64(offset - valueLength, littleEndian) : 0;
+    } else {
+      // String-like VRs
+      value = new TextDecoder('ascii').decode(valueBytes).replace(/\0/g, '').trim();
+    }
+
+    return { tagKey, vr, value };
+  }
+
+  // Check Transfer Syntax in meta header
+  // Read meta header (group 0002) first
+  while (offset < len) {
+    const saved = offset;
+    const tag = readTag();
+    if (!tag) break;
+
+    const group = (tag.tagKey >>> 16) & 0xFFFF;
+    if (group !== 0x0002) {
+      offset = saved; // rewind — done with meta header
+      break;
+    }
+    tags[tag.tagKey] = tag.value;
+
+    // Transfer Syntax UID (0002,0010)
+    if (tag.tagKey === 0x00020010) {
+      const ts = String(tag.value).trim();
+      if (ts === '1.2.840.10008.1.2') {
+        // Implicit VR Little Endian
+        explicitVR = false;
+        littleEndian = true;
+      } else if (ts === '1.2.840.10008.1.2.1') {
+        // Explicit VR Little Endian
+        explicitVR = true;
+        littleEndian = true;
+      } else if (ts === '1.2.840.10008.1.2.2') {
+        // Explicit VR Big Endian
+        explicitVR = true;
+        littleEndian = false;
+      }
+      // Other transfer syntaxes (compressed) — try explicit LE as fallback
+    }
+  }
+
+  // Read remaining tags
+  while (offset < len) {
+    const tag = readTag();
+    if (!tag) break;
+    if (tag.value !== null) {
+      tags[tag.tagKey] = tag.value;
+    }
+  }
+
+  // Extract needed values
+  const rows = tags[0x00280010]; // Rows
+  const cols = tags[0x00280011]; // Columns
+  const bitsAllocated = tags[0x00280100] || 16;
+  const bitsStored = tags[0x00280101] || bitsAllocated;
+  const pixelRep = tags[0x00280103] || 0; // 0=unsigned, 1=signed
+  const rescaleSlope = parseFloat(tags[0x00281053]) || 1;
+  const rescaleIntercept = parseFloat(tags[0x00281052]) || 0;
+  const samplesPerPixel = tags[0x00280002] || 1;
+
+  // PixelSpacing (0028,0030) — string like "0.488\\0.488"
+  let pixelSpacing = null;
+  const psStr = tags[0x00280030];
+  if (psStr) {
+    const parts = String(psStr).split('\\').map(Number);
+    if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      pixelSpacing = [parts[0], parts[1]];
+    }
+  }
+
+  // WW/WL
+  let windowWidth = parseFloat(String(tags[0x00281051] || '').split('\\')[0]) || 400;
+  let windowCenter = parseFloat(String(tags[0x00281050] || '').split('\\')[0]) || 40;
+
+  // Metadata for display
+  const metadata = {
+    modality: tags[0x00080060] || '',
+    manufacturer: tags[0x00080070] || '',
+    kvp: tags[0x00180060] || '',
+    sliceThickness: tags[0x00180050] || '',
+    convolutionKernel: tags[0x00181210] || '',
+  };
+
+  // Extract pixel data
+  if (pixelDataOffset < 0 || !rows || !cols) {
+    throw new Error('ピクセルデータまたは画像サイズが見つかりません。');
+  }
+
+  const numPixels = rows * cols * samplesPerPixel;
+  const rawData = new Float64Array(numPixels);
+
+  if (bitsAllocated === 16) {
+    for (let i = 0; i < numPixels; i++) {
+      const byteOffset = pixelDataOffset + i * 2;
+      if (byteOffset + 2 > len) break;
+      let val;
+      if (pixelRep === 1) {
+        val = dv.getInt16(byteOffset, littleEndian);
+      } else {
+        val = dv.getUint16(byteOffset, littleEndian);
+      }
+      rawData[i] = val * rescaleSlope + rescaleIntercept;
+    }
+  } else if (bitsAllocated === 8) {
+    const bytes = new Uint8Array(arrayBuffer, pixelDataOffset, numPixels);
+    for (let i = 0; i < numPixels; i++) {
+      rawData[i] = bytes[i] * rescaleSlope + rescaleIntercept;
+    }
+  } else {
+    throw new Error(`BitsAllocated=${bitsAllocated} は未対応です。8bit / 16bit のみ対応しています。`);
+  }
+
+  return {
+    rows, cols, rawData,
+    pixelSpacing, windowWidth, windowCenter,
+    bitsAllocated, bitsStored, metadata,
+  };
+}
+
+// ================================================================
+//  DICOM ファイル処理
+// ================================================================
+
+function handleDicomFile(file) {
+  const msgArea = document.getElementById('msg-area');
+  isDicom = true;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const dcm = parseDicom(e.target.result);
+
+      imgWidth = dcm.cols;
+      imgHeight = dcm.rows;
+      rawPixelData = dcm.rawData;
+
+      // PixelSpacing → auto-fill
+      if (dcm.pixelSpacing && dcm.pixelSpacing[0] > 0) {
+        document.getElementById('pixel-size').value = dcm.pixelSpacing[0].toFixed(4);
+        document.getElementById('ps-auto').classList.remove('hidden');
+      } else {
+        document.getElementById('ps-auto').classList.add('hidden');
+        addMsg(msgArea, 'PixelSpacingが取得できませんでした。ピクセルサイズを手動入力してください。', 'warning');
+      }
+
+      // WW/WL
+      dicomDefaultWW = dcm.windowWidth;
+      dicomDefaultWL = dcm.windowCenter;
+      dicomWW = dicomDefaultWW;
+      dicomWL = dicomDefaultWL;
+
+      const wwSlider = document.getElementById('ww-slider');
+      const wlSlider = document.getElementById('wl-slider');
+      wwSlider.value = dicomWW;
+      wlSlider.value = dicomWL;
+      document.getElementById('ww-val').textContent = Math.round(dicomWW);
+      document.getElementById('wl-val').textContent = Math.round(dicomWL);
+      document.getElementById('ww-wl-controls').classList.remove('hidden');
+
+      // DICOM info display (no patient info)
+      const dicomInfoEl = document.getElementById('dicom-info');
+      dicomInfoEl.innerHTML = '';
+      const infoItems = [
+        { label: 'Modality', val: dcm.metadata.modality },
+        { label: 'Manufacturer', val: dcm.metadata.manufacturer },
+        { label: 'KVP', val: dcm.metadata.kvp },
+        { label: 'SliceThickness', val: dcm.metadata.sliceThickness },
+        { label: 'ConvolutionKernel', val: dcm.metadata.convolutionKernel },
+      ];
+      for (const item of infoItems) {
+        if (item.val && String(item.val).trim()) {
+          const span = document.createElement('span');
+          span.className = 'dicom-tag';
+          span.innerHTML = `<strong>${item.label}:</strong> ${item.val}`;
+          dicomInfoEl.appendChild(span);
+        }
+      }
+      if (dcm.pixelSpacing) {
+        const span = document.createElement('span');
+        span.className = 'dicom-tag';
+        span.innerHTML = `<strong>PixelSpacing:</strong> ${dcm.pixelSpacing[0].toFixed(4)} × ${dcm.pixelSpacing[1].toFixed(4)} mm`;
+        dicomInfoEl.appendChild(span);
+      }
+      const sizeSpan = document.createElement('span');
+      sizeSpan.className = 'dicom-tag';
+      sizeSpan.innerHTML = `<strong>Matrix:</strong> ${imgWidth} × ${imgHeight}　|　<strong>Bits:</strong> ${dcm.bitsStored}bit`;
+      dicomInfoEl.appendChild(sizeSpan);
+      dicomInfoEl.classList.remove('hidden');
+
+      // Render
+      setupCanvas(imgWidth, imgHeight);
+      applyWindowLevel(rawPixelData, imgWidth, imgHeight, dicomWW, dicomWL);
+
+      updateSliderRanges();
+      document.getElementById('image-info').textContent =
+        `${file.name}　|　${imgWidth} × ${imgHeight} px　|　DICOM (${dcm.bitsStored}bit)　|　${(file.size / 1024).toFixed(1)} KB`;
+      detectAndSetROI();
+      document.getElementById('section-image').classList.remove('hidden');
+      document.getElementById('section-result').classList.add('hidden');
+
+      addMsg(msgArea, `DICOMファイルを正常に読み込みました。${dcm.bitsStored}bitデータで解析します。`, 'success');
+
+    } catch (err) {
+      addMsg(msgArea, 'DICOMファイルの解析中にエラーが発生しました: ' + err.message, 'error');
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ================================================================
+//  Canvas セットアップ
+// ================================================================
+
+function setupCanvas(w, h) {
+  const canvas = document.getElementById('canvas-preview');
+  const overlay = document.getElementById('canvas-overlay');
+  const maxDisplay = 512;
+  const scale = Math.min(maxDisplay / w, maxDisplay / h, 1);
+  const dispW = Math.round(w * scale);
+  const dispH = Math.round(h * scale);
+
+  canvas.width = w;
+  canvas.height = h;
+  canvas.style.width = dispW + 'px';
+  canvas.style.height = dispH + 'px';
+  overlay.width = w;
+  overlay.height = h;
+  overlay.style.width = dispW + 'px';
+  overlay.style.height = dispH + 'px';
+}
+
+function updateSliderRanges() {
+  document.getElementById('roi-cx').max = imgWidth;
+  document.getElementById('roi-cy').max = imgHeight;
+  document.getElementById('roi-r').max = Math.floor(Math.min(imgWidth, imgHeight) / 2);
+}
+
+// ================================================================
+//  WW/WL スライダー（表示用のみ）
+// ================================================================
+
+document.getElementById('ww-slider').addEventListener('input', function() {
+  dicomWW = parseInt(this.value);
+  document.getElementById('ww-val').textContent = dicomWW;
+  if (isDicom && rawPixelData) {
+    applyWindowLevel(rawPixelData, imgWidth, imgHeight, dicomWW, dicomWL);
+    drawOverlay();
+  }
+});
+
+document.getElementById('wl-slider').addEventListener('input', function() {
+  dicomWL = parseInt(this.value);
+  document.getElementById('wl-val').textContent = dicomWL;
+  if (isDicom && rawPixelData) {
+    applyWindowLevel(rawPixelData, imgWidth, imgHeight, dicomWW, dicomWL);
+    drawOverlay();
+  }
+});
+
+document.getElementById('btn-ww-reset').addEventListener('click', () => {
+  dicomWW = dicomDefaultWW;
+  dicomWL = dicomDefaultWL;
+  document.getElementById('ww-slider').value = dicomWW;
+  document.getElementById('wl-slider').value = dicomWL;
+  document.getElementById('ww-val').textContent = Math.round(dicomWW);
+  document.getElementById('wl-val').textContent = Math.round(dicomWL);
+  if (isDicom && rawPixelData) {
+    applyWindowLevel(rawPixelData, imgWidth, imgHeight, dicomWW, dicomWL);
+    drawOverlay();
+  }
+});
+
+// ================================================================
+//  ROI 検出・スライダー・クリック
+// ================================================================
+
+function detectAndSetROI() {
+  const result = detectCircle(imageData.data, imgWidth, imgHeight);
+  roiCx = result.cx;
+  roiCy = result.cy;
+  roiR = result.r;
+
+  document.getElementById('roi-cx').value = roiCx;
+  document.getElementById('roi-cy').value = roiCy;
+  document.getElementById('roi-r').value = roiR;
+  document.getElementById('roi-cx-val').textContent = roiCx;
+  document.getElementById('roi-cy-val').textContent = roiCy;
+  document.getElementById('roi-r-val').textContent = roiR;
+
+  drawOverlay();
+}
+
+document.getElementById('btn-detect').addEventListener('click', detectAndSetROI);
+
+['roi-cx', 'roi-cy', 'roi-r'].forEach(id => {
+  const slider = document.getElementById(id);
+  slider.addEventListener('input', () => {
+    document.getElementById(id + '-val').textContent = slider.value;
+    roiCx = parseInt(document.getElementById('roi-cx').value);
+    roiCy = parseInt(document.getElementById('roi-cy').value);
+    roiR = parseInt(document.getElementById('roi-r').value);
+    drawOverlay();
+  });
+});
+
+document.getElementById('canvas-overlay').addEventListener('click', function(e) {
+  const rect = this.getBoundingClientRect();
+  const scaleX = imgWidth / rect.width;
+  const scaleY = imgHeight / rect.height;
+  roiCx = Math.round((e.clientX - rect.left) * scaleX);
+  roiCy = Math.round((e.clientY - rect.top) * scaleY);
+  document.getElementById('roi-cx').value = roiCx;
+  document.getElementById('roi-cy').value = roiCy;
+  document.getElementById('roi-cx-val').textContent = roiCx;
+  document.getElementById('roi-cy-val').textContent = roiCy;
+  drawOverlay();
+});
+
+// ================================================================
+//  オーバーレイ描画
+// ================================================================
+
+function drawOverlay() {
+  const canvas = document.getElementById('canvas-overlay');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.beginPath();
+  ctx.arc(roiCx, roiCy, roiR, 0, 2 * Math.PI);
+  ctx.strokeStyle = '#00ff88';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const esfW = parseInt(document.getElementById('esf-width').value) || 30;
+  ctx.beginPath();
+  ctx.arc(roiCx, roiCy, roiR - esfW, 0, 2 * Math.PI);
+  ctx.strokeStyle = 'rgba(0,255,136,0.3)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(roiCx, roiCy, roiR + esfW, 0, 2 * Math.PI);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.beginPath();
+  ctx.moveTo(roiCx - 10, roiCy);
+  ctx.lineTo(roiCx + 10, roiCy);
+  ctx.moveTo(roiCx, roiCy - 10);
+  ctx.lineTo(roiCx, roiCy + 10);
+  ctx.strokeStyle = '#ff4444';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+// ================================================================
+//  MTF算出ボタン
+// ================================================================
+
+document.getElementById('btn-calc').addEventListener('click', () => {
+  clearMsg('roi-msg');
+  const msgArea = document.getElementById('roi-msg');
+
+  if (!rawPixelData) {
+    addMsg(msgArea, '先に画像をアップロードしてください。', 'error');
+    return;
+  }
+
+  const pixelSize = parseFloat(document.getElementById('pixel-size').value);
+  const esfWidth = parseInt(document.getElementById('esf-width').value);
+  const numAngles = parseInt(document.getElementById('angle-segments').value);
+
+  if (isNaN(pixelSize) || pixelSize <= 0) {
+    addMsg(msgArea, 'ピクセルサイズに正の数値を入力してください。', 'error');
+    return;
+  }
+
+  addMsg(msgArea, '計算中...', 'info');
+
+  requestAnimationFrame(() => {
+    const result = computeMTF(imgWidth, imgHeight,
+      roiCx, roiCy, roiR, pixelSize, esfWidth, numAngles);
+
+    clearMsg('roi-msg');
+
+    if (!result) {
+      addMsg(msgArea, 'エッジプロファイルが十分に取得できませんでした。ROI位置・半径を調整してください。', 'error');
+      return;
+    }
+
+    lastMtfResult = result;
+
+    document.getElementById('section-result').classList.remove('hidden');
+
+    document.getElementById('mtf50-val').textContent =
+      result.f50 !== null ? result.f50.toFixed(3) : 'N/A';
+    document.getElementById('mtf10-val').textContent =
+      result.f10 !== null ? result.f10.toFixed(3) : 'N/A';
+    document.getElementById('nyquist-val').textContent = result.nyquist.toFixed(3);
+    document.getElementById('profile-count').textContent = result.profileCount;
+
+    renderMtfChart(result);
+    renderEsfChart(result);
+    renderLsfChart(result);
+
+    const dataType = isDicom ? '16bitデータ' : '8bitデータ';
+    addMsg(msgArea, `MTF算出完了（${dataType}）。${result.profileCount} 本のプロファイルを使用。`, 'success');
+
+    document.getElementById('section-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// ================================================================
+//  グラフ描画
+// ================================================================
+
+function renderMtfChart(result) {
+  const maxIdx = result.freq.findIndex(f => f > result.nyquist);
+  const len = maxIdx > 0 ? maxIdx : result.freq.length;
+  const freqData = result.freq.slice(0, len);
+  const mtfData = result.mtf.slice(0, len);
+
+  if (chartMtf) chartMtf.destroy();
+  chartMtf = new Chart(document.getElementById('chart-mtf').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: freqData.map(f => f.toFixed(3)),
+      datasets: [{
+        label: 'MTF',
+        data: mtfData,
+        borderColor: '#1a56db',
+        backgroundColor: 'rgba(26,86,219,0.08)',
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: true,
+        tension: 0.1,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: 'MTFカーブ（Circular Edge法）',
+          font: { size: 14, weight: '600' },
+          color: '#2d3748',
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: '空間周波数 (cycles/mm)', color: '#718096' },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          ticks: {
+            maxTicksLimit: 15,
+            callback: function(val) {
+              return parseFloat(this.getLabelForValue(val)).toFixed(1);
+            }
+          },
+        },
+        y: {
+          min: 0, max: 1.05,
+          title: { display: true, text: 'MTF', color: '#718096' },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+        },
+      },
+    },
+    plugins: [{
+      afterDraw: function(chart) {
+        const ctx = chart.ctx;
+        const yScale = chart.scales.y;
+        const xScale = chart.scales.x;
+
+        // 50% line
+        const y50 = yScale.getPixelForValue(0.5);
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(xScale.left, y50);
+        ctx.lineTo(xScale.right, y50);
+        ctx.strokeStyle = 'rgba(229,62,62,0.6)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([6, 3]);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(229,62,62,0.8)';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('50%', xScale.right + 4, y50 + 4);
+
+        // 10% line
+        const y10 = yScale.getPixelForValue(0.1);
+        ctx.beginPath();
+        ctx.moveTo(xScale.left, y10);
+        ctx.lineTo(xScale.right, y10);
+        ctx.strokeStyle = 'rgba(160,174,192,0.7)';
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(160,174,192,0.9)';
+        ctx.fillText('10%', xScale.right + 4, y10 + 4);
+        ctx.restore();
+
+        // 50% vertical marker
+        if (result.f50 !== null) {
+          const xIdx = freqData.findIndex(f => f >= result.f50);
+          if (xIdx >= 0) {
+            const xPx = xScale.getPixelForValue(xIdx);
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(xPx, yScale.top);
+            ctx.lineTo(xPx, yScale.bottom);
+            ctx.strokeStyle = 'rgba(229,62,62,0.4)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.fillStyle = '#c53030';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillText(`50%: ${result.f50.toFixed(3)}`, xPx + 4, yScale.top + 14);
+            ctx.restore();
+          }
+        }
+
+        // 10% vertical marker
+        if (result.f10 !== null) {
+          const xIdx = freqData.findIndex(f => f >= result.f10);
+          if (xIdx >= 0) {
+            const xPx = xScale.getPixelForValue(xIdx);
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(xPx, yScale.top);
+            ctx.lineTo(xPx, yScale.bottom);
+            ctx.strokeStyle = 'rgba(160,174,192,0.5)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.fillStyle = '#718096';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillText(`10%: ${result.f10.toFixed(3)}`, xPx + 4, yScale.top + 28);
+            ctx.restore();
+          }
+        }
+      }
+    }],
+  });
+}
+
+function renderEsfChart(result) {
+  if (chartEsf) chartEsf.destroy();
+  chartEsf = new Chart(document.getElementById('chart-esf').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: result.esfPos.map(p => p.toFixed(2)),
+      datasets: [{
+        label: 'ESF',
+        data: result.esf,
+        borderColor: '#2b6cb0',
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false,
+        tension: 0.1,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: 'Edge Spread Function (ESF)',
+          font: { size: 14, weight: '600' },
+          color: '#2d3748',
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: '位置 (mm)', color: '#718096' },
+          ticks: { maxTicksLimit: 15 },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+        },
+        y: {
+          min: -0.05, max: 1.05,
+          title: { display: true, text: '正規化値', color: '#718096' },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+        },
+      },
+    },
+  });
+}
+
+function renderLsfChart(result) {
+  if (chartLsf) chartLsf.destroy();
+  chartLsf = new Chart(document.getElementById('chart-lsf').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: result.lsfPos.map(p => p.toFixed(2)),
+      datasets: [{
+        label: 'LSF',
+        data: result.lsf,
+        borderColor: '#38a169',
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false,
+        tension: 0.1,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: 'Line Spread Function (LSF)',
+          font: { size: 14, weight: '600' },
+          color: '#2d3748',
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: '位置 (mm)', color: '#718096' },
+          ticks: { maxTicksLimit: 15 },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+        },
+        y: {
+          title: { display: true, text: '強度', color: '#718096' },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+        },
+      },
+    },
+  });
+}
+
+// ================================================================
+//  タブ切り替え
+// ================================================================
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.chart-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ================================================================
+//  エクスポート
+// ================================================================
+
+document.getElementById('btn-export-csv').addEventListener('click', () => {
+  if (!lastMtfResult) return;
+  const r = lastMtfResult;
+
+  let csv = '\uFEFF';
+  csv += '空間周波数(cycles/mm),MTF\n';
+  const maxIdx = r.freq.findIndex(f => f > r.nyquist);
+  const len = maxIdx > 0 ? maxIdx : r.freq.length;
+  for (let i = 0; i < len; i++) {
+    csv += `${r.freq[i].toFixed(6)},${r.mtf[i].toFixed(6)}\n`;
+  }
+  csv += '\n';
+  csv += `MTF 50%,${r.f50 !== null ? r.f50.toFixed(4) : 'N/A'},cycles/mm\n`;
+  csv += `MTF 10%,${r.f10 !== null ? r.f10.toFixed(4) : 'N/A'},cycles/mm\n`;
+  csv += `Nyquist,${r.nyquist.toFixed(4)},cycles/mm\n`;
+  csv += `プロファイル数,${r.profileCount}\n`;
+  csv += `データ形式,${isDicom ? 'DICOM (16bit)' : 'Image (8bit)'}\n`;
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const d = new Date();
+  a.download = `mtf_result_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('btn-export-png').addEventListener('click', () => {
+  if (!chartMtf) return;
+  const url = chartMtf.toBase64Image();
+  const a = document.createElement('a');
+  a.href = url;
+  const d = new Date();
+  a.download = `mtf_curve_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+});
+
+</script>
+</body>
+</html>

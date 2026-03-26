@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CT Contrast Simulator | RT-Lab</title>
+  <meta name="description" content="造影CTの薬物動態シミュレータ。患者体格・管電圧・造影剤・注入条件から各臓器のTime-Density Curveをリアルタイムにシミュレーション。A/Bプロトコル比較機能搭載。">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #1a56db;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.06em; }
+    .logo a { color: #fff; text-decoration: none; }
+    .tool-name-header {
+      font-size: 0.95rem;
+      opacity: 0.88;
+      padding-left: 16px;
+      border-left: 2px solid rgba(255,255,255,0.35);
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a56db;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* ── Steps ── */
+    .steps { display: flex; gap: 12px; flex-wrap: wrap; }
+    .step {
+      flex: 1; min-width: 180px;
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px; background: #f7fafc;
+      border-radius: 8px; border: 1px solid #e2e8f0;
+    }
+    .step-num {
+      width: 26px; height: 26px; background: #1a56db; color: #fff;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+    }
+    .step-body strong { display: block; font-weight: 600; color: #2d3748; margin-bottom: 3px; }
+    .step-body span { color: #4a5568; font-size: 0.82rem; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 22px; border: none; border-radius: 6px;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer;
+      transition: background 0.15s, transform 0.1s; text-decoration: none;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: #1a56db; color: #fff; }
+    .btn-primary:hover { background: #1648c0; }
+    .btn-secondary { background: #edf2f7; color: #2d3748; border: 1px solid #e2e8f0; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+    .btn-danger { background: #e53e3e; color: #fff; }
+    .btn-danger:hover { background: #c53030; }
+    .btn-compare {
+      background: #ed8936; color: #fff;
+    }
+    .btn-compare:hover { background: #dd6b20; }
+
+    /* ── Messages ── */
+    .msg { padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; margin-top: 10px; }
+    .msg-info    { background: #ebf8ff; border: 1px solid #63b3ed; color: #2b6cb0; }
+
+    /* ── Form controls ── */
+    .form-row {
+      display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;
+      margin-bottom: 14px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label {
+      font-size: 0.8rem; font-weight: 600; color: #4a5568;
+    }
+    .form-group input, .form-group select {
+      padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 5px;
+      font-size: 0.85rem; width: 150px; color: #2d3748;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none; border-color: #1a56db; box-shadow: 0 0 0 2px rgba(26,86,219,0.15);
+    }
+    .form-hint {
+      font-size: 0.72rem; color: #718096; margin-top: 2px;
+    }
+
+    /* ── Grid layout ── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* ── Injection protocol table ── */
+    .protocol-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+    }
+    .protocol-table th {
+      background: #f7fafc;
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 600;
+      color: #4a5568;
+      border-bottom: 2px solid #e2e8f0;
+      font-size: 0.8rem;
+    }
+    .protocol-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .protocol-table td input, .protocol-table td select {
+      padding: 5px 8px;
+      border: 1px solid #cbd5e0;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      width: 100%;
+      color: #2d3748;
+    }
+    .protocol-table td input:focus, .protocol-table td select:focus {
+      outline: none; border-color: #1a56db;
+    }
+    .protocol-table .phase-label {
+      font-weight: 600;
+      color: #2d3748;
+      white-space: nowrap;
+    }
+    .protocol-table .remove-phase {
+      background: none; border: none; color: #e53e3e; cursor: pointer;
+      font-size: 1rem; padding: 2px 6px;
+    }
+    .protocol-table .remove-phase:hover { color: #c53030; }
+
+    /* ── Summary bar ── */
+    .summary-bar {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      padding: 12px 16px;
+      background: #f7fafc;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 16px;
+    }
+    .summary-item {
+      font-size: 0.82rem;
+      color: #4a5568;
+    }
+    .summary-item strong {
+      color: #1a56db;
+      font-size: 0.95rem;
+    }
+
+    /* ── Chart ── */
+    .chart-container {
+      position: relative;
+      height: 420px;
+      margin-top: 12px;
+    }
+
+    /* ── Organ checkboxes ── */
+    .organ-checks {
+      display: flex; gap: 14px; flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .organ-check {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.82rem; font-weight: 500;
+      cursor: pointer;
+    }
+    .organ-check input { cursor: pointer; }
+    .organ-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* ── Scan timing ── */
+    .scan-timing {
+      display: flex; gap: 14px; flex-wrap: wrap;
+      align-items: flex-end;
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: #fffff0;
+      border: 1px solid #ecc94b;
+      border-radius: 8px;
+    }
+    .scan-timing label {
+      font-size: 0.8rem; font-weight: 600; color: #744210;
+    }
+    .scan-timing input {
+      padding: 5px 8px; border: 1px solid #ecc94b; border-radius: 4px;
+      font-size: 0.85rem; width: 80px;
+    }
+    .scan-timing .scan-result {
+      font-size: 0.82rem; color: #744210;
+      padding: 6px 12px; background: #fefcbf; border-radius: 4px;
+    }
+
+    /* ── Table result ── */
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 12px;
+    }
+    .result-table th {
+      background: #f7fafc;
+      padding: 8px 10px;
+      text-align: center;
+      font-weight: 600;
+      color: #4a5568;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .result-table td {
+      padding: 7px 10px;
+      text-align: center;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .result-table td:first-child {
+      text-align: left;
+      font-weight: 600;
+    }
+
+    /* ── Preset buttons ── */
+    .preset-group {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .preset-btn {
+      padding: 6px 14px; border: 1px solid #cbd5e0; border-radius: 20px;
+      background: #fff; font-size: 0.78rem; cursor: pointer;
+      transition: all 0.15s; color: #4a5568; font-weight: 500;
+    }
+    .preset-btn:hover { border-color: #1a56db; color: #1a56db; background: #ebf4ff; }
+    .preset-btn.active { border-color: #1a56db; color: #fff; background: #1a56db; }
+
+    /* ── Compare banner ── */
+    .compare-banner {
+      display: none;
+      padding: 12px 16px;
+      background: #fffaf0;
+      border: 2px solid #ed8936;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 0.82rem;
+    }
+    .compare-banner.active { display: block; }
+    .compare-banner .compare-label {
+      font-weight: 700; color: #c05621; font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+    .compare-banner .compare-detail {
+      color: #744210; line-height: 1.7;
+    }
+    .compare-actions {
+      display: flex; gap: 8px; margin-top: 10px; align-items: center;
+    }
+
+    /* ── kVp selector ── */
+    .kvp-group {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .kvp-btn {
+      padding: 5px 14px; border: 2px solid #cbd5e0; border-radius: 6px;
+      background: #fff; font-size: 0.82rem; cursor: pointer;
+      transition: all 0.15s; color: #4a5568; font-weight: 600;
+    }
+    .kvp-btn:hover { border-color: #1a56db; color: #1a56db; }
+    .kvp-btn.active { border-color: #1a56db; color: #fff; background: #1a56db; }
+
+    /* ── Comparison result table ── */
+    .compare-result-table th.col-a { background: #ebf8ff; color: #2b6cb0; }
+    .compare-result-table th.col-b { background: #fffaf0; color: #c05621; }
+    .compare-result-table td.better { color: #38a169; font-weight: 600; }
+    .compare-result-table td.worse { color: #e53e3e; }
+
+    /* ── Footer ── */
+    footer {
+      background: #2d3748;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      padding: 24px 16px;
+      font-size: 0.75rem;
+      line-height: 1.8;
+    }
+    footer a { color: rgba(255,255,255,0.85); text-decoration: none; }
+    footer a:hover { color: #fff; }
+    .footer-disclaimer {
+      max-width: 640px; margin: 10px auto 0;
+      font-size: 0.7rem; opacity: 0.65;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .chart-container { height: 320px; }
+      main { padding: 16px 12px 32px; }
+      header { padding: 12px 16px; }
+      .form-group input, .form-group select { width: 120px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header>
+  <div class="logo"><a href="/">RT-Lab</a></div>
+  <div class="tool-name-header">CT Contrast Simulator — 造影CT薬物動態シミュレータ</div>
+</header>
+
+<!-- ===== Main ===== -->
+<main>
+
+  <!-- How to use -->
+  <div class="card">
+    <div class="card-title">使い方</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>患者情報・管電圧を入力</strong>
+          <span>体重・心拍出量・管電圧を設定</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>注入プロトコルを設定</strong>
+          <span>造影剤種類・注入速度・注入量を各フェーズで設定</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>シミュレーション実行</strong>
+          <span>各臓器のTDCを確認。A/B比較で条件変更の影響を可視化</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Left column: Parameters -->
+    <div>
+      <!-- Patient parameters -->
+      <div class="card">
+        <div class="card-title">患者パラメータ</div>
+        <div class="preset-group" id="patientPresets">
+          <button class="preset-btn" onclick="applyPatientPreset('small', event)">小柄（45kg）</button>
+          <button class="preset-btn active" onclick="applyPatientPreset('standard', event)">標準（60kg）</button>
+          <button class="preset-btn" onclick="applyPatientPreset('large', event)">大柄（80kg）</button>
+          <button class="preset-btn" onclick="applyPatientPreset('xl', event)">肥満（100kg）</button>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>体重 (kg)</label>
+            <input type="number" id="bodyWeight" value="60" min="20" max="200" step="1">
+          </div>
+          <div class="form-group">
+            <label>心拍出量 (L/min)</label>
+            <input type="number" id="cardiacOutput" value="5.0" min="1.0" max="15.0" step="0.1">
+            <span class="form-hint">正常: 4-6 L/min</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>心拍出量調整</label>
+            <select id="coAdjust" onchange="adjustCO()">
+              <option value="normal" selected>正常</option>
+              <option value="low">低心拍出（心不全等）</option>
+              <option value="high">高心拍出（発熱・貧血等）</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tube voltage (kVp) -->
+      <div class="card">
+        <div class="card-title">管電圧 (kVp)</div>
+        <div class="kvp-group" id="kvpGroup">
+          <button class="kvp-btn" onclick="selectKvp(80, event)">80 kVp</button>
+          <button class="kvp-btn" onclick="selectKvp(100, event)">100 kVp</button>
+          <button class="kvp-btn active" onclick="selectKvp(120, event)">120 kVp</button>
+          <button class="kvp-btn" onclick="selectKvp(140, event)">140 kVp</button>
+        </div>
+        <div id="kvpInfo" class="msg msg-info" style="margin-top:12px">
+          120 kVp: ヨード造影効果 25.0 HU/(mgI/mL)（基準）
+        </div>
+      </div>
+
+      <!-- Injection protocol -->
+      <div class="card">
+        <div class="card-title">注入プロトコル</div>
+        <div class="form-row" style="margin-bottom:16px">
+          <div class="form-group">
+            <label>造影剤</label>
+            <select id="contrastAgent" style="width:220px" onchange="updateContrastInfo()">
+              <option value="300">イオパミドール 300 mgI/mL</option>
+              <option value="350" selected>イオパミドール 350 mgI/mL</option>
+              <option value="370">イオパミドール 370 mgI/mL</option>
+              <option value="300b">イオヘキソール 300 mgI/mL</option>
+              <option value="350b">イオヘキソール 350 mgI/mL</option>
+            </select>
+          </div>
+        </div>
+
+        <table class="protocol-table" id="protocolTable">
+          <thead>
+            <tr>
+              <th>フェーズ</th>
+              <th style="width:100px">注入液</th>
+              <th style="width:90px">速度 (mL/s)</th>
+              <th style="width:90px">量 (mL)</th>
+              <th style="width:80px">時間 (s)</th>
+              <th style="width:30px"></th>
+            </tr>
+          </thead>
+          <tbody id="protocolBody">
+          </tbody>
+        </table>
+
+        <div style="display:flex; gap:8px; margin-bottom:14px;">
+          <button class="btn btn-sm btn-secondary" onclick="addPhase('contrast')">+ 造影剤フェーズ</button>
+          <button class="btn btn-sm btn-secondary" onclick="addPhase('saline')">+ 生食フェーズ</button>
+        </div>
+
+        <div class="summary-bar" id="summaryBar">
+          <div class="summary-item">総造影剤量: <strong id="totalVolume">100</strong> mL</div>
+          <div class="summary-item">総ヨード量: <strong id="totalIodine">35.0</strong> gI</div>
+          <div class="summary-item">体重あたりヨード量: <strong id="iodinePerKg">583</strong> mgI/kg</div>
+          <div class="summary-item">総注入時間: <strong id="totalTime">33.3</strong> 秒</div>
+        </div>
+
+        <div class="preset-group" id="protocolPresets">
+          <span style="font-size:0.8rem; font-weight:600; color:#4a5568; padding:6px 0;">プリセット:</span>
+          <button class="preset-btn" onclick="applyProtocolPreset('chest', event)">胸部大動脈</button>
+          <button class="preset-btn" onclick="applyProtocolPreset('liver_dynamic', event)">肝ダイナミック</button>
+          <button class="preset-btn" onclick="applyProtocolPreset('liver_eq', event)">肝平衡相</button>
+          <button class="preset-btn" onclick="applyProtocolPreset('coronary', event)">冠動脈CTA</button>
+          <button class="preset-btn" onclick="applyProtocolPreset('renal', event)">腎動脈</button>
+          <button class="preset-btn" onclick="applyProtocolPreset('brain', event)">頭部CTA</button>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:8px;">
+          <button class="btn btn-primary" onclick="runSimulation()" style="flex:1;">
+            シミュレーション実行
+          </button>
+          <button class="btn btn-compare" onclick="saveAsProtocolA()" id="btnSaveA" style="flex:0 0 auto;">
+            Protocol A として保存
+          </button>
+        </div>
+      </div>
+
+      <!-- Compare banner -->
+      <div class="compare-banner" id="compareBanner">
+        <div class="compare-label">Protocol A（比較基準）が保存されています</div>
+        <div class="compare-detail" id="compareDetail"></div>
+        <div class="compare-actions">
+          <button class="btn btn-sm btn-secondary" onclick="clearProtocolA()">比較をクリア</button>
+          <span style="font-size:0.75rem; color:#a0aec0;">条件を変更してシミュレーション実行 → 自動で比較表示</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: Results -->
+    <div>
+      <!-- TDC Chart -->
+      <div class="card">
+        <div class="card-title">Time-Density Curve（TDC）</div>
+        <div class="organ-checks" id="organChecks">
+          <label class="organ-check"><input type="checkbox" checked data-organ="aorta" onchange="toggleOrgan(this)"><span class="organ-dot" style="background:#e53e3e"></span>大動脈</label>
+          <label class="organ-check"><input type="checkbox" checked data-organ="ivc" onchange="toggleOrgan(this)"><span class="organ-dot" style="background:#3182ce"></span>下大静脈</label>
+          <label class="organ-check"><input type="checkbox" checked data-organ="portalVein" onchange="toggleOrgan(this)"><span class="organ-dot" style="background:#38a169"></span>門脈</label>
+          <label class="organ-check"><input type="checkbox" checked data-organ="liverParenchyma" onchange="toggleOrgan(this)"><span class="organ-dot" style="background:#d69e2e"></span>肝実質</label>
+          <label class="organ-check"><input type="checkbox" data-organ="kidney" onchange="toggleOrgan(this)"><span class="organ-dot" style="background:#805ad5"></span>腎実質</label>
+          <label class="organ-check"><input type="checkbox" data-organ="spleen" onchange="toggleOrgan(this)"><span class="organ-dot" style="background:#d53f8c"></span>脾臓</label>
+          <label class="organ-check"><input type="checkbox" data-organ="pancreas" onchange="toggleOrgan(this)"><span class="organ-dot" style="background:#dd6b20"></span>膵臓</label>
+        </div>
+        <div class="chart-container">
+          <canvas id="tdcChart"></canvas>
+        </div>
+
+        <!-- Scan timing -->
+        <div class="scan-timing">
+          <div class="form-group">
+            <label>スキャンタイミング (秒)</label>
+            <input type="number" id="scanTime" value="30" min="0" max="300" step="1" oninput="updateScanMarker()">
+          </div>
+          <div class="scan-result" id="scanResult">
+            各臓器のCT値を確認するにはシミュレーションを実行してください
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhancement values -->
+      <div class="card">
+        <div class="card-title" id="resultTableTitle">各臓器の造影効果</div>
+        <table class="result-table" id="resultTable">
+          <thead id="resultHead">
+            <tr>
+              <th>臓器</th>
+              <th>ピーク時間 (s)</th>
+              <th>ピークCT値上昇 (HU)</th>
+              <th>指定時間CT値上昇 (HU)</th>
+            </tr>
+          </thead>
+          <tbody id="resultBody">
+            <tr><td colspan="4" style="text-align:center; color:#a0aec0; padding:20px;">シミュレーション実行後に結果が表示されます</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Injection profile chart -->
+      <div class="card">
+        <div class="card-title">注入プロファイル</div>
+        <div class="chart-container" style="height:200px">
+          <canvas id="injectionChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- References -->
+  <div class="card">
+    <div class="card-title">モデルについて</div>
+    <div style="font-size:0.82rem; color:#4a5568; line-height:1.9;">
+      <p>本シミュレータはBaeらの薬物動態コンパートメントモデルを簡略化して実装しています。心血管系を複数の混合槽（右心系・肺循環・左心系）としてモデル化し、各臓器への造影剤分布を畳み込み積分で計算します。</p>
+      <p style="margin-top:8px"><strong>管電圧別CT値変換:</strong> ヨード造影剤のCT値上昇はX線エネルギーに依存します。低管電圧ではヨードのK吸収端（33.2 keV）に近づくため造影効果が増強されます。本シミュレータでは管電圧ごとの変換係数を適用しています。</p>
+      <p style="margin-top:8px">シミュレーション結果は理論的な推定値であり、実際の臨床値とは差異が生じます。個々の患者の循環動態、腎機能、体組成などにより実測値は変動します。</p>
+      <p style="margin-top:12px; font-size:0.75rem; color:#a0aec0;">
+        参考文献: Bae KT. Intravenous contrast medium administration and scan timing at CT: considerations and approaches. Radiology. 2010;256(1):32-61.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== Footer ===== -->
+<footer>
+  <div><a href="/">RT-Lab</a> | 放射線技師のためのWebツール集</div>
+  <div class="footer-disclaimer">
+    本ツールは医療機器ではありません。シミュレーション結果はあくまで参考値であり、臨床判断の根拠としての使用はご自身の責任においてご判断ください。実際の造影プロトコルは施設の基準・患者の状態に基づいて決定してください。
+  </div>
+  <div style="margin-top:10px; opacity:0.5;">&copy; 2025 RT-Lab</div>
+</footer>
+
+<script>
+// ====================================================================
+// CT Contrast Simulator
+// Based on Bae's compartmental model (simplified)
+// ====================================================================
+
+// ── Constants ──
+const DT = 0.1;          // Time step (seconds)
+const T_MAX = 300;        // Maximum simulation time (seconds)
+const N_STEPS = Math.ceil(T_MAX / DT);
+
+// Contrast agent concentrations (mgI/mL)
+const CONTRAST_AGENTS = {
+  '300':  { name: 'イオパミドール 300', concentration: 300 },
+  '350':  { name: 'イオパミドール 350', concentration: 350 },
+  '370':  { name: 'イオパミドール 370', concentration: 370 },
+  '300b': { name: 'イオヘキソール 300', concentration: 300 },
+  '350b': { name: 'イオヘキソール 350', concentration: 350 },
+};
+
+// kVp-dependent CT value conversion factors (HU per mgI/mL)
+// Based on: lower kVp → closer to iodine K-edge (33.2 keV) → higher attenuation
+const KVP_HU_FACTORS = {
+  80:  40.0,  // ~1.6x relative to 120 kVp
+  100: 30.0,  // ~1.2x relative to 120 kVp
+  120: 25.0,  // Reference
+  140: 22.0,  // ~0.88x relative to 120 kVp
+};
+
+let selectedKvp = 120;
+
+// ── State ──
+let phases = [];
+let simulationResults = null;
+let protocolA = null; // Saved Protocol A for comparison
+let tdcChart = null;
+let injectionChart = null;
+
+// Organ display config
+const ORGANS = {
+  aorta:           { label: '大動脈',     color: '#e53e3e', visible: true },
+  ivc:             { label: '下大静脈',   color: '#3182ce', visible: true },
+  portalVein:      { label: '門脈',       color: '#38a169', visible: true },
+  liverParenchyma: { label: '肝実質',     color: '#d69e2e', visible: true },
+  kidney:          { label: '腎実質',     color: '#805ad5', visible: false },
+  spleen:          { label: '脾臓',       color: '#d53f8c', visible: false },
+  pancreas:        { label: '膵臓',       color: '#dd6b20', visible: false },
+};
+
+// ── Initialization ──
+document.addEventListener('DOMContentLoaded', function() {
+  initDefaultProtocol();
+  initCharts();
+});
+
+function initDefaultProtocol() {
+  phases = [
+    { type: 'contrast', rate: 3.0, volume: 100 },
+    { type: 'saline',   rate: 3.0, volume: 30 },
+  ];
+  renderProtocolTable();
+  updateSummary();
+}
+
+// ── kVp selection ──
+function selectKvp(kvp, e) {
+  selectedKvp = kvp;
+  document.querySelectorAll('#kvpGroup .kvp-btn').forEach(btn => btn.classList.remove('active'));
+  if (e && e.target) e.target.classList.add('active');
+  else document.querySelector(`#kvpGroup .kvp-btn[onclick*="${kvp}"]`).classList.add('active');
+
+  const factor = KVP_HU_FACTORS[kvp];
+  const ratio = (factor / KVP_HU_FACTORS[120] * 100).toFixed(0);
+  let desc = '';
+  if (kvp < 120) {
+    desc = `ヨード造影効果 ${factor.toFixed(1)} HU/(mgI/mL)（120kVp比 ${ratio}% — 造影剤減量の可能性）`;
+  } else if (kvp > 120) {
+    desc = `ヨード造影効果 ${factor.toFixed(1)} HU/(mgI/mL)（120kVp比 ${ratio}%）`;
+  } else {
+    desc = `ヨード造影効果 ${factor.toFixed(1)} HU/(mgI/mL)（基準）`;
+  }
+  document.getElementById('kvpInfo').textContent = `${kvp} kVp: ${desc}`;
+}
+
+// ── Patient presets ──
+function applyPatientPreset(preset, e) {
+  const presets = {
+    small:    { weight: 45, co: 4.0 },
+    standard: { weight: 60, co: 5.0 },
+    large:    { weight: 80, co: 6.0 },
+    xl:       { weight: 100, co: 7.0 },
+  };
+  const p = presets[preset];
+  document.getElementById('bodyWeight').value = p.weight;
+  document.getElementById('cardiacOutput').value = p.co;
+  document.getElementById('coAdjust').value = 'normal';
+
+  document.querySelectorAll('#patientPresets .preset-btn').forEach(btn => btn.classList.remove('active'));
+  if (e && e.target) e.target.classList.add('active');
+
+  updateSummary();
+}
+
+function adjustCO() {
+  const select = document.getElementById('coAdjust');
+  const coInput = document.getElementById('cardiacOutput');
+  const weight = parseFloat(document.getElementById('bodyWeight').value) || 60;
+  const baseCO = weight * 0.07;
+
+  switch(select.value) {
+    case 'low':
+      coInput.value = (baseCO * 0.6).toFixed(1);
+      break;
+    case 'high':
+      coInput.value = (baseCO * 1.4).toFixed(1);
+      break;
+    case 'normal':
+    default:
+      coInput.value = baseCO.toFixed(1);
+      break;
+  }
+}
+
+// ── Protocol management ──
+function addPhase(type) {
+  phases.push({
+    type: type,
+    rate: type === 'contrast' ? 3.0 : 3.0,
+    volume: type === 'contrast' ? 50 : 30,
+  });
+  renderProtocolTable();
+  updateSummary();
+}
+
+function removePhase(index) {
+  if (phases.length <= 1) return;
+  phases.splice(index, 1);
+  renderProtocolTable();
+  updateSummary();
+}
+
+function renderProtocolTable() {
+  const tbody = document.getElementById('protocolBody');
+  tbody.innerHTML = '';
+
+  phases.forEach((phase, i) => {
+    const duration = (phase.volume / phase.rate).toFixed(1);
+    const phaseLabel = `Phase ${i + 1}`;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="phase-label">${phaseLabel}</td>
+      <td>
+        <select onchange="updatePhaseType(${i}, this.value)">
+          <option value="contrast" ${phase.type === 'contrast' ? 'selected' : ''}>造影剤</option>
+          <option value="saline" ${phase.type === 'saline' ? 'selected' : ''}>生食</option>
+        </select>
+      </td>
+      <td><input type="number" value="${phase.rate}" min="0.5" max="10" step="0.1" onchange="updatePhaseRate(${i}, this.value)"></td>
+      <td><input type="number" value="${phase.volume}" min="1" max="500" step="1" onchange="updatePhaseVolume(${i}, this.value)"></td>
+      <td style="text-align:center; color:#4a5568;">${duration}</td>
+      <td><button class="remove-phase" onclick="removePhase(${i})" ${phases.length <= 1 ? 'disabled' : ''} title="削除">&times;</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updatePhaseType(i, value) {
+  phases[i].type = value;
+  updateSummary();
+}
+
+function updatePhaseRate(i, value) {
+  phases[i].rate = parseFloat(value) || 1;
+  renderProtocolTable();
+  updateSummary();
+}
+
+function updatePhaseVolume(i, value) {
+  phases[i].volume = parseFloat(value) || 1;
+  renderProtocolTable();
+  updateSummary();
+}
+
+function updateContrastInfo() {
+  updateSummary();
+}
+
+function updateSummary() {
+  const agentKey = document.getElementById('contrastAgent').value;
+  const concentration = CONTRAST_AGENTS[agentKey].concentration;
+  const weight = parseFloat(document.getElementById('bodyWeight').value) || 60;
+
+  let totalContrastVol = 0;
+  let totalTime = 0;
+
+  phases.forEach(p => {
+    if (p.type === 'contrast') totalContrastVol += p.volume;
+    totalTime += p.volume / p.rate;
+  });
+
+  const totalIodine = totalContrastVol * concentration / 1000;
+  const iodinePerKg = totalContrastVol * concentration / weight;
+
+  document.getElementById('totalVolume').textContent = totalContrastVol;
+  document.getElementById('totalIodine').textContent = totalIodine.toFixed(1);
+  document.getElementById('iodinePerKg').textContent = Math.round(iodinePerKg);
+  document.getElementById('totalTime').textContent = totalTime.toFixed(1);
+}
+
+// ── Protocol presets ──
+function applyProtocolPreset(preset, e) {
+  const agentSelect = document.getElementById('contrastAgent');
+
+  const presets = {
+    chest: {
+      agent: '350',
+      phases: [
+        { type: 'contrast', rate: 4.0, volume: 80 },
+        { type: 'saline',   rate: 4.0, volume: 40 },
+      ]
+    },
+    liver_dynamic: {
+      agent: '350',
+      phases: [
+        { type: 'contrast', rate: 3.0, volume: 100 },
+        { type: 'saline',   rate: 3.0, volume: 30 },
+      ]
+    },
+    liver_eq: {
+      agent: '350',
+      phases: [
+        { type: 'contrast', rate: 2.0, volume: 100 },
+        { type: 'saline',   rate: 2.0, volume: 30 },
+      ]
+    },
+    coronary: {
+      agent: '370',
+      phases: [
+        { type: 'contrast', rate: 5.0, volume: 60 },
+        { type: 'contrast', rate: 3.0, volume: 20 },
+        { type: 'saline',   rate: 3.0, volume: 30 },
+      ]
+    },
+    renal: {
+      agent: '350',
+      phases: [
+        { type: 'contrast', rate: 3.5, volume: 80 },
+        { type: 'saline',   rate: 3.5, volume: 30 },
+      ]
+    },
+    brain: {
+      agent: '350',
+      phases: [
+        { type: 'contrast', rate: 4.0, volume: 70 },
+        { type: 'saline',   rate: 4.0, volume: 30 },
+      ]
+    },
+  };
+
+  const p = presets[preset];
+  agentSelect.value = p.agent;
+  phases = p.phases.map(ph => ({ ...ph }));
+  renderProtocolTable();
+  updateSummary();
+
+  document.querySelectorAll('#protocolPresets .preset-btn').forEach(btn => btn.classList.remove('active'));
+  if (e && e.target) e.target.classList.add('active');
+}
+
+// ── A/B Comparison ──
+function saveAsProtocolA() {
+  // Run simulation first if needed
+  if (!simulationResults) runSimulation();
+  if (!simulationResults) return;
+
+  const agentKey = document.getElementById('contrastAgent').value;
+  const weight = parseFloat(document.getElementById('bodyWeight').value) || 60;
+  const co = parseFloat(document.getElementById('cardiacOutput').value) || 5.0;
+
+  protocolA = {
+    results: JSON.parse(JSON.stringify(simulationResults)),
+    params: {
+      weight: weight,
+      co: co,
+      kvp: selectedKvp,
+      agent: agentKey,
+      agentName: CONTRAST_AGENTS[agentKey].name,
+      phases: phases.map(p => ({ ...p })),
+    }
+  };
+
+  // Update banner
+  const banner = document.getElementById('compareBanner');
+  banner.classList.add('active');
+
+  let detail = `体重: ${weight}kg / CO: ${co} L/min / ${selectedKvp} kVp / ${CONTRAST_AGENTS[agentKey].name}<br>`;
+  protocolA.params.phases.forEach((p, i) => {
+    const typeLabel = p.type === 'contrast' ? '造影剤' : '生食';
+    detail += `Phase ${i+1}: ${typeLabel} ${p.rate} mL/s × ${p.volume} mL`;
+    if (i < protocolA.params.phases.length - 1) detail += ' → ';
+  });
+  document.getElementById('compareDetail').innerHTML = detail;
+
+  // Update button text
+  document.getElementById('btnSaveA').textContent = 'Protocol A を再保存';
+}
+
+function clearProtocolA() {
+  protocolA = null;
+  document.getElementById('compareBanner').classList.remove('active');
+  document.getElementById('btnSaveA').textContent = 'Protocol A として保存';
+
+  // Redraw charts without comparison
+  if (simulationResults) {
+    updateTDCChart();
+    updateResultTable();
+  }
+}
+
+// ── Pharmacokinetic Model ──
+function runSimulationCore(weight, CO, concentration, phasesInput, kvp) {
+  const HU_PER_MGI_ML = KVP_HU_FACTORS[kvp] || 25.0;
+
+  const totalBloodVolume = weight * 70;
+  const V_rh = totalBloodVolume * 0.04;
+  const V_lung = totalBloodVolume * 0.12;
+  const V_lh = totalBloodVolume * 0.04;
+  const V_art = totalBloodVolume * 0.15;
+  const V_ven = totalBloodVolume * 0.60;
+
+  const F_liver_art = 0.065;
+  const F_portal = 0.19;
+  const F_kidney = 0.22;
+  const F_spleen = 0.03;
+  const F_pancreas = 0.015;
+
+  const V_liver = weight * 25;
+  const V_kidney_t = weight * 5;
+  const V_spleen_t = weight * 3;
+  const V_pancreas_t = weight * 1.5;
+
+  const fv_liver = 0.25;
+  const fv_kidney = 0.20;
+  const fv_spleen = 0.25;
+  const fv_pancreas = 0.15;
+
+  const PS_liver = 0.015;
+  const PS_kidney = 0.025;
+  const PS_spleen = 0.012;
+  const PS_pancreas = 0.010;
+
+  const CO_mLs = CO * 1000 / 60;
+
+  // Build injection input function
+  const injectionRate = new Float64Array(N_STEPS);
+  let t_offset = 0;
+  phasesInput.forEach(phase => {
+    const duration = phase.volume / phase.rate;
+    const iodineRate = phase.type === 'contrast' ? phase.rate * concentration : 0;
+    const startIdx = Math.floor(t_offset / DT);
+    const endIdx = Math.floor((t_offset + duration) / DT);
+    for (let i = startIdx; i < endIdx && i < N_STEPS; i++) {
+      injectionRate[i] = iodineRate;
+    }
+    t_offset += duration;
+  });
+
+  // Compartment simulation
+  const C_art = new Float64Array(N_STEPS);
+  const C_ven = new Float64Array(N_STEPS);
+  const C_portal_vasc = new Float64Array(N_STEPS);
+  const C_liver_vasc = new Float64Array(N_STEPS);
+  const C_kidney_vasc = new Float64Array(N_STEPS);
+  const C_spleen_vasc = new Float64Array(N_STEPS);
+  const C_pancreas_vasc = new Float64Array(N_STEPS);
+
+  let M_rh = 0, M_lung = 0, M_lh = 0, M_art = 0, M_ven = 0;
+  let M_liver_v = 0, M_portal_v = 0, M_kidney_v = 0, M_spleen_v = 0, M_pancreas_v = 0;
+  let M_liver_e = 0, M_kidney_e = 0, M_spleen_e = 0, M_pancreas_e = 0;
+
+  const splanchnicDelay = 8.0;
+  const splanchnicBuffer = new Float64Array(N_STEPS);
+  const V_portal = totalBloodVolume * 0.02;
+
+  for (let i = 1; i < N_STEPS; i++) {
+    const flowOut_rh = CO_mLs * (M_rh / V_rh);
+    const flowOut_lung = CO_mLs * (M_lung / V_lung);
+    const flowOut_lh = CO_mLs * (M_lh / V_lh);
+    const flowOut_art = CO_mLs * (M_art / V_art);
+    const flowOut_ven = CO_mLs * (M_ven / V_ven);
+
+    const c_art = M_art / V_art;
+
+    const F_liver_art_flow = F_liver_art * CO_mLs;
+    const F_portal_flow = F_portal * CO_mLs;
+
+    const splanchnicInput = F_portal * CO_mLs * c_art;
+    splanchnicBuffer[i] = splanchnicInput;
+
+    let portalInput = 0;
+    const delaySteps = Math.floor(splanchnicDelay / DT);
+    const dispersionSteps = Math.floor(splanchnicDelay * 0.4 / DT);
+    if (i > delaySteps) {
+      const kernelSize = Math.min(dispersionSteps * 3, i);
+      let kernelSum = 0;
+      for (let k = 0; k < kernelSize && (i - delaySteps - k) >= 0; k++) {
+        const w = Math.exp(-k * DT / (splanchnicDelay * 0.4));
+        portalInput += splanchnicBuffer[i - delaySteps - k] * w;
+        kernelSum += w;
+      }
+      if (kernelSum > 0) portalInput /= kernelSum;
+    }
+
+    const F_kidney_flow = F_kidney * CO_mLs;
+    const F_spleen_flow = F_spleen * CO_mLs;
+    const F_pancreas_flow = F_pancreas * CO_mLs;
+    const F_other = (1 - F_liver_art - F_portal - F_kidney - F_spleen - F_pancreas) * CO_mLs;
+
+    const V_liver_v = V_liver * fv_liver;
+    const V_kidney_v = V_kidney_t * fv_kidney;
+    const V_spleen_v = V_spleen_t * fv_spleen;
+    const V_pancreas_v = V_pancreas_t * fv_pancreas;
+    const V_liver_e = V_liver * (1 - fv_liver) * 0.3;
+    const V_kidney_e = V_kidney_t * (1 - fv_kidney) * 0.3;
+    const V_spleen_e = V_spleen_t * (1 - fv_spleen) * 0.3;
+    const V_pancreas_e = V_pancreas_t * (1 - fv_pancreas) * 0.3;
+
+    const c_liver_v = M_liver_v / V_liver_v;
+    const c_liver_e = M_liver_e / V_liver_e;
+    const liver_art_in = F_liver_art_flow * c_art;
+    const portal_in = portalInput;
+    const liver_out = (F_liver_art_flow + F_portal_flow) * c_liver_v;
+    const liver_leak = PS_liver * (c_liver_v - c_liver_e) * V_liver_v;
+
+    const c_portal = M_portal_v / V_portal;
+    const portal_out = F_portal_flow * c_portal;
+
+    const c_kidney_v = M_kidney_v / V_kidney_v;
+    const c_kidney_e = M_kidney_e / V_kidney_e;
+    const kidney_in = F_kidney_flow * c_art;
+    const kidney_out = F_kidney_flow * c_kidney_v;
+    const kidney_leak = PS_kidney * (c_kidney_v - c_kidney_e) * V_kidney_v;
+
+    const c_spleen_v = M_spleen_v / V_spleen_v;
+    const c_spleen_e = M_spleen_e / V_spleen_e;
+    const spleen_in = F_spleen_flow * c_art;
+    const spleen_out = F_spleen_flow * c_spleen_v;
+    const spleen_leak = PS_spleen * (c_spleen_v - c_spleen_e) * V_spleen_v;
+
+    const c_pancreas_v = M_pancreas_v / V_pancreas_v;
+    const c_pancreas_e = M_pancreas_e / V_pancreas_e;
+    const pancreas_in = F_pancreas_flow * c_art;
+    const pancreas_out = F_pancreas_flow * c_pancreas_v;
+    const pancreas_leak = PS_pancreas * (c_pancreas_v - c_pancreas_e) * V_pancreas_v;
+
+    const other_return = F_other * c_art;
+    const venousReturn = liver_out + kidney_out + spleen_out + pancreas_out + other_return;
+
+    M_rh += (injectionRate[i] + flowOut_ven - flowOut_rh) * DT;
+    M_lung += (flowOut_rh - flowOut_lung) * DT;
+    M_lh += (flowOut_lung - flowOut_lh) * DT;
+    M_art += (flowOut_lh - flowOut_art) * DT;
+    M_ven += (venousReturn - flowOut_ven) * DT;
+
+    M_portal_v += (portalInput - portal_out) * DT;
+    M_liver_v += (liver_art_in + portal_out - liver_out - liver_leak) * DT;
+    M_liver_e += liver_leak * DT;
+    M_kidney_v += (kidney_in - kidney_out - kidney_leak) * DT;
+    M_kidney_e += kidney_leak * DT;
+    M_spleen_v += (spleen_in - spleen_out - spleen_leak) * DT;
+    M_spleen_e += spleen_leak * DT;
+    M_pancreas_v += (pancreas_in - pancreas_out - pancreas_leak) * DT;
+    M_pancreas_e += pancreas_leak * DT;
+
+    M_rh = Math.max(0, M_rh);
+    M_lung = Math.max(0, M_lung);
+    M_lh = Math.max(0, M_lh);
+    M_art = Math.max(0, M_art);
+    M_ven = Math.max(0, M_ven);
+    M_liver_v = Math.max(0, M_liver_v);
+    M_liver_e = Math.max(0, M_liver_e);
+    M_portal_v = Math.max(0, M_portal_v);
+    M_kidney_v = Math.max(0, M_kidney_v);
+    M_kidney_e = Math.max(0, M_kidney_e);
+    M_spleen_v = Math.max(0, M_spleen_v);
+    M_spleen_e = Math.max(0, M_spleen_e);
+    M_pancreas_v = Math.max(0, M_pancreas_v);
+    M_pancreas_e = Math.max(0, M_pancreas_e);
+
+    C_art[i] = M_art / V_art;
+    C_ven[i] = M_ven / V_ven;
+    C_portal_vasc[i] = M_portal_v / V_portal;
+    C_liver_vasc[i] = (M_liver_v + M_liver_e) / (V_liver_v + V_liver_e);
+    C_kidney_vasc[i] = (M_kidney_v + M_kidney_e) / (V_kidney_v + V_kidney_e);
+    C_spleen_vasc[i] = (M_spleen_v + M_spleen_e) / (V_spleen_v + V_spleen_e);
+    C_pancreas_vasc[i] = (M_pancreas_v + M_pancreas_e) / (V_pancreas_v + V_pancreas_e);
+  }
+
+  // Convert to HU and downsample
+  const timePoints = [];
+  const results = {};
+  Object.keys(ORGANS).forEach(key => { results[key] = []; });
+
+  const displayStep = Math.round(1.0 / DT);
+
+  for (let i = 0; i < N_STEPS; i += displayStep) {
+    const t = i * DT;
+    if (t > T_MAX) break;
+    timePoints.push(t);
+    results.aorta.push(C_art[i] * HU_PER_MGI_ML);
+    results.ivc.push(C_ven[i] * HU_PER_MGI_ML);
+    results.portalVein.push(C_portal_vasc[i] * HU_PER_MGI_ML);
+    results.liverParenchyma.push(C_liver_vasc[i] * HU_PER_MGI_ML);
+    results.kidney.push(C_kidney_vasc[i] * HU_PER_MGI_ML);
+    results.spleen.push(C_spleen_vasc[i] * HU_PER_MGI_ML);
+    results.pancreas.push(C_pancreas_vasc[i] * HU_PER_MGI_ML);
+  }
+
+  return { timePoints, results, injectionRate };
+}
+
+function runSimulation() {
+  const weight = parseFloat(document.getElementById('bodyWeight').value) || 60;
+  const CO = parseFloat(document.getElementById('cardiacOutput').value) || 5.0;
+  const agentKey = document.getElementById('contrastAgent').value;
+  const concentration = CONTRAST_AGENTS[agentKey].concentration;
+
+  simulationResults = runSimulationCore(weight, CO, concentration, phases, selectedKvp);
+
+  updateTDCChart();
+  updateInjectionChart();
+  updateResultTable();
+  updateScanMarker();
+}
+
+// ── Charts ──
+function initCharts() {
+  const tdcCtx = document.getElementById('tdcChart').getContext('2d');
+  tdcChart = new Chart(tdcCtx, {
+    type: 'line',
+    data: { labels: [], datasets: [] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} HU`;
+            }
+          }
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: '時間 (秒)', font: { size: 12 } },
+          ticks: { maxTicksLimit: 20 },
+        },
+        y: {
+          title: { display: true, text: 'CT値上昇 (HU)', font: { size: 12 } },
+          beginAtZero: true,
+        }
+      }
+    }
+  });
+
+  const injCtx = document.getElementById('injectionChart').getContext('2d');
+  injectionChart = new Chart(injCtx, {
+    type: 'line',
+    data: { labels: [], datasets: [] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: {
+        legend: { display: false },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: '時間 (秒)', font: { size: 11 } },
+          ticks: { maxTicksLimit: 15 },
+        },
+        y: {
+          title: { display: true, text: 'ヨード注入速度 (mgI/s)', font: { size: 11 } },
+          beginAtZero: true,
+        }
+      }
+    }
+  });
+}
+
+function updateTDCChart() {
+  if (!simulationResults) return;
+  const { timePoints, results } = simulationResults;
+
+  // Find max time with meaningful enhancement
+  let maxTime = 120;
+  const allResults = [results];
+  if (protocolA) allResults.push(protocolA.results.results);
+
+  allResults.forEach(res => {
+    Object.keys(ORGANS).forEach(key => {
+      if (!ORGANS[key].visible) return;
+      for (let i = res[key].length - 1; i >= 0; i--) {
+        if (res[key][i] > 2) {
+          const tp = protocolA && res === protocolA.results.results ? protocolA.results.timePoints : timePoints;
+          maxTime = Math.max(maxTime, tp[i] + 10);
+          break;
+        }
+      }
+    });
+  });
+  maxTime = Math.min(maxTime, T_MAX);
+
+  const displayIdx = timePoints.findIndex(t => t > maxTime);
+  const endIdx = displayIdx === -1 ? timePoints.length : displayIdx;
+  const labels = timePoints.slice(0, endIdx);
+
+  const datasets = [];
+
+  // Protocol A (comparison) - dashed lines
+  if (protocolA) {
+    const aResults = protocolA.results.results;
+    const aTimePoints = protocolA.results.timePoints;
+    const aEndIdx = Math.min(aTimePoints.findIndex(t => t > maxTime), aTimePoints.length);
+    const aEnd = aEndIdx === -1 ? aTimePoints.length : aEndIdx;
+
+    Object.keys(ORGANS).forEach(key => {
+      if (!ORGANS[key].visible) return;
+      // Resample Protocol A data to match current labels
+      const data = labels.map(t => {
+        const idx = aTimePoints.findIndex(at => at >= t);
+        if (idx >= 0 && idx < aResults[key].length) return aResults[key][idx];
+        return null;
+      });
+      datasets.push({
+        label: `${ORGANS[key].label}（A）`,
+        data: data,
+        borderColor: ORGANS[key].color,
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        borderDash: [8, 4],
+        pointRadius: 0,
+        pointHoverRadius: 3,
+        tension: 0.3,
+        fill: false,
+      });
+    });
+  }
+
+  // Current protocol (Protocol B) - solid lines
+  Object.keys(ORGANS).forEach(key => {
+    if (!ORGANS[key].visible) return;
+    const label = protocolA ? `${ORGANS[key].label}（B）` : ORGANS[key].label;
+    datasets.push({
+      label: label,
+      data: results[key].slice(0, endIdx),
+      borderColor: ORGANS[key].color,
+      backgroundColor: ORGANS[key].color + '20',
+      borderWidth: 2.5,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      tension: 0.3,
+      fill: false,
+    });
+  });
+
+  // Add scan timing vertical line
+  const scanTime = parseFloat(document.getElementById('scanTime').value) || 30;
+  if (scanTime <= maxTime) {
+    const verticalData = labels.map(t => {
+      if (Math.abs(t - scanTime) < 0.5) {
+        let maxHU = 0;
+        Object.keys(ORGANS).forEach(key => {
+          if (!ORGANS[key].visible) return;
+          const idx = timePoints.indexOf(t);
+          if (idx >= 0) maxHU = Math.max(maxHU, results[key][idx]);
+        });
+        if (protocolA) {
+          Object.keys(ORGANS).forEach(key => {
+            if (!ORGANS[key].visible) return;
+            const aResults = protocolA.results.results;
+            const aIdx = protocolA.results.timePoints.indexOf(t);
+            if (aIdx >= 0) maxHU = Math.max(maxHU, aResults[key][aIdx]);
+          });
+        }
+        return maxHU * 1.1;
+      }
+      return null;
+    });
+
+    datasets.push({
+      label: 'スキャンタイミング',
+      data: verticalData,
+      borderColor: '#718096',
+      borderWidth: 2,
+      borderDash: [6, 3],
+      pointRadius: 0,
+      pointHoverRadius: 0,
+      fill: false,
+      spanGaps: false,
+    });
+  }
+
+  tdcChart.data.labels = labels;
+  tdcChart.data.datasets = datasets;
+  tdcChart.update();
+}
+
+function updateInjectionChart() {
+  if (!simulationResults) return;
+  const { injectionRate } = simulationResults;
+
+  const displayStep = Math.round(1.0 / DT);
+  const labels = [];
+  const data = [];
+  const dataA = [];
+
+  // Find total injection time (max of current and A)
+  let totalInjTime = 0;
+  phases.forEach(p => { totalInjTime += p.volume / p.rate; });
+  if (protocolA) {
+    let tA = 0;
+    protocolA.params.phases.forEach(p => { tA += p.volume / p.rate; });
+    totalInjTime = Math.max(totalInjTime, tA);
+  }
+  const maxT = Math.ceil(totalInjTime) + 5;
+
+  for (let i = 0; i < N_STEPS; i += displayStep) {
+    const t = i * DT;
+    if (t > maxT) break;
+    labels.push(t);
+    data.push(injectionRate[i]);
+    if (protocolA) {
+      dataA.push(protocolA.results.injectionRate[i] || 0);
+    }
+  }
+
+  const datasets = [];
+
+  if (protocolA) {
+    datasets.push({
+      label: 'Protocol A',
+      data: dataA,
+      borderColor: '#ed893680',
+      backgroundColor: '#ed893615',
+      borderWidth: 2,
+      borderDash: [8, 4],
+      pointRadius: 0,
+      fill: true,
+      stepped: true,
+    });
+  }
+
+  datasets.push({
+    label: protocolA ? 'Protocol B（現在）' : 'ヨード注入速度',
+    data: data,
+    borderColor: '#e53e3e',
+    backgroundColor: '#e53e3e20',
+    borderWidth: 2,
+    pointRadius: 0,
+    fill: true,
+    stepped: true,
+  });
+
+  injectionChart.data.labels = labels;
+  injectionChart.data.datasets = datasets;
+  injectionChart.options.plugins.legend.display = !!protocolA;
+  injectionChart.update();
+}
+
+function toggleOrgan(checkbox) {
+  const organ = checkbox.dataset.organ;
+  ORGANS[organ].visible = checkbox.checked;
+  updateTDCChart();
+  updateResultTable();
+}
+
+// ── Result table ──
+function updateResultTable() {
+  if (!simulationResults) return;
+  const { timePoints, results } = simulationResults;
+  const scanTime = parseFloat(document.getElementById('scanTime').value) || 30;
+  const isCompare = !!protocolA;
+
+  // Update table header
+  const thead = document.getElementById('resultHead');
+  if (isCompare) {
+    thead.innerHTML = `
+      <tr>
+        <th rowspan="2">臓器</th>
+        <th colspan="3" class="col-a" style="text-align:center; background:#fffaf0; color:#c05621;">Protocol A</th>
+        <th colspan="3" class="col-b" style="text-align:center; background:#ebf8ff; color:#2b6cb0;">Protocol B（現在）</th>
+        <th rowspan="2">差分 (HU)<br><span style="font-size:0.7rem; font-weight:400;">指定時間</span></th>
+      </tr>
+      <tr>
+        <th class="col-a" style="background:#fffaf0; color:#c05621;">ピーク (s)</th>
+        <th class="col-a" style="background:#fffaf0; color:#c05621;">ピーク (HU)</th>
+        <th class="col-a" style="background:#fffaf0; color:#c05621;">@${scanTime}s (HU)</th>
+        <th class="col-b" style="background:#ebf8ff; color:#2b6cb0;">ピーク (s)</th>
+        <th class="col-b" style="background:#ebf8ff; color:#2b6cb0;">ピーク (HU)</th>
+        <th class="col-b" style="background:#ebf8ff; color:#2b6cb0;">@${scanTime}s (HU)</th>
+      </tr>
+    `;
+    document.getElementById('resultTableTitle').textContent = '各臓器の造影効果（A/B比較）';
+  } else {
+    thead.innerHTML = `
+      <tr>
+        <th>臓器</th>
+        <th>ピーク時間 (s)</th>
+        <th>ピークCT値上昇 (HU)</th>
+        <th>指定時間CT値上昇 (HU)</th>
+      </tr>
+    `;
+    document.getElementById('resultTableTitle').textContent = '各臓器の造影効果';
+  }
+
+  const tbody = document.getElementById('resultBody');
+  tbody.innerHTML = '';
+
+  Object.keys(ORGANS).forEach(key => {
+    if (!ORGANS[key].visible) return;
+
+    // Current (B)
+    const data = results[key];
+    let peakValue = 0, peakTime = 0;
+    for (let i = 0; i < data.length; i++) {
+      if (data[i] > peakValue) { peakValue = data[i]; peakTime = timePoints[i]; }
+    }
+    let scanValue = 0;
+    const scanIdx = timePoints.findIndex(t => t >= scanTime);
+    if (scanIdx >= 0 && scanIdx < data.length) scanValue = data[scanIdx];
+
+    if (isCompare) {
+      // Protocol A values
+      const aData = protocolA.results.results[key];
+      const aTP = protocolA.results.timePoints;
+      let aPeak = 0, aPeakTime = 0;
+      for (let i = 0; i < aData.length; i++) {
+        if (aData[i] > aPeak) { aPeak = aData[i]; aPeakTime = aTP[i]; }
+      }
+      let aScanValue = 0;
+      const aScanIdx = aTP.findIndex(t => t >= scanTime);
+      if (aScanIdx >= 0 && aScanIdx < aData.length) aScanValue = aData[aScanIdx];
+
+      const diff = scanValue - aScanValue;
+      const diffClass = diff > 5 ? 'better' : (diff < -5 ? 'worse' : '');
+      const diffSign = diff > 0 ? '+' : '';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="organ-dot" style="background:${ORGANS[key].color}; vertical-align:middle; margin-right:6px;"></span>${ORGANS[key].label}</td>
+        <td>${aPeakTime.toFixed(0)}</td>
+        <td>${aPeak.toFixed(1)}</td>
+        <td>${aScanValue.toFixed(1)}</td>
+        <td>${peakTime.toFixed(0)}</td>
+        <td>${peakValue.toFixed(1)}</td>
+        <td>${scanValue.toFixed(1)}</td>
+        <td class="${diffClass}">${diffSign}${diff.toFixed(1)}</td>
+      `;
+      tbody.appendChild(tr);
+    } else {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="organ-dot" style="background:${ORGANS[key].color}; vertical-align:middle; margin-right:6px;"></span>${ORGANS[key].label}</td>
+        <td>${peakTime.toFixed(0)}</td>
+        <td>${peakValue.toFixed(1)}</td>
+        <td>${scanValue.toFixed(1)}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+  });
+}
+
+function updateScanMarker() {
+  if (!simulationResults) {
+    document.getElementById('scanResult').textContent = '各臓器のCT値を確認するにはシミュレーションを実行してください';
+    return;
+  }
+
+  const scanTime = parseFloat(document.getElementById('scanTime').value) || 30;
+  const { timePoints, results } = simulationResults;
+
+  let text = `${scanTime}秒時点: `;
+  const parts = [];
+  Object.keys(ORGANS).forEach(key => {
+    if (!ORGANS[key].visible) return;
+    const scanIdx = timePoints.findIndex(t => t >= scanTime);
+    if (scanIdx >= 0 && scanIdx < results[key].length) {
+      parts.push(`${ORGANS[key].label} ${results[key][scanIdx].toFixed(0)} HU`);
+    }
+  });
+  text += parts.join(' / ');
+
+  document.getElementById('scanResult').textContent = text;
+  updateTDCChart();
+  updateResultTable();
+}
+
+// ── Run initial simulation on load ──
+window.addEventListener('load', function() {
+  setTimeout(runSimulation, 100);
+});
+</script>
+
+</body>
+</html>
