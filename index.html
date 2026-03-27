@@ -6,6 +6,7 @@
 <title>RT-Lab | 放射線技師のためのWebツール集</title>
 <meta name="description" content="放射線技師向けの無料Webツール集。DRL比較・MTF計算・NPS計算など、インストール不要でブラウザから使えます。Japan DRLs 2025対応。">
 <meta name="keywords" content="放射線技師,DRL,MTF,NPS,CNR,線量管理,画質評価,診断参考レベル,CT,一般撮影">
+<meta name="robots" content="index,follow,max-image-preview:large">
 <meta property="og:title" content="RT-Lab | 放射線技師のためのWebツール集">
 <meta property="og:description" content="インストール不要・完全無料。現場で使える放射線技師向けWebツール集。">
 <meta property="og:type" content="website">
@@ -17,7 +18,31 @@
   "@type": "WebSite",
   "name": "RT-Lab",
   "url": "https://rt-ai-lab.com/",
-  "description": "放射線技師向けの無料Webツール集。インストール不要でブラウザから使えます。"
+  "description": "放射線技師向けの無料Webツール集。インストール不要でブラウザから使えます。",
+  "publisher": {
+    "@type": "Organization",
+    "name": "RT-Lab"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "RT-Lab",
+  "url": "https://rt-ai-lab.com/",
+  "description": "放射線技師向けの品質管理・線量評価・画質評価に関するブラウザツールを提供する公開サイトです。",
+  "sameAs": [
+    "https://github.com/arincoai-lab/rt-lab"
+  ],
+  "contactPoint": [
+    {
+      "@type": "ContactPoint",
+      "contactType": "customer support",
+      "url": "https://github.com/arincoai-lab/rt-lab/issues",
+      "availableLanguage": ["ja"]
+    }
+  ]
 }
 </script>
 <script type="application/ld+json">
@@ -132,6 +157,7 @@ body {
   display: flex;
   gap: 1.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .header-nav a {
@@ -491,6 +517,9 @@ body {
   </a>
   <nav class="header-nav">
     <a href="#tools">ツール一覧</a>
+    <a href="/about/">サイトについて</a>
+    <a href="/privacy/">プライバシー</a>
+    <a href="/contact/">お問い合わせ</a>
   </nav>
 </header>
 
@@ -569,6 +598,16 @@ body {
     </div>
 
     <div class="tool-card">
+      <div class="tool-icon">☢️</div>
+      <h3 class="tool-name">CT Dose Estimator</h3>
+      <p class="tool-desc">CTDIvol・DLPと患者径からSSDEと実効線量を推定。AAPM Report 204に基づくサイズ換算。Japan DRL 2025との比較機能搭載。複数シリーズの合算にも対応。</p>
+      <div class="tool-footer">
+        <span class="badge badge-live">✅ 公開中</span>
+        <a href="/ct-dose-estimator/" class="tool-link">使ってみる →</a>
+      </div>
+    </div>
+
+    <div class="tool-card">
       <div class="tool-icon">🎯</div>
       <h3 class="tool-name">CNR計算ツール</h3>
       <p class="tool-desc">コントラスト対ノイズ比（CNR）を計算。ROIを指定してCNR値を即時算出。</p>
@@ -593,6 +632,10 @@ body {
 <section class="section">
   <h2 class="section-title">更新情報</h2>
   <ul class="news-list">
+    <li class="news-item">
+      <span class="news-date">2026.03.27</span>
+      <span>CT Dose Estimator（CT線量推定ツール） 公開</span>
+    </li>
     <li class="news-item">
       <span class="news-date">2026.03.26</span>
       <span>CT Contrast Simulator（造影CT薬物動態シミュレータ） 公開</span>
@@ -620,9 +663,12 @@ body {
 <footer class="footer">
   <div class="footer-title">RT-Lab | 放射線技師のためのWebツール集</div>
   <div class="footer-links">
+    <a href="/about/">サイトについて</a>
+    <a href="/privacy/">プライバシーポリシー</a>
+    <a href="/contact/">お問い合わせ</a>
     <a href="#" id="disclaimer-link">免責事項</a>
   </div>
-  <p class="footer-disclaimer">本サイトのツールは医療機器ではありません。計算結果はあくまで参考値であり、臨床判断の根拠としての使用はご自身の責任においてご判断ください。Japan DRLs 2025（J-RIME）の数値を参照していますが、最新情報は必ず公式文書をご確認ください。</p>
+  <p class="footer-disclaimer">RT-Lab は、放射線技師向けの品質管理・線量評価・画質評価ツールを公開するWebサイトです。アップロードした画像やCSVは原則としてブラウザ内で処理し、保存機能を前提としていません。本サイトのツールは医療機器ではありません。計算結果は参考値であり、臨床判断の根拠としての使用はご自身の責任においてご判断ください。Japan DRLs 2025（J-RIME）の数値を参照していますが、最新情報は必ず公式文書をご確認ください。</p>
   <p class="footer-copy">&copy; 2025 RT-Lab</p>
 </footer>
 
