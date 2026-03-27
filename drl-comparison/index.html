@@ -4,151 +4,64 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DRL比較ツール | RT-Lab</title>
-  <meta name="description" content="CT検査の線量データをCSVで読み込み、Japan DRLs 2025と自施設データを比較。診断参考レベルとの乖離を可視化。">
-  <meta property="og:title" content="DRL比較ツール | RT-Lab">
-  <meta property="og:description" content="CT検査の線量データをCSVで読み込み、Japan DRLs 2025と自施設データを比較。診断参考レベルとの乖離を可視化。">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://rt-ai-lab.com/drl-comparison/">
-  <link rel="canonical" href="https://rt-ai-lab.com/drl-comparison/">
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "DRL比較ツール",
-    "url": "https://rt-ai-lab.com/drl-comparison/",
-    "description": "CT検査の線量データをCSVで読み込み、Japan DRLs 2025と自施設データを比較",
-    "applicationCategory": "HealthApplication",
-    "operatingSystem": "Any",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
-      { "@type": "ListItem", "position": 2, "name": "DRL比較ツール", "item": "https://rt-ai-lab.com/drl-comparison/" }
-    ]
-  }
-  </script>
+  <meta name="description" content="施設の線量データをCSVで読み込み、Japan DRLs 2025と比較。CT・一般撮影・マンモグラフィ・IVR・核医学・歯科・小児CTに対応。">
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
-      background: #f0f4f8;
-      color: #2d3748;
-      line-height: 1.6;
-      font-size: 14px;
+      background: #f0f4f8; color: #2d3748; line-height: 1.6; font-size: 14px;
     }
-
-    /* ── Header ── */
     header {
-      background: #1a56db;
-      color: #fff;
-      padding: 14px 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      background: #1a56db; color: #fff; padding: 14px 24px;
+      display: flex; align-items: center; gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 100;
     }
-    .logo {
-      font-size: 1.35rem;
-      font-weight: 800;
-      letter-spacing: 0.06em;
-    }
-    .tool-name {
-      font-size: 0.95rem;
-      opacity: 0.88;
-      padding-left: 16px;
-      border-left: 2px solid rgba(255,255,255,0.35);
-    }
+    .logo { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.06em; }
+    .tool-name { font-size: 0.95rem; opacity: 0.88; padding-left: 16px; border-left: 2px solid rgba(255,255,255,0.35); }
+    main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 40px; }
 
-    /* ── Layout ── */
-    main {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 24px 16px 40px;
+    /* Modality tabs */
+    .modality-bar {
+      display: flex; flex-wrap: wrap; gap: 4px; background: #fff;
+      padding: 8px 16px; border-bottom: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06); position: sticky; top: 52px; z-index: 99;
     }
+    .mod-btn {
+      padding: 7px 16px; border: 1px solid #e2e8f0; background: #f7fafc;
+      border-radius: 6px; font-size: 0.82rem; font-weight: 600; color: #4a5568;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .mod-btn:hover { background: #ebf4ff; border-color: #90cdf4; color: #2b6cb0; }
+    .mod-btn.active { background: #1a56db; color: #fff; border-color: #1a56db; }
 
-    /* ── Card ── */
     .card {
-      background: #fff;
-      border-radius: 10px;
+      background: #fff; border-radius: 10px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
-      padding: 24px;
-      margin-bottom: 20px;
+      padding: 24px; margin-bottom: 20px;
     }
     .card-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #1a56db;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 7px;
+      font-size: 0.95rem; font-weight: 700; color: #1a56db; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 7px;
     }
-
-    /* ── Steps ── */
-    .steps {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+    .steps { display: flex; gap: 12px; flex-wrap: wrap; }
     .step {
-      flex: 1;
-      min-width: 180px;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      padding: 14px;
-      background: #f7fafc;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
+      flex: 1; min-width: 180px; display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px; background: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0;
     }
     .step-num {
-      width: 26px;
-      height: 26px;
-      background: #1a56db;
-      color: #fff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 0.8rem;
-      flex-shrink: 0;
+      width: 26px; height: 26px; background: #1a56db; color: #fff; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-weight: 700;
+      font-size: 0.8rem; flex-shrink: 0;
     }
-    .step-body strong {
-      display: block;
-      font-weight: 600;
-      color: #2d3748;
-      margin-bottom: 3px;
-    }
-    .step-body span {
-      color: #4a5568;
-      font-size: 0.82rem;
-    }
+    .step-body strong { display: block; font-weight: 600; color: #2d3748; margin-bottom: 3px; }
+    .step-body span { color: #4a5568; font-size: 0.82rem; }
 
-    /* ── Buttons ── */
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 18px;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
-      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px;
+      border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: background 0.15s, transform 0.1s; text-decoration: none;
     }
     .btn:active { transform: scale(0.98); }
     .btn-primary { background: #1a56db; color: #fff; }
@@ -157,175 +70,65 @@
     .btn-secondary:hover { background: #e2e8f0; }
     .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
 
-    /* ── Upload area ── */
     .upload-area {
-      border: 2px dashed #a0aec0;
-      border-radius: 8px;
-      padding: 42px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      position: relative;
-      user-select: none;
+      border: 2px dashed #a0aec0; border-radius: 8px; padding: 42px 20px;
+      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      position: relative; user-select: none;
     }
-    .upload-area:hover, .upload-area.dragover {
-      border-color: #1a56db;
-      background: #ebf4ff;
-    }
+    .upload-area:hover, .upload-area.dragover { border-color: #1a56db; background: #ebf4ff; }
     .upload-area input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
     }
     .upload-icon { font-size: 2.2rem; margin-bottom: 10px; }
     .upload-text { font-size: 0.9rem; color: #4a5568; }
     .upload-text strong { color: #1a56db; }
     .upload-hint { font-size: 0.75rem; color: #718096; margin-top: 6px; }
-    .upload-filename {
-      display: none;
-      margin-top: 10px;
-      font-size: 0.82rem;
-      color: #276749;
-      font-weight: 600;
-    }
+    .upload-filename { display: none; margin-top: 10px; font-size: 0.82rem; color: #276749; font-weight: 600; }
 
-    /* ── Messages ── */
     .msg { padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; margin-top: 10px; }
     .msg-error   { background: #fff5f5; border: 1px solid #fc8181; color: #c53030; }
     .msg-warning { background: #fffbeb; border: 1px solid #f6ad55; color: #c05621; }
     .msg-info    { background: #ebf8ff; border: 1px solid #63b3ed; color: #2b6cb0; }
 
-    /* ── Mapping UI ── */
-    .card-mapping {
-      border: 2px solid #1a56db;
-      box-shadow: 0 1px 4px rgba(26,86,219,0.12), 0 0 0 1px rgba(26,86,219,0.08);
-    }
-    .mapping-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.84rem;
-    }
+    .card-mapping { border: 2px solid #1a56db; box-shadow: 0 1px 4px rgba(26,86,219,0.12); }
+    .mapping-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
     .mapping-table th {
-      background: #f7fafc;
-      padding: 10px 12px;
-      text-align: left;
-      font-weight: 700;
-      color: #4a5568;
-      border-bottom: 2px solid #e2e8f0;
-      white-space: nowrap;
+      background: #f7fafc; padding: 10px 12px; text-align: left; font-weight: 700;
+      color: #4a5568; border-bottom: 2px solid #e2e8f0; white-space: nowrap;
     }
-    .mapping-table th:last-child {
-      text-align: center;
-    }
-    .mapping-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #edf2f7;
-      vertical-align: middle;
-    }
-    .mapping-table td:last-child {
-      text-align: center;
-      font-weight: 600;
-      color: #2d3748;
-    }
-    .mapping-table tbody tr:hover td {
-      background: #f7fafc;
-    }
-    .mapping-proto-name {
-      font-weight: 500;
-      color: #2d3748;
-      word-break: break-all;
-    }
-    .mapping-arrow {
-      color: #a0aec0;
-      font-size: 1.1rem;
-      padding: 0 8px;
-      flex-shrink: 0;
-    }
+    .mapping-table th:last-child { text-align: center; }
+    .mapping-table td { padding: 10px 12px; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
+    .mapping-table td:last-child { text-align: center; font-weight: 600; color: #2d3748; }
+    .mapping-table tbody tr:hover td { background: #f7fafc; }
+    .mapping-proto-name { font-weight: 500; color: #2d3748; word-break: break-all; }
+    .mapping-arrow { color: #a0aec0; font-size: 1.1rem; padding: 0 8px; }
     .mapping-select {
-      padding: 6px 10px;
-      border: 1px solid #cbd5e0;
-      border-radius: 6px;
-      font-size: 0.84rem;
-      color: #2d3748;
-      background: #fff;
-      min-width: 200px;
-      max-width: 100%;
-      cursor: pointer;
-      transition: border-color 0.15s;
+      padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.84rem;
+      color: #2d3748; background: #fff; min-width: 200px; max-width: 100%; cursor: pointer;
     }
-    .mapping-select:focus {
-      outline: none;
-      border-color: #1a56db;
-      box-shadow: 0 0 0 2px rgba(26,86,219,0.15);
-    }
+    .mapping-select:focus { outline: none; border-color: #1a56db; box-shadow: 0 0 0 2px rgba(26,86,219,0.15); }
     .badge-auto {
-      display: inline-block;
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 2px 7px;
-      border-radius: 4px;
-      background: #ebf8ff;
-      color: #2b6cb0;
-      margin-left: 8px;
-      white-space: nowrap;
-      vertical-align: middle;
+      display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 2px 7px;
+      border-radius: 4px; background: #ebf8ff; color: #2b6cb0; margin-left: 8px; white-space: nowrap;
     }
     .badge-unset {
-      display: inline-block;
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 2px 7px;
-      border-radius: 4px;
-      background: #fffbeb;
-      color: #c05621;
-      margin-left: 8px;
-      white-space: nowrap;
-      vertical-align: middle;
+      display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 2px 7px;
+      border-radius: 4px; background: #fffbeb; color: #c05621; margin-left: 8px; white-space: nowrap;
     }
-    .mapping-cell-select {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .mapping-run-bar {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      margin-top: 18px;
-      gap: 12px;
-    }
-    .mapping-summary {
-      font-size: 0.82rem;
-      color: #4a5568;
-    }
+    .mapping-cell-select { display: flex; align-items: center; gap: 4px; }
+    .mapping-run-bar { display: flex; justify-content: flex-end; align-items: center; margin-top: 18px; gap: 12px; }
+    .mapping-summary { font-size: 0.82rem; color: #4a5568; }
     .mapping-summary strong { color: #2d3748; }
 
-    /* ── Action bar ── */
-    .action-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
+    .action-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
     .record-count { font-size: 0.82rem; color: #4a5568; }
     .record-count strong { color: #2d3748; }
 
-    /* ── Table ── */
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table.result-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
     table.result-table th {
-      background: #f7fafc;
-      padding: 9px 11px;
-      text-align: center;
-      font-weight: 700;
-      color: #4a5568;
-      border-bottom: 2px solid #e2e8f0;
-      white-space: nowrap;
+      background: #f7fafc; padding: 9px 11px; text-align: center; font-weight: 700;
+      color: #4a5568; border-bottom: 2px solid #e2e8f0; white-space: nowrap;
     }
     table.result-table th:first-child { text-align: left; }
     table.result-table td { padding: 9px 11px; border-bottom: 1px solid #edf2f7; text-align: center; vertical-align: middle; }
@@ -341,70 +144,34 @@
     .na-cell  { color: #a0aec0; font-style: italic; }
     .count-warn { color: #c05621; }
 
-    /* ── Chart tabs ── */
-    .tab-bar {
-      display: flex;
-      gap: 2px;
-      border-bottom: 2px solid #e2e8f0;
-      margin-bottom: 20px;
-    }
+    .tab-bar { display: flex; gap: 2px; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px; }
     .tab-btn {
-      padding: 8px 22px;
-      border: none;
-      background: none;
-      color: #718096;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      transition: color 0.15s;
+      padding: 8px 22px; border: none; background: none; color: #718096;
+      font-size: 0.875rem; font-weight: 600; cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.15s;
     }
     .tab-btn.active { color: #1a56db; border-bottom-color: #1a56db; }
     .chart-panel { display: none; }
     .chart-panel.active { display: block; }
     .chart-container { position: relative; }
 
-    /* ── Notice ── */
     .notice-box {
-      background: #f7fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 16px 18px;
-      font-size: 0.8rem;
-      color: #4a5568;
-      line-height: 1.9;
+      background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+      padding: 16px 18px; font-size: 0.8rem; color: #4a5568; line-height: 1.9;
     }
-    .notice-box .notice-title {
-      font-weight: 700;
-      color: #2d3748;
-      margin-bottom: 8px;
-      font-size: 0.85rem;
-    }
-    .notice-box .source {
-      margin-top: 10px;
-      color: #718096;
-      font-size: 0.77rem;
-    }
+    .notice-box .notice-title { font-weight: 700; color: #2d3748; margin-bottom: 8px; font-size: 0.85rem; }
+    .notice-box .source { margin-top: 10px; color: #718096; font-size: 0.77rem; }
 
-    /* ── Footer ── */
-    footer {
-      text-align: center;
-      padding: 16px;
-      font-size: 0.75rem;
-      color: #a0aec0;
-    }
-
-    /* ── Hidden ── */
+    footer { text-align: center; padding: 16px; font-size: 0.75rem; color: #a0aec0; }
     .hidden { display: none !important; }
 
-    /* ── Responsive ── */
     @media (max-width: 700px) {
       .steps { flex-direction: column; }
       .action-bar { flex-direction: column; align-items: flex-start; }
       .mapping-select { min-width: 160px; }
-      .mapping-table th:nth-child(2),
-      .mapping-table td:nth-child(2) { display: none; }
+      .mapping-table th:nth-child(2), .mapping-table td:nth-child(2) { display: none; }
+      .modality-bar { gap: 3px; padding: 6px 8px; }
+      .mod-btn { padding: 5px 10px; font-size: 0.75rem; }
     }
   </style>
 </head>
@@ -415,79 +182,77 @@
   <div class="tool-name">DRL比較ツール（Japan DRLs 2025）</div>
 </header>
 
-<main>
+<!-- Modality tabs -->
+<div class="modality-bar" id="modality-bar"></div>
 
+<main>
   <!-- Step instructions -->
   <div class="card">
-    <div class="card-title">📋 使い方</div>
+    <div class="card-title">使い方</div>
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <div class="step-body">
-          <strong>テンプレートをダウンロード</strong>
-          <span>所定の列構成に従って施設のデータを入力してください</span>
-        </div>
+        <div class="step-body"><strong>モダリティを選択</strong><span>上部のタブで検査種別を選んでください</span></div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <div class="step-body">
-          <strong>CSVをアップロード</strong>
-          <span>ファイルをドラッグ＆ドロップ、またはクリックして選択</span>
-        </div>
+        <div class="step-body"><strong>テンプレートをDL → CSV作成</strong><span>所定の列構成に従いデータを入力</span></div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <div class="step-body">
-          <strong>プロトコールを対応づけ</strong>
-          <span>CSVのプロトコール名をDRLカテゴリに対応づけます（自動推定あり）</span>
-        </div>
+        <div class="step-body"><strong>CSVアップロード → マッピング</strong><span>プロトコール名をDRLカテゴリに対応づけ</span></div>
       </div>
       <div class="step">
         <div class="step-num">4</div>
-        <div class="step-body">
-          <strong>結果を確認・エクスポート</strong>
-          <span>施設中央値と DRL 値を自動比較し、グラフで可視化します</span>
-        </div>
+        <div class="step-body"><strong>結果を確認・エクスポート</strong><span>施設中央値とDRL値を自動比較</span></div>
       </div>
     </div>
-    <div style="margin-top:18px;">
-      <button class="btn btn-secondary" id="btn-dl-template">
-        ⬇ CSVテンプレートをダウンロード
-      </button>
+    <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+      <button class="btn btn-secondary" id="btn-dl-template">CSVテンプレートをダウンロード</button>
+      <span id="modality-label" style="font-size:0.82rem; color:#4a5568;"></span>
     </div>
   </div>
 
   <!-- Upload -->
   <div class="card">
-    <div class="card-title">📂 CSVアップロード</div>
+    <div class="card-title">CSVアップロード</div>
     <div class="upload-area" id="upload-area">
       <input type="file" id="file-input" accept=".csv">
       <div class="upload-icon">📄</div>
-      <div class="upload-text">
-        <strong>クリックしてファイルを選択</strong>、またはここにドラッグ＆ドロップ
-      </div>
+      <div class="upload-text"><strong>クリックしてファイルを選択</strong>、またはドラッグ＆ドロップ</div>
       <div class="upload-hint">対応形式: CSV（UTF-8 または Shift-JIS）</div>
       <div class="upload-filename" id="upload-filename"></div>
     </div>
+    <div id="col-info" style="margin-top:10px; font-size:0.8rem; color:#718096;"></div>
     <div id="msg-area"></div>
   </div>
 
-  <!-- Mapping -->
-  <div class="card card-mapping hidden" id="section-mapping">
-    <div class="card-title">🔗 プロトコール名マッピング</div>
+  <!-- Column mapping (flexible columns) -->
+  <div class="card hidden" id="section-col-mapping">
+    <div class="card-title">列名マッチング</div>
     <p style="font-size:0.82rem; color:#4a5568; margin-bottom:14px;">
-      CSVに含まれるプロトコール名を、対応するDRLカテゴリに割り当ててください。自動推定された候補が選択されていますが、必要に応じて変更できます。
+      CSVの列名を自動検出しました。正しく対応しているか確認してください。
     </p>
     <div class="table-wrap">
       <table class="mapping-table">
-        <thead>
-          <tr>
-            <th>CSVのプロトコール名</th>
-            <th style="text-align:center;">→</th>
-            <th>DRLカテゴリ</th>
-            <th>件数</th>
-          </tr>
-        </thead>
+        <thead><tr><th>必要な項目</th><th style="text-align:center;">→</th><th>CSVの列名</th></tr></thead>
+        <tbody id="col-mapping-tbody"></tbody>
+      </table>
+    </div>
+    <div class="mapping-run-bar">
+      <button class="btn btn-primary" id="btn-apply-col-mapping">列を確定して続行</button>
+    </div>
+  </div>
+
+  <!-- Protocol mapping -->
+  <div class="card card-mapping hidden" id="section-mapping">
+    <div class="card-title">プロトコール名マッピング</div>
+    <p style="font-size:0.82rem; color:#4a5568; margin-bottom:14px;">
+      CSVに含まれるプロトコール名を、対応するDRLカテゴリに割り当ててください。
+    </p>
+    <div class="table-wrap">
+      <table class="mapping-table">
+        <thead><tr><th>CSVのプロトコール名</th><th style="text-align:center;">→</th><th>DRLカテゴリ</th><th>件数</th></tr></thead>
         <tbody id="mapping-tbody"></tbody>
       </table>
     </div>
@@ -500,29 +265,17 @@
   <!-- Results table -->
   <div class="card hidden" id="section-table">
     <div class="action-bar">
-      <div class="card-title" style="margin-bottom:0">📊 集計結果</div>
+      <div class="card-title" style="margin-bottom:0">集計結果</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <span class="record-count" id="record-count"></span>
-        <button class="btn btn-secondary btn-sm" id="btn-remap">🔗 マッピングを変更</button>
-        <button class="btn btn-secondary btn-sm" id="btn-export">⬇ 結果CSVをエクスポート</button>
+        <button class="btn btn-secondary btn-sm" id="btn-remap">マッピングを変更</button>
+        <button class="btn btn-secondary btn-sm" id="btn-export">結果CSVをエクスポート</button>
       </div>
     </div>
     <div id="warn-area"></div>
     <div class="table-wrap">
       <table class="result-table">
-        <thead>
-          <tr>
-            <th>プロトコール</th>
-            <th>件数</th>
-            <th>CTDIvol 中央値<br>(mGy)</th>
-            <th>CTDIvol DRL<br>(mGy)</th>
-            <th>CTDIvol<br>比率</th>
-            <th>DLP 中央値<br>(mGy·cm)</th>
-            <th>DLP DRL<br>(mGy·cm)</th>
-            <th>DLP<br>比率</th>
-            <th>判定</th>
-          </tr>
-        </thead>
+        <thead id="result-thead"></thead>
         <tbody id="result-tbody"></tbody>
       </table>
     </div>
@@ -530,154 +283,344 @@
 
   <!-- Charts -->
   <div class="card hidden" id="section-chart">
-    <div class="card-title">📈 グラフ（施設中央値 vs DRL値）</div>
-    <div class="tab-bar">
-      <button class="tab-btn active" data-tab="ctdi">CTDIvol</button>
-      <button class="tab-btn" data-tab="dlp">DLP</button>
-    </div>
-    <div class="chart-panel active" id="tab-ctdi">
-      <div class="chart-container" id="container-ctdi">
-        <canvas id="chart-ctdi"></canvas>
-      </div>
-    </div>
-    <div class="chart-panel" id="tab-dlp">
-      <div class="chart-container" id="container-dlp">
-        <canvas id="chart-dlp"></canvas>
-      </div>
-    </div>
+    <div class="card-title">グラフ（施設中央値 vs DRL値）</div>
+    <div class="tab-bar" id="chart-tab-bar"></div>
+    <div id="chart-panels"></div>
   </div>
 
   <!-- Notice -->
   <div class="card">
     <div class="notice-box">
       <div class="notice-title">注意事項・出典</div>
-      <p>・本ツールは Japan DRLs 2025（J-RIME）の成人 CT 基準値に基づいています。</p>
-      <p>・集計対象は年齢 20〜80 歳、体重 50〜70 kg のデータに限定されます。</p>
+      <p>・本ツールは Japan DRLs 2025（J-RIME）の診断参考レベルに基づいています。</p>
       <p>・DRL は線量限度ではなく最適化の指標です。中央値が DRL 値を超えた場合はプロトコールの見直しを検討してください。</p>
       <p>・アップロードされたデータはブラウザ内のみで処理され、外部サーバーには送信されません。</p>
       <div class="source">
-        出典：医療被ばく研究情報ネットワーク（J-RIME）、日本の診断参考レベル（2025 年版）、2025-07、https://j-rime.qst.go.jp/report/JapanDRLs2025_ja.pdf
+        出典：医療被ばく研究情報ネットワーク（J-RIME）、日本の診断参考レベル（2025年版）
       </div>
     </div>
   </div>
-
 </main>
 
 <footer>
   <div>&copy; 2025 RT-Lab — ブラウザ完結型・無料 Web ツール for 放射線技師</div>
-  <div style="margin-top:8px; font-size:0.8rem;">
-    <a href="/about/">サイトについて</a> |
-    <a href="/privacy/">プライバシーポリシー</a> |
-    <a href="/contact/">お問い合わせ</a>
-  </div>
 </footer>
 
 <script>
 'use strict';
 
 // ================================================================
-//  定数
+//  モダリティ設定
 // ================================================================
 
-const DRL_TABLE = {
-  '頭部単純ルーチン':              { ctdi: 67,   dlp: 1260 },
-  '胸部Ⅰ相':                      { ctdi: 11,   dlp: 430  },
-  '胸部～骨盤Ⅰ相':                { ctdi: 13,   dlp: 940  },
-  '上腹部～骨盤Ⅰ相':              { ctdi: 14,   dlp: 720  },
-  '肝臓ダイナミック':              { ctdi: 13,   dlp: 1630 },
-  '冠動脈':                        { ctdi: 57,   dlp: 940  },
-  '急性肺塞栓症&深部静脈血栓症':  { ctdi: 12,   dlp: 2300 },
-  '外傷全身CT':                    { ctdi: null, dlp: 5290 },
+const MODALITIES = {
+  ct: {
+    name: 'CT（成人）',
+    protocolCol: '検査プロトコール',
+    requiredCols: ['検査プロトコール','CTDIvol','DLP'],
+    optionalCols: ['年齢','体重','性別','検査日','造影有無'],
+    colAliases: {
+      '検査プロトコール': ['プロトコール','Protocol','検査名','StudyDescription','protocol','検査プロトコル'],
+      'CTDIvol': ['CTDIvol(mGy)','CTDI','CTDIvol_mGy','ctdivol','CTDI vol'],
+      'DLP': ['DLP(mGy·cm)','DLP(mGycm)','DLP_mGycm','dlp','DLP(mGy*cm)'],
+      '年齢': ['Age','age','患者年齢'],
+      '体重': ['Weight','weight','体重(kg)','体重kg'],
+    },
+    filter: (row, cm) => {
+      const age = parseFloat(row[cm['年齢']]);
+      const wt  = parseFloat(row[cm['体重']]);
+      if (cm['年齢'] && !isNaN(age) && (age < 20 || age > 80)) return false;
+      if (cm['体重'] && !isNaN(wt) && (wt < 50 || wt > 70)) return false;
+      return true;
+    },
+    filterDesc: '年齢20〜80歳・体重50〜70kg（該当列がある場合）',
+    metrics: [
+      { key: 'ctdivol', label: 'CTDIvol', unit: 'mGy', csvCol: 'CTDIvol' },
+      { key: 'dlp', label: 'DLP', unit: 'mGy·cm', csvCol: 'DLP' },
+    ],
+    drl: {
+      '頭部単純ルーチン':             { ctdivol: 67,   dlp: 1260 },
+      '胸部Ⅰ相':                     { ctdivol: 11,   dlp: 430  },
+      '胸部～骨盤Ⅰ相':               { ctdivol: 13,   dlp: 940  },
+      '上腹部～骨盤Ⅰ相':             { ctdivol: 14,   dlp: 720  },
+      '肝臓ダイナミック':             { ctdivol: 13,   dlp: 1630 },
+      '冠動脈':                       { ctdivol: 57,   dlp: 940  },
+      '急性肺塞栓症&深部静脈血栓症': { ctdivol: 12,   dlp: 2300 },
+      '外傷全身CT':                   { ctdivol: null, dlp: 5290 },
+    },
+    keywordMap: {
+      '頭部単純ルーチン': { keywords: [['頭部',3],['head',3],['brain',3],['ルーチン',1],['単純',1]], exclude: ['胸部','chest','腹部','骨盤','肝','外傷'] },
+      '胸部Ⅰ相': { keywords: [['胸部',2],['chest',2],['lung',2],['肺',2]], exclude: ['骨盤','腹部','肝'] },
+      '胸部～骨盤Ⅰ相': { keywords: [['胸腹',5],['TAP',5],['CAP',5],['胸部～骨盤',5],['胸部.*骨盤',3]] },
+      '上腹部～骨盤Ⅰ相': { keywords: [['腹部.*骨盤',4],['上腹部',4],['abdomen',3],['腹部',2],['骨盤',2]] },
+      '肝臓ダイナミック': { keywords: [['肝臓',4],['liver',4],['ダイナミック',3],['dynamic',3],['肝ダイナ',5]] },
+      '冠動脈': { keywords: [['冠動脈',5],['coronary',5],['cardiac',3],['心臓',3]] },
+      '急性肺塞栓症&深部静脈血栓症': { keywords: [['肺塞栓',5],['塞栓',3],['血栓',3],['DVT',5]] },
+      '外傷全身CT': { keywords: [['外傷',5],['trauma',5],['外傷全身',8],['whole.?body',4]] },
+    },
+    templateRows: [
+      { '検査プロトコール':'頭部単純ルーチン','CTDIvol':45,'DLP':980,'年齢':65,'体重':62 },
+      { '検査プロトコール':'胸部Ⅰ相','CTDIvol':9,'DLP':380,'年齢':55,'体重':58 },
+      { '検査プロトコール':'肝臓ダイナミック','CTDIvol':14,'DLP':1500,'年齢':60,'体重':65 },
+      { '検査プロトコール':'冠動脈','CTDIvol':50,'DLP':880,'年齢':70,'体重':68 },
+    ],
+  },
+
+  general: {
+    name: '一般撮影',
+    protocolCol: '撮影部位',
+    requiredCols: ['撮影部位','入射表面線量'],
+    optionalCols: ['検査日','性別','年齢'],
+    colAliases: {
+      '撮影部位': ['部位','検査部位','Protocol','撮影プロトコール','検査名'],
+      '入射表面線量': ['ESD','ESD(mGy)','入射表面線量(mGy)','表面線量','入射線量'],
+    },
+    filter: () => true,
+    filterDesc: 'なし（全データ対象）',
+    metrics: [
+      { key: 'esd', label: '入射表面線量', unit: 'mGy', csvCol: '入射表面線量' },
+    ],
+    drl: {
+      '胸部（正面）':   { esd: 0.3 },
+      '胸部（側面）':   { esd: 1.5 },
+      '腹部（正面）':   { esd: 2.5 },
+      '腰椎（正面）':   { esd: 4.0 },
+      '腰椎（側面）':   { esd: 10 },
+      '骨盤（正面）':   { esd: 3.0 },
+    },
+    keywordMap: {
+      '胸部（正面）': { keywords: [['胸部',3],['chest',3],['正面',2],['PA',2],['AP',1]], exclude: ['側面','LAT','腰','骨盤','腹'] },
+      '胸部（側面）': { keywords: [['胸部',3],['chest',3],['側面',3],['LAT',3]], exclude: ['腰','骨盤','腹'] },
+      '腹部（正面）': { keywords: [['腹部',3],['abdomen',3],['正面',1],['AP',1]], exclude: ['腰椎','骨盤','側面'] },
+      '腰椎（正面）': { keywords: [['腰椎',4],['lumbar',4],['L-spine',4],['正面',1],['AP',1]], exclude: ['側面','LAT'] },
+      '腰椎（側面）': { keywords: [['腰椎',4],['lumbar',4],['L-spine',4],['側面',3],['LAT',3]] },
+      '骨盤（正面）': { keywords: [['骨盤',4],['pelvis',4],['正面',1],['AP',1]] },
+    },
+    templateRows: [
+      { '撮影部位':'胸部PA','入射表面線量':0.25 },
+      { '撮影部位':'腹部正面','入射表面線量':2.8 },
+      { '撮影部位':'腰椎AP','入射表面線量':3.5 },
+      { '撮影部位':'腰椎LAT','入射表面線量':9.0 },
+    ],
+  },
+
+  mammo: {
+    name: 'マンモグラフィ',
+    protocolCol: '撮影方向',
+    requiredCols: ['撮影方向','AGD'],
+    optionalCols: ['検査日','圧迫乳房厚','管電圧'],
+    colAliases: {
+      '撮影方向': ['View','Direction','撮影方法','ポジション'],
+      'AGD': ['AGD(mGy)','平均乳腺線量','平均乳腺線量(mGy)','MGD'],
+    },
+    filter: () => true,
+    filterDesc: 'なし（全データ対象）',
+    metrics: [
+      { key: 'agd', label: 'AGD', unit: 'mGy', csvCol: 'AGD' },
+    ],
+    drl: {
+      'MLO（PMMA 2cm相当）':   { agd: 1.2 },
+      'MLO（PMMA 4.5cm相当）': { agd: 2.4 },
+      'CC（PMMA 2cm相当）':    { agd: 1.2 },
+      'CC（PMMA 4.5cm相当）':  { agd: 2.4 },
+    },
+    keywordMap: {
+      'MLO（PMMA 2cm相当）': { keywords: [['MLO',3],['内外斜位',3],['2cm',2],['薄',1]], exclude: ['4.5','標準'] },
+      'MLO（PMMA 4.5cm相当）': { keywords: [['MLO',3],['内外斜位',3],['4.5cm',3],['標準',2]] },
+      'CC（PMMA 2cm相当）': { keywords: [['CC',3],['頭尾',3],['2cm',2],['薄',1]], exclude: ['4.5','標準'] },
+      'CC（PMMA 4.5cm相当）': { keywords: [['CC',3],['頭尾',3],['4.5cm',3],['標準',2]] },
+    },
+    templateRows: [
+      { '撮影方向':'MLO（標準）','AGD':2.1 },
+      { '撮影方向':'CC（標準）','AGD':2.0 },
+    ],
+  },
+
+  dental: {
+    name: '歯科',
+    protocolCol: '撮影種別',
+    requiredCols: ['撮影種別','線量指標値'],
+    optionalCols: ['検査日','線量指標名','管電圧'],
+    colAliases: {
+      '撮影種別': ['検査名','Protocol','撮影方法','モダリティ'],
+      '線量指標値': ['DAP','ESD','線量','DLP','CTDIvol','線量値'],
+    },
+    filter: () => true,
+    filterDesc: 'なし（全データ対象）',
+    metrics: [
+      { key: 'dose', label: '線量指標値', unit: '（種別による）', csvCol: '線量指標値' },
+    ],
+    drl: {
+      'パノラマ撮影（DAP: cGy·cm²）':       { dose: 12 },
+      '口内法デジタル（入射表面線量: mGy）': { dose: 1.4 },
+      '歯科用CBCT 小照射野（DLP: mGy·cm）':  { dose: 400 },
+      '歯科用CBCT 大照射野（DLP: mGy·cm）':  { dose: 1200 },
+    },
+    keywordMap: {
+      'パノラマ撮影（DAP: cGy·cm²）': { keywords: [['パノラマ',5],['panorama',5],['OPG',4]] },
+      '口内法デジタル（入射表面線量: mGy）': { keywords: [['口内',5],['intraoral',5],['デンタル',4],['periapical',3]] },
+      '歯科用CBCT 小照射野（DLP: mGy·cm）': { keywords: [['CBCT',3],['小照射',3],['small',2],['limited',2]], exclude: ['大照射','large','full'] },
+      '歯科用CBCT 大照射野（DLP: mGy·cm）': { keywords: [['CBCT',3],['大照射',3],['large',2],['full',2]], exclude: ['小照射','small','limited'] },
+    },
+    templateRows: [
+      { '撮影種別':'パノラマ','線量指標値':10 },
+      { '撮影種別':'口内法（デジタル）','線量指標値':1.2 },
+      { '撮影種別':'CBCT 小照射野','線量指標値':350 },
+    ],
+  },
+
+  ivr: {
+    name: 'IVR',
+    protocolCol: '手技名',
+    requiredCols: ['手技名','Ka,r'],
+    optionalCols: ['検査日','PKA','透視時間','撮影枚数'],
+    colAliases: {
+      '手技名': ['術式','Protocol','検査名','手技','Procedure'],
+      'Ka,r': ['Ka,r(mGy)','基準点線量','Kar','Ka_r','入射基準点線量'],
+      'PKA': ['PKA(Gy·cm²)','DAP','DAP(Gy·cm²)','面積線量','KAP'],
+    },
+    filter: () => true,
+    filterDesc: 'なし（全データ対象）',
+    metrics: [
+      { key: 'kar', label: 'Ka,r', unit: 'mGy', csvCol: 'Ka,r' },
+      { key: 'pka', label: 'PKA', unit: 'Gy·cm²', csvCol: 'PKA', optional: true },
+    ],
+    drl: {
+      '経皮的冠動脈インターベンション（PCI）': { kar: 1400, pka: 85  },
+      '冠動脈造影（CAG）':                     { kar: 580,  pka: 40  },
+      '頭頸部血管内治療（脳動脈瘤コイル塞栓）': { kar: 1600, pka: 130 },
+      '肝動脈化学塞栓術（TACE）':              { kar: 450,  pka: 260 },
+      '経カテーテル大動脈弁留置術（TAVI）':     { kar: 340,  pka: 68  },
+      '下肢動脈治療（EVT）':                   { kar: 730,  pka: 150 },
+    },
+    keywordMap: {
+      '経皮的冠動脈インターベンション（PCI）': { keywords: [['PCI',5],['経皮的冠動脈',5],['ステント',3]], exclude: ['CAG','造影のみ'] },
+      '冠動脈造影（CAG）': { keywords: [['CAG',5],['冠動脈造影',5]], exclude: ['PCI','ステント','治療'] },
+      '頭頸部血管内治療（脳動脈瘤コイル塞栓）': { keywords: [['脳動脈瘤',5],['コイル',4],['脳血管内',4]] },
+      '肝動脈化学塞栓術（TACE）': { keywords: [['TACE',5],['肝動脈',4],['化学塞栓',5],['TAE',3]] },
+      '経カテーテル大動脈弁留置術（TAVI）': { keywords: [['TAVI',5],['TAVR',5],['大動脈弁',4]] },
+      '下肢動脈治療（EVT）': { keywords: [['EVT',5],['下肢',3],['末梢血管',3],['PTA',3]] },
+    },
+    templateRows: [
+      { '手技名':'PCI','Ka,r':1200,'PKA':70 },
+      { '手技名':'CAG','Ka,r':450,'PKA':30 },
+      { '手技名':'TACE','Ka,r':400,'PKA':220 },
+    ],
+  },
+
+  nm: {
+    name: '核医学',
+    protocolCol: '検査名',
+    requiredCols: ['検査名','投与量'],
+    optionalCols: ['検査日','核種','体重'],
+    colAliases: {
+      '検査名': ['検査','Protocol','撮影名','Study','手技名'],
+      '投与量': ['投与量(MBq)','MBq','投与放射能','Activity','投与量MBq'],
+    },
+    filter: () => true,
+    filterDesc: 'なし（全データ対象）',
+    metrics: [
+      { key: 'activity', label: '投与量', unit: 'MBq', csvCol: '投与量' },
+    ],
+    drl: {
+      'FDG PET':                            { activity: 240 },
+      '骨シンチ（99mTc-MDP）':               { activity: 740 },
+      '心筋血流SPECT（99mTc 負荷+安静）':     { activity: 1200 },
+      '脳血流SPECT（99mTc-ECD）':             { activity: 740 },
+      '肺血流シンチ（99mTc-MAA）':            { activity: 185 },
+      '甲状腺シンチ（99mTcO4）':              { activity: 185 },
+      'ガリウムシンチ（67Ga）':               { activity: 185 },
+      '脳血流SPECT（123I-IMP）':              { activity: 222 },
+    },
+    keywordMap: {
+      'FDG PET': { keywords: [['FDG',5],['PET',3],['フルオロ',2]] },
+      '骨シンチ（99mTc-MDP）': { keywords: [['骨シンチ',5],['bone',4],['MDP',5],['HMDP',5]] },
+      '心筋血流SPECT（99mTc 負荷+安静）': { keywords: [['心筋',4],['myocardial',4],['MIBI',5],['tetrofosmin',4],['心筋血流',5]] },
+      '脳血流SPECT（99mTc-ECD）': { keywords: [['脳血流',5],['ECD',5],['cerebral',3]], exclude: ['IMP','123I'] },
+      '肺血流シンチ（99mTc-MAA）': { keywords: [['肺血流',5],['MAA',5],['lung perfusion',4]] },
+      '甲状腺シンチ（99mTcO4）': { keywords: [['甲状腺',5],['thyroid',4],['TcO4',4]] },
+      'ガリウムシンチ（67Ga）': { keywords: [['ガリウム',5],['Ga',3],['gallium',4],['67Ga',5]] },
+      '脳血流SPECT（123I-IMP）': { keywords: [['IMP',5],['123I',4],['I-IMP',5]] },
+    },
+    templateRows: [
+      { '検査名':'FDG PET','投与量':220 },
+      { '検査名':'骨シンチ','投与量':700 },
+      { '検査名':'心筋血流SPECT（負荷+安静合計）','投与量':1100 },
+    ],
+  },
+
+  pediatric_ct: {
+    name: '小児CT',
+    protocolCol: '検査プロトコール',
+    requiredCols: ['検査プロトコール','CTDIvol','DLP'],
+    optionalCols: ['年齢','体重','検査日'],
+    colAliases: {
+      '検査プロトコール': ['プロトコール','Protocol','検査名'],
+      'CTDIvol': ['CTDIvol(mGy)','CTDI','ctdivol'],
+      'DLP': ['DLP(mGy·cm)','DLP(mGycm)','dlp'],
+      '年齢': ['Age','age','患者年齢'],
+    },
+    filter: () => true,
+    filterDesc: 'なし（DRLカテゴリ内で年齢区分を選択）',
+    metrics: [
+      { key: 'ctdivol', label: 'CTDIvol', unit: 'mGy', csvCol: 'CTDIvol' },
+      { key: 'dlp', label: 'DLP', unit: 'mGy·cm', csvCol: 'DLP' },
+    ],
+    drl: {
+      '頭部（0〜1歳）':    { ctdivol: 30,  dlp: 350  },
+      '頭部（1〜5歳）':    { ctdivol: 40,  dlp: 500  },
+      '頭部（5〜10歳）':   { ctdivol: 50,  dlp: 700  },
+      '頭部（10〜15歳）':  { ctdivol: 60,  dlp: 900  },
+      '胸部（0〜1歳）':    { ctdivol: 5,   dlp: 55   },
+      '胸部（1〜5歳）':    { ctdivol: 5,   dlp: 90   },
+      '胸部（5〜10歳）':   { ctdivol: 7,   dlp: 160  },
+      '胸部（10〜15歳）':  { ctdivol: 9,   dlp: 290  },
+      '腹部（0〜1歳）':    { ctdivol: 6,   dlp: 80   },
+      '腹部（1〜5歳）':    { ctdivol: 7,   dlp: 160  },
+      '腹部（5〜10歳）':   { ctdivol: 10,  dlp: 330  },
+      '腹部（10〜15歳）':  { ctdivol: 13,  dlp: 530  },
+    },
+    keywordMap: {
+      '頭部（0〜1歳）':   { keywords: [['頭部',3],['head',3],['brain',3],['0歳',3],['新生児',3],['乳児',3]] },
+      '頭部（1〜5歳）':   { keywords: [['頭部',3],['head',3],['2歳',3],['3歳',3],['4歳',3],['幼児',2]] },
+      '頭部（5〜10歳）':  { keywords: [['頭部',3],['head',3],['6歳',3],['7歳',3],['8歳',3],['学童',2]] },
+      '頭部（10〜15歳）': { keywords: [['頭部',3],['head',3],['11歳',3],['12歳',3],['13歳',3]] },
+      '胸部（0〜1歳）':   { keywords: [['胸部',3],['chest',3],['0歳',3],['新生児',3],['乳児',3]], exclude: ['頭部','腹部'] },
+      '胸部（1〜5歳）':   { keywords: [['胸部',3],['chest',3],['2歳',3],['3歳',3],['幼児',2]], exclude: ['頭部','腹部'] },
+      '胸部（5〜10歳）':  { keywords: [['胸部',3],['chest',3],['6歳',3],['学童',2]], exclude: ['頭部','腹部'] },
+      '胸部（10〜15歳）': { keywords: [['胸部',3],['chest',3],['11歳',3],['12歳',3]], exclude: ['頭部','腹部'] },
+      '腹部（0〜1歳）':   { keywords: [['腹部',3],['abdomen',3],['0歳',3],['乳児',3]], exclude: ['頭部','胸部'] },
+      '腹部（1〜5歳）':   { keywords: [['腹部',3],['abdomen',3],['2歳',3],['幼児',2]], exclude: ['頭部','胸部'] },
+      '腹部（5〜10歳）':  { keywords: [['腹部',3],['abdomen',3],['6歳',3],['学童',2]], exclude: ['頭部','胸部'] },
+      '腹部（10〜15歳）': { keywords: [['腹部',3],['abdomen',3],['11歳',3]], exclude: ['頭部','胸部'] },
+    },
+    templateRows: [
+      { '検査プロトコール':'頭部CT（3歳）','CTDIvol':35,'DLP':450,'年齢':3 },
+      { '検査プロトコール':'胸部CT（8歳）','CTDIvol':6,'DLP':140,'年齢':8 },
+      { '検査プロトコール':'腹部CT（12歳）','CTDIvol':11,'DLP':480,'年齢':12 },
+    ],
+  },
 };
 
-const PROTOCOLS = Object.keys(DRL_TABLE);
 const EXCLUDE_LABEL = '（対象外）';
 
-const REQUIRED_COLS = ['検査日','性別','年齢','身長','体重','検査プロトコール','造影有無','CTDIvol','DLP'];
-
 // ================================================================
-//  キーワードマッピング
+//  状態管理
 // ================================================================
 
-// キーワード: [keyword, weight] の配列。weight が高いほど強い指標
-const KEYWORD_MAP = {
-  '頭部単純ルーチン': [['頭部',3], ['head',3], ['brain',3], ['ルーチン',1], ['単純',1], ['routine',1]],
-  '胸部Ⅰ相': [['胸部',2], ['chest',2], ['lung',2], ['肺',2], ['Ⅰ相',1], ['1相',1]],
-  '胸部～骨盤Ⅰ相': [['胸腹',5], ['TAP',5], ['CAP',5], ['胸部～骨盤',5], ['chest.*pelvis',3], ['胸部.*骨盤',3]],
-  '上腹部～骨盤Ⅰ相': [['腹部.*骨盤',4], ['上腹部',4], ['abdomen',3], ['腹部',2], ['骨盤',2], ['pelvis',2]],
-  '肝臓ダイナミック': [['肝臓',4], ['liver',4], ['ダイナミック',3], ['dynamic',3], ['肝ダイナ',5]],
-  '冠動脈': [['冠動脈',5], ['coronary',5], ['cardiac',3], ['心臓',3], ['CTA',2]],
-  '急性肺塞栓症&深部静脈血栓症': [['肺塞栓',5], ['塞栓',3], ['血栓',3], ['DVT',5], ['PE',2]],
-  '外傷全身CT': [['外傷',5], ['trauma',5], ['外傷全身',8], ['whole.?body',4]],
-};
-
-// 特定カテゴリの除外キーワード（そのキーワードが含まれたら候補から除外）
-const EXCLUDE_KEYWORDS = {
-  '頭部単純ルーチン': ['胸部', 'chest', '腹部', 'abdomen', '骨盤', 'pelvis', '肝', 'liver', '外傷', 'trauma'],
-  '胸部Ⅰ相': ['骨盤', 'pelvis', '腹部', 'abdomen', '肝', 'liver'],
-};
-
-function suggestDrlCategory(protocolName) {
-  const lower = protocolName.toLowerCase();
-  let bestCategory = EXCLUDE_LABEL;
-  let bestScore = 0;
-
-  for (const [category, kwPairs] of Object.entries(KEYWORD_MAP)) {
-    let score = 0;
-    for (const [kw, weight] of kwPairs) {
-      try {
-        if (new RegExp(kw.toLowerCase()).test(lower)) {
-          score += weight;
-        }
-      } catch {
-        if (lower.includes(kw.toLowerCase())) {
-          score += weight;
-        }
-      }
-    }
-    // 除外キーワードチェック
-    const excludes = EXCLUDE_KEYWORDS[category];
-    if (excludes && score > 0) {
-      for (const ex of excludes) {
-        if (lower.includes(ex.toLowerCase())) {
-          score = Math.max(0, score - 5);
-          break;
-        }
-      }
-    }
-    if (score > bestScore) {
-      bestScore = score;
-      bestCategory = category;
-    }
-  }
-
-  return { category: bestCategory, auto: bestScore > 0 };
-}
-
-// ================================================================
-//  テンプレート CSV
-// ================================================================
-
-const TEMPLATE_ROWS = [
-  ['2025/04/01','男',65,170,62,'頭部単純ルーチン','なし',45,980],
-  ['2025/04/02','女',55,158,58,'胸部Ⅰ相','なし',9,380],
-  ['2025/04/03','男',60,168,65,'胸部～骨盤Ⅰ相','あり',12,850],
-  ['2025/04/04','女',45,162,52,'上腹部～骨盤Ⅰ相','なし',13,700],
-  ['2025/04/05','男',70,172,68,'肝臓ダイナミック','あり',14,1500],
-  ['2025/04/06','女',50,155,56,'冠動脈','なし',50,880],
-  ['2025/04/07','男',35,180,64,'急性肺塞栓症&深部静脈血栓症','あり',11,2100],
-  ['2025/04/08','男',40,175,64,'外傷全身CT','なし',20,4800],
-];
-
-function buildTemplateCsv() {
-  const header = REQUIRED_COLS.join(',');
-  const rows = TEMPLATE_ROWS.map(r => r.join(','));
-  return [header, ...rows].join('\r\n');
-}
+let currentModality = 'ct';
+let parsedRows      = null;
+let currentFile     = null;
+let colMap          = {};
+let currentStats    = null;
+let charts          = {};
 
 // ================================================================
 //  ユーティリティ
 // ================================================================
+
+function mod() { return MODALITIES[currentModality]; }
+function drlProtocols() { return Object.keys(mod().drl); }
 
 function calcMedian(arr) {
   if (!arr || arr.length === 0) return null;
@@ -686,80 +629,98 @@ function calcMedian(arr) {
   return s.length % 2 !== 0 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
-function fmt1(v) {
-  return v === null || v === undefined ? null : Math.round(v * 10) / 10;
-}
-
-function downloadBlob(content, filename) {
-  const bom  = '\uFEFF';
-  const blob = new Blob([bom + content], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function addMsg(container, text, type) {
-  const d = document.createElement('div');
-  d.className = `msg msg-${type}`;
-  d.textContent = text;
-  container.appendChild(d);
-}
+function fmt1(v) { return v === null || v === undefined ? null : Math.round(v * 10) / 10; }
+function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
 function today() {
   const d = new Date();
   return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
 }
 
+function downloadBlob(content, filename) {
+  const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function addMsg(container, text, type) {
+  const d = document.createElement('div');
+  d.className = `msg msg-${type}`; d.textContent = text;
+  container.appendChild(d);
+}
+
 // ================================================================
-//  テンプレートダウンロード
+//  モダリティタブ描画
+// ================================================================
+
+function renderModalityTabs() {
+  const bar = document.getElementById('modality-bar');
+  bar.innerHTML = '';
+  for (const [key, cfg] of Object.entries(MODALITIES)) {
+    const btn = document.createElement('button');
+    btn.className = 'mod-btn' + (key === currentModality ? ' active' : '');
+    btn.textContent = cfg.name;
+    btn.dataset.mod = key;
+    btn.addEventListener('click', () => switchModality(key));
+    bar.appendChild(btn);
+  }
+}
+
+function switchModality(key) {
+  currentModality = key;
+  parsedRows = null; currentFile = null; colMap = {}; currentStats = null;
+
+  document.querySelectorAll('.mod-btn').forEach(b => b.classList.toggle('active', b.dataset.mod === key));
+  document.getElementById('modality-label').textContent = `選択中: ${mod().name}`;
+
+  const m = mod();
+  document.getElementById('col-info').innerHTML =
+    `<strong>必須列:</strong> ${m.requiredCols.join(', ')}` +
+    (m.optionalCols.length ? ` | <strong>任意列:</strong> ${m.optionalCols.join(', ')}` : '');
+
+  document.getElementById('upload-filename').style.display = 'none';
+  document.getElementById('msg-area').innerHTML = '';
+  hideAll();
+}
+
+function hideAll() {
+  ['section-col-mapping','section-mapping','section-table','section-chart'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
+}
+
+// ================================================================
+//  テンプレート CSV
 // ================================================================
 
 document.getElementById('btn-dl-template').addEventListener('click', () => {
-  downloadBlob(buildTemplateCsv(), 'drl_template.csv');
+  const m = mod();
+  const allCols = [...m.requiredCols, ...m.optionalCols.filter(c => m.templateRows[0]?.[c] !== undefined)];
+  const header = allCols.join(',');
+  const rows = m.templateRows.map(r => allCols.map(c => r[c] ?? '').join(','));
+  downloadBlob([header, ...rows].join('\r\n'), `drl_template_${currentModality}.csv`);
 });
 
 // ================================================================
-//  ファイルアップロード（ドラッグ＆ドロップ）
+//  ファイルアップロード
 // ================================================================
 
 const uploadArea = document.getElementById('upload-area');
 const fileInput  = document.getElementById('file-input');
 
-uploadArea.addEventListener('dragover',  e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
 uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
 uploadArea.addEventListener('drop', e => {
-  e.preventDefault();
-  uploadArea.classList.remove('dragover');
-  const file = e.dataTransfer.files[0];
-  if (file) handleFile(file);
+  e.preventDefault(); uploadArea.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 });
-fileInput.addEventListener('change', e => {
-  if (e.target.files[0]) handleFile(e.target.files[0]);
-});
-
-// ================================================================
-//  状態管理
-// ================================================================
-
-let parsedRows    = null;   // 全行（パース済み生データ）
-let currentFile   = null;   // アップロードファイル名
-let currentStats  = null;
-let chartCtdi     = null;
-let chartDlp      = null;
-
-// ================================================================
-//  ファイル処理
-// ================================================================
+fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
 
 function readAsText(file, enc) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
-    r.onload  = e => resolve(e.target.result);
+    r.onload = e => resolve(e.target.result);
     r.onerror = () => reject(new Error('ファイルの読み込みに失敗しました'));
     r.readAsText(file, enc);
   });
@@ -768,145 +729,220 @@ function readAsText(file, enc) {
 async function handleFile(file) {
   const msgArea = document.getElementById('msg-area');
   msgArea.innerHTML = '';
-  hideResults();
-  hideMapping();
+  hideAll();
 
-  // ファイル名表示
-  const fnEl = document.getElementById('upload-filename');
-  fnEl.textContent = '✓ ' + file.name;
-  fnEl.style.display = 'block';
+  document.getElementById('upload-filename').textContent = '✓ ' + file.name;
+  document.getElementById('upload-filename').style.display = 'block';
   currentFile = file.name;
 
-  // エンコーディング自動判別（UTF-8 → Shift-JIS フォールバック）
   let text;
   try {
     text = await readAsText(file, 'UTF-8');
-    if (text.includes('\uFFFD')) {
-      text = await readAsText(file, 'Shift-JIS');
-    }
-  } catch (err) {
-    addMsg(msgArea, err.message, 'error');
-    return;
-  }
+    if (text.includes('\uFFFD')) text = await readAsText(file, 'Shift-JIS');
+  } catch (err) { addMsg(msgArea, err.message, 'error'); return; }
 
   const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-
-  // 列名チェック
-  const fields = parsed.meta.fields || [];
-  const missing = REQUIRED_COLS.filter(c => !fields.includes(c));
-  if (missing.length > 0) {
-    addMsg(msgArea, 'CSVのフォーマットが正しくありません。テンプレートをご確認ください。', 'error');
-    return;
-  }
+  const csvFields = parsed.meta.fields || [];
+  if (csvFields.length === 0) { addMsg(msgArea, 'CSVにヘッダーが見つかりませんでした。', 'error'); return; }
 
   parsedRows = parsed.data;
 
-  // ユニークプロトコール名を抽出し、件数をカウント
-  const protoCounts = {};
-  for (const row of parsedRows) {
-    const proto = (row['検査プロトコール'] || '').trim();
-    if (!proto) continue;
-    protoCounts[proto] = (protoCounts[proto] || 0) + 1;
+  // Auto-match columns
+  const m = mod();
+  const autoMap = {};
+  let needManual = false;
+
+  function normalize(s) { return s.toLowerCase().replace(/[\s_()（）\-·*]/g, ''); }
+
+  for (const reqCol of m.requiredCols) {
+    if (csvFields.includes(reqCol)) { autoMap[reqCol] = reqCol; continue; }
+    const aliases = m.colAliases[reqCol] || [];
+    const found = csvFields.find(f => aliases.some(a => normalize(f) === normalize(a)));
+    if (found) { autoMap[reqCol] = found; continue; }
+    const fuzzy = csvFields.find(f =>
+      normalize(f).includes(normalize(reqCol)) || normalize(reqCol).includes(normalize(f)) ||
+      aliases.some(a => normalize(f).includes(normalize(a)) || normalize(a).includes(normalize(f)))
+    );
+    if (fuzzy) { autoMap[reqCol] = fuzzy; }
+    else { needManual = true; autoMap[reqCol] = ''; }
   }
 
-  if (Object.keys(protoCounts).length === 0) {
-    addMsg(msgArea, 'プロトコール名が見つかりませんでした。CSVの内容をご確認ください。', 'error');
-    return;
+  for (const optCol of m.optionalCols) {
+    if (csvFields.includes(optCol)) { autoMap[optCol] = optCol; continue; }
+    const aliases = m.colAliases[optCol] || [];
+    const found = csvFields.find(f => aliases.some(a => normalize(f) === normalize(a)));
+    if (found) autoMap[optCol] = found;
   }
 
-  // 数値チェック警告
-  let skipNumeric = 0;
-  for (const row of parsedRows) {
-    const ctdi = parseFloat(row['CTDIvol']);
-    const dlp  = parseFloat(row['DLP']);
-    if (isNaN(ctdi) || isNaN(dlp)) skipNumeric++;
+  if (needManual) {
+    showColMapping(csvFields, autoMap);
+  } else {
+    colMap = autoMap;
+    addMsg(msgArea, `列を自動検出: ${m.requiredCols.map(c => c + ' → ' + autoMap[c]).join(', ')}`, 'info');
+    proceedToProtocolMapping();
   }
-  if (skipNumeric > 0) {
-    addMsg(msgArea, `CTDIvol / DLP が数値でない行が ${skipNumeric} 件あります（集計時にスキップされます）。`, 'warning');
-  }
-
-  showMapping(protoCounts);
 }
 
 // ================================================================
-//  マッピング UI
+//  列名マッピングUI
 // ================================================================
 
-function showMapping(protoCounts) {
-  const section = document.getElementById('section-mapping');
-  const tbody   = document.getElementById('mapping-tbody');
+function showColMapping(csvFields, autoMap) {
+  const m = mod();
+  const tbody = document.getElementById('col-mapping-tbody');
   tbody.innerHTML = '';
 
-  // プロトコール名を件数降順でソート
-  const sortedProtos = Object.entries(protoCounts)
-    .sort((a, b) => b[1] - a[1]);
-
-  let totalRows = 0;
-
-  for (const [protoName, count] of sortedProtos) {
-    totalRows += count;
-    const suggestion = suggestDrlCategory(protoName);
-
+  for (const col of [...m.requiredCols, ...m.optionalCols]) {
+    const isReq = m.requiredCols.includes(col);
     const tr = document.createElement('tr');
 
-    // CSV protocol name
-    const tdName = document.createElement('td');
-    tdName.innerHTML = `<span class="mapping-proto-name">${escapeHtml(protoName)}</span>`;
-    tr.appendChild(tdName);
+    const tdLabel = document.createElement('td');
+    tdLabel.innerHTML = escapeHtml(col) + (isReq
+      ? ' <span style="color:#c53030;font-weight:700;">*</span>'
+      : ' <span style="color:#718096;font-size:0.75rem;">(任意)</span>');
+    tr.appendChild(tdLabel);
 
-    // Arrow
     const tdArrow = document.createElement('td');
     tdArrow.style.textAlign = 'center';
     tdArrow.innerHTML = '<span class="mapping-arrow">→</span>';
     tr.appendChild(tdArrow);
 
-    // Dropdown + badge
+    const tdSelect = document.createElement('td');
+    const select = document.createElement('select');
+    select.className = 'mapping-select'; select.dataset.reqcol = col;
+
+    const noneOpt = document.createElement('option');
+    noneOpt.value = ''; noneOpt.textContent = isReq ? '-- 選択してください --' : '-- なし --';
+    select.appendChild(noneOpt);
+
+    for (const f of csvFields) {
+      const opt = document.createElement('option');
+      opt.value = f; opt.textContent = f;
+      select.appendChild(opt);
+    }
+    if (autoMap[col]) select.value = autoMap[col];
+    tdSelect.appendChild(select);
+    tr.appendChild(tdSelect);
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById('section-col-mapping').classList.remove('hidden');
+  document.getElementById('section-col-mapping').scrollIntoView({ behavior: 'smooth' });
+}
+
+document.getElementById('btn-apply-col-mapping').addEventListener('click', () => {
+  const m = mod();
+  const selects = document.querySelectorAll('#col-mapping-tbody .mapping-select');
+  const newMap = {};
+  for (const sel of selects) { if (sel.value) newMap[sel.dataset.reqcol] = sel.value; }
+
+  const missing = m.requiredCols.filter(c => !newMap[c]);
+  if (missing.length > 0) {
+    const msgArea = document.getElementById('msg-area');
+    msgArea.innerHTML = '';
+    addMsg(msgArea, `必須列が未設定です: ${missing.join(', ')}`, 'error');
+    return;
+  }
+
+  colMap = newMap;
+  document.getElementById('section-col-mapping').classList.add('hidden');
+  proceedToProtocolMapping();
+});
+
+// ================================================================
+//  プロトコール名マッピング
+// ================================================================
+
+function suggestDrlCategory(protocolName) {
+  const lower = protocolName.toLowerCase();
+  const kwMap = mod().keywordMap;
+  let bestCategory = EXCLUDE_LABEL, bestScore = 0;
+
+  for (const [category, config] of Object.entries(kwMap)) {
+    let score = 0;
+    for (const [kw, weight] of config.keywords) {
+      try { if (new RegExp(kw.toLowerCase()).test(lower)) score += weight; }
+      catch { if (lower.includes(kw.toLowerCase())) score += weight; }
+    }
+    if (config.exclude && score > 0) {
+      for (const ex of config.exclude) {
+        if (lower.includes(ex.toLowerCase())) { score = Math.max(0, score - 5); break; }
+      }
+    }
+    if (score > bestScore) { bestScore = score; bestCategory = category; }
+  }
+  return { category: bestCategory, auto: bestScore > 0 };
+}
+
+function proceedToProtocolMapping() {
+  const m = mod();
+  const protoColName = colMap[m.protocolCol];
+  if (!protoColName) return;
+
+  const protoCounts = {};
+  for (const row of parsedRows) {
+    const proto = (row[protoColName] || '').trim();
+    if (proto) protoCounts[proto] = (protoCounts[proto] || 0) + 1;
+  }
+  if (Object.keys(protoCounts).length === 0) {
+    addMsg(document.getElementById('msg-area'), 'プロトコール名が見つかりませんでした。', 'error'); return;
+  }
+  showProtocolMapping(protoCounts);
+}
+
+function showProtocolMapping(protoCounts) {
+  const section = document.getElementById('section-mapping');
+  const tbody = document.getElementById('mapping-tbody');
+  tbody.innerHTML = '';
+
+  const cats = drlProtocols();
+  const sorted = Object.entries(protoCounts).sort((a, b) => b[1] - a[1]);
+
+  for (const [protoName, count] of sorted) {
+    const suggestion = suggestDrlCategory(protoName);
+    const tr = document.createElement('tr');
+
+    const tdName = document.createElement('td');
+    tdName.innerHTML = `<span class="mapping-proto-name">${escapeHtml(protoName)}</span>`;
+    tr.appendChild(tdName);
+
+    const tdArrow = document.createElement('td');
+    tdArrow.style.textAlign = 'center';
+    tdArrow.innerHTML = '<span class="mapping-arrow">→</span>';
+    tr.appendChild(tdArrow);
+
     const tdSelect = document.createElement('td');
     const wrapper = document.createElement('div');
     wrapper.className = 'mapping-cell-select';
 
     const select = document.createElement('select');
-    select.className = 'mapping-select';
-    select.dataset.proto = protoName;
+    select.className = 'mapping-select'; select.dataset.proto = protoName;
 
-    // Add options
-    const excludeOpt = document.createElement('option');
-    excludeOpt.value = EXCLUDE_LABEL;
-    excludeOpt.textContent = EXCLUDE_LABEL;
-    select.appendChild(excludeOpt);
-
-    for (const cat of PROTOCOLS) {
+    const exOpt = document.createElement('option');
+    exOpt.value = EXCLUDE_LABEL; exOpt.textContent = EXCLUDE_LABEL;
+    select.appendChild(exOpt);
+    for (const cat of cats) {
       const opt = document.createElement('option');
-      opt.value = cat;
-      opt.textContent = cat;
+      opt.value = cat; opt.textContent = cat;
       select.appendChild(opt);
     }
-
     select.value = suggestion.category;
 
-    wrapper.appendChild(select);
-
-    // Badge
     const badge = document.createElement('span');
     badge.className = suggestion.auto ? 'badge-auto' : 'badge-unset';
     badge.textContent = suggestion.auto ? '自動推定' : '未設定';
-    wrapper.appendChild(badge);
 
-    // Update badge on change
     select.addEventListener('change', () => {
-      badge.className = 'badge-auto';
-      badge.textContent = '手動設定';
+      badge.className = 'badge-auto'; badge.textContent = '手動設定';
       updateMappingSummary();
     });
 
-    tdSelect.appendChild(wrapper);
-    tr.appendChild(tdSelect);
+    wrapper.appendChild(select); wrapper.appendChild(badge);
+    tdSelect.appendChild(wrapper); tr.appendChild(tdSelect);
 
-    // Count
     const tdCount = document.createElement('td');
     tdCount.textContent = count;
     tr.appendChild(tdCount);
-
     tbody.appendChild(tr);
   }
 
@@ -915,132 +951,85 @@ function showMapping(protoCounts) {
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function hideMapping() {
-  document.getElementById('section-mapping').classList.add('hidden');
-}
-
 function updateMappingSummary() {
   const selects = document.querySelectorAll('#mapping-tbody .mapping-select');
-  let mapped = 0;
-  let excluded = 0;
-  for (const sel of selects) {
-    if (sel.value === EXCLUDE_LABEL) {
-      excluded++;
-    } else {
-      mapped++;
-    }
-  }
-  const summaryEl = document.getElementById('mapping-summary');
-  summaryEl.innerHTML = `<strong>${mapped}</strong> カテゴリに対応づけ / <strong>${excluded}</strong> 対象外`;
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  let mapped = 0, excluded = 0;
+  for (const sel of selects) { sel.value === EXCLUDE_LABEL ? excluded++ : mapped++; }
+  document.getElementById('mapping-summary').innerHTML =
+    `<strong>${mapped}</strong> カテゴリに対応づけ / <strong>${excluded}</strong> 対象外`;
 }
 
 // ================================================================
-//  集計実行（マッピング適用）
+//  集計実行
 // ================================================================
 
-document.getElementById('btn-run-mapping').addEventListener('click', () => {
-  runAnalysis();
-});
+document.getElementById('btn-run-mapping').addEventListener('click', runAnalysis);
 
 function runAnalysis() {
-  // Read mapping from dropdowns
+  const m = mod();
+  const protoColName = colMap[m.protocolCol];
+
   const selects = document.querySelectorAll('#mapping-tbody .mapping-select');
   const mapping = {};
-  for (const sel of selects) {
-    mapping[sel.dataset.proto] = sel.value;
-  }
+  for (const sel of selects) mapping[sel.dataset.proto] = sel.value;
 
-  // Reclassify and filter rows
-  let skipNumeric = 0;
-  let skipFilter  = 0;
-  let skipExclude = 0;
+  let skipNumeric = 0, skipFilter = 0, skipExclude = 0;
   const validRows = [];
 
   for (const row of parsedRows) {
-    const rawProto = (row['検査プロトコール'] || '').trim();
+    const rawProto = (row[protoColName] || '').trim();
     const drlCategory = mapping[rawProto];
+    if (!drlCategory || drlCategory === EXCLUDE_LABEL) { if (rawProto) skipExclude++; continue; }
 
-    // Skip if not in mapping or excluded
-    if (!drlCategory || drlCategory === EXCLUDE_LABEL) {
-      if (rawProto) skipExclude++;
-      continue;
+    if (!m.filter(row, colMap)) { skipFilter++; continue; }
+
+    const metricVals = {};
+    let valid = true;
+    for (const metric of m.metrics) {
+      const csvColName = colMap[metric.csvCol];
+      if (!csvColName) { if (!metric.optional) { valid = false; skipNumeric++; } continue; }
+      const v = parseFloat(row[csvColName]);
+      if (isNaN(v)) { if (!metric.optional) { valid = false; skipNumeric++; } continue; }
+      metricVals[metric.key] = v;
     }
+    if (!valid) continue;
+    if (Object.keys(metricVals).length === 0) continue;
 
-    const age    = parseInt(row['年齢'],    10);
-    const weight = parseFloat(row['体重']);
-    const ctdi   = parseFloat(row['CTDIvol']);
-    const dlp    = parseFloat(row['DLP']);
-
-    // 数値チェック
-    if (isNaN(ctdi) || isNaN(dlp)) {
-      skipNumeric++;
-      continue;
-    }
-
-    // フィルタ（標準患者）
-    if (isNaN(age) || age < 20 || age > 80) { skipFilter++; continue; }
-    if (isNaN(weight) || weight < 50 || weight > 70) { skipFilter++; continue; }
-
-    validRows.push({ proto: drlCategory, age, weight, ctdi, dlp });
+    validRows.push({ proto: drlCategory, metrics: metricVals });
   }
 
-  // 警告エリア
   const warnArea = document.getElementById('warn-area');
   warnArea.innerHTML = '';
+  if (skipExclude > 0) addMsg(warnArea, `「対象外」の ${skipExclude} 件をスキップ。`, 'info');
+  if (skipNumeric > 0) addMsg(warnArea, `数値でない ${skipNumeric} 件をスキップ。`, 'warning');
+  if (skipFilter > 0) addMsg(warnArea, `フィルタ条件（${m.filterDesc}）外の ${skipFilter} 件をスキップ。`, 'info');
 
-  if (skipExclude > 0) {
-    addMsg(warnArea, `「対象外」に設定されたプロトコールの ${skipExclude} 件はスキップしました。`, 'info');
-  }
-  if (skipNumeric > 0) {
-    addMsg(warnArea, `CTDIvol / DLP が数値でない行が ${skipNumeric} 件あったためスキップしました。`, 'warning');
-  }
-  if (skipFilter > 0) {
-    addMsg(warnArea, `フィルタ条件（年齢20〜80歳・体重50〜70kg）に該当しない ${skipFilter} 件をスキップしました。`, 'info');
-  }
-
-  // 対象データ 0 件
   if (validRows.length === 0) {
-    addMsg(warnArea, 'フィルタ条件に該当するデータがありません。マッピングやCSVの内容をご確認ください。', 'error');
-    hideResults();
-    return;
+    addMsg(warnArea, '該当するデータがありません。', 'error'); hideResults(); return;
   }
 
-  // プロトコール別集計
   const stats = {};
-  for (const proto of PROTOCOLS) {
+  for (const proto of drlProtocols()) {
     const rows = validRows.filter(r => r.proto === proto);
-    const ctdiVals = rows.map(r => r.ctdi);
-    const dlpVals  = rows.map(r => r.dlp);
-    stats[proto] = {
-      count:       rows.length,
-      ctdiMedian:  calcMedian(ctdiVals),
-      dlpMedian:   calcMedian(dlpVals),
-    };
+    const s = { count: rows.length };
+    for (const metric of m.metrics) {
+      const vals = rows.map(r => r.metrics[metric.key]).filter(v => v !== undefined);
+      s[metric.key + '_median'] = calcMedian(vals);
+    }
+    stats[proto] = s;
   }
-
   currentStats = stats;
 
-  // 件数情報
   document.getElementById('record-count').innerHTML =
-    `ファイル: <strong>${escapeHtml(currentFile)}</strong> &nbsp;|&nbsp; フィルタ後: <strong>${validRows.length} 件</strong>`;
+    `ファイル: <strong>${escapeHtml(currentFile)}</strong> | フィルタ後: <strong>${validRows.length} 件</strong>`;
 
   renderTable(stats);
   renderCharts(stats);
 
-  // 5件未満警告
-  for (const proto of PROTOCOLS) {
+  for (const proto of drlProtocols()) {
     const c = stats[proto].count;
-    if (c > 0 && c < 5) {
-      addMsg(warnArea, `「${proto}」の件数が ${c} 件です。統計的信頼性が低いためご注意ください。`, 'warning');
-    }
+    if (c > 0 && c < 5) addMsg(warnArea, `「${proto}」${c} 件 — 統計的信頼性が低い可能性。`, 'warning');
   }
-
   showResults();
 }
 
@@ -1051,19 +1040,15 @@ function runAnalysis() {
 function showResults() {
   document.getElementById('section-table').classList.remove('hidden');
   document.getElementById('section-chart').classList.remove('hidden');
-  document.getElementById('section-table').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('section-table').scrollIntoView({ behavior: 'smooth' });
 }
-
 function hideResults() {
   document.getElementById('section-table').classList.add('hidden');
   document.getElementById('section-chart').classList.add('hidden');
 }
-
-// Re-map button
 document.getElementById('btn-remap').addEventListener('click', () => {
   hideResults();
-  const mappingSection = document.getElementById('section-mapping');
-  mappingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('section-mapping').scrollIntoView({ behavior: 'smooth' });
 });
 
 // ================================================================
@@ -1071,60 +1056,50 @@ document.getElementById('btn-remap').addEventListener('click', () => {
 // ================================================================
 
 function renderTable(stats) {
+  const m = mod();
+  const thead = document.getElementById('result-thead');
   const tbody = document.getElementById('result-tbody');
-  tbody.innerHTML = '';
+  thead.innerHTML = ''; tbody.innerHTML = '';
 
-  for (const proto of PROTOCOLS) {
-    const s   = stats[proto];
-    const drl = DRL_TABLE[proto];
+  const headerRow = document.createElement('tr');
+  headerRow.innerHTML = '<th>プロトコール</th><th>件数</th>';
+  for (const metric of m.metrics) {
+    headerRow.innerHTML += `<th>${metric.label} 中央値<br>(${metric.unit})</th>`;
+    headerRow.innerHTML += `<th>${metric.label} DRL<br>(${metric.unit})</th>`;
+    headerRow.innerHTML += `<th>${metric.label}<br>比率</th>`;
+  }
+  headerRow.innerHTML += '<th>判定</th>';
+  thead.appendChild(headerRow);
+
+  for (const proto of drlProtocols()) {
+    const s = stats[proto];
+    const drl = m.drl[proto];
     if (s.count === 0) continue;
 
-    const ctdiMed = fmt1(s.ctdiMedian);
-    const dlpMed  = fmt1(s.dlpMedian);
+    let anyExceeded = false;
+    let html = `<td>${escapeHtml(proto)}</td>`;
+    html += `<td>${s.count < 5 ? s.count + ' <span class="count-warn">⚠</span>' : s.count}</td>`;
 
-    const ctdiDrl = drl.ctdi;  // null for 外傷全身CT
-    const dlpDrl  = drl.dlp;
+    for (const metric of m.metrics) {
+      const med = fmt1(s[metric.key + '_median']);
+      const drlVal = drl[metric.key];
+      if (drlVal === null || drlVal === undefined) {
+        html += `<td>${med !== null ? med.toFixed(1) : '−'}</td><td class="na-cell">−</td><td class="na-cell">−</td>`;
+        continue;
+      }
+      const exceeded = med !== null && med > drlVal;
+      if (exceeded) anyExceeded = true;
+      const ratio = med !== null ? Math.round((med / drlVal) * 100) : null;
+      const fmtR = ratio === null ? '<span class="na-cell">−</span>'
+        : `<span class="${exceeded ? 'ratio-ng' : 'ratio-ok'}">${ratio}%</span>`;
+      html += `<td>${med !== null ? med.toFixed(1) : '−'}</td><td>${drlVal}</td><td>${fmtR}</td>`;
+    }
 
-    const ctdiExceeded = ctdiDrl !== null && ctdiMed !== null && ctdiMed > ctdiDrl;
-    const dlpExceeded  = dlpMed  !== null && dlpMed  > dlpDrl;
-    const anyExceeded  = ctdiExceeded || dlpExceeded;
-
-    const ctdiRatio = ctdiDrl !== null && ctdiMed !== null
-      ? Math.round((ctdiMed / ctdiDrl) * 100) : null;
-    const dlpRatio  = dlpMed !== null
-      ? Math.round((dlpMed  / dlpDrl)  * 100) : null;
-
-    const fmtRatio = (r, exceeded) =>
-      r === null ? '<span class="na-cell">−</span>'
-                 : `<span class="${exceeded ? 'ratio-ng' : 'ratio-ok'}">${r}%</span>`;
-
-    const countCell = s.count < 5
-      ? `${s.count} <span class="count-warn" title="件数が少なく統計的信頼性が低い">⚠</span>`
-      : String(s.count);
-
-    const ctdiMedCell = ctdiDrl === null
-      ? `<span class="na-cell">−（設定なし）</span>`
-      : ctdiMed !== null ? ctdiMed.toFixed(1) : '−';
-
-    const ctdiDrlCell = ctdiDrl !== null ? ctdiDrl : '<span class="na-cell">−</span>';
-
-    const judgement = anyExceeded
-      ? '<span class="badge-ng">⚠️ 超過</span>'
-      : '<span class="badge-ok">✅ 適正</span>';
+    html += `<td>${anyExceeded ? '<span class="badge-ng">⚠ 超過</span>' : '<span class="badge-ok">✓ 適正</span>'}</td>`;
 
     const tr = document.createElement('tr');
     if (anyExceeded) tr.classList.add('row-exceeded');
-    tr.innerHTML = `
-      <td>${escapeHtml(proto)}</td>
-      <td>${countCell}</td>
-      <td>${ctdiMedCell}</td>
-      <td>${ctdiDrlCell}</td>
-      <td>${fmtRatio(ctdiRatio, ctdiExceeded)}</td>
-      <td>${dlpMed !== null ? dlpMed.toFixed(1) : '−'}</td>
-      <td>${dlpDrl}</td>
-      <td>${fmtRatio(dlpRatio, dlpExceeded)}</td>
-      <td>${judgement}</td>
-    `;
+    tr.innerHTML = html;
     tbody.appendChild(tr);
   }
 }
@@ -1141,133 +1116,69 @@ const BORDER_EXCEED = 'rgba(229, 62, 62, 1)';
 const BORDER_DRL    = 'rgba(160, 174, 192, 0.9)';
 
 function renderCharts(stats) {
-  const activeProtos = PROTOCOLS.filter(p => stats[p].count > 0);
+  const m = mod();
+  const tabBar = document.getElementById('chart-tab-bar');
+  const panels = document.getElementById('chart-panels');
+  tabBar.innerHTML = ''; panels.innerHTML = '';
+  for (const c of Object.values(charts)) c.destroy();
+  charts = {};
 
-  // ── CTDIvol（外傷全身CT は DRL = null のため除外） ──
-  const ctdiProtos  = activeProtos.filter(p => DRL_TABLE[p].ctdi !== null);
-  const ctdiMedVals = ctdiProtos.map(p => fmt1(stats[p].ctdiMedian));
-  const ctdiDrlVals = ctdiProtos.map(p => DRL_TABLE[p].ctdi);
-  const ctdiBgColors = ctdiProtos.map((p, i) =>
-    ctdiMedVals[i] > ctdiDrlVals[i] ? COLOR_EXCEED : COLOR_NORMAL);
-  const ctdiBorders  = ctdiProtos.map((p, i) =>
-    ctdiMedVals[i] > ctdiDrlVals[i] ? BORDER_EXCEED : BORDER_NORMAL);
+  const activeProtos = drlProtocols().filter(p => stats[p].count > 0);
 
-  setChartHeight('container-ctdi', ctdiProtos.length);
-  if (chartCtdi) chartCtdi.destroy();
-  chartCtdi = new Chart(document.getElementById('chart-ctdi').getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: ctdiProtos,
-      datasets: [
-        {
-          label: '施設中央値',
-          data:  ctdiMedVals,
-          backgroundColor: ctdiBgColors,
-          borderColor:     ctdiBorders,
-          borderWidth: 1,
-          borderRadius: 3,
-        },
-        {
-          label: 'DRL値',
-          data:  ctdiDrlVals,
-          backgroundColor: COLOR_DRL,
-          borderColor:     BORDER_DRL,
-          borderWidth: 1,
-          borderRadius: 3,
-        },
-      ],
-    },
-    options: chartOptions('CTDIvol 比較', 'CTDIvol (mGy)'),
-  });
+  m.metrics.forEach((metric, idx) => {
+    const tabBtn = document.createElement('button');
+    tabBtn.className = 'tab-btn' + (idx === 0 ? ' active' : '');
+    tabBtn.textContent = metric.label;
+    tabBtn.dataset.tab = metric.key;
+    tabBtn.addEventListener('click', () => {
+      tabBar.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      panels.querySelectorAll('.chart-panel').forEach(p => p.classList.remove('active'));
+      tabBtn.classList.add('active');
+      document.getElementById('panel-' + metric.key).classList.add('active');
+    });
+    tabBar.appendChild(tabBtn);
 
-  // ── DLP ──
-  const dlpMedVals   = activeProtos.map(p => fmt1(stats[p].dlpMedian));
-  const dlpDrlVals   = activeProtos.map(p => DRL_TABLE[p].dlp);
-  const dlpBgColors  = activeProtos.map((p, i) =>
-    dlpMedVals[i] > dlpDrlVals[i] ? COLOR_EXCEED : COLOR_NORMAL);
-  const dlpBorders   = activeProtos.map((p, i) =>
-    dlpMedVals[i] > dlpDrlVals[i] ? BORDER_EXCEED : BORDER_NORMAL);
+    const panel = document.createElement('div');
+    panel.className = 'chart-panel' + (idx === 0 ? ' active' : '');
+    panel.id = 'panel-' + metric.key;
 
-  setChartHeight('container-dlp', activeProtos.length);
-  if (chartDlp) chartDlp.destroy();
-  chartDlp = new Chart(document.getElementById('chart-dlp').getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: activeProtos,
-      datasets: [
-        {
-          label: '施設中央値',
-          data:  dlpMedVals,
-          backgroundColor: dlpBgColors,
-          borderColor:     dlpBorders,
-          borderWidth: 1,
-          borderRadius: 3,
+    const container = document.createElement('div');
+    container.className = 'chart-container';
+
+    const chartProtos = activeProtos.filter(p => m.drl[p][metric.key] != null);
+    container.style.height = Math.max(320, chartProtos.length * 55 + 120) + 'px';
+
+    const canvas = document.createElement('canvas');
+    container.appendChild(canvas); panel.appendChild(container); panels.appendChild(panel);
+
+    const medVals = chartProtos.map(p => fmt1(stats[p][metric.key + '_median']));
+    const drlVals = chartProtos.map(p => m.drl[p][metric.key]);
+    const bgColors = chartProtos.map((_, i) => medVals[i] > drlVals[i] ? COLOR_EXCEED : COLOR_NORMAL);
+    const borders  = chartProtos.map((_, i) => medVals[i] > drlVals[i] ? BORDER_EXCEED : BORDER_NORMAL);
+
+    charts[metric.key] = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: chartProtos,
+        datasets: [
+          { label: '施設中央値', data: medVals, backgroundColor: bgColors, borderColor: borders, borderWidth: 1, borderRadius: 3 },
+          { label: 'DRL値', data: drlVals, backgroundColor: COLOR_DRL, borderColor: BORDER_DRL, borderWidth: 1, borderRadius: 3 },
+        ],
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' },
+          title: { display: true, text: `${metric.label} 比較`, font: { size: 14, weight: '600' }, color: '#2d3748' },
         },
-        {
-          label: 'DRL値',
-          data:  dlpDrlVals,
-          backgroundColor: COLOR_DRL,
-          borderColor:     BORDER_DRL,
-          borderWidth: 1,
-          borderRadius: 3,
+        scales: {
+          x: { beginAtZero: true, title: { display: true, text: `${metric.label} (${metric.unit})`, color: '#718096' }, grid: { color: 'rgba(0,0,0,0.05)' } },
+          y: { ticks: { font: { size: 11 }, color: '#2d3748' }, grid: { display: false } },
         },
-      ],
-    },
-    options: chartOptions('DLP 比較', 'DLP (mGy·cm)'),
+      },
+    });
   });
 }
-
-function setChartHeight(containerId, numProtos) {
-  const h = Math.max(320, numProtos * 62 + 120);
-  document.getElementById(containerId).style.height = h + 'px';
-}
-
-function chartOptions(titleText, xLabel) {
-  return {
-    indexAxis: 'y',
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'top' },
-      title: {
-        display: true,
-        text: titleText,
-        font: { size: 14, weight: '600' },
-        padding: { bottom: 12 },
-        color: '#2d3748',
-      },
-      tooltip: {
-        callbacks: {
-          label: ctx => `${ctx.dataset.label}: ${ctx.parsed.x} ${xLabel.split('(')[1]?.replace(')','') ?? ''}`,
-        },
-      },
-    },
-    scales: {
-      x: {
-        beginAtZero: true,
-        title: { display: true, text: xLabel, color: '#718096', font: { size: 12 } },
-        grid: { color: 'rgba(0,0,0,0.05)' },
-      },
-      y: {
-        ticks: { font: { size: 12 }, color: '#2d3748' },
-        grid: { display: false },
-      },
-    },
-  };
-}
-
-// ================================================================
-//  タブ切り替え
-// ================================================================
-
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.chart-panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-  });
-});
 
 // ================================================================
 //  エクスポート
@@ -1275,47 +1186,42 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 document.getElementById('btn-export').addEventListener('click', () => {
   if (!currentStats) return;
+  const m = mod();
 
-  const header = ['プロトコール','件数','CTDIvol中央値(mGy)','CTDIvol DRL(mGy)',
-                  'CTDIvol比率(%)','DLP中央値(mGy·cm)','DLP DRL(mGy·cm)','DLP比率(%)','判定'];
+  const header = ['プロトコール', '件数'];
+  for (const metric of m.metrics) {
+    header.push(`${metric.label}中央値(${metric.unit})`, `${metric.label} DRL(${metric.unit})`, `${metric.label}比率(%)`);
+  }
+  header.push('判定');
+
   const rows = [header];
-
-  for (const proto of PROTOCOLS) {
-    const s   = currentStats[proto];
-    const drl = DRL_TABLE[proto];
+  for (const proto of drlProtocols()) {
+    const s = currentStats[proto]; const drl = m.drl[proto];
     if (s.count === 0) continue;
-
-    const ctdiMed = fmt1(s.ctdiMedian);
-    const dlpMed  = fmt1(s.dlpMedian);
-    const ctdiDrl = drl.ctdi;
-    const dlpDrl  = drl.dlp;
-
-    const ctdiExceeded = ctdiDrl !== null && ctdiMed !== null && ctdiMed > ctdiDrl;
-    const dlpExceeded  = dlpMed  !== null && dlpMed  > dlpDrl;
-
-    const ctdiRatioStr = ctdiDrl !== null && ctdiMed !== null
-      ? Math.round((ctdiMed / ctdiDrl) * 100) + '%' : '−';
-    const dlpRatioStr  = dlpMed !== null
-      ? Math.round((dlpMed / dlpDrl) * 100) + '%' : '−';
-
-    const judgement = (ctdiExceeded || dlpExceeded) ? '超過' : '適正';
-
-    rows.push([
-      proto,
-      s.count,
-      ctdiDrl === null ? '−（設定なし）' : (ctdiMed !== null ? ctdiMed.toFixed(1) : '−'),
-      ctdiDrl !== null ? ctdiDrl : '−',
-      ctdiRatioStr,
-      dlpMed  !== null ? dlpMed.toFixed(1) : '−',
-      dlpDrl,
-      dlpRatioStr,
-      judgement,
-    ]);
+    const row = [proto, s.count];
+    let anyExceeded = false;
+    for (const metric of m.metrics) {
+      const med = fmt1(s[metric.key + '_median']);
+      const drlVal = drl[metric.key];
+      const exceeded = drlVal != null && med != null && med > drlVal;
+      if (exceeded) anyExceeded = true;
+      row.push(med != null ? med.toFixed(1) : '−', drlVal != null ? drlVal : '−',
+        drlVal != null && med != null ? Math.round((med / drlVal) * 100) + '%' : '−');
+    }
+    row.push(anyExceeded ? '超過' : '適正');
+    rows.push(row);
   }
 
-  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\r\n');
-  downloadBlob(csv, `drl_result_${today()}.csv`);
+  downloadBlob(rows.map(r => r.map(v => `"${v}"`).join(',')).join('\r\n'), `drl_result_${currentModality}_${today()}.csv`);
 });
+
+// ================================================================
+//  初期化
+// ================================================================
+
+renderModalityTabs();
+switchModality('ct');
+
 </script>
 </body>
 </html>
