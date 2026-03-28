@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>脳画像差分ツール（CT/MRI） | RT-Lab</title>
+  <meta name="description" content="脳CT/MRIの2シリーズを位置合わせし、差分を可視化するツール。剛体・affine・弱い非剛体位置合わせ対応。ブラウザ完結・インストール不要・無料。">
+  <meta property="og:title" content="脳画像差分ツール（CT/MRI） | RT-Lab">
+  <meta property="og:description" content="脳CT/MRIの2シリーズを位置合わせし差分を可視化。ブラウザ完結・無料。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rt-ai-lab.com/brain-diff/">
+  <link rel="canonical" href="https://rt-ai-lab.com/brain-diff/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "脳画像差分ツール（CT/MRI）",
+    "url": "https://rt-ai-lab.com/brain-diff/",
+    "description": "脳CT/MRIの2シリーズを位置合わせし差分を可視化するツール。剛体・affine・弱い非剛体位置合わせ対応。",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
+      { "@type": "ListItem", "position": 2, "name": "脳画像差分ツール", "item": "https://rt-ai-lab.com/brain-diff/" }
+    ]
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #1a56db;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.06em; }
+    .logo a { color: #fff; text-decoration: none; }
+    .tool-name-header {
+      font-size: 0.95rem;
+      opacity: 0.88;
+      padding-left: 16px;
+      border-left: 2px solid rgba(255,255,255,0.35);
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a56db;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* ── Steps ── */
+    .steps { display: flex; gap: 12px; flex-wrap: wrap; }
+    .step {
+      flex: 1; min-width: 180px;
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px; background: #f7fafc;
+      border-radius: 8px; border: 1px solid #e2e8f0;
+    }
+    .step-num {
+      min-width: 26px; height: 26px;
+      background: #1a56db; color: #fff;
+      border-radius: 50%; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 0.78rem; font-weight: 700;
+    }
+    .step-text { font-size: 0.82rem; color: #4a5568; line-height: 1.5; }
+
+    /* ── Upload zones ── */
+    .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .upload-zone {
+      border: 2px dashed #cbd5e0;
+      border-radius: 10px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #1a56db;
+      background: #ebf8ff;
+    }
+    .upload-zone.loaded {
+      border-color: #48bb78;
+      border-style: solid;
+      background: #f0fff4;
+    }
+    .upload-zone-label {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #2d3748;
+      margin-bottom: 8px;
+    }
+    .upload-zone-sub {
+      font-size: 0.78rem;
+      color: #718096;
+    }
+    .upload-zone-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+    .upload-btns {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+    .upload-btn-label {
+      padding: 6px 14px;
+      border: 1px solid #cbd5e0;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #4a5568;
+      background: #fff;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .upload-btn-label:hover {
+      background: #ebf8ff;
+      border-color: #1a56db;
+      color: #1a56db;
+    }
+    .upload-btn-label input[type="file"] {
+      display: none;
+    }
+
+    /* ── Series info ── */
+    .series-info {
+      margin-top: 14px;
+      font-size: 0.78rem;
+      color: #4a5568;
+      display: none;
+    }
+    .series-info.show { display: block; }
+    .series-info-row {
+      display: flex;
+      gap: 6px;
+      padding: 3px 0;
+      border-bottom: 1px solid #edf2f7;
+    }
+    .series-info-label { font-weight: 600; min-width: 110px; color: #2d3748; }
+
+    /* ── Compatibility ── */
+    .compat-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    .compat-table th {
+      background: #f7fafc;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .compat-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #edf2f7;
+    }
+    .compat-ok { color: #38a169; font-weight: 600; }
+    .compat-warn { color: #d69e2e; font-weight: 600; }
+    .compat-error { color: #e53e3e; font-weight: 600; }
+
+    .compat-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+    .compat-status.ok { background: #f0fff4; color: #276749; border: 1px solid #c6f6d5; }
+    .compat-status.warn { background: #fffff0; color: #975a16; border: 1px solid #fefcbf; }
+    .compat-status.error { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
+
+    /* ── Progress ── */
+    .progress-bar-container {
+      width: 100%;
+      height: 24px;
+      background: #edf2f7;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 12px 0;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #1a56db, #3b82f6);
+      border-radius: 12px;
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      color: #fff;
+      font-weight: 600;
+      min-width: 0;
+    }
+    .progress-label {
+      font-size: 0.82rem;
+      color: #4a5568;
+      margin-top: 6px;
+    }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      background: #1a56db;
+      color: #fff;
+      border: none;
+      padding: 10px 28px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-primary:hover { background: #1e40af; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: #edf2f7;
+      color: #2d3748;
+      border: 1px solid #e2e8f0;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    /* ── Result viewer ── */
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    .viewer-panel {
+      text-align: center;
+    }
+    .viewer-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 6px;
+    }
+    .viewer-canvas-wrap {
+      position: relative;
+      background: #000;
+      border-radius: 6px;
+      overflow: hidden;
+      aspect-ratio: 1;
+    }
+    .viewer-canvas-wrap canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* ── Slice nav ── */
+    .slice-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .slice-nav input[type="range"] {
+      flex: 1;
+      max-width: 400px;
+    }
+    .slice-nav-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #2d3748;
+      min-width: 100px;
+      text-align: center;
+    }
+
+    /* ── Controls ── */
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 14px;
+      align-items: center;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .control-group label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #4a5568;
+      white-space: nowrap;
+    }
+    .control-group input[type="range"] {
+      width: 100px;
+    }
+    .control-group .val-display {
+      font-size: 0.78rem;
+      min-width: 40px;
+      text-align: right;
+      color: #2d3748;
+      font-weight: 600;
+    }
+
+    /* ── Overlay mode buttons ── */
+    .mode-btns {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .mode-btn {
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid #cbd5e0;
+      background: #fff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #4a5568;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .mode-btn.active {
+      background: #1a56db;
+      color: #fff;
+      border-color: #1a56db;
+    }
+
+    /* ── QA metrics ── */
+    .qa-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .qa-item {
+      background: #f7fafc;
+      border-radius: 8px;
+      padding: 14px;
+      border: 1px solid #e2e8f0;
+    }
+    .qa-label {
+      font-size: 0.75rem;
+      color: #718096;
+      margin-bottom: 4px;
+    }
+    .qa-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #2d3748;
+    }
+    .qa-unit {
+      font-size: 0.72rem;
+      color: #a0aec0;
+      margin-left: 4px;
+    }
+
+    /* ── Summary cards (like CT dose estimator) ── */
+    .summary-cards {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .summary-card {
+      flex: 1;
+      min-width: 160px;
+      padding: 18px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .summary-card.ncc-before {
+      background: linear-gradient(135deg, #ebf8ff, #bee3f8);
+    }
+    .summary-card.ncc-after {
+      background: linear-gradient(135deg, #f0fff4, #c6f6d5);
+    }
+    .summary-card.mean-diff {
+      background: linear-gradient(135deg, #fffff0, #fefcbf);
+    }
+    .summary-card.voxel-change {
+      background: linear-gradient(135deg, #fff5f5, #fed7d7);
+    }
+    .summary-card-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+    .summary-card-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+    .summary-card-unit {
+      font-size: 0.7rem;
+      opacity: 0.6;
+      margin-top: 2px;
+    }
+
+    /* ── Messages ── */
+    .msg { padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; margin-bottom: 10px; }
+    .msg-error { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
+    .msg-warn { background: #fffff0; color: #975a16; border: 1px solid #fefcbf; }
+    .msg-info { background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }
+
+    /* ── Hidden ── */
+    .hidden { display: none !important; }
+
+    /* ── Footer ── */
+    footer {
+      background: #2d3748;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      padding: 24px 16px;
+      font-size: 0.75rem;
+      line-height: 1.8;
+    }
+    footer a { color: rgba(255,255,255,0.85); text-decoration: none; }
+    footer a:hover { color: #fff; }
+    .footer-disclaimer {
+      max-width: 640px; margin: 10px auto 0;
+      font-size: 0.7rem; opacity: 0.65;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .upload-grid { grid-template-columns: 1fr; }
+      .viewer-grid { grid-template-columns: 1fr; }
+      .tool-name-header { display: none; }
+      .summary-cards { flex-direction: column; }
+      .qa-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><a href="/">RT-Lab</a></div>
+  <div class="tool-name-header">脳画像差分ツール（CT/MRI）</div>
+</header>
+
+<main>
+
+  <!-- ===== 使い方 ===== -->
+  <div class="card">
+    <div class="card-title">使い方</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">ベースラインとフォローアップの脳CT/MRI DICOMシリーズをそれぞれアップロード</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">互換性チェック後、「位置合わせ開始」ボタンで剛体→affine→非剛体位置合わせを実行</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">差分オーバーレイ・QA指標を確認。スライスを切り替えて経時変化を評価</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== アップロード ===== -->
+  <div class="card">
+    <div class="card-title">1. DICOMシリーズ アップロード</div>
+    <div class="upload-grid">
+      <div>
+        <div class="upload-zone" id="dropBaseline">
+          <div class="upload-zone-icon">📁</div>
+          <div class="upload-zone-label">Baseline（ベースライン）</div>
+          <div class="upload-zone-sub">DICOMファイルをドラッグ&ドロップ</div>
+          <div class="upload-btns">
+            <label class="upload-btn-label">
+              ファイル選択
+              <input type="file" id="fileBaseline" multiple accept=".dcm,.DCM,.dicom,*">
+            </label>
+            <label class="upload-btn-label">
+              フォルダ選択
+              <input type="file" id="folderBaseline" webkitdirectory>
+            </label>
+          </div>
+        </div>
+        <div class="series-info" id="infoBaseline"></div>
+      </div>
+      <div>
+        <div class="upload-zone" id="dropFollowup">
+          <div class="upload-zone-icon">📁</div>
+          <div class="upload-zone-label">Follow-up（フォローアップ）</div>
+          <div class="upload-zone-sub">DICOMファイルをドラッグ&ドロップ</div>
+          <div class="upload-btns">
+            <label class="upload-btn-label">
+              ファイル選択
+              <input type="file" id="fileFollowup" multiple accept=".dcm,.DCM,.dicom,*">
+            </label>
+            <label class="upload-btn-label">
+              フォルダ選択
+              <input type="file" id="folderFollowup" webkitdirectory>
+            </label>
+          </div>
+        </div>
+        <div class="series-info" id="infoFollowup"></div>
+      </div>
+    </div>
+    <div id="uploadMsg" style="margin-top: 12px;"></div>
+  </div>
+
+  <!-- ===== 互換性チェック ===== -->
+  <div class="card hidden" id="compatCard">
+    <div class="card-title">2. 互換性チェック</div>
+    <div id="compatStatus"></div>
+    <table class="compat-table" id="compatTable">
+      <thead>
+        <tr><th>項目</th><th>Baseline</th><th>Follow-up</th><th>判定</th></tr>
+      </thead>
+      <tbody id="compatBody"></tbody>
+    </table>
+  </div>
+
+  <!-- ===== 処理 ===== -->
+  <div class="card hidden" id="processCard">
+    <div class="card-title">3. 位置合わせ・差分計算</div>
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+      <button class="btn-primary" id="btnStart" disabled>位置合わせ開始</button>
+      <button class="btn-secondary hidden" id="btnCancel">キャンセル</button>
+    </div>
+    <div id="progressSection" class="hidden" style="margin-top:14px;">
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+      </div>
+      <div class="progress-label" id="progressLabel">準備中...</div>
+    </div>
+    <div id="processMsg" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- ===== 結果表示 ===== -->
+  <div class="card hidden" id="resultCard">
+    <div class="card-title">4. 結果</div>
+
+    <!-- QA summary -->
+    <div class="summary-cards">
+      <div class="summary-card ncc-before">
+        <div class="summary-card-label">NCC（位置合わせ前）</div>
+        <div class="summary-card-value" id="qaNccBefore">--</div>
+      </div>
+      <div class="summary-card ncc-after">
+        <div class="summary-card-label">NCC（位置合わせ後）</div>
+        <div class="summary-card-value" id="qaNccAfter">--</div>
+      </div>
+      <div class="summary-card mean-diff">
+        <div class="summary-card-label">平均絶対差分</div>
+        <div class="summary-card-value" id="qaMeanDiff">--</div>
+        <div class="summary-card-unit" id="qaMeanDiffUnit"></div>
+      </div>
+      <div class="summary-card voxel-change">
+        <div class="summary-card-label">変化ボクセル率</div>
+        <div class="summary-card-value" id="qaVoxelPct">--</div>
+        <div class="summary-card-unit">%</div>
+      </div>
+    </div>
+
+    <!-- Registration params -->
+    <div id="regParamsSection" style="margin-bottom:16px;">
+      <div style="font-size:0.78rem; font-weight:600; color:#4a5568; margin-bottom:6px;">位置合わせパラメータ</div>
+      <div class="qa-grid" id="regParams"></div>
+    </div>
+
+    <!-- Viewer -->
+    <div class="viewer-grid" id="viewerGrid">
+      <div class="viewer-panel">
+        <div class="viewer-label">Baseline</div>
+        <div class="viewer-canvas-wrap"><canvas id="cvBase"></canvas></div>
+      </div>
+      <div class="viewer-panel">
+        <div class="viewer-label">Follow-up（位置合わせ後）</div>
+        <div class="viewer-canvas-wrap"><canvas id="cvFollowup"></canvas></div>
+      </div>
+      <div class="viewer-panel">
+        <div class="viewer-label" id="diffViewLabel">差分オーバーレイ</div>
+        <div class="viewer-canvas-wrap"><canvas id="cvDiff"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Slice navigation -->
+    <div class="slice-nav">
+      <button class="btn-secondary" id="btnSlicePrev">&lt;</button>
+      <input type="range" id="sliceSlider" min="0" max="0" value="0">
+      <button class="btn-secondary" id="btnSliceNext">&gt;</button>
+      <div class="slice-nav-label" id="sliceLabel">-- / --</div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-row">
+      <div class="control-group">
+        <label>WW:</label>
+        <input type="range" id="ctrlWW" min="1" max="4000" value="400">
+        <span class="val-display" id="valWW">400</span>
+      </div>
+      <div class="control-group">
+        <label>WL:</label>
+        <input type="range" id="ctrlWL" min="-1000" max="3000" value="40">
+        <span class="val-display" id="valWL">40</span>
+      </div>
+      <div class="control-group">
+        <label>差分閾値:</label>
+        <input type="range" id="ctrlThresh" min="0" max="200" value="10">
+        <span class="val-display" id="valThresh">10</span>
+      </div>
+      <div class="control-group">
+        <label>不透明度:</label>
+        <input type="range" id="ctrlOpacity" min="0" max="100" value="50">
+        <span class="val-display" id="valOpacity">50%</span>
+      </div>
+    </div>
+    <div class="controls-row">
+      <div class="mode-btns">
+        <button class="mode-btn active" data-mode="overlay">カラーオーバーレイ</button>
+        <button class="mode-btn" data-mode="absdiff">絶対差分</button>
+        <button class="mode-btn" data-mode="subtract">単純引き算</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 注意事項 ===== -->
+  <div class="card">
+    <div class="card-title">注意事項</div>
+    <ul style="font-size:0.82rem; color:#4a5568; list-style:disc; padding-left:20px; line-height:1.8;">
+      <li>本ツールは研究・教育目的です。臨床診断の根拠として使用しないでください。</li>
+      <li>非圧縮DICOM（Explicit/Implicit VR, Little/Big Endian）のみ対応しています。JPEG圧縮DICOMは読み込めません。</li>
+      <li>すべての処理はブラウザ内で完結します。画像データは外部に送信されません。</li>
+      <li>位置合わせはあくまで近似的なものです。大きな位置ずれや体動がある場合、精度が低下します。</li>
+      <li>非剛体位置合わせは局所変形を最小限に抑制した設定です。過度なワーピングは行いません。</li>
+    </ul>
+  </div>
+
+</main>
+
+<!-- ===== Footer ===== -->
+<footer>
+  <div><a href="/">RT-Lab</a> | 放射線技師のためのWebツール集</div>
+  <div class="footer-disclaimer">
+    本ツールは医療機器ではありません。表示される差分画像および数値は参考情報であり、臨床判断の根拠としての使用はご自身の責任においてご判断ください。
+  </div>
+  <div style="margin-top:10px; opacity:0.5;">&copy; 2025-2026 RT-Lab</div>
+</footer>
+
+<script>
+// ================================================================
+//  Utility
+// ================================================================
+const $ = id => document.getElementById(id);
+
+// Fast percentile estimation via sampling (avoids full sort)
+function estimatePercentile(data, pct) {
+  const sampleSize = Math.min(data.length, 4000);
+  const step = Math.max(1, Math.floor(data.length / sampleSize));
+  const samples = [];
+  for (let i = 0; i < data.length; i += step) samples.push(data[i]);
+  samples.sort((a, b) => a - b);
+  return samples[Math.floor(samples.length * pct)] || 1;
+}
+
+// ================================================================
+//  State
+// ================================================================
+let baselineSeries = null;   // { slices, meta, volume }
+let followupSeries = null;
+let registeredVolume = null;
+let diffVolume = null;
+let absDiffVolume = null;
+let currentSlice = 0;
+let displayMode = 'overlay'; // overlay | absdiff | subtract
+let workerRef = null;
+let isProcessing = false;
+
+// ================================================================
+//  DICOM Parser (extended for multi-slice)
+// ================================================================
+function parseDicom(arrayBuffer) {
+  const dv = new DataView(arrayBuffer);
+  const len = arrayBuffer.byteLength;
+
+  if (len < 132) throw new Error('ファイルサイズが小さすぎます');
+  const magic = String.fromCharCode(dv.getUint8(128), dv.getUint8(129), dv.getUint8(130), dv.getUint8(131));
+  if (magic !== 'DICM') throw new Error('DICMヘッダが見つかりません');
+
+  const tags = {};
+  let offset = 132;
+  let littleEndian = true;
+  let explicitVR = true;
+  let transferSyntaxExplicit = true;
+  let transferSyntaxLE = true;
+  let pixelDataOffset = -1;
+  let pixelDataLength = 0;
+
+  const longVRs = new Set(['OB', 'OD', 'OF', 'OL', 'OW', 'SQ', 'UC', 'UN', 'UR', 'UT']);
+
+  function readTag() {
+    if (offset + 4 > len) return null;
+    const group = dv.getUint16(offset, littleEndian);
+    const element = dv.getUint16(offset + 2, littleEndian);
+    offset += 4;
+    const tagKey = ((group << 16) | element) >>> 0;
+
+    let vr = '', valueLength = 0;
+
+    if (explicitVR) {
+      if (offset + 2 > len) return null;
+      vr = String.fromCharCode(dv.getUint8(offset), dv.getUint8(offset + 1));
+      offset += 2;
+      if (longVRs.has(vr)) {
+        offset += 2;
+        if (offset + 4 > len) return null;
+        valueLength = dv.getUint32(offset, littleEndian);
+        offset += 4;
+      } else {
+        if (offset + 2 > len) return null;
+        valueLength = dv.getUint16(offset, littleEndian);
+        offset += 2;
+      }
+    } else {
+      if (offset + 4 > len) return null;
+      valueLength = dv.getUint32(offset, littleEndian);
+      offset += 4;
+    }
+
+    if (valueLength === 0xFFFFFFFF) {
+      while (offset + 8 <= len) {
+        const g = dv.getUint16(offset, littleEndian);
+        const e = dv.getUint16(offset + 2, littleEndian);
+        if ((g === 0xFFFE && e === 0xE0DD) || (g === 0x7FE0 && e === 0x0010)) {
+          if (g === 0xFFFE) offset += 8;
+          break;
+        }
+        offset++;
+      }
+      return { tagKey, vr, value: null };
+    }
+
+    if (offset + valueLength > len) return null;
+
+    if (group === 0x7FE0 && element === 0x0010) {
+      pixelDataOffset = offset;
+      pixelDataLength = valueLength;
+      offset += valueLength;
+      return { tagKey, vr, value: 'PIXEL_DATA' };
+    }
+
+    const valueBytes = new Uint8Array(arrayBuffer, offset, valueLength);
+    offset += valueLength;
+
+    let value;
+    if (vr === 'US') {
+      value = valueLength >= 2 ? dv.getUint16(offset - valueLength, littleEndian) : 0;
+    } else if (vr === 'SS') {
+      value = valueLength >= 2 ? dv.getInt16(offset - valueLength, littleEndian) : 0;
+    } else if (vr === 'UL') {
+      value = valueLength >= 4 ? dv.getUint32(offset - valueLength, littleEndian) : 0;
+    } else if (vr === 'SL') {
+      value = valueLength >= 4 ? dv.getInt32(offset - valueLength, littleEndian) : 0;
+    } else if (vr === 'FL') {
+      value = valueLength >= 4 ? dv.getFloat32(offset - valueLength, littleEndian) : 0;
+    } else if (vr === 'FD') {
+      value = valueLength >= 8 ? dv.getFloat64(offset - valueLength, littleEndian) : 0;
+    } else {
+      value = new TextDecoder('ascii').decode(valueBytes).replace(/\0/g, '').trim();
+    }
+
+    return { tagKey, vr, value };
+  }
+
+  // Meta header (group 0002)
+  while (offset < len) {
+    const saved = offset;
+    const tag = readTag();
+    if (!tag) break;
+    const group = (tag.tagKey >>> 16) & 0xFFFF;
+    if (group !== 0x0002) { offset = saved; break; }
+    tags[tag.tagKey] = tag.value;
+
+    if (tag.tagKey === 0x00020010) {
+      const ts = String(tag.value).trim();
+      // Detect compressed transfer syntaxes
+      const compressedTS = [
+        '1.2.840.10008.1.2.4.',  // JPEG family
+        '1.2.840.10008.1.2.5',   // RLE
+      ];
+      const isCompressed = compressedTS.some(prefix => ts.startsWith(prefix));
+      if (isCompressed) {
+        throw new Error('圧縮DICOM（JPEG/JPEG2000/RLE）は未対応です。非圧縮DICOMをご利用ください。');
+      }
+      if (ts === '1.2.840.10008.1.2') { transferSyntaxExplicit = false; transferSyntaxLE = true; }
+      else if (ts === '1.2.840.10008.1.2.1') { transferSyntaxExplicit = true; transferSyntaxLE = true; }
+      else if (ts === '1.2.840.10008.1.2.2') { transferSyntaxExplicit = true; transferSyntaxLE = false; }
+    }
+  }
+
+  // Apply transfer syntax to body parsing (meta header is always Explicit VR LE)
+  explicitVR = transferSyntaxExplicit;
+  littleEndian = transferSyntaxLE;
+
+  // Remaining tags
+  while (offset < len) {
+    const tag = readTag();
+    if (!tag) break;
+    if (tag.value !== null) tags[tag.tagKey] = tag.value;
+  }
+
+  const rows = tags[0x00280010];
+  const cols = tags[0x00280011];
+  const bitsAllocated = tags[0x00280100] || 16;
+  const pixelRep = tags[0x00280103] || 0;
+  const rescaleSlope = parseFloat(tags[0x00281053]) || 1;
+  const rescaleIntercept = parseFloat(tags[0x00281052]) || 0;
+  const samplesPerPixel = tags[0x00280002] || 1;
+
+  // PixelSpacing
+  let pixelSpacing = null;
+  const psStr = tags[0x00280030];
+  if (psStr) {
+    const parts = String(psStr).split('\\').map(Number);
+    if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) pixelSpacing = [parts[0], parts[1]];
+  }
+
+  // ImagePositionPatient
+  let imagePosition = null;
+  const ipStr = tags[0x00200032];
+  if (ipStr) {
+    const parts = String(ipStr).split('\\').map(Number);
+    if (parts.length >= 3) imagePosition = parts.slice(0, 3);
+  }
+
+  // ImageOrientationPatient
+  let imageOrientation = null;
+  const ioStr = tags[0x00200037];
+  if (ioStr) {
+    const parts = String(ioStr).split('\\').map(Number);
+    if (parts.length >= 6) imageOrientation = parts.slice(0, 6);
+  }
+
+  const windowWidth = parseFloat(String(tags[0x00281051] || '').split('\\')[0]) || 400;
+  const windowCenter = parseFloat(String(tags[0x00281050] || '').split('\\')[0]) || 40;
+
+  if (pixelDataOffset < 0 || !rows || !cols) throw new Error('ピクセルデータまたは画像サイズが見つかりません');
+
+  const numPixels = rows * cols * samplesPerPixel;
+  const rawData = new Float32Array(numPixels);
+
+  if (bitsAllocated === 16) {
+    for (let i = 0; i < numPixels; i++) {
+      const bo = pixelDataOffset + i * 2;
+      if (bo + 2 > len) break;
+      const val = pixelRep === 1 ? dv.getInt16(bo, littleEndian) : dv.getUint16(bo, littleEndian);
+      rawData[i] = val * rescaleSlope + rescaleIntercept;
+    }
+  } else if (bitsAllocated === 32) {
+    for (let i = 0; i < numPixels; i++) {
+      const bo = pixelDataOffset + i * 4;
+      if (bo + 4 > len) break;
+      const val = dv.getFloat32(bo, littleEndian);
+      rawData[i] = val * rescaleSlope + rescaleIntercept;
+    }
+  } else if (bitsAllocated === 8) {
+    const bytes = new Uint8Array(arrayBuffer, pixelDataOffset, numPixels);
+    for (let i = 0; i < numPixels; i++) rawData[i] = bytes[i] * rescaleSlope + rescaleIntercept;
+  } else {
+    throw new Error(`BitsAllocated=${bitsAllocated} は未対応です（8/16/32bit対応）`);
+  }
+
+  return {
+    rows, cols, rawData, pixelSpacing, imagePosition, imageOrientation,
+    windowWidth, windowCenter,
+    modality: tags[0x00080060] || '',
+    seriesInstanceUID: tags[0x0020000E] || '',
+    instanceNumber: parseInt(tags[0x00200013]) || 0,
+    seriesDescription: tags[0x0008103E] || '',
+    contrastBolusAgent: tags[0x00180010] || '',
+    sliceThickness: parseFloat(tags[0x00180050]) || 0,
+  };
+}
+
+// ================================================================
+//  Series Builder
+// ================================================================
+async function loadSeries(files) {
+  const parsed = [];
+  for (const file of files) {
+    const buf = await file.arrayBuffer();
+    try {
+      parsed.push(parseDicom(buf));
+    } catch (e) {
+      // skip non-DICOM files silently
+    }
+  }
+  if (parsed.length === 0) throw new Error('有効なDICOMファイルが見つかりません');
+
+  // Use first slice as reference for metadata
+  const ref = parsed[0];
+
+  // Sort by ImagePositionPatient z-component (slice normal direction)
+  if (ref.imageOrientation && ref.imagePosition) {
+    const rowDir = ref.imageOrientation.slice(0, 3);
+    const colDir = ref.imageOrientation.slice(3, 6);
+    // Slice normal = row x col
+    const normal = [
+      rowDir[1] * colDir[2] - rowDir[2] * colDir[1],
+      rowDir[2] * colDir[0] - rowDir[0] * colDir[2],
+      rowDir[0] * colDir[1] - rowDir[1] * colDir[0]
+    ];
+    parsed.sort((a, b) => {
+      if (!a.imagePosition || !b.imagePosition) return (a.instanceNumber || 0) - (b.instanceNumber || 0);
+      const za = a.imagePosition[0] * normal[0] + a.imagePosition[1] * normal[1] + a.imagePosition[2] * normal[2];
+      const zb = b.imagePosition[0] * normal[0] + b.imagePosition[1] * normal[1] + b.imagePosition[2] * normal[2];
+      return za - zb;
+    });
+  } else {
+    parsed.sort((a, b) => (a.instanceNumber || 0) - (b.instanceNumber || 0));
+  }
+
+  const rows = ref.rows;
+  const cols = ref.cols;
+  const sliceSize = rows * cols;
+  const numSlices = parsed.length;
+  const volume = new Float32Array(sliceSize * numSlices);
+
+  for (let i = 0; i < numSlices; i++) {
+    const sl = parsed[i];
+    if (sl.rows !== rows || sl.cols !== cols) {
+      throw new Error(`スライス ${i + 1} のマトリクスサイズが異なります（${sl.rows}x${sl.cols} vs ${rows}x${cols}）`);
+    }
+    volume.set(sl.rawData, i * sliceSize);
+  }
+
+  // Compute actual slice spacing from positions
+  let sliceSpacing = ref.sliceThickness || 1;
+  if (numSlices >= 2 && parsed[0].imagePosition && parsed[1].imagePosition) {
+    const p0 = parsed[0].imagePosition;
+    const p1 = parsed[1].imagePosition;
+    const dist = Math.sqrt((p1[0]-p0[0])**2 + (p1[1]-p0[1])**2 + (p1[2]-p0[2])**2);
+    if (dist > 0) sliceSpacing = dist;
+  }
+
+  return {
+    volume, numSlices, rows, cols,
+    meta: {
+      modality: ref.modality,
+      seriesDescription: ref.seriesDescription,
+      contrastBolusAgent: ref.contrastBolusAgent,
+      pixelSpacing: ref.pixelSpacing || [1, 1],
+      sliceThickness: ref.sliceThickness,
+      sliceSpacing,
+      windowWidth: ref.windowWidth,
+      windowCenter: ref.windowCenter,
+      imageOrientation: ref.imageOrientation,
+    }
+  };
+}
+
+// ================================================================
+//  Compatibility Checker
+// ================================================================
+function checkCompatibility(baseMeta, fuMeta) {
+  const results = [];
+  let hasError = false;
+  let hasWarn = false;
+
+  // Modality
+  const modMatch = baseMeta.modality === fuMeta.modality;
+  results.push({
+    item: 'モダリティ',
+    base: baseMeta.modality || '不明',
+    fu: fuMeta.modality || '不明',
+    status: modMatch ? 'ok' : 'error',
+    msg: modMatch ? '一致' : '不一致'
+  });
+  if (!modMatch) hasError = true;
+
+  // Contrast
+  const baseContrast = baseMeta.contrastBolusAgent ? 'あり' : 'なし';
+  const fuContrast = fuMeta.contrastBolusAgent ? 'あり' : 'なし';
+  const contrastMatch = baseContrast === fuContrast;
+  results.push({
+    item: '造影条件',
+    base: baseContrast + (baseMeta.contrastBolusAgent ? ` (${baseMeta.contrastBolusAgent})` : ''),
+    fu: fuContrast + (fuMeta.contrastBolusAgent ? ` (${fuMeta.contrastBolusAgent})` : ''),
+    status: contrastMatch ? 'ok' : 'error',
+    msg: contrastMatch ? '一致' : '不一致'
+  });
+  if (!contrastMatch) hasError = true;
+
+  // Series description (warning only)
+  const descMatch = baseMeta.seriesDescription.toLowerCase() === fuMeta.seriesDescription.toLowerCase();
+  results.push({
+    item: 'シリーズ種別',
+    base: baseMeta.seriesDescription || '不明',
+    fu: fuMeta.seriesDescription || '不明',
+    status: descMatch ? 'ok' : 'warn',
+    msg: descMatch ? '一致' : '異なる可能性'
+  });
+  if (!descMatch) hasWarn = true;
+
+  // Matrix size
+  const matrixMatch = baseMeta.rows === fuMeta.rows && baseMeta.cols === fuMeta.cols;
+  results.push({
+    item: 'マトリクスサイズ',
+    base: `${baseMeta.cols} x ${baseMeta.rows}`,
+    fu: `${fuMeta.cols} x ${fuMeta.rows}`,
+    status: matrixMatch ? 'ok' : 'error',
+    msg: matrixMatch ? '一致' : '不一致（同一マトリクスが必要）'
+  });
+  if (!matrixMatch) hasError = true;
+
+  // Pixel spacing (check both X and Y)
+  const bps = baseMeta.pixelSpacing;
+  const fps = fuMeta.pixelSpacing;
+  const psDiffX = Math.abs(bps[0] - fps[0]) / Math.max(bps[0], 0.001);
+  const psDiffY = Math.abs(bps[1] - fps[1]) / Math.max(bps[1], 0.001);
+  const psDiffRatio = Math.max(psDiffX, psDiffY);
+  const psStatus = psDiffRatio < 0.05 ? 'ok' : psDiffRatio < 0.5 ? 'warn' : 'error';
+  results.push({
+    item: 'PixelSpacing',
+    base: `${bps[0].toFixed(3)} x ${bps[1].toFixed(3)} mm`,
+    fu: `${fps[0].toFixed(3)} x ${fps[1].toFixed(3)} mm`,
+    status: psStatus,
+    msg: psDiffRatio < 0.05 ? '一致' : `差 ${(psDiffRatio * 100).toFixed(1)}%`
+  });
+  if (psDiffRatio >= 0.05) hasWarn = true;
+  if (psDiffRatio >= 0.5) hasError = true;
+
+  // Slice thickness
+  const stDiff = baseMeta.sliceThickness && fuMeta.sliceThickness
+    ? Math.abs(baseMeta.sliceThickness - fuMeta.sliceThickness) / Math.max(baseMeta.sliceThickness, 0.001) : 0;
+  const stStatus = stDiff < 0.05 ? 'ok' : stDiff < 0.5 ? 'warn' : 'error';
+  results.push({
+    item: 'SliceThickness',
+    base: baseMeta.sliceThickness ? `${baseMeta.sliceThickness.toFixed(2)} mm` : '不明',
+    fu: fuMeta.sliceThickness ? `${fuMeta.sliceThickness.toFixed(2)} mm` : '不明',
+    status: stStatus,
+    msg: stDiff < 0.05 ? '一致' : `差 ${(stDiff * 100).toFixed(1)}%`
+  });
+  if (stDiff >= 0.05) hasWarn = true;
+  if (stDiff >= 0.5) hasError = true;
+
+  return {
+    results,
+    status: hasError ? 'error' : hasWarn ? 'warn' : 'ok',
+    compatible: !hasError
+  };
+}
+
+// ================================================================
+//  Upload handlers
+// ================================================================
+function setupUploadZone(dropId, fileId, folderId, infoId, onLoaded) {
+  const drop = $(dropId);
+
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault();
+    drop.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files, drop, infoId, onLoaded);
+  });
+  $(fileId).addEventListener('change', e => {
+    if (e.target.files.length) handleFiles(e.target.files, drop, infoId, onLoaded);
+  });
+  $(folderId).addEventListener('change', e => {
+    if (e.target.files.length) handleFiles(e.target.files, drop, infoId, onLoaded);
+  });
+}
+
+async function handleFiles(files, dropEl, infoId, onLoaded) {
+  const msgArea = $('uploadMsg');
+  msgArea.textContent = '';
+  dropEl.querySelector('.upload-zone-sub').textContent = `${files.length} ファイル読み込み中...`;
+
+  try {
+    const series = await loadSeries(files);
+    dropEl.classList.add('loaded');
+    dropEl.querySelector('.upload-zone-sub').textContent = `${series.numSlices} スライス読み込み完了`;
+
+    // Show series info
+    const infoEl = $(infoId);
+    infoEl.textContent = '';
+    [
+      infoRow('モダリティ', series.meta.modality || '不明'),
+      infoRow('シリーズ', series.meta.seriesDescription || '不明'),
+      infoRow('造影', series.meta.contrastBolusAgent || 'なし'),
+      infoRow('マトリクス', `${series.cols} x ${series.rows}`),
+      infoRow('スライス数', String(series.numSlices)),
+      infoRow('PixelSpacing', series.meta.pixelSpacing.map(v => v.toFixed(3)).join(' x ') + ' mm'),
+      infoRow('SliceThickness', series.meta.sliceThickness ? series.meta.sliceThickness.toFixed(2) + ' mm' : '不明'),
+    ].forEach(el => infoEl.appendChild(el));
+    infoEl.classList.add('show');
+
+    onLoaded(series);
+  } catch (e) {
+    addMsg(msgArea, e.message, 'error');
+    dropEl.querySelector('.upload-zone-sub').textContent = 'DICOMファイルをドラッグ&ドロップ\nまたはクリックして複数選択';
+  }
+}
+
+function infoRow(label, value) {
+  const row = document.createElement('div');
+  row.className = 'series-info-row';
+  const lbl = document.createElement('span');
+  lbl.className = 'series-info-label';
+  lbl.textContent = label;
+  const val = document.createElement('span');
+  val.textContent = value;
+  row.appendChild(lbl);
+  row.appendChild(val);
+  return row;
+}
+
+function addMsg(container, text, type) {
+  const div = document.createElement('div');
+  div.className = 'msg msg-' + (type === 'error' ? 'error' : type === 'warning' ? 'warn' : 'info');
+  div.textContent = text;
+  container.appendChild(div);
+}
+
+// ================================================================
+//  Compatibility display
+// ================================================================
+function showCompatibility() {
+  if (!baselineSeries || !followupSeries) return;
+
+  // Add matrix size to meta for compatibility check
+  const baseMeta = { ...baselineSeries.meta, rows: baselineSeries.rows, cols: baselineSeries.cols };
+  const fuMeta = { ...followupSeries.meta, rows: followupSeries.rows, cols: followupSeries.cols };
+  const compat = checkCompatibility(baseMeta, fuMeta);
+
+  // Status badge
+  const statusEl = $('compatStatus');
+  statusEl.textContent = '';
+  const badge = document.createElement('div');
+  badge.className = 'compat-status ' + compat.status;
+  const icons = { ok: '✅', warn: '⚠️', error: '❌' };
+  const labels = { ok: '比較可能', warn: '警告あり（比較可能）', error: '比較不可' };
+  badge.textContent = icons[compat.status] + ' ' + labels[compat.status];
+  statusEl.appendChild(badge);
+
+  // Table
+  const tbody = $('compatBody');
+  tbody.textContent = '';
+  compat.results.forEach(r => {
+    const tr = document.createElement('tr');
+    [r.item, r.base, r.fu].forEach(text => {
+      const td = document.createElement('td');
+      td.textContent = text;
+      tr.appendChild(td);
+    });
+    const tdStatus = document.createElement('td');
+    tdStatus.className = 'compat-' + r.status;
+    tdStatus.textContent = r.msg;
+    tr.appendChild(tdStatus);
+    tbody.appendChild(tr);
+  });
+
+  $('compatCard').classList.remove('hidden');
+  $('processCard').classList.remove('hidden');
+
+  if (compat.compatible) {
+    $('btnStart').disabled = false;
+    $('processMsg').textContent = '';
+  } else {
+    $('btnStart').disabled = true;
+    $('processMsg').textContent = '';
+    addMsg($('processMsg'), '互換性チェックでエラーが検出されました。比較条件を満たさないため、差分計算はできません。', 'error');
+  }
+}
+
+// ================================================================
+//  Init upload zones
+// ================================================================
+setupUploadZone('dropBaseline', 'fileBaseline', 'folderBaseline', 'infoBaseline', series => {
+  baselineSeries = series;
+  showCompatibility();
+});
+setupUploadZone('dropFollowup', 'fileFollowup', 'folderFollowup', 'infoFollowup', series => {
+  followupSeries = series;
+  showCompatibility();
+});
+
+// ================================================================
+//  Registration Worker (inline Blob)
+// ================================================================
+function buildWorkerCode() {
+  return `
+'use strict';
+
+// ── NCC ──
+function computeNCC(a, b, n) {
+  let meanA = 0, meanB = 0;
+  for (let i = 0; i < n; i++) { meanA += a[i]; meanB += b[i]; }
+  meanA /= n; meanB /= n;
+  let num = 0, denA = 0, denB = 0;
+  for (let i = 0; i < n; i++) {
+    const da = a[i] - meanA, db = b[i] - meanB;
+    num += da * db; denA += da * da; denB += db * db;
+  }
+  const den = Math.sqrt(denA * denB);
+  return den > 1e-12 ? num / den : 0;
+}
+
+// ── Downsample 2D ──
+function downsample(data, rows, cols, factor) {
+  const nr = Math.floor(rows / factor), nc = Math.floor(cols / factor);
+  const out = new Float32Array(nr * nc);
+  const f2 = factor * factor;
+  for (let y = 0; y < nr; y++) {
+    for (let x = 0; x < nc; x++) {
+      let sum = 0;
+      for (let dy = 0; dy < factor; dy++)
+        for (let dx = 0; dx < factor; dx++)
+          sum += data[(y * factor + dy) * cols + (x * factor + dx)];
+      out[y * nc + x] = sum / f2;
+    }
+  }
+  return { data: out, rows: nr, cols: nc };
+}
+
+// ── Apply 2D rigid transform (inverse mapping + bilinear) ──
+function applyRigid2D(src, rows, cols, tx, ty, theta) {
+  const out = new Float32Array(rows * cols);
+  const cosT = Math.cos(theta), sinT = Math.sin(theta);
+  const cx = cols / 2, cy = rows / 2;
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const dx = x - cx, dy = y - cy;
+      const sx = cosT * dx + sinT * dy + cx - tx;
+      const sy = -sinT * dx + cosT * dy + cy - ty;
+      const x0 = Math.floor(sx), y0 = Math.floor(sy);
+      const fx = sx - x0, fy = sy - y0;
+      if (x0 >= 0 && x0 + 1 < cols && y0 >= 0 && y0 + 1 < rows) {
+        out[y * cols + x] =
+          (1 - fx) * (1 - fy) * src[y0 * cols + x0] +
+          fx * (1 - fy) * src[y0 * cols + x0 + 1] +
+          (1 - fx) * fy * src[(y0 + 1) * cols + x0] +
+          fx * fy * src[(y0 + 1) * cols + x0 + 1];
+      }
+    }
+  }
+  return out;
+}
+
+// ── Apply 2D affine transform (inverse mapping + bilinear) ──
+function applyAffine2D(src, rows, cols, params) {
+  // params: [tx, ty, theta, sx, sy, shear]
+  const [tx, ty, theta, scaleX, scaleY, shear] = params;
+  const out = new Float32Array(rows * cols);
+  const cosT = Math.cos(theta), sinT = Math.sin(theta);
+  const cx = cols / 2, cy = rows / 2;
+
+  // Forward matrix: Scale → Shear → Rotate → Translate
+  // We need the inverse for backward mapping
+  // M = T * R * Sh * S
+  // M_inv = S_inv * Sh_inv * R_inv * T_inv
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      // Translate to center
+      let px = x - cx - tx, py = y - cy - ty;
+      // Inverse rotate
+      const rx = cosT * px - sinT * py;
+      const ry = sinT * px + cosT * py;
+      // Inverse shear
+      const hx = rx - shear * ry;
+      const hy = ry;
+      // Inverse scale
+      const sx2 = hx / scaleX + cx;
+      const sy2 = hy / scaleY + cy;
+
+      const x0 = Math.floor(sx2), y0 = Math.floor(sy2);
+      const fx = sx2 - x0, fy = sy2 - y0;
+      if (x0 >= 0 && x0 + 1 < cols && y0 >= 0 && y0 + 1 < rows) {
+        out[y * cols + x] =
+          (1 - fx) * (1 - fy) * src[y0 * cols + x0] +
+          fx * (1 - fy) * src[y0 * cols + x0 + 1] +
+          (1 - fx) * fy * src[(y0 + 1) * cols + x0] +
+          fx * fy * src[(y0 + 1) * cols + x0 + 1];
+      }
+    }
+  }
+  return out;
+}
+
+// ── B-spline basis (cubic) ──
+function bsplineBasis(t) {
+  const t2 = t * t, t3 = t2 * t;
+  return [
+    (1 - 3*t + 3*t2 - t3) / 6,
+    (4 - 6*t2 + 3*t3) / 6,
+    (1 + 3*t + 3*t2 - 3*t3) / 6,
+    t3 / 6
+  ];
+}
+
+// ── Apply 2D B-spline deformation ──
+function applyBspline2D(src, rows, cols, cpX, cpY, nCpX, nCpY, spacingX, spacingY, maxDisp) {
+  const out = new Float32Array(rows * cols);
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      // Compute displacement from B-spline
+      const u = x / spacingX - 0.5;
+      const v = y / spacingY - 0.5;
+      const iu = Math.floor(u), iv = Math.floor(v);
+      const fu = u - iu, fv = v - iv;
+      const bu = bsplineBasis(fu), bv = bsplineBasis(fv);
+
+      let dx = 0, dy = 0;
+      for (let jj = 0; jj < 4; jj++) {
+        const cpj = iv + jj - 1;
+        if (cpj < 0 || cpj >= nCpY) continue;
+        for (let ii = 0; ii < 4; ii++) {
+          const cpi = iu + ii - 1;
+          if (cpi < 0 || cpi >= nCpX) continue;
+          const w = bu[ii] * bv[jj];
+          const idx = cpj * nCpX + cpi;
+          dx += w * cpX[idx];
+          dy += w * cpY[idx];
+        }
+      }
+
+      // Clamp displacement
+      const dispMag = Math.sqrt(dx * dx + dy * dy);
+      if (dispMag > maxDisp) {
+        const scale = maxDisp / dispMag;
+        dx *= scale;
+        dy *= scale;
+      }
+
+      const sx = x - dx, sy = y - dy;
+      const x0 = Math.floor(sx), y0 = Math.floor(sy);
+      const fx2 = sx - x0, fy2 = sy - y0;
+      if (x0 >= 0 && x0 + 1 < cols && y0 >= 0 && y0 + 1 < rows) {
+        out[y * cols + x] =
+          (1 - fx2) * (1 - fy2) * src[y0 * cols + x0] +
+          fx2 * (1 - fy2) * src[y0 * cols + x0 + 1] +
+          (1 - fx2) * fy2 * src[(y0 + 1) * cols + x0] +
+          fx2 * fy2 * src[(y0 + 1) * cols + x0 + 1];
+      }
+    }
+  }
+  return out;
+}
+
+// ── Nelder-Mead optimizer ──
+function nelderMead(costFn, x0, maxIter, tol) {
+  const n = x0.length;
+  const alpha = 1, gamma = 2, rho = 0.5, sigma = 0.5;
+
+  // Init simplex
+  let simplex = [x0.slice()];
+  for (let i = 0; i < n; i++) {
+    const v = x0.slice();
+    v[i] += Math.abs(v[i]) > 1e-8 ? 0.05 * Math.abs(v[i]) : 0.5;
+    simplex.push(v);
+  }
+  let values = simplex.map(costFn);
+
+  for (let iter = 0; iter < maxIter; iter++) {
+    // Sort
+    const idx = Array.from({length: n + 1}, (_, i) => i);
+    idx.sort((a, b) => values[a] - values[b]);
+    simplex = idx.map(i => simplex[i]);
+    values = idx.map(i => values[i]);
+
+    if (Math.abs(values[n] - values[0]) < tol) break;
+
+    // Centroid
+    const centroid = new Array(n).fill(0);
+    for (let i = 0; i < n; i++)
+      for (let j = 0; j < n; j++)
+        centroid[j] += simplex[i][j];
+    for (let j = 0; j < n; j++) centroid[j] /= n;
+
+    // Reflection
+    const xr = centroid.map((c, j) => c + alpha * (c - simplex[n][j]));
+    const fr = costFn(xr);
+
+    if (fr < values[n - 1] && fr >= values[0]) {
+      simplex[n] = xr; values[n] = fr; continue;
+    }
+
+    if (fr < values[0]) {
+      const xe = centroid.map((c, j) => c + gamma * (xr[j] - c));
+      const fe = costFn(xe);
+      if (fe < fr) { simplex[n] = xe; values[n] = fe; }
+      else { simplex[n] = xr; values[n] = fr; }
+      continue;
+    }
+
+    const xc = centroid.map((c, j) => c + rho * (simplex[n][j] - c));
+    const fc = costFn(xc);
+    if (fc < values[n]) {
+      simplex[n] = xc; values[n] = fc; continue;
+    }
+
+    // Shrink
+    for (let i = 1; i <= n; i++) {
+      for (let j = 0; j < n; j++)
+        simplex[i][j] = simplex[0][j] + sigma * (simplex[i][j] - simplex[0][j]);
+      values[i] = costFn(simplex[i]);
+    }
+  }
+
+  let bestIdx = 0;
+  for (let i = 1; i <= n; i++) if (values[i] < values[bestIdx]) bestIdx = i;
+  return { params: simplex[bestIdx], cost: values[bestIdx] };
+}
+
+// ── Estimate z-shift ──
+function estimateZShift(baseVol, fuVol, rows, cols, numBaseSlices, numFuSlices) {
+  const sliceSize = rows * cols;
+  // Downsample each slice to thumbnails
+  const thumbFactor = Math.max(1, Math.floor(Math.min(rows, cols) / 32));
+  const baseThumbs = [];
+  const fuThumbs = [];
+
+  for (let i = 0; i < numBaseSlices; i++) {
+    const sl = baseVol.subarray(i * sliceSize, (i + 1) * sliceSize);
+    const d = downsample(sl, rows, cols, thumbFactor);
+    baseThumbs.push(d);
+  }
+  for (let i = 0; i < numFuSlices; i++) {
+    const sl = fuVol.subarray(i * sliceSize, (i + 1) * sliceSize);
+    const d = downsample(sl, rows, cols, thumbFactor);
+    fuThumbs.push(d);
+  }
+
+  const maxShift = Math.max(1, Math.floor(numBaseSlices * 0.25));
+  let bestShift = 0, bestNCC = -Infinity;
+
+  for (let shift = -maxShift; shift <= maxShift; shift++) {
+    let nccSum = 0, count = 0;
+    for (let i = 0; i < numBaseSlices; i++) {
+      const j = i + shift;
+      if (j >= 0 && j < numFuSlices) {
+        nccSum += computeNCC(baseThumbs[i].data, fuThumbs[j].data, baseThumbs[i].rows * baseThumbs[i].cols);
+        count++;
+      }
+    }
+    if (count > 0) {
+      const avgNCC = nccSum / count;
+      if (avgNCC > bestNCC) { bestNCC = avgNCC; bestShift = shift; }
+    }
+  }
+  return bestShift;
+}
+
+// ── Main registration pipeline ──
+self.onmessage = function(e) {
+  const { baseVol, fuVol, rows, cols, numBaseSlices, numFuSlices, pixelSpacing } = e.data;
+  const sliceSize = rows * cols;
+
+  self.postMessage({ type: 'progress', pct: 2, label: 'Z方向シフト推定中...' });
+
+  // Step 0: Z-shift estimation
+  const zShift = estimateZShift(baseVol, fuVol, rows, cols, numBaseSlices, numFuSlices);
+
+  // Determine matched slice range
+  const matchStart = Math.max(0, -zShift);
+  const fuStart = Math.max(0, zShift);
+  const matchCount = Math.min(numBaseSlices - matchStart, numFuSlices - fuStart);
+
+  if (matchCount < 3) {
+    self.postMessage({ type: 'error', msg: 'マッチするスライスが少なすぎます（3枚未満）' });
+    return;
+  }
+
+  self.postMessage({ type: 'progress', pct: 8, label: '剛体位置合わせ（粗い）...' });
+
+  // Select key slices (5 evenly spaced, avoiding edges)
+  const margin = Math.max(1, Math.floor(matchCount * 0.1));
+  const usable = matchCount - 2 * margin;
+  const numKey = Math.min(5, usable);
+  const keyIndices = [];
+  for (let k = 0; k < numKey; k++) {
+    keyIndices.push(matchStart + margin + Math.round(k * (usable - 1) / Math.max(1, numKey - 1)));
+  }
+
+  // Compute NCC before registration
+  let nccBefore = 0;
+  for (const ki of keyIndices) {
+    const baseSlice = baseVol.subarray(ki * sliceSize, (ki + 1) * sliceSize);
+    const fuIdx = ki - matchStart + fuStart;
+    const fuSlice = fuVol.subarray(fuIdx * sliceSize, (fuIdx + 1) * sliceSize);
+    nccBefore += computeNCC(baseSlice, fuSlice, sliceSize);
+  }
+  nccBefore /= keyIndices.length;
+
+  // ── Step 1: Rigid registration (multi-resolution) ──
+  let rigidParams = [0, 0, 0]; // tx, ty, theta
+
+  for (const factor of [4, 2, 1]) {
+    const costFn = (p) => {
+      let totalNCC = 0;
+      for (const ki of keyIndices) {
+        const baseSlice = baseVol.subarray(ki * sliceSize, (ki + 1) * sliceSize);
+        const fuIdx = ki - matchStart + fuStart;
+        const fuSlice = fuVol.subarray(fuIdx * sliceSize, (fuIdx + 1) * sliceSize);
+
+        let bData, fData, r, c;
+        if (factor > 1) {
+          const bd = downsample(baseSlice, rows, cols, factor);
+          const fd = downsample(fuSlice, rows, cols, factor);
+          bData = bd.data; fData = fd.data; r = bd.rows; c = bd.cols;
+        } else {
+          bData = baseSlice; fData = fuSlice; r = rows; c = cols;
+        }
+
+        const transformed = applyRigid2D(fData, r, c,
+          p[0] / factor, p[1] / factor, p[2]);
+        totalNCC += computeNCC(bData, transformed, r * c);
+      }
+      return -totalNCC / keyIndices.length;
+    };
+
+    const maxIter = factor > 1 ? 200 : 150;
+    const result = nelderMead(costFn, rigidParams, maxIter, 1e-8);
+    rigidParams = result.params;
+
+    if (factor === 4) self.postMessage({ type: 'progress', pct: 20, label: '剛体位置合わせ（中間）...' });
+    if (factor === 2) self.postMessage({ type: 'progress', pct: 35, label: '剛体位置合わせ（精密）...' });
+  }
+
+  self.postMessage({ type: 'progress', pct: 45, label: '簡易affine補正...' });
+
+  // ── Step 2: Affine refinement ──
+  let affineParams = [rigidParams[0], rigidParams[1], rigidParams[2], 1.0, 1.0, 0.0];
+  // params: tx, ty, theta, scaleX, scaleY, shear
+
+  const affineCostFn = (p) => {
+    // Enforce constraints
+    if (p[3] < 0.9 || p[3] > 1.1) return 1e6;
+    if (p[4] < 0.9 || p[4] > 1.1) return 1e6;
+    if (Math.abs(p[5]) > 0.087) return 1e6; // ~5 degrees
+
+    let totalNCC = 0;
+    for (const ki of keyIndices) {
+      const baseSlice = baseVol.subarray(ki * sliceSize, (ki + 1) * sliceSize);
+      const fuIdx = ki - matchStart + fuStart;
+      const fuSlice = fuVol.subarray(fuIdx * sliceSize, (fuIdx + 1) * sliceSize);
+
+      // Use 2x downsample for speed
+      const bd = downsample(baseSlice, rows, cols, 2);
+      const fd = downsample(fuSlice, rows, cols, 2);
+      const sp = [p[0] / 2, p[1] / 2, p[2], p[3], p[4], p[5]];
+      const transformed = applyAffine2D(fd.data, bd.rows, bd.cols, sp);
+      totalNCC += computeNCC(bd.data, transformed, bd.rows * bd.cols);
+    }
+    return -totalNCC / keyIndices.length;
+  };
+
+  const affineResult = nelderMead(affineCostFn, affineParams, 300, 1e-8);
+  affineParams = affineResult.params;
+
+  self.postMessage({ type: 'progress', pct: 60, label: '弱い非剛体位置合わせ...' });
+
+  // ── Step 3: Weak B-spline deformable (per-slice, downsampled optimization) ──
+  // Use large control point spacing and optimize on downsampled images for performance
+  const dsFactor = 4; // optimize on 4x downsampled images
+  const dsRows = Math.floor(rows / dsFactor);
+  const dsCols = Math.floor(cols / dsFactor);
+  const dsSize = dsRows * dsCols;
+
+  // Control point spacing in downsampled pixel units (~30mm)
+  const cpSpacingDs = Math.max(4, Math.round(30 / (pixelSpacing[0] * dsFactor)));
+  const nCpX = Math.ceil(dsCols / cpSpacingDs) + 3;
+  const nCpY = Math.ceil(dsRows / cpSpacingDs) + 3;
+  const maxDispDs = Math.max(1, Math.round(5 / (pixelSpacing[0] * dsFactor))); // 5mm max in ds pixels
+
+  // Full-resolution B-spline params for final application
+  const cpSpacingFull = cpSpacingDs * dsFactor;
+  const maxDispFull = Math.round(5 / pixelSpacing[0]);
+
+  // Build output volume
+  const outSlices = matchCount;
+  const outVol = new Float32Array(sliceSize * outSlices);
+
+  for (let si = 0; si < outSlices; si++) {
+    const baseIdx = matchStart + si;
+    const fuIdx = fuStart + si;
+    const baseSlice = baseVol.subarray(baseIdx * sliceSize, (baseIdx + 1) * sliceSize);
+    const fuSlice = fuVol.subarray(fuIdx * sliceSize, (fuIdx + 1) * sliceSize);
+
+    // Apply affine transform first
+    const affineTransformed = applyAffine2D(fuSlice, rows, cols, affineParams);
+
+    // Downsample for B-spline optimization
+    const baseDs = downsample(baseSlice, rows, cols, dsFactor);
+    const affineDs = downsample(affineTransformed, rows, cols, dsFactor);
+
+    // Optimize B-spline on downsampled images
+    const cpX = new Float32Array(nCpX * nCpY);
+    const cpY = new Float32Array(nCpX * nCpY);
+    const numCp = nCpX * nCpY;
+
+    const lr = 0.5;
+    const lambda = 0.15; // regularization
+    const numIter = 10;
+    const eps = 0.5;
+
+    for (let iter = 0; iter < numIter; iter++) {
+      for (let ci = 0; ci < numCp; ci++) {
+        // X gradient
+        cpX[ci] += eps;
+        const dp = applyBspline2D(affineDs.data, dsRows, dsCols, cpX, cpY, nCpX, nCpY, cpSpacingDs, cpSpacingDs, maxDispDs);
+        const np = computeNCC(baseDs.data, dp, dsSize);
+        cpX[ci] -= 2 * eps;
+        const dm = applyBspline2D(affineDs.data, dsRows, dsCols, cpX, cpY, nCpX, nCpY, cpSpacingDs, cpSpacingDs, maxDispDs);
+        const nm = computeNCC(baseDs.data, dm, dsSize);
+        cpX[ci] += eps;
+        cpX[ci] += lr * ((np - nm) / (2 * eps) - lambda * cpX[ci]);
+
+        // Y gradient
+        cpY[ci] += eps;
+        const dpy = applyBspline2D(affineDs.data, dsRows, dsCols, cpX, cpY, nCpX, nCpY, cpSpacingDs, cpSpacingDs, maxDispDs);
+        const npy = computeNCC(baseDs.data, dpy, dsSize);
+        cpY[ci] -= 2 * eps;
+        const dmy = applyBspline2D(affineDs.data, dsRows, dsCols, cpX, cpY, nCpX, nCpY, cpSpacingDs, cpSpacingDs, maxDispDs);
+        const nmy = computeNCC(baseDs.data, dmy, dsSize);
+        cpY[ci] += eps;
+        cpY[ci] += lr * ((npy - nmy) / (2 * eps) - lambda * cpY[ci]);
+      }
+    }
+
+    // Scale control point displacements to full resolution and apply
+    const cpXFull = new Float32Array(numCp);
+    const cpYFull = new Float32Array(numCp);
+    for (let i = 0; i < numCp; i++) {
+      cpXFull[i] = cpX[i] * dsFactor;
+      cpYFull[i] = cpY[i] * dsFactor;
+    }
+
+    const finalSlice = applyBspline2D(affineTransformed, rows, cols, cpXFull, cpYFull, nCpX, nCpY, cpSpacingFull, cpSpacingFull, maxDispFull);
+    outVol.set(finalSlice, si * sliceSize);
+
+    if (si % Math.max(1, Math.floor(outSlices / 10)) === 0) {
+      const pct = 60 + Math.round(35 * si / outSlices);
+      self.postMessage({ type: 'progress', pct, label: '非剛体位置合わせ (' + (si + 1) + '/' + outSlices + ')...' });
+    }
+  }
+
+  self.postMessage({ type: 'progress', pct: 96, label: '差分計算中...' });
+
+  // Compute NCC after registration
+  let nccAfter = 0;
+  for (const ki of keyIndices) {
+    const localIdx = ki - matchStart;
+    if (localIdx < 0 || localIdx >= outSlices) continue;
+    const baseSlice = baseVol.subarray(ki * sliceSize, (ki + 1) * sliceSize);
+    const regSlice = outVol.subarray(localIdx * sliceSize, (localIdx + 1) * sliceSize);
+    nccAfter += computeNCC(baseSlice, regSlice, sliceSize);
+  }
+  nccAfter /= keyIndices.length;
+
+  const resultMsg = {
+    type: 'result',
+    registeredVol: outVol,
+    matchStart,
+    matchCount: outSlices,
+    zShift,
+    rigidParams,
+    affineParams,
+    nccBefore,
+    nccAfter,
+    pixelSpacing
+  };
+  self.postMessage(resultMsg, [outVol.buffer]);
+};
+`;
+}
+
+// ================================================================
+//  Start registration
+// ================================================================
+$('btnStart').addEventListener('click', startRegistration);
+
+function startRegistration() {
+  if (!baselineSeries || !followupSeries || isProcessing) return;
+  isProcessing = true;
+
+  $('btnStart').disabled = true;
+  $('btnCancel').classList.remove('hidden');
+  $('progressSection').classList.remove('hidden');
+  $('resultCard').classList.add('hidden');
+  $('processMsg').textContent = '';
+
+  const blob = new Blob([buildWorkerCode()], { type: 'application/javascript' });
+  const blobUrl = URL.createObjectURL(blob);
+  const worker = new Worker(blobUrl);
+  workerRef = worker;
+
+  worker.onmessage = function(e) {
+    const msg = e.data;
+    if (msg.type === 'progress') {
+      $('progressBar').style.width = msg.pct + '%';
+      $('progressBar').textContent = msg.pct + '%';
+      $('progressLabel').textContent = msg.label;
+    } else if (msg.type === 'error') {
+      addMsg($('processMsg'), msg.msg, 'error');
+      cleanup();
+    } else if (msg.type === 'result') {
+      onRegistrationComplete(msg);
+      cleanup();
+    }
+  };
+
+  worker.onerror = function(err) {
+    addMsg($('processMsg'), '位置合わせ中にエラーが発生しました: ' + err.message, 'error');
+    cleanup();
+  };
+
+  function cleanup() {
+    isProcessing = false;
+    $('btnStart').disabled = false;
+    $('btnCancel').classList.add('hidden');
+    worker.terminate();
+    workerRef = null;
+    URL.revokeObjectURL(blobUrl);
+  }
+
+  // Copy volumes for Transferable transfer (originals stay intact for re-run)
+  const baseVolCopy = baselineSeries.volume.slice();
+  const fuVolCopy = followupSeries.volume.slice();
+
+  worker.postMessage({
+    baseVol: baseVolCopy,
+    fuVol: fuVolCopy,
+    rows: baselineSeries.rows,
+    cols: baselineSeries.cols,
+    numBaseSlices: baselineSeries.numSlices,
+    numFuSlices: followupSeries.numSlices,
+    pixelSpacing: baselineSeries.meta.pixelSpacing,
+  }, [baseVolCopy.buffer, fuVolCopy.buffer]);
+}
+
+$('btnCancel').addEventListener('click', () => {
+  if (workerRef) {
+    workerRef.terminate();
+    workerRef = null;
+  }
+  isProcessing = false;
+  $('btnStart').disabled = false;
+  $('btnCancel').classList.add('hidden');
+  $('progressSection').classList.add('hidden');
+  $('processMsg').textContent = '';
+});
+
+// ================================================================
+//  Registration complete → show results
+// ================================================================
+function onRegistrationComplete(result) {
+  const { registeredVol, matchStart, matchCount, zShift, rigidParams, affineParams, nccBefore, nccAfter, pixelSpacing } = result;
+
+  const rows = baselineSeries.rows;
+  const cols = baselineSeries.cols;
+  const sliceSize = rows * cols;
+
+  registeredVolume = registeredVol;
+
+  // Compute difference volumes
+  diffVolume = new Float32Array(sliceSize * matchCount);
+  absDiffVolume = new Float32Array(sliceSize * matchCount);
+
+  for (let i = 0; i < sliceSize * matchCount; i++) {
+    const baseVal = baselineSeries.volume[matchStart * sliceSize + i];
+    const regVal = registeredVol[i];
+    diffVolume[i] = regVal - baseVal;
+    absDiffVolume[i] = Math.abs(diffVolume[i]);
+  }
+
+  // QA metrics
+  let sumAbsDiff = 0;
+  let countAbove = 0;
+  const threshold = 10; // default threshold for voxel change counting
+  const totalVoxels = sliceSize * matchCount;
+  for (let i = 0; i < totalVoxels; i++) {
+    sumAbsDiff += absDiffVolume[i];
+    if (absDiffVolume[i] > threshold) countAbove++;
+  }
+
+  $('qaNccBefore').textContent = nccBefore.toFixed(4);
+  $('qaNccAfter').textContent = nccAfter.toFixed(4);
+  $('qaMeanDiff').textContent = (sumAbsDiff / totalVoxels).toFixed(1);
+  $('qaMeanDiffUnit').textContent = baselineSeries.meta.modality === 'CT' ? 'HU' : 'AU';
+  $('qaVoxelPct').textContent = ((countAbove / totalVoxels) * 100).toFixed(1);
+
+  // Registration params display (safe DOM construction)
+  const ps = pixelSpacing[0];
+  const regParamsEl = $('regParams');
+  regParamsEl.textContent = '';
+  const paramItems = [
+    ['Z方向シフト', String(zShift), 'スライス'],
+    ['X方向移動', (rigidParams[0] * ps).toFixed(1), 'mm'],
+    ['Y方向移動', (rigidParams[1] * ps).toFixed(1), 'mm'],
+    ['回転', (rigidParams[2] * 180 / Math.PI).toFixed(2), '°'],
+    ['ScaleX', affineParams[3].toFixed(4), ''],
+    ['ScaleY', affineParams[4].toFixed(4), ''],
+  ];
+  paramItems.forEach(([label, value, unit]) => {
+    const item = document.createElement('div');
+    item.className = 'qa-item';
+    const lbl = document.createElement('div');
+    lbl.className = 'qa-label';
+    lbl.textContent = label;
+    const val = document.createElement('div');
+    val.className = 'qa-value';
+    val.textContent = value;
+    if (unit) {
+      const u = document.createElement('span');
+      u.className = 'qa-unit';
+      u.textContent = unit;
+      val.appendChild(u);
+    }
+    item.appendChild(lbl);
+    item.appendChild(val);
+    regParamsEl.appendChild(item);
+  });
+
+  // Store match info for viewer
+  baselineSeries._matchStart = matchStart;
+  baselineSeries._matchCount = matchCount;
+
+  // Setup viewer
+  const sliceSlider = $('sliceSlider');
+  sliceSlider.max = matchCount - 1;
+  sliceSlider.value = Math.floor(matchCount / 2);
+  currentSlice = Math.floor(matchCount / 2);
+
+  // WW/WL defaults
+  $('ctrlWW').value = baselineSeries.meta.windowWidth;
+  $('ctrlWL').value = baselineSeries.meta.windowCenter;
+  $('valWW').textContent = Math.round(baselineSeries.meta.windowWidth);
+  $('valWL').textContent = Math.round(baselineSeries.meta.windowCenter);
+
+  // Show result card and render
+  $('resultCard').classList.remove('hidden');
+  $('progressBar').style.width = '100%';
+  $('progressBar').textContent = '100%';
+  $('progressLabel').textContent = '完了';
+
+  // NCC quality warning
+  if (nccAfter < 0.7) {
+    addMsg($('processMsg'), '位置合わせの精度が低い可能性があります（NCC < 0.7）。結果の解釈にご注意ください。', 'warning');
+  }
+
+  renderViewer();
+}
+
+// ================================================================
+//  Rendering
+// ================================================================
+function renderViewer() {
+  if (!registeredVolume || !baselineSeries) return;
+
+  const rows = baselineSeries.rows;
+  const cols = baselineSeries.cols;
+  const sliceSize = rows * cols;
+  const matchStart = baselineSeries._matchStart;
+
+  const ww = parseFloat($('ctrlWW').value);
+  const wl = parseFloat($('ctrlWL').value);
+  const thresh = parseFloat($('ctrlThresh').value);
+  const opacity = parseFloat($('ctrlOpacity').value) / 100;
+
+  // Baseline slice
+  const baseData = baselineSeries.volume.subarray(
+    (matchStart + currentSlice) * sliceSize,
+    (matchStart + currentSlice + 1) * sliceSize
+  );
+
+  // Registered follow-up slice
+  const regData = registeredVolume.subarray(
+    currentSlice * sliceSize,
+    (currentSlice + 1) * sliceSize
+  );
+
+  // Diff slice
+  const diffData = diffVolume.subarray(
+    currentSlice * sliceSize,
+    (currentSlice + 1) * sliceSize
+  );
+
+  const absDiffData = absDiffVolume.subarray(
+    currentSlice * sliceSize,
+    (currentSlice + 1) * sliceSize
+  );
+
+  // Render baseline
+  renderGrayscale('cvBase', baseData, rows, cols, ww, wl);
+
+  // Render registered follow-up
+  renderGrayscale('cvFollowup', regData, rows, cols, ww, wl);
+
+  // Render diff panel
+  if (displayMode === 'overlay') {
+    renderColorOverlay('cvDiff', baseData, diffData, rows, cols, ww, wl, thresh, opacity);
+  } else if (displayMode === 'absdiff') {
+    renderAbsDiff('cvDiff', absDiffData, rows, cols, thresh);
+  } else {
+    renderSubtraction('cvDiff', diffData, rows, cols);
+  }
+
+  // Update slice label
+  $('sliceLabel').textContent = `${currentSlice + 1} / ${baselineSeries._matchCount}`;
+}
+
+function renderGrayscale(canvasId, data, rows, cols, ww, wl) {
+  const canvas = $(canvasId);
+  canvas.width = cols;
+  canvas.height = rows;
+  const ctx = canvas.getContext('2d');
+  const imgData = ctx.createImageData(cols, rows);
+  const d = imgData.data;
+  const lower = wl - ww / 2;
+  const upper = wl + ww / 2;
+
+  for (let i = 0; i < rows * cols; i++) {
+    let v = data[i];
+    if (v <= lower) v = 0;
+    else if (v >= upper) v = 255;
+    else v = ((v - lower) / ww) * 255;
+    d[i * 4] = v;
+    d[i * 4 + 1] = v;
+    d[i * 4 + 2] = v;
+    d[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+function renderColorOverlay(canvasId, baseData, diffData, rows, cols, ww, wl, thresh, opacity) {
+  const canvas = $(canvasId);
+  canvas.width = cols;
+  canvas.height = rows;
+  const ctx = canvas.getContext('2d');
+  const imgData = ctx.createImageData(cols, rows);
+  const d = imgData.data;
+  const lower = wl - ww / 2;
+  const upper = wl + ww / 2;
+
+  for (let i = 0; i < rows * cols; i++) {
+    // Base grayscale
+    let bg = baseData[i];
+    if (bg <= lower) bg = 0;
+    else if (bg >= upper) bg = 255;
+    else bg = ((bg - lower) / ww) * 255;
+
+    const diff = diffData[i];
+    const absDiff = Math.abs(diff);
+
+    if (absDiff > thresh) {
+      // Color: blue for decrease, red for increase
+      const intensity = Math.min(1, (absDiff - thresh) / Math.max(1, ww * 0.3));
+      let r, g, b;
+      if (diff > 0) {
+        // Increase: red-yellow
+        r = 255;
+        g = Math.round(100 * (1 - intensity));
+        b = 0;
+      } else {
+        // Decrease: blue-cyan
+        r = 0;
+        g = Math.round(100 * (1 - intensity));
+        b = 255;
+      }
+      d[i * 4] = Math.round(bg * (1 - opacity) + r * opacity);
+      d[i * 4 + 1] = Math.round(bg * (1 - opacity) + g * opacity);
+      d[i * 4 + 2] = Math.round(bg * (1 - opacity) + b * opacity);
+    } else {
+      d[i * 4] = bg;
+      d[i * 4 + 1] = bg;
+      d[i * 4 + 2] = bg;
+    }
+    d[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+function renderAbsDiff(canvasId, absDiffData, rows, cols, thresh) {
+  const canvas = $(canvasId);
+  canvas.width = cols;
+  canvas.height = rows;
+  const ctx = canvas.getContext('2d');
+  const imgData = ctx.createImageData(cols, rows);
+  const d = imgData.data;
+
+  // Auto-scale: estimate 95th percentile via sampling
+  const p95 = estimatePercentile(absDiffData, 0.95);
+
+  for (let i = 0; i < rows * cols; i++) {
+    const v = absDiffData[i];
+    let intensity = 0;
+    if (v > thresh) {
+      intensity = Math.min(255, ((v - thresh) / Math.max(1, p95 - thresh)) * 255);
+    }
+    d[i * 4] = intensity;
+    d[i * 4 + 1] = intensity;
+    d[i * 4 + 2] = intensity;
+    d[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+function renderSubtraction(canvasId, diffData, rows, cols) {
+  const canvas = $(canvasId);
+  canvas.width = cols;
+  canvas.height = rows;
+  const ctx = canvas.getContext('2d');
+  const imgData = ctx.createImageData(cols, rows);
+  const d = imgData.data;
+
+  // Map diff to 0-255 with 0 diff = 128 (gray)
+  const absData = new Float32Array(rows * cols);
+  for (let i = 0; i < rows * cols; i++) absData[i] = Math.abs(diffData[i]);
+  const p95 = estimatePercentile(absData, 0.95);
+  const scale = 127 / p95;
+
+  for (let i = 0; i < rows * cols; i++) {
+    const v = Math.max(0, Math.min(255, 128 + diffData[i] * scale));
+    d[i * 4] = v;
+    d[i * 4 + 1] = v;
+    d[i * 4 + 2] = v;
+    d[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+// ================================================================
+//  Controls
+// ================================================================
+$('sliceSlider').addEventListener('input', e => {
+  currentSlice = parseInt(e.target.value);
+  renderViewer();
+});
+
+$('btnSlicePrev').addEventListener('click', () => {
+  if (currentSlice > 0) {
+    currentSlice--;
+    $('sliceSlider').value = currentSlice;
+    renderViewer();
+  }
+});
+
+$('btnSliceNext').addEventListener('click', () => {
+  const max = parseInt($('sliceSlider').max);
+  if (currentSlice < max) {
+    currentSlice++;
+    $('sliceSlider').value = currentSlice;
+    renderViewer();
+  }
+});
+
+// Mouse wheel on viewer for slice navigation
+$('viewerGrid').addEventListener('wheel', e => {
+  e.preventDefault();
+  const max = parseInt($('sliceSlider').max);
+  if (e.deltaY > 0 && currentSlice < max) currentSlice++;
+  else if (e.deltaY < 0 && currentSlice > 0) currentSlice--;
+  $('sliceSlider').value = currentSlice;
+  renderViewer();
+}, { passive: false });
+
+// WW/WL/threshold/opacity
+['ctrlWW', 'ctrlWL', 'ctrlThresh', 'ctrlOpacity'].forEach(id => {
+  $(id).addEventListener('input', () => {
+    $('valWW').textContent = Math.round($('ctrlWW').value);
+    $('valWL').textContent = Math.round($('ctrlWL').value);
+    $('valThresh').textContent = $('ctrlThresh').value;
+    $('valOpacity').textContent = $('ctrlOpacity').value + '%';
+    renderViewer();
+  });
+});
+
+// Display mode buttons
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    displayMode = btn.dataset.mode;
+
+    const labels = { overlay: '差分オーバーレイ', absdiff: '絶対差分', subtract: '単純引き算' };
+    $('diffViewLabel').textContent = labels[displayMode];
+    renderViewer();
+  });
+});
+
+</script>
+
+</body>
+</html>

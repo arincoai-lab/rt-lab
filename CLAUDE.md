@@ -26,6 +26,7 @@
 | NPS計算ツール | ✅ 公開中 | `nps-calculator/index.html` |
 | CT Contrast Simulator（造影CT薬物動態シミュレータ） | ✅ 公開中 | `contrast-simulator/index.html` |
 | CT Dose Estimator（CT線量推定ツール） | ✅ 公開中 | `ct-dose-estimator/index.html` |
+| 脳画像差分ツール（CT/MRI） | ✅ 公開中 | `brain-diff/index.html` |
 | CNR計算ツール | 🚧 開発中 | 未作成 |
 | 一般撮影条件参照 | 🚧 開発中 | 未作成 |
 | Visibility・CNRlow計測ツール | 📋 計画中 | 未作成 |
@@ -51,6 +52,8 @@ rt-lab/
 │   └── index.html          ← CT Contrast Simulator（公開中）
 ├── ct-dose-estimator/
 │   └── index.html          ← CT Dose Estimator（公開中）
+├── brain-diff/
+│   └── index.html          ← 脳画像差分ツール（公開中）
 └── .claude/
     └── launch.json         ← ローカルサーバー設定
 ```
@@ -72,3 +75,4 @@ rt-lab/
 | 2026-03-25 | NPS計算ツール（2D-NPS）実装・公開。トップページ更新情報の日付修正 |
 | 2026-03-26 | CT Contrast Simulator 実装・公開。Baeの薬物動態コンパートメントモデルに基づくTDCシミュレーション。kVp別CT値変換・A/Bプロトコル比較機能搭載 |
 | 2026-03-27 | CT Dose Estimator 実装・公開。AAPM Report 204ベースのSSDE計算、DLP→実効線量換算、Japan DRL 2025比較機能搭載。GitHub Pages初期セットアップ |
+| 2026-03-29 | 脳画像差分ツール 実装・公開。2シリーズDICOM入力、剛体→affine→弱いB-spline非剛体位置合わせ、差分オーバーレイ可視化。Web Worker非同期処理 |
