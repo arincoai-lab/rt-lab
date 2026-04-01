@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プライバシーポリシー | RT-Lab</title>
+<meta name="description" content="RT-Lab における入力データ、アクセス情報、外部配信サービスの扱いをまとめています。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:title" content="プライバシーポリシー | RT-Lab">
+<meta property="og:description" content="RT-Lab における入力データ、アクセス情報、外部配信サービスの扱いをまとめています。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rt-ai-lab.com/privacy/">
+<link rel="canonical" href="https://rt-ai-lab.com/privacy/">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --main: #1a5f9e;
+  --bg: #f5f7fb;
+  --text: #243447;
+  --muted: #5b6b7d;
+  --white: #fff;
+  --line: #dbe4ee;
+}
+body {
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.85;
+}
+.wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+.hero, .panel {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(26, 95, 158, 0.08);
+}
+.hero {
+  padding: 2rem;
+  margin-bottom: 1.2rem;
+}
+.hero h1 { font-size: 1.9rem; margin-bottom: 0.8rem; }
+.hero p, .panel p, .panel li { color: var(--muted); }
+.panel {
+  padding: 1.4rem;
+  margin-bottom: 1rem;
+}
+.panel h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.7rem;
+}
+.panel ul { padding-left: 1.2rem; }
+.nav {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.nav a, a {
+  color: var(--main);
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <nav class="nav">
+    <a href="/">トップ</a>
+    <a href="/about/">サイトについて</a>
+    <a href="/contact/">お問い合わせ</a>
+  </nav>
+
+  <section class="hero">
+    <h1>プライバシーポリシー</h1>
+    <p>RT-Lab は、放射線技師向けのWebツールサイトとして、入力データをできる限りブラウザ内で処理し、サーバー保存を前提としない構成を採用しています。</p>
+  </section>
+
+  <section class="panel">
+    <h2>1. 入力データの扱い</h2>
+    <p>DRL比較ツール、MTF計算ツール、NPS計算ツール、造影CTシミュレータで扱う画像、DICOM、CSVなどの入力データは、原則としてブラウザ内で処理されます。サイト運営者が内容を収集・保存することを目的とした設計ではありません。</p>
+  </section>
+
+  <section class="panel">
+    <h2>2. アクセス時に外部へ接続されるサービス</h2>
+    <ul>
+      <li>トップページでは、表示用フォント読込のため Google Fonts を利用する場合があります。</li>
+      <li>一部のツールページでは、グラフ描画やCSV読込のため jsDelivr CDN 配信のJavaScriptライブラリを利用しています。</li>
+      <li>サイトは GitHub Pages を用いて公開されています。</li>
+    </ul>
+    <p>これらのサービスでは、アクセス時にIPアドレスやUser-Agentなどの通信上必要な情報が各配信元へ送信される可能性があります。</p>
+  </section>
+
+  <section class="panel">
+    <h2>3. Cookieと解析</h2>
+    <p>2026年3月27日時点で、RT-Lab は独自のアクセス解析ツールや広告配信を導入していません。</p>
+  </section>
+
+  <section class="panel">
+    <h2>4. 安全管理</h2>
+    <p>患者情報や施設情報を含むデータを扱う場合は、利用者自身の責任で匿名化や院内ルールへの適合を確認してください。RT-Lab は医療機器ではなく、計算結果は参考値です。</p>
+  </section>
+
+  <section class="panel">
+    <h2>5. お問い合わせ</h2>
+    <p>本ポリシーや掲載内容に関するお問い合わせは、<a href="https://github.com/arincoai-lab/rt-lab/issues">GitHub Issues</a> から受け付けています。</p>
+  </section>
+</main>
+</body>
+</html>

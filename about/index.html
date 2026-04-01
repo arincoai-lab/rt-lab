@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>サイトについて | RT-Lab</title>
+<meta name="description" content="RT-Lab の公開目的、対象ユーザー、データの扱い、運営方針をまとめたページです。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:title" content="サイトについて | RT-Lab">
+<meta property="og:description" content="RT-Lab の公開目的、対象ユーザー、データの扱い、運営方針をまとめています。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rt-ai-lab.com/about/">
+<link rel="canonical" href="https://rt-ai-lab.com/about/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "name": "サイトについて",
+  "url": "https://rt-ai-lab.com/about/",
+  "description": "RT-Lab の公開目的、対象ユーザー、データの扱い、運営方針をまとめたページです。",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "RT-Lab",
+    "url": "https://rt-ai-lab.com/"
+  }
+}
+</script>
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --main: #1a5f9e;
+  --main-light: #2980b9;
+  --bg: #f5f7fb;
+  --text: #243447;
+  --muted: #5b6b7d;
+  --white: #ffffff;
+  --line: #dbe4ee;
+}
+
+body {
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.8;
+}
+
+.header {
+  background: linear-gradient(135deg, var(--main) 0%, var(--main-light) 100%);
+  color: var(--white);
+  padding: 1.25rem 1.5rem;
+}
+
+.header-inner,
+.main,
+.footer {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.brand {
+  color: var(--white);
+  text-decoration: none;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.subnav {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.subnav a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+
+.main {
+  padding: 2rem 1.5rem 3rem;
+}
+
+.hero,
+.panel {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(26, 95, 158, 0.08);
+}
+
+.hero {
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.hero h1 {
+  font-size: 2rem;
+  margin-bottom: 0.8rem;
+}
+
+.hero p {
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.panel {
+  padding: 1.4rem;
+}
+
+.panel h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.7rem;
+}
+
+.panel p,
+.panel li {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.panel ul {
+  padding-left: 1.2rem;
+}
+
+.panel a,
+.footer a {
+  color: var(--main);
+}
+
+.footer {
+  padding: 0 1.5rem 2rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .hero h1 {
+    font-size: 1.55rem;
+  }
+}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-inner">
+    <a class="brand" href="/">RT-Lab</a>
+    <nav class="subnav">
+      <a href="/tools/">ツール一覧</a>
+      <a href="/privacy/">プライバシーポリシー</a>
+      <a href="/contact/">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="main">
+  <section class="hero">
+    <h1>RT-Labについて</h1>
+    <p>RT-Lab は、放射線技師の実務、品質管理、研究・教育で使いやすいブラウザツールを公開するサイトです。線量評価、画質評価、検証作業を、インストール不要で試せることを重視しています。</p>
+  </section>
+
+  <section class="grid">
+    <article class="panel">
+      <h2>対象ユーザー</h2>
+      <p>放射線技師、品質管理担当者、教育担当者、研究・検証用途で画像評価を行う方を主な対象としています。</p>
+    </article>
+
+    <article class="panel">
+      <h2>公開方針</h2>
+      <p>現場でまず使えることを優先し、無料・広告なし・ローカル処理を基本方針としています。入力データを外部保存しない構成を重視しています。</p>
+    </article>
+
+    <article class="panel">
+      <h2>提供内容</h2>
+      <ul>
+        <li>DRL比較ツール</li>
+        <li>MTF計算ツール</li>
+        <li>NPS計算ツール</li>
+        <li>造影CT薬物動態シミュレータ</li>
+      </ul>
+    </article>
+
+    <article class="panel">
+      <h2>データの扱い</h2>
+      <p>画像、DICOM、CSVなどの入力データは、原則としてブラウザ内で処理する設計です。共有機能や履歴保存機能は前提としていません。</p>
+    </article>
+
+    <article class="panel">
+      <h2>運営情報</h2>
+      <p>サイト名: RT-Lab</p>
+      <p>公開URL: <a href="https://rt-ai-lab.com/">https://rt-ai-lab.com/</a></p>
+      <p>ソース管理: <a href="https://github.com/arincoai-lab/rt-lab">GitHub / arincoai-lab/rt-lab</a></p>
+    </article>
+
+    <article class="panel">
+      <h2>問い合わせ窓口</h2>
+      <p>不具合報告や掲載内容に関する連絡は、<a href="https://github.com/arincoai-lab/rt-lab/issues">GitHub Issues</a> から受け付けています。院内フィルタやアクセス制限に関する問い合わせにも利用できます。</p>
+    </article>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-links">
+    <a href="/">トップ</a>
+    <a href="/privacy/">プライバシーポリシー</a>
+    <a href="/contact/">お問い合わせ</a>
+  </div>
+  <div>&copy; 2025 RT-Lab</div>
+</footer>
+</body>
+</html>
