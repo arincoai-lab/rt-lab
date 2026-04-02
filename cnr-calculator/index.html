@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CNR計測ツール | RT-Lab</title>
+  <meta name="description" content="CNR（コントラスト対ノイズ比）計測ツール。DICOM画像にROIを設定し、CNR・CNRlow・Detectability Index (d')・Visibilityを自動算出。ブラウザ完結・無料。">
+  <meta property="og:title" content="CNR計測ツール | RT-Lab">
+  <meta property="og:description" content="CNR・CNRlow・Detectability Index計測ツール。DICOM画像対応、ブラウザ完結。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rt-ai-lab.com/cnr-calculator/">
+  <link rel="canonical" href="https://rt-ai-lab.com/cnr-calculator/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "CNR計測ツール",
+    "url": "https://rt-ai-lab.com/cnr-calculator/",
+    "description": "CNR（コントラスト対ノイズ比）・CNRlow・Detectability Index計測ツール。DICOM画像対応。",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
+      { "@type": "ListItem", "position": 2, "name": "CNR計測ツール", "item": "https://rt-ai-lab.com/cnr-calculator/" }
+    ]
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #1a56db;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.06em; }
+    .logo a { color: #fff; text-decoration: none; }
+    .tool-name-header {
+      font-size: 0.95rem;
+      opacity: 0.88;
+      padding-left: 16px;
+      border-left: 2px solid rgba(255,255,255,0.35);
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a56db;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* ── Steps ── */
+    .steps { display: flex; gap: 12px; flex-wrap: wrap; }
+    .step {
+      flex: 1; min-width: 180px;
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px; background: #f7fafc;
+      border-radius: 8px; border: 1px solid #e2e8f0;
+    }
+    .step-num {
+      width: 26px; height: 26px; background: #1a56db; color: #fff;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+    }
+    .step-body strong { display: block; font-weight: 600; color: #2d3748; margin-bottom: 3px; }
+    .step-body span { color: #4a5568; font-size: 0.82rem; }
+
+    /* ── Upload ── */
+    .upload-area {
+      border: 2px dashed #cbd5e0;
+      border-radius: 10px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      color: #4a5568;
+    }
+    .upload-area:hover, .upload-area.dragover {
+      border-color: #1a56db;
+      background: #ebf5ff;
+    }
+    .upload-area p { margin-bottom: 8px; }
+    .upload-icon { font-size: 2rem; margin-bottom: 8px; display: block; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 22px; border: none; border-radius: 6px;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer;
+      transition: background 0.15s, transform 0.1s; text-decoration: none;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: #1a56db; color: #fff; }
+    .btn-primary:hover { background: #1648c0; }
+    .btn-secondary { background: #edf2f7; color: #2d3748; border: 1px solid #e2e8f0; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+    .btn-danger { background: #e53e3e; color: #fff; }
+    .btn-danger:hover { background: #c53030; }
+
+    /* ── Messages ── */
+    .msg { padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; margin-bottom: 8px; }
+    .msg-success { background: #f0fff4; color: #276749; border: 1px solid #c6f6d5; }
+    .msg-error { background: #fff5f5; color: #9b2c2c; border: 1px solid #feb2b2; }
+    .msg-warning { background: #fffff0; color: #975a16; border: 1px solid #fefcbf; }
+    .msg-info { background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }
+
+    /* ── Canvas container ── */
+    .canvas-container {
+      position: relative;
+      display: inline-block;
+      background: #000;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .canvas-container canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    #canvas-overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      cursor: crosshair;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+      margin-bottom: 14px; padding: 10px 14px;
+      background: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0;
+    }
+    .toolbar label { font-size: 0.8rem; font-weight: 600; color: #4a5568; }
+    .toolbar select, .toolbar input[type="number"] {
+      padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 4px;
+      font-size: 0.82rem; color: #2d3748;
+    }
+    .toolbar select:focus, .toolbar input:focus {
+      outline: none; border-color: #1a56db; box-shadow: 0 0 0 2px rgba(26,86,219,0.15);
+    }
+    .tool-group {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .tool-btn {
+      padding: 5px 12px; border: 2px solid #e2e8f0; border-radius: 5px;
+      background: #fff; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      color: #4a5568; transition: all 0.15s;
+    }
+    .tool-btn:hover { border-color: #1a56db; color: #1a56db; }
+    .tool-btn.active { background: #1a56db; color: #fff; border-color: #1a56db; }
+    .separator { width: 1px; height: 24px; background: #e2e8f0; margin: 0 4px; }
+
+    /* ── WW/WL ── */
+    .wwwl-controls {
+      display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+      margin-bottom: 14px;
+    }
+    .wwwl-controls label { font-size: 0.8rem; font-weight: 600; color: #4a5568; white-space: nowrap; }
+    .wwwl-controls input[type="range"] { width: 140px; }
+    .wwwl-controls .val { font-size: 0.82rem; color: #2d3748; font-weight: 600; min-width: 40px; }
+
+    /* ── DICOM info ── */
+    .dicom-info {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .dicom-tag {
+      padding: 3px 10px; background: #edf2f7; border-radius: 4px;
+      font-size: 0.78rem; color: #4a5568;
+    }
+
+    /* ── ROI stats table ── */
+    .roi-table {
+      width: 100%; border-collapse: collapse; font-size: 0.82rem;
+    }
+    .roi-table th {
+      background: #f7fafc; padding: 8px 10px; text-align: left;
+      font-weight: 600; color: #4a5568; border-bottom: 2px solid #e2e8f0;
+      font-size: 0.78rem;
+    }
+    .roi-table td {
+      padding: 6px 10px; border-bottom: 1px solid #e2e8f0;
+    }
+    .roi-table tr:hover { background: #f7fafc; }
+    .roi-table .role-signal { color: #d69e2e; font-weight: 700; }
+    .roi-table .role-bg { color: #3182ce; font-weight: 700; }
+    .roi-table .role-nps { color: #38a169; font-weight: 700; }
+
+    /* ── Result cards ── */
+    .result-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px; margin-bottom: 18px;
+    }
+    .result-item {
+      padding: 16px; background: #f7fafc; border-radius: 8px;
+      border: 1px solid #e2e8f0; text-align: center;
+    }
+    .result-label { font-size: 0.78rem; color: #4a5568; font-weight: 600; margin-bottom: 4px; }
+    .result-value { font-size: 1.6rem; font-weight: 800; color: #1a56db; }
+    .result-unit { font-size: 0.75rem; color: #718096; }
+    .result-formula {
+      font-size: 0.75rem; color: #718096; margin-top: 6px;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── Visibility ── */
+    .vis-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    .vis-item {
+      padding: 12px; border-radius: 8px; text-align: center;
+      border: 2px solid #e2e8f0;
+    }
+    .vis-item.pass { border-color: #48bb78; background: #f0fff4; }
+    .vis-item.fail { border-color: #fc8181; background: #fff5f5; }
+    .vis-threshold { font-size: 0.78rem; color: #4a5568; font-weight: 600; }
+    .vis-judge { font-size: 1.1rem; font-weight: 800; margin-top: 4px; }
+    .vis-item.pass .vis-judge { color: #276749; }
+    .vis-item.fail .vis-judge { color: #9b2c2c; }
+
+    /* ── NPS chart container ── */
+    .chart-container { position: relative; height: 280px; margin-top: 12px; }
+
+    /* ── Detectability ── */
+    .dprime-params {
+      display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+      margin-bottom: 16px;
+    }
+    .dprime-params .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .dprime-params label { font-size: 0.78rem; font-weight: 600; color: #4a5568; }
+    .dprime-params input, .dprime-params select {
+      padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 5px;
+      font-size: 0.82rem; width: 130px; color: #2d3748;
+    }
+
+    /* ── Hidden ── */
+    .hidden { display: none !important; }
+
+    /* ── Footer ── */
+    footer {
+      background: #2d3748;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      padding: 24px 16px;
+      font-size: 0.75rem;
+    }
+    footer a { color: rgba(255,255,255,0.85); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    .footer-disclaimer {
+      max-width: 640px;
+      margin: 10px auto 0;
+      font-size: 0.7rem;
+      opacity: 0.65;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      header { padding: 12px 16px; gap: 10px; }
+      .logo { font-size: 1.1rem; }
+      main { padding: 16px 10px 30px; }
+      .card { padding: 16px; }
+      .toolbar { flex-direction: column; align-items: flex-start; }
+      .result-grid { grid-template-columns: 1fr 1fr; }
+      .vis-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><a href="/">RT-Lab</a></div>
+  <div class="tool-name-header">CNR計測ツール</div>
+</header>
+
+<main>
+
+<!-- ===== How to use ===== -->
+<div class="card">
+  <div class="card-title">使い方</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>画像を読み込む</strong>
+        <span>DICOM画像をドラッグ&ドロップまたはファイル選択</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>ROIを配置</strong>
+        <span>Signal / Background ROIを画像上に配置。CNR自動算出</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>詳細解析</strong>
+        <span>NPS計算でCNRlow、Detectability Index、Visibility判定</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Upload ===== -->
+<div class="card">
+  <div class="card-title">画像アップロード</div>
+  <div id="upload-area" class="upload-area">
+    <span class="upload-icon">📁</span>
+    <p><strong>DICOM画像をドラッグ&ドロップ</strong></p>
+    <p style="font-size:0.82rem;">またはクリックしてファイルを選択</p>
+    <input type="file" id="file-input" accept=".dcm,.DCM,.dicom,*" style="display:none">
+  </div>
+  <div id="msg-area"></div>
+</div>
+
+<!-- ===== Image & ROI ===== -->
+<div id="section-image" class="card hidden">
+  <div class="card-title">画像表示 & ROI設定</div>
+
+  <div id="dicom-info" class="dicom-info hidden"></div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="tool-group">
+      <label>ROI形状:</label>
+      <button class="tool-btn active" data-shape="circle" id="btn-circle">円形</button>
+      <button class="tool-btn" data-shape="rect" id="btn-rect">矩形</button>
+    </div>
+    <div class="separator"></div>
+    <div class="tool-group">
+      <label>役割:</label>
+      <button class="tool-btn active" data-role="signal" id="btn-role-signal" style="color:#d69e2e;border-color:#d69e2e;">Signal</button>
+      <button class="tool-btn" data-role="background" id="btn-role-bg">BG</button>
+      <button class="tool-btn" data-role="nps" id="btn-role-nps" title="NPS算出に使用する均一領域（複数配置可）">NPS領域</button>
+    </div>
+    <div class="separator"></div>
+    <div class="tool-group" style="flex-direction:column;gap:4px;align-items:flex-start;">
+      <label>サイズ <span id="size-hint" style="font-weight:400;color:#718096;font-size:0.75rem;">（半径 px）</span></label>
+      <div style="display:flex;gap:5px;align-items:center;">
+        <button class="tool-btn" id="btn-size-s" data-preset="s" title="小">S</button>
+        <button class="tool-btn" id="btn-size-m" data-preset="m" title="中">M</button>
+        <button class="tool-btn active" id="btn-size-l" data-preset="l" title="大">L</button>
+        <input type="number" id="roi-size-input" value="30" min="5" max="300" style="width:54px;" title="半径(円) / 幅(矩形) px">
+        <span style="font-size:0.75rem;color:#718096;">px</span>
+      </div>
+    </div>
+    <div class="separator"></div>
+    <button class="btn btn-sm btn-secondary" id="btn-clear-rois">ROI全削除</button>
+  </div>
+
+  <!-- WW/WL -->
+  <div class="wwwl-controls">
+    <label>WW:</label>
+    <input type="range" id="ww-slider" min="1" max="4000" value="400">
+    <span class="val" id="ww-val">400</span>
+    <label>WL:</label>
+    <input type="range" id="wl-slider" min="-1024" max="3000" value="40">
+    <span class="val" id="wl-val">40</span>
+    <button class="btn btn-sm btn-secondary" id="btn-ww-reset">リセット</button>
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas-container" id="canvas-container">
+    <canvas id="canvas-preview"></canvas>
+    <canvas id="canvas-overlay"></canvas>
+  </div>
+  <div style="font-size:0.75rem;color:#718096;margin-top:6px;">
+    クリックでROI配置 / ドラッグで移動 / Delete で選択ROI削除
+  </div>
+</div>
+
+<!-- ===== ROI Statistics ===== -->
+<div id="section-stats" class="card hidden">
+  <div class="card-title">ROI統計量</div>
+  <table class="roi-table">
+    <thead>
+      <tr>
+        <th>ROI</th>
+        <th>役割</th>
+        <th>形状</th>
+        <th>Mean</th>
+        <th>SD</th>
+        <th>Min</th>
+        <th>Max</th>
+        <th>Pixels</th>
+        <th>面積 (mm²)</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="roi-stats-body"></tbody>
+  </table>
+</div>
+
+<!-- ===== CNR Result ===== -->
+<div id="section-cnr" class="card hidden">
+  <div class="card-title">CNR計測結果</div>
+  <div class="result-grid">
+    <div class="result-item">
+      <div class="result-label">CNR</div>
+      <div class="result-value" id="cnr-value">--</div>
+      <div class="result-formula">|Mean_S - Mean_BG| / SD_BG</div>
+    </div>
+    <div class="result-item">
+      <div class="result-label">Signal Mean</div>
+      <div class="result-value" id="signal-mean">--</div>
+      <div class="result-unit">HU</div>
+    </div>
+    <div class="result-item">
+      <div class="result-label">BG Mean</div>
+      <div class="result-value" id="bg-mean">--</div>
+      <div class="result-unit">HU</div>
+    </div>
+    <div class="result-item">
+      <div class="result-label">Contrast</div>
+      <div class="result-value" id="contrast-value">--</div>
+      <div class="result-unit">HU</div>
+    </div>
+    <div class="result-item">
+      <div class="result-label">BG SD</div>
+      <div class="result-value" id="bg-sd">--</div>
+      <div class="result-unit">HU</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CNRlow (NPS-based) ===== -->
+<div id="section-cnrlow" class="card hidden">
+  <div class="card-title">CNRlow（NPSベース）</div>
+  <div id="nps-roi-hint" style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:#f0fff4;border:1px solid #c6f6d5;border-radius:8px;margin-bottom:14px;">
+    <span style="font-size:1.1rem;">🟢</span>
+    <div style="font-size:0.82rem;color:#276749;">
+      <strong>NPS算出の手順：</strong>
+      上の画像でROI役割を <strong>「NPS領域」</strong> に切り替え、均一なバックグラウンド部分に1つ以上のROIを配置してください。配置後に「NPS算出」ボタンを押すと、NPSを計算してCNRlowを算出します。
+    </div>
+  </div>
+
+  <div class="toolbar" style="margin-bottom:14px;">
+    <div class="tool-group">
+      <label>NPS ROIサイズ:</label>
+      <select id="nps-roi-size">
+        <option value="32">32 x 32</option>
+        <option value="64" selected>64 x 64</option>
+        <option value="128">128 x 128</option>
+      </select>
+    </div>
+    <div class="separator"></div>
+    <div class="tool-group">
+      <label>デトレンド:</label>
+      <select id="nps-detrend">
+        <option value="mean">平均値差し引き</option>
+        <option value="poly2" selected>2次多項式フィット</option>
+      </select>
+    </div>
+    <div class="separator"></div>
+    <button class="btn btn-sm btn-primary" id="btn-calc-nps" title="NPS領域ROI内のタイルからNPSを計算">NPS算出（NPS領域ROI使用）</button>
+  </div>
+
+  <div id="nps-msg"></div>
+
+  <div id="nps-result" class="hidden">
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="result-label">CNRlow</div>
+        <div class="result-value" id="cnrlow-value">--</div>
+        <div class="result-formula">|ΔS| / √(∫NPS)</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">√(∫NPS)</div>
+        <div class="result-value" id="nps-noise">--</div>
+        <div class="result-unit">HU</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">SD (ROI)</div>
+        <div class="result-value" id="nps-sd">--</div>
+        <div class="result-unit">HU</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">NPS ROI数</div>
+        <div class="result-value" id="nps-roi-count">--</div>
+        <div class="result-unit">個</div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="chart-nps"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Detectability Index ===== -->
+<div id="section-dprime" class="card hidden">
+  <div class="card-title">Detectability Index (d')</div>
+  <p style="font-size:0.82rem;color:#4a5568;margin-bottom:14px;">
+    NPWEモデル（Non-Prewhitening with Eye filter）に基づく検出能指標。NPS計算後に利用可能。
+  </p>
+
+  <div class="dprime-params">
+    <div class="form-group">
+      <label>病変直径 (mm)</label>
+      <input type="number" id="lesion-diameter" value="5" min="1" max="100" step="0.5">
+    </div>
+    <div class="form-group">
+      <label>コントラスト (HU)</label>
+      <input type="number" id="lesion-contrast" value="" placeholder="自動取得">
+    </div>
+    <div class="form-group">
+      <label>観察者モデル</label>
+      <select id="observer-model">
+        <option value="npwe">NPWE</option>
+        <option value="ideal">Ideal Observer</option>
+      </select>
+    </div>
+    <button class="btn btn-sm btn-primary" id="btn-calc-dprime">d' 算出</button>
+  </div>
+
+  <div id="dprime-msg"></div>
+
+  <div id="dprime-result" class="hidden">
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="result-label">d' (NPWE)</div>
+        <div class="result-value" id="dprime-value">--</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">最小検出コントラスト</div>
+        <div class="result-value" id="min-contrast">--</div>
+        <div class="result-unit">HU (d'=3.0)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Visibility ===== -->
+<div id="section-visibility" class="card hidden">
+  <div class="card-title">Visibility判定（Rose基準）</div>
+  <div class="vis-grid" id="vis-grid">
+    <div class="vis-item" id="vis-3">
+      <div class="vis-threshold">CNR ≥ 3.0</div>
+      <div class="vis-judge" id="vis-judge-3">--</div>
+      <div style="font-size:0.72rem;color:#718096;">最低検出限界</div>
+    </div>
+    <div class="vis-item" id="vis-4">
+      <div class="vis-threshold">CNR ≥ 4.0</div>
+      <div class="vis-judge" id="vis-judge-4">--</div>
+      <div style="font-size:0.72rem;color:#718096;">確実な検出</div>
+    </div>
+    <div class="vis-item" id="vis-5">
+      <div class="vis-threshold">CNR ≥ 5.0</div>
+      <div class="vis-judge" id="vis-judge-5">--</div>
+      <div style="font-size:0.72rem;color:#718096;">信頼性の高い検出</div>
+    </div>
+  </div>
+  <div id="dprime-vis" class="hidden" style="margin-top:14px;">
+    <div class="vis-grid">
+      <div class="vis-item" id="vis-dprime-3">
+        <div class="vis-threshold">d' ≥ 3.0</div>
+        <div class="vis-judge" id="vis-djudge-3">--</div>
+        <div style="font-size:0.72rem;color:#718096;">検出閾値</div>
+      </div>
+      <div class="vis-item" id="vis-dprime-4">
+        <div class="vis-threshold">d' ≥ 4.0</div>
+        <div class="vis-judge" id="vis-djudge-4">--</div>
+        <div style="font-size:0.72rem;color:#718096;">確実な検出</div>
+      </div>
+      <div class="vis-item" id="vis-dprime-5">
+        <div class="vis-threshold">d' ≥ 5.0</div>
+        <div class="vis-judge" id="vis-djudge-5">--</div>
+        <div style="font-size:0.72rem;color:#718096;">高信頼性</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Notes ===== -->
+<div class="card">
+  <div class="card-title">注意事項</div>
+  <div style="font-size:0.82rem; color:#4a5568; line-height:1.8;">
+    <p>・CNR = |Mean_signal - Mean_background| / SD_background で計算されます。</p>
+    <p>・CNRlow はNPS積分値の平方根をノイズとして使用し、周波数特性を考慮した評価値です。</p>
+    <p>・Detectability Index (d') はNPWEモデルに基づくタスクベースの検出能指標です。病変形状は円盤状を仮定しています。</p>
+    <p>・Rose基準では一般的にCNR ≥ 3〜5で病変検出可能とされます。</p>
+    <p>・本ツールは研究・教育目的であり、医療機器としての認証を受けていません。</p>
+    <p>・アップロードされた画像はブラウザ内のみで処理され、外部サーバーには送信されません。</p>
+  </div>
+</div>
+
+</main>
+
+<!-- ===== Footer ===== -->
+<footer>
+  <div><a href="/">RT-Lab</a> | 放射線技師のためのWebツール集</div>
+  <div class="footer-disclaimer">
+    本ツールは医療機器ではありません。計算結果はあくまで参考値であり、臨床判断の根拠としての使用はご自身の責任においてご判断ください。
+  </div>
+  <div style="margin-top:10px; font-size:0.8rem;">
+    <a href="/about/">サイトについて</a> |
+    <a href="/privacy/">プライバシーポリシー</a> |
+    <a href="/contact/">お問い合わせ</a>
+  </div>
+  <div style="margin-top:10px; opacity:0.5;">&copy; 2025 RT-Lab</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+'use strict';
+
+// ================================================================
+//  グローバル状態
+// ================================================================
+let rawPixelData = null;
+let imgWidth = 0;
+let imgHeight = 0;
+let pixelSpacing = [1.0, 1.0];
+let dicomWW = 400, dicomWL = 40;
+let dicomDefaultWW = 400, dicomDefaultWL = 40;
+
+// ROI管理
+let rois = [];
+let roiIdCounter = 0;
+let selectedRoiId = null;
+let currentShape = 'circle';
+let currentRole = 'signal';
+let dragState = null; // { roiId, startX, startY, origCx, origCy }
+
+// NPS結果
+let lastNpsResult = null;
+let chartNps = null;
+
+const $ = id => document.getElementById(id);
+
+// ================================================================
+//  ユーティリティ
+// ================================================================
+
+function addMsg(container, text, type) {
+  if (typeof container === 'string') container = $(container);
+  const d = document.createElement('div');
+  d.className = 'msg msg-' + type;
+  d.textContent = text;
+  container.appendChild(d);
+}
+
+function clearMsg(id) {
+  $(id).innerHTML = '';
+}
+
+// ================================================================
+//  DICOM パーサー
+// ================================================================
+
+function parseDicom(arrayBuffer) {
+  const dv = new DataView(arrayBuffer);
+  const bytes = new Uint8Array(arrayBuffer);
+
+  let offset = 128;
+  const magic = String.fromCharCode(bytes[128], bytes[129], bytes[130], bytes[131]);
+  if (magic !== 'DICM') throw new Error('DICOM形式ではありません');
+  offset = 132;
+
+  let isExplicit = true;
+  let isLittleEndian = true;
+  const tags = {};
+  let pixelDataOffset = -1;
+  let pixelDataLength = 0;
+
+  function readTag() {
+    if (offset + 4 > bytes.length) return null;
+    const group = dv.getUint16(offset, isLittleEndian);
+    const elem = dv.getUint16(offset + 2, isLittleEndian);
+    offset += 4;
+    const tagKey = ((group << 16) | elem) >>> 0;
+
+    let vr = '', valueLength = 0;
+
+    if (isExplicit && group !== 0xFFFE) {
+      vr = String.fromCharCode(bytes[offset], bytes[offset + 1]);
+      offset += 2;
+      if (['OB','OW','OF','SQ','UC','UN','UT','OD','OL','OV','SV','UV'].includes(vr)) {
+        offset += 2;
+        valueLength = dv.getUint32(offset, isLittleEndian);
+        offset += 4;
+      } else {
+        valueLength = dv.getUint16(offset, isLittleEndian);
+        offset += 2;
+      }
+    } else {
+      valueLength = dv.getUint32(offset, isLittleEndian);
+      offset += 4;
+    }
+
+    if (valueLength === 0xFFFFFFFF) {
+      return { tagKey, vr, value: null, undefined: true };
+    }
+
+    const valueOffset = offset;
+    offset += valueLength;
+
+    return { tagKey, vr, valueOffset, valueLength };
+  }
+
+  // Meta header (always Explicit VR Little Endian)
+  while (offset < bytes.length && offset < 500) {
+    const savedOffset = offset;
+    const t = readTag();
+    if (!t) break;
+    if (t.tagKey === 0x00020010 && t.valueOffset !== undefined) {
+      const ts = new TextDecoder().decode(bytes.slice(t.valueOffset, t.valueOffset + t.valueLength)).trim().replace(/\0/g, '');
+      if (ts === '1.2.840.10008.1.2') {
+        isExplicit = false;
+      } else if (ts === '1.2.840.10008.1.2.2') {
+        isLittleEndian = false;
+      }
+      // Check for compressed transfer syntaxes
+      if (ts.startsWith('1.2.840.10008.1.2.4') || ts === '1.2.840.10008.1.2.5') {
+        throw new Error('圧縮されたDICOMファイルには対応していません（Transfer Syntax: ' + ts + '）');
+      }
+      tags[t.tagKey] = ts;
+    }
+    if (t.tagKey > 0x0002FFFF) {
+      offset = savedOffset;
+      break;
+    }
+  }
+
+  const importantTags = new Set([
+    0x00280010, 0x00280011, 0x00280030,
+    0x00280100, 0x00280101, 0x00280102, 0x00280103,
+    0x00281052, 0x00281053, 0x00281050, 0x00281051,
+    0x7FE00010, 0x00080060, 0x00180050, 0x00181210,
+    0x00080008,
+  ]);
+
+  while (offset < bytes.length - 4) {
+    const t = readTag();
+    if (!t) break;
+    if (t.undefined) continue;
+    if (t.valueOffset === undefined) continue;
+
+    if (t.tagKey === 0x7FE00010) {
+      pixelDataOffset = t.valueOffset;
+      pixelDataLength = t.valueLength;
+      break;
+    }
+
+    if (importantTags.has(t.tagKey)) {
+      if (t.vr === 'US' && t.valueLength === 2) {
+        tags[t.tagKey] = dv.getUint16(t.valueOffset, isLittleEndian).toString();
+      } else if (t.vr === 'SS' && t.valueLength === 2) {
+        tags[t.tagKey] = dv.getInt16(t.valueOffset, isLittleEndian).toString();
+      } else {
+        tags[t.tagKey] = new TextDecoder().decode(bytes.slice(t.valueOffset, t.valueOffset + t.valueLength)).trim().replace(/\0/g, '');
+      }
+    }
+  }
+
+  const rows = parseInt(tags[0x00280010]) || 0;
+  const cols = parseInt(tags[0x00280011]) || 0;
+  const bitsAlloc = parseInt(tags[0x00280100]) || 16;
+  const pixelRep = parseInt(tags[0x00280103]) || 0;
+  const slope = parseFloat(tags[0x00281053]) || 1;
+  const intercept = parseFloat(tags[0x00281052]) || 0;
+
+  const psStr = tags[0x00280030] || '';
+  let ps = null;
+  if (psStr) {
+    const parts = psStr.split('\\');
+    if (parts.length >= 2) ps = [parseFloat(parts[0]), parseFloat(parts[1])];
+  }
+
+  const wc = tags[0x00281050] ? parseFloat(tags[0x00281050].split('\\')[0]) : null;
+  const ww = tags[0x00281051] ? parseFloat(tags[0x00281051].split('\\')[0]) : null;
+
+  if (pixelDataOffset < 0 || rows === 0 || cols === 0) {
+    throw new Error('PixelDataが見つかりません');
+  }
+
+  const numPixels = rows * cols;
+  const rawData = new Float64Array(numPixels);
+
+  if (bitsAlloc === 16) {
+    for (let i = 0; i < numPixels; i++) {
+      const byteIdx = pixelDataOffset + i * 2;
+      let val = dv.getUint16(byteIdx, isLittleEndian);
+      if (pixelRep === 1 && val >= 32768) val -= 65536;
+      rawData[i] = val * slope + intercept;
+    }
+  } else if (bitsAlloc === 8) {
+    for (let i = 0; i < numPixels; i++) {
+      rawData[i] = bytes[pixelDataOffset + i] * slope + intercept;
+    }
+  } else if (bitsAlloc === 32) {
+    for (let i = 0; i < numPixels; i++) {
+      const byteIdx = pixelDataOffset + i * 4;
+      const val = dv.getFloat32(byteIdx, isLittleEndian);
+      rawData[i] = val * slope + intercept;
+    }
+  } else {
+    throw new Error('未対応のBitsAllocated: ' + bitsAlloc);
+  }
+
+  return {
+    rows, cols, rawData, pixelSpacing: ps,
+    windowCenter: wc, windowWidth: ww,
+    modality: tags[0x00080060] || '',
+    kernel: tags[0x00181210] || '',
+    sliceThickness: tags[0x00180050] || '',
+  };
+}
+
+// ================================================================
+//  Canvas表示（WW/WL）
+// ================================================================
+
+function applyWindowLevel(rawData, w, h, ww, wl) {
+  const canvas = $('canvas-preview');
+  const ctx = canvas.getContext('2d');
+  const imgData = ctx.createImageData(w, h);
+  const d = imgData.data;
+  ww = Math.max(ww, 1);
+  const lower = wl - ww / 2;
+  const upper = wl + ww / 2;
+
+  for (let i = 0; i < w * h; i++) {
+    let v = rawData[i];
+    if (v <= lower) v = 0;
+    else if (v >= upper) v = 255;
+    else v = ((v - lower) / ww) * 255;
+    v = Math.round(v);
+    d[i * 4] = v;
+    d[i * 4 + 1] = v;
+    d[i * 4 + 2] = v;
+    d[i * 4 + 3] = 255;
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+}
+
+// ================================================================
+//  ROI統計計算
+// ================================================================
+
+function computeRoiStats(roi) {
+  if (!rawPixelData) return null;
+  const pixels = [];
+
+  if (roi.type === 'circle') {
+    const r2 = roi.radius * roi.radius;
+    const minX = Math.max(0, Math.floor(roi.cx - roi.radius));
+    const maxX = Math.min(imgWidth - 1, Math.ceil(roi.cx + roi.radius));
+    const minY = Math.max(0, Math.floor(roi.cy - roi.radius));
+    const maxY = Math.min(imgHeight - 1, Math.ceil(roi.cy + roi.radius));
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const dx = x - roi.cx, dy = y - roi.cy;
+        if (dx * dx + dy * dy <= r2) {
+          pixels.push(rawPixelData[y * imgWidth + x]);
+        }
+      }
+    }
+  } else {
+    const minX = Math.max(0, Math.floor(roi.x));
+    const maxX = Math.min(imgWidth - 1, Math.floor(roi.x + roi.width - 1));
+    const minY = Math.max(0, Math.floor(roi.y));
+    const maxY = Math.min(imgHeight - 1, Math.floor(roi.y + roi.height - 1));
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        pixels.push(rawPixelData[y * imgWidth + x]);
+      }
+    }
+  }
+
+  if (pixels.length === 0) return null;
+
+  let sum = 0, min = Infinity, max = -Infinity;
+  for (let i = 0; i < pixels.length; i++) {
+    sum += pixels[i];
+    if (pixels[i] < min) min = pixels[i];
+    if (pixels[i] > max) max = pixels[i];
+  }
+  const mean = sum / pixels.length;
+
+  let sumSq = 0;
+  for (let i = 0; i < pixels.length; i++) {
+    const d = pixels[i] - mean;
+    sumSq += d * d;
+  }
+  const sd = pixels.length > 1 ? Math.sqrt(sumSq / (pixels.length - 1)) : 0;
+
+  const pxArea = pixelSpacing[0] * pixelSpacing[1];
+
+  return {
+    mean, sd, min, max,
+    pixels: pixels.length,
+    area_mm2: pixels.length * pxArea
+  };
+}
+
+// ================================================================
+//  ROI描画
+// ================================================================
+
+function drawOverlay() {
+  const canvas = $('canvas-overlay');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (const roi of rois) {
+    const isSelected = roi.id === selectedRoiId;
+    let color;
+    if (roi.role === 'signal') color = '#ecc94b';
+    else if (roi.role === 'background') color = '#63b3ed';
+    else color = '#68d391';
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = isSelected ? 3 : 2;
+
+    if (roi.type === 'circle') {
+      ctx.beginPath();
+      ctx.arc(roi.cx, roi.cy, roi.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      // Cross at center
+      ctx.beginPath();
+      ctx.moveTo(roi.cx - 4, roi.cy);
+      ctx.lineTo(roi.cx + 4, roi.cy);
+      ctx.moveTo(roi.cx, roi.cy - 4);
+      ctx.lineTo(roi.cx, roi.cy + 4);
+      ctx.stroke();
+    } else {
+      ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
+      // Cross at center
+      const cx = roi.x + roi.width / 2;
+      const cy = roi.y + roi.height / 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - 4, cy);
+      ctx.lineTo(cx + 4, cy);
+      ctx.moveTo(cx, cy - 4);
+      ctx.lineTo(cx, cy + 4);
+      ctx.stroke();
+    }
+
+    // Label
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = color;
+    const label = roi.role === 'signal' ? 'S' : roi.role === 'background' ? 'BG' : 'NPS';
+    const labelX = roi.type === 'circle' ? roi.cx + roi.radius + 4 : roi.x + roi.width + 4;
+    const labelY = roi.type === 'circle' ? roi.cy - roi.radius + 12 : roi.y + 12;
+    ctx.fillText(label + roi.id, labelX, labelY);
+
+    // Selection indicator
+    if (isSelected) {
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      if (roi.type === 'circle') {
+        ctx.beginPath();
+        ctx.arc(roi.cx, roi.cy, roi.radius + 4, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.strokeRect(roi.x - 3, roi.y - 3, roi.width + 6, roi.height + 6);
+      }
+      ctx.setLineDash([]);
+    }
+  }
+}
+
+// ================================================================
+//  ROI統計テーブル更新
+// ================================================================
+
+function updateStatsTable() {
+  const tbody = $('roi-stats-body');
+  tbody.innerHTML = '';
+
+  if (rois.length === 0) {
+    $('section-stats').classList.add('hidden');
+    return;
+  }
+  $('section-stats').classList.remove('hidden');
+
+  for (const roi of rois) {
+    roi.stats = computeRoiStats(roi);
+    const tr = document.createElement('tr');
+    const roleClass = roi.role === 'signal' ? 'role-signal' : roi.role === 'background' ? 'role-bg' : 'role-nps';
+    const roleLabel = roi.role === 'signal' ? 'Signal' : roi.role === 'background' ? 'BG' : 'NPS';
+    const shapeLabel = roi.type === 'circle' ? '円形' : '矩形';
+
+    const stats = roi.stats || { mean: 0, sd: 0, min: 0, max: 0, pixels: 0, area_mm2: 0 };
+
+    const tdId = document.createElement('td');
+    tdId.textContent = '#' + roi.id;
+    tr.appendChild(tdId);
+
+    const tdRole = document.createElement('td');
+    tdRole.className = roleClass;
+    tdRole.textContent = roleLabel;
+    tr.appendChild(tdRole);
+
+    const tdShape = document.createElement('td');
+    tdShape.textContent = shapeLabel;
+    tr.appendChild(tdShape);
+
+    const fields = ['mean', 'sd', 'min', 'max'];
+    for (const f of fields) {
+      const td = document.createElement('td');
+      td.textContent = stats[f].toFixed(1);
+      tr.appendChild(td);
+    }
+
+    const tdPx = document.createElement('td');
+    tdPx.textContent = stats.pixels;
+    tr.appendChild(tdPx);
+
+    const tdArea = document.createElement('td');
+    tdArea.textContent = stats.area_mm2.toFixed(1);
+    tr.appendChild(tdArea);
+
+    const tdDel = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '×';
+    delBtn.className = 'btn btn-sm btn-danger';
+    delBtn.style.padding = '2px 8px';
+    delBtn.addEventListener('click', function() {
+      rois = rois.filter(r => r.id !== roi.id);
+      if (selectedRoiId === roi.id) selectedRoiId = null;
+      drawOverlay();
+      updateStatsTable();
+      updateCNR();
+    });
+    tdDel.appendChild(delBtn);
+    tr.appendChild(tdDel);
+
+    tbody.appendChild(tr);
+  }
+}
+
+// ================================================================
+//  CNR計算
+// ================================================================
+
+function updateCNR() {
+  const signalRoi = rois.find(r => r.role === 'signal' && r.stats);
+  const bgRoi = rois.find(r => r.role === 'background' && r.stats);
+
+  if (!signalRoi || !bgRoi) {
+    $('section-cnr').classList.add('hidden');
+    $('section-visibility').classList.add('hidden');
+    $('section-cnrlow').classList.add('hidden');
+    $('section-dprime').classList.add('hidden');
+    return;
+  }
+
+  $('section-cnr').classList.remove('hidden');
+  $('section-visibility').classList.remove('hidden');
+  $('section-cnrlow').classList.remove('hidden');
+
+  const sM = signalRoi.stats.mean;
+  const bM = bgRoi.stats.mean;
+  const bSD = bgRoi.stats.sd;
+  const contrast = Math.abs(sM - bM);
+  const cnr = bSD > 0 ? contrast / bSD : 0;
+
+  $('cnr-value').textContent = cnr.toFixed(2);
+  $('signal-mean').textContent = sM.toFixed(1);
+  $('bg-mean').textContent = bM.toFixed(1);
+  $('contrast-value').textContent = contrast.toFixed(1);
+  $('bg-sd').textContent = bSD.toFixed(2);
+
+  // Auto-fill contrast for d'
+  if (!$('lesion-contrast').value) {
+    $('lesion-contrast').placeholder = contrast.toFixed(1);
+  }
+
+  // Visibility (Rose criterion)
+  updateVisibility(cnr);
+
+  // Update CNRlow if NPS available
+  if (lastNpsResult) {
+    updateCNRlow(contrast);
+  }
+}
+
+function updateVisibility(cnr) {
+  const thresholds = [3, 4, 5];
+  for (const t of thresholds) {
+    const el = $('vis-' + t);
+    const judge = $('vis-judge-' + t);
+    if (cnr >= t) {
+      el.className = 'vis-item pass';
+      judge.textContent = '検出可能';
+    } else {
+      el.className = 'vis-item fail';
+      judge.textContent = '検出困難';
+    }
+  }
+}
+
+function updateDprimeVisibility(dprime) {
+  $('dprime-vis').classList.remove('hidden');
+  const thresholds = [3, 4, 5];
+  for (const t of thresholds) {
+    const el = $('vis-dprime-' + t);
+    const judge = $('vis-djudge-' + t);
+    if (dprime >= t) {
+      el.className = 'vis-item pass';
+      judge.textContent = '検出可能';
+    } else {
+      el.className = 'vis-item fail';
+      judge.textContent = '検出困難';
+    }
+  }
+}
+
+// ================================================================
+//  FFT (Cooley-Tukey radix-2)
+// ================================================================
+
+function fft1d(re, im) {
+  const n = re.length;
+  if (n <= 1) return;
+
+  let j = 0;
+  for (let i = 1; i < n; i++) {
+    let bit = n >> 1;
+    while (j & bit) { j ^= bit; bit >>= 1; }
+    j ^= bit;
+    if (i < j) {
+      [re[i], re[j]] = [re[j], re[i]];
+      [im[i], im[j]] = [im[j], im[i]];
+    }
+  }
+
+  for (let len = 2; len <= n; len *= 2) {
+    const halfLen = len / 2;
+    const angle = -2 * Math.PI / len;
+    const wRe = Math.cos(angle);
+    const wIm = Math.sin(angle);
+    for (let i = 0; i < n; i += len) {
+      let curRe = 1, curIm = 0;
+      for (let k = 0; k < halfLen; k++) {
+        const tRe = curRe * re[i + k + halfLen] - curIm * im[i + k + halfLen];
+        const tIm = curRe * im[i + k + halfLen] + curIm * re[i + k + halfLen];
+        re[i + k + halfLen] = re[i + k] - tRe;
+        im[i + k + halfLen] = im[i + k] - tIm;
+        re[i + k] += tRe;
+        im[i + k] += tIm;
+        const newCurRe = curRe * wRe - curIm * wIm;
+        curIm = curRe * wIm + curIm * wRe;
+        curRe = newCurRe;
+      }
+    }
+  }
+}
+
+function fft2d(dataRe, dataIm, N) {
+  for (let y = 0; y < N; y++) {
+    const rowRe = new Float64Array(N);
+    const rowIm = new Float64Array(N);
+    for (let x = 0; x < N; x++) {
+      rowRe[x] = dataRe[y * N + x];
+      rowIm[x] = dataIm[y * N + x];
+    }
+    fft1d(rowRe, rowIm);
+    for (let x = 0; x < N; x++) {
+      dataRe[y * N + x] = rowRe[x];
+      dataIm[y * N + x] = rowIm[x];
+    }
+  }
+  for (let x = 0; x < N; x++) {
+    const colRe = new Float64Array(N);
+    const colIm = new Float64Array(N);
+    for (let y = 0; y < N; y++) {
+      colRe[y] = dataRe[y * N + x];
+      colIm[y] = dataIm[y * N + x];
+    }
+    fft1d(colRe, colIm);
+    for (let y = 0; y < N; y++) {
+      dataRe[y * N + x] = colRe[y];
+      dataIm[y * N + x] = colIm[y];
+    }
+  }
+}
+
+// ================================================================
+//  デトレンド
+// ================================================================
+
+function detrendPoly2(roi, N) {
+  const rowMean = new Float64Array(N);
+  const colMean = new Float64Array(N);
+  let total = 0;
+
+  for (let y = 0; y < N; y++) {
+    let s = 0;
+    for (let x = 0; x < N; x++) s += roi[y * N + x];
+    rowMean[y] = s / N;
+    total += s;
+  }
+  for (let x = 0; x < N; x++) {
+    let s = 0;
+    for (let y = 0; y < N; y++) s += roi[y * N + x];
+    colMean[x] = s / N;
+  }
+  const grandMean = total / (N * N);
+
+  function fitQuad(arr) {
+    const n = arr.length;
+    let sx = 0, sx2 = 0, sx3 = 0, sx4 = 0, sy = 0, sxy = 0, sx2y = 0;
+    for (let i = 0; i < n; i++) {
+      const x = i - n / 2;
+      sx += x; sx2 += x * x; sx3 += x * x * x; sx4 += x * x * x * x;
+      sy += arr[i]; sxy += x * arr[i]; sx2y += x * x * arr[i];
+    }
+    const A = [[n, sx, sx2], [sx, sx2, sx3], [sx2, sx3, sx4]];
+    const B = [sy, sxy, sx2y];
+    for (let i = 0; i < 3; i++) {
+      let maxRow = i;
+      for (let k = i + 1; k < 3; k++) if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
+      [A[i], A[maxRow]] = [A[maxRow], A[i]];
+      [B[i], B[maxRow]] = [B[maxRow], B[i]];
+      for (let k = i + 1; k < 3; k++) {
+        const f = A[k][i] / A[i][i];
+        for (let j = i; j < 3; j++) A[k][j] -= f * A[i][j];
+        B[k] -= f * B[i];
+      }
+    }
+    const c = new Float64Array(3);
+    for (let i = 2; i >= 0; i--) {
+      c[i] = B[i];
+      for (let j = i + 1; j < 3; j++) c[i] -= A[i][j] * c[j];
+      c[i] /= A[i][i];
+    }
+    const trend = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = i - n / 2;
+      trend[i] = c[0] + c[1] * x + c[2] * x * x;
+    }
+    return trend;
+  }
+
+  const rowTrend = fitQuad(rowMean);
+  const colTrend = fitQuad(colMean);
+
+  const result = new Float64Array(N * N);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      result[y * N + x] = roi[y * N + x] - (rowTrend[y] + colTrend[x] - grandMean);
+    }
+  }
+  return result;
+}
+
+// ================================================================
+//  NPS計算（NPS ROI内でグリッド配置）
+// ================================================================
+
+function computeNPS() {
+  const npsRegions = rois.filter(r => r.role === 'nps');
+  if (npsRegions.length === 0) {
+    addMsg('nps-msg', 'NPS領域ROIが設定されていません。ROI役割を「NPS領域」にして均一バックグラウンド部分にROIを配置してください。', 'error');
+    return null;
+  }
+
+  const N = parseInt($('nps-roi-size').value);
+  const detrend = $('nps-detrend').value;
+  const ps = pixelSpacing[0];
+
+  // 各NPS ROI内に計算用の正方形タイルをグリッド配置
+  const npsRois = [];
+  const half = N / 2;
+
+  for (const region of npsRegions) {
+    let cx, cy, scanRadius;
+    if (region.type === 'circle') {
+      cx = region.cx;
+      cy = region.cy;
+      scanRadius = region.radius;
+    } else {
+      cx = region.x + region.width / 2;
+      cy = region.y + region.height / 2;
+      scanRadius = Math.min(region.width, region.height) / 2;
+    }
+
+    const scanMin = -Math.ceil(scanRadius / N) * N;
+    const scanMax = Math.ceil(scanRadius / N) * N;
+
+    for (let dy = scanMin; dy < scanMax; dy += N) {
+      for (let dx = scanMin; dx < scanMax; dx += N) {
+        const rx = Math.round(cx + dx - half);
+        const ry = Math.round(cy + dy - half);
+
+        let inside;
+        if (region.type === 'circle') {
+          const corners = [[rx, ry], [rx + N, ry], [rx, ry + N], [rx + N, ry + N]];
+          inside = corners.every(([px, py]) => {
+            const ddx = px - cx, ddy = py - cy;
+            return Math.sqrt(ddx * ddx + ddy * ddy) <= scanRadius;
+          });
+        } else {
+          inside = rx >= region.x && ry >= region.y &&
+                   rx + N <= region.x + region.width && ry + N <= region.y + region.height;
+        }
+
+        if (inside && rx >= 0 && ry >= 0 && rx + N <= imgWidth && ry + N <= imgHeight) {
+          npsRois.push({ x: rx, y: ry });
+        }
+      }
+    }
+  }
+
+  if (npsRois.length < 3) {
+    addMsg('nps-msg', 'NPS用タイルが' + npsRois.length + '個しか配置できません（最低3個必要）。NPS領域ROIを大きくするかROIサイズを小さくしてください。', 'error');
+    return null;
+  }
+
+  if (npsRois.length < 10) {
+    addMsg('nps-msg', 'NPS用タイルが' + npsRois.length + '個と少なめです。精度向上のため10個以上を推奨します（NPS領域ROIを大きくするか複数配置してください）。', 'warning');
+  }
+
+  const nps2d = new Float64Array(N * N);
+  let totalMean = 0;
+  let totalVar = 0;
+
+  for (const roi of npsRois) {
+    const roiData = new Float64Array(N * N);
+    let mean = 0;
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        const val = rawPixelData[(roi.y + y) * imgWidth + (roi.x + x)];
+        roiData[y * N + x] = val;
+        mean += val;
+      }
+    }
+    mean /= (N * N);
+    totalMean += mean;
+
+    let detrended;
+    if (detrend === 'poly2') {
+      detrended = detrendPoly2(roiData, N);
+    } else {
+      detrended = new Float64Array(N * N);
+      for (let i = 0; i < N * N; i++) detrended[i] = roiData[i] - mean;
+    }
+
+    let sumSq = 0;
+    for (let i = 0; i < N * N; i++) sumSq += detrended[i] * detrended[i];
+    totalVar += sumSq / (N * N);
+
+    const re = new Float64Array(detrended);
+    const im = new Float64Array(N * N);
+    fft2d(re, im, N);
+
+    for (let i = 0; i < N * N; i++) {
+      nps2d[i] += (re[i] * re[i] + im[i] * im[i]);
+    }
+  }
+
+  const numRois = npsRois.length;
+  totalMean /= numRois;
+  totalVar /= numRois;
+  const totalSD = Math.sqrt(totalVar);
+
+  const scale = (ps * ps) / (N * N * numRois);
+  for (let i = 0; i < N * N; i++) nps2d[i] *= scale;
+
+  // FFTShift
+  const nps2dShifted = new Float64Array(N * N);
+  const halfN = N / 2;
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const sy = (y + halfN) % N;
+      const sx = (x + halfN) % N;
+      nps2dShifted[sy * N + sx] = nps2d[y * N + x];
+    }
+  }
+
+  // Radial Average → 1D NPS
+  const maxFreqBin = halfN;
+  const freqStep = 1.0 / (N * ps);
+  const radialSum = new Float64Array(maxFreqBin + 1);
+  const radialCount = new Uint32Array(maxFreqBin + 1);
+
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const fx = x - halfN;
+      const fy = y - halfN;
+      const r = Math.sqrt(fx * fx + fy * fy);
+      const bin = Math.round(r);
+      if (bin <= maxFreqBin) {
+        radialSum[bin] += nps2dShifted[y * N + x];
+        radialCount[bin]++;
+      }
+    }
+  }
+
+  const freq = [];
+  const nps1d = [];
+  for (let i = 1; i <= maxFreqBin; i++) {
+    if (radialCount[i] > 0) {
+      freq.push(i * freqStep);
+      nps1d.push(radialSum[i] / radialCount[i]);
+    }
+  }
+
+  // NPS integral (2D: 2π*f*NPS(f)df)
+  let integral2d = 0;
+  for (let i = 1; i < freq.length; i++) {
+    const fMid = (freq[i - 1] + freq[i]) / 2;
+    const npsMid = (nps1d[i - 1] + nps1d[i]) / 2;
+    integral2d += 2 * Math.PI * fMid * npsMid * (freq[i] - freq[i - 1]);
+  }
+
+  return {
+    freq, nps1d, nps2dShifted, N,
+    numRois, meanCT: totalMean, sd: totalSD,
+    npsIntegralSqrt: Math.sqrt(integral2d),
+    freqStep, pixelSize: ps
+  };
+}
+
+function updateCNRlow(contrast) {
+  if (!lastNpsResult) return;
+  const npsNoise = lastNpsResult.npsIntegralSqrt;
+  const cnrlow = npsNoise > 0 ? contrast / npsNoise : 0;
+
+  $('cnrlow-value').textContent = cnrlow.toFixed(2);
+  $('nps-noise').textContent = npsNoise.toFixed(2);
+  $('nps-sd').textContent = lastNpsResult.sd.toFixed(2);
+  $('nps-roi-count').textContent = lastNpsResult.numRois;
+}
+
+function showNpsChart(result) {
+  $('nps-result').classList.remove('hidden');
+
+  if (chartNps) chartNps.destroy();
+  const ctx = $('chart-nps').getContext('2d');
+  chartNps = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: result.freq.map(f => f.toFixed(3)),
+      datasets: [{
+        label: 'NPS (HU²·mm²)',
+        data: result.nps1d,
+        borderColor: '#1a56db',
+        backgroundColor: 'rgba(26,86,219,0.1)',
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.1,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'top' },
+        tooltip: {
+          callbacks: {
+            title: items => items[0].label + ' cycles/mm',
+            label: item => 'NPS: ' + parseFloat(item.raw).toExponential(3) + ' HU²·mm²'
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: '空間周波数 (cycles/mm)', font: { weight: 'bold' } },
+          ticks: {
+            maxTicksLimit: 10,
+            callback: function(val, idx) {
+              const f = result.freq[idx];
+              return f !== undefined ? f.toFixed(2) : '';
+            }
+          }
+        },
+        y: {
+          title: { display: true, text: 'NPS (HU²·mm²)', font: { weight: 'bold' } },
+          ticks: { callback: val => val.toExponential(1) }
+        }
+      }
+    }
+  });
+}
+
+// ================================================================
+//  Detectability Index (d')
+// ================================================================
+
+// Bessel J1 approximation
+function besselJ1(x) {
+  if (Math.abs(x) < 1e-10) return 0;
+  const ax = Math.abs(x);
+  if (ax < 8) {
+    const y = x * x;
+    const r1 = x * (72362614232.0 + y * (-7895059235.0 + y * (242396853.1 +
+      y * (-2972611.439 + y * (15704.48260 + y * (-30.16036606))))));
+    const r2 = 144725228442.0 + y * (2300535178.0 + y * (18583304.74 +
+      y * (99447.43394 + y * (376.9991397 + y))));
+    return r1 / r2;
+  }
+  // Large x: asymptotic approximation
+  const z = 8.0 / ax;
+  const y = z * z;
+  const xx = ax - 2.356194491;
+  const p0 = 1.0 + y * (0.183105e-2 + y * (-0.3516396496e-4 + y * 0.2457520174e-5));
+  const q0 = 0.04687499995 + y * (-0.2002690873e-3 + y * (0.8449199096e-5 + y * (-0.88228987e-6)));
+  const ans = Math.sqrt(0.636619772 / ax) * (Math.cos(xx) * p0 - z * Math.sin(xx) * q0);
+  return x < 0 ? -ans : ans;
+}
+
+function computeTaskFunction2D(diameter_mm, ps, N) {
+  // Disk lesion FT: W(f) = 2*R*J1(2*pi*f*R) / (2*pi*f*R) for f > 0; W(0) = pi*R^2
+  const R = diameter_mm / 2;
+  const halfN = N / 2;
+  const freqStep = 1.0 / (N * ps);
+  const W = new Float64Array(N * N);
+
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const fx = (x - halfN) * freqStep;
+      const fy = (y - halfN) * freqStep;
+      const f = Math.sqrt(fx * fx + fy * fy);
+      if (f < 1e-10) {
+        // DC: W(0) = pi*R^2 (area of disk)
+        W[y * N + x] = Math.PI * R * R;
+      } else {
+        // FT of disk: W(f) = pi*R^2 * 2*J1(2*pi*f*R) / (2*pi*f*R)
+        const arg = 2 * Math.PI * f * R;
+        W[y * N + x] = Math.PI * R * R * 2 * besselJ1(arg) / arg;
+      }
+    }
+  }
+  return W;
+}
+
+function eyeFilter2D(N, ps) {
+  // Burgess (1994) eye filter: E(f) = f^1.3 * exp(-c * f^2)
+  // f in cycles/mm. c = 1/(2*sigma^2) where sigma relates to viewing distance.
+  // c = 120 corresponds to sigma ≈ 0.065 cycles/mm, typical for CT viewing at ~50cm.
+  // Ref: Burgess AE (1994), J Opt Soc Am A 11(5):1237-42
+  const c = 120;
+  const halfN = N / 2;
+  const freqStep = 1.0 / (N * ps);
+  const E = new Float64Array(N * N);
+
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const fx = (x - halfN) * freqStep;
+      const fy = (y - halfN) * freqStep;
+      const f = Math.sqrt(fx * fx + fy * fy);
+      E[y * N + x] = Math.pow(f, 1.3) * Math.exp(-c * f * f);
+    }
+  }
+  return E;
+}
+
+function computeDetectabilityIndex() {
+  if (!lastNpsResult) {
+    addMsg('dprime-msg', 'まずNPSを算出してください。', 'error');
+    return;
+  }
+
+  const nps = lastNpsResult;
+  const N = nps.N;
+  const ps = nps.pixelSize;
+
+  const diameterMm = parseFloat($('lesion-diameter').value) || 5;
+  let contrast = parseFloat($('lesion-contrast').value);
+  if (isNaN(contrast) || contrast === 0) {
+    // Try to get from Signal/BG ROIs
+    const signalRoi = rois.find(r => r.role === 'signal' && r.stats);
+    const bgRoi = rois.find(r => r.role === 'background' && r.stats);
+    if (signalRoi && bgRoi) {
+      contrast = Math.abs(signalRoi.stats.mean - bgRoi.stats.mean);
+    } else {
+      addMsg('dprime-msg', 'コントラスト値を入力するか、Signal/BG ROIを設定してください。', 'error');
+      return;
+    }
+  }
+
+  const model = $('observer-model').value;
+
+  // Task function
+  const W = computeTaskFunction2D(diameterMm, ps, N);
+
+  // Eye filter (only for NPWE)
+  let E = null;
+  if (model === 'npwe') {
+    E = eyeFilter2D(N, ps);
+  }
+
+  // Compute d'
+  const nps2d = nps.nps2dShifted;
+  const halfN = N / 2;
+  const freqStep = 1.0 / (N * ps);
+  const df2 = freqStep * freqStep;
+
+  // NPWE: d' = ΔS * ∫W²E² d²f / √(∫W²E²·NPS d²f)
+  // Ideal: d' = ΔS * √(∫W²/NPS d²f)
+  // Ref: Burgess (1994), Barrett & Myers (2004)
+  let npweNum = 0;  // ∫ W²·E² d²f
+  let npweDen = 0;  // ∫ W²·E²·NPS d²f
+  let idealInt = 0; // ∫ W²/NPS d²f
+
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const fx = x - halfN;
+      const fy = y - halfN;
+      const f = Math.sqrt(fx * fx + fy * fy) * freqStep;
+
+      // Skip DC and Nyquist
+      if (f < 1e-10 || f > 0.5 / ps) continue;
+
+      const w2 = W[y * N + x] * W[y * N + x];
+      const npsVal = Math.max(nps2d[y * N + x], 1e-20);
+
+      if (model === 'npwe') {
+        const e2 = E[y * N + x] * E[y * N + x];
+        npweNum += w2 * e2 * df2;
+        npweDen += w2 * e2 * npsVal * df2;
+      } else {
+        idealInt += w2 / npsVal * df2;
+      }
+    }
+  }
+
+  let dprime;
+  if (model === 'npwe') {
+    dprime = npweDen > 0 ? contrast * npweNum / Math.sqrt(npweDen) : 0;
+  } else {
+    dprime = contrast * Math.sqrt(idealInt);
+  }
+
+  // Minimum detectable contrast at d' = 3.0
+  const targetDprime = 3.0;
+  let minContrast;
+  if (model === 'npwe') {
+    minContrast = npweNum > 0 && npweDen > 0 ? targetDprime * Math.sqrt(npweDen) / npweNum : Infinity;
+  } else {
+    minContrast = idealInt > 0 ? targetDprime / Math.sqrt(idealInt) : Infinity;
+  }
+
+  $('dprime-result').classList.remove('hidden');
+  $('dprime-value').textContent = dprime.toFixed(2);
+  $('min-contrast').textContent = minContrast < 1000 ? minContrast.toFixed(1) : '---';
+
+  // Enable d' based visibility
+  $('section-dprime').classList.remove('hidden');
+  updateDprimeVisibility(dprime);
+
+  clearMsg('dprime-msg');
+  addMsg('dprime-msg', 'd\' 算出完了（' + model.toUpperCase() + 'モデル, 病変径 ' + diameterMm + ' mm）', 'success');
+}
+
+// ================================================================
+//  ファイル読み込み
+// ================================================================
+
+function handleFile(file) {
+  clearMsg('msg-area');
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const result = parseDicom(e.target.result);
+      imgWidth = result.cols;
+      imgHeight = result.rows;
+      rawPixelData = result.rawData;
+
+      if (result.pixelSpacing) {
+        pixelSpacing = result.pixelSpacing;
+      }
+
+      dicomWW = result.windowWidth || 400;
+      dicomWL = result.windowCenter || 40;
+      dicomDefaultWW = dicomWW;
+      dicomDefaultWL = dicomWL;
+      $('ww-slider').value = dicomWW;
+      $('wl-slider').value = dicomWL;
+      $('ww-val').textContent = Math.round(dicomWW);
+      $('wl-val').textContent = Math.round(dicomWL);
+
+      const canvas = $('canvas-preview');
+      const overlay = $('canvas-overlay');
+      canvas.width = imgWidth;
+      canvas.height = imgHeight;
+      overlay.width = imgWidth;
+      overlay.height = imgHeight;
+
+      // Set display size
+      const maxDispW = Math.min(600, window.innerWidth - 60);
+      const scale = Math.min(1, maxDispW / imgWidth);
+      const dispW = Math.round(imgWidth * scale);
+      const dispH = Math.round(imgHeight * scale);
+      canvas.style.width = dispW + 'px';
+      canvas.style.height = dispH + 'px';
+      overlay.style.width = dispW + 'px';
+      overlay.style.height = dispH + 'px';
+
+      applyWindowLevel(rawPixelData, imgWidth, imgHeight, dicomWW, dicomWL);
+
+      // DICOM info
+      const infoEl = $('dicom-info');
+      infoEl.classList.remove('hidden');
+      infoEl.innerHTML = '';
+      const tags = [
+        ['サイズ', imgWidth + '×' + imgHeight],
+        ['PixelSpacing', pixelSpacing[0].toFixed(3) + ' mm'],
+        ['Modality', result.modality],
+        ['Kernel', result.kernel],
+        ['SliceThickness', result.sliceThickness ? result.sliceThickness + ' mm' : '']
+      ];
+      for (const [label, value] of tags) {
+        if (!value) continue;
+        const span = document.createElement('span');
+        span.className = 'dicom-tag';
+        const strong = document.createElement('strong');
+        strong.textContent = label + ': ';
+        span.appendChild(strong);
+        span.appendChild(document.createTextNode(value));
+        infoEl.appendChild(span);
+      }
+
+      $('section-image').classList.remove('hidden');
+
+      // Reset ROIs and charts
+      if (chartNps) { chartNps.destroy(); chartNps = null; }
+      rois = [];
+      roiIdCounter = 0;
+      selectedRoiId = null;
+      lastNpsResult = null;
+      drawOverlay();
+      updateStatsTable();
+      updateCNR();
+
+      addMsg('msg-area', 'DICOM画像を読み込みました。画像上をクリックしてROIを配置してください。', 'success');
+
+    } catch (err) {
+      addMsg('msg-area', '読み込みエラー: ' + err.message, 'error');
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ================================================================
+//  イベントハンドラ
+// ================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  const fileInput = $('file-input');
+  const uploadArea = $('upload-area');
+
+  fileInput.addEventListener('change', function(e) {
+    if (e.target.files.length > 0) handleFile(e.target.files[0]);
+  });
+
+  uploadArea.addEventListener('click', function() { fileInput.click(); });
+  uploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+  });
+  uploadArea.addEventListener('dragleave', function() {
+    uploadArea.classList.remove('dragover');
+  });
+  uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+  });
+
+  // Shape buttons
+  document.querySelectorAll('[data-shape]').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('[data-shape]').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      currentShape = this.dataset.shape;
+    });
+  });
+
+  // Role→デフォルトサイズ定義（S/M/L の px値）
+  const ROLE_SIZES = {
+    signal:     { s: 10, m: 20, l: 30,  label: '半径 px' },
+    background: { s: 25, m: 40, l: 60,  label: '半径 px' },
+    nps:        { s: 40, m: 70, l: 100, label: '半径 px' },
+  };
+  // 現在選択中のプリセット
+  let currentSizePreset = 'l';
+
+  function setRoiSize(px) {
+    $('roi-size-input').value = px;
+  }
+
+  function updateSizePresetButtons(preset) {
+    ['s','m','l'].forEach(p => {
+      const el = $('btn-size-' + p);
+      el.classList.toggle('active', p === preset);
+    });
+    currentSizePreset = preset;
+    const sizes = ROLE_SIZES[currentRole] || ROLE_SIZES.signal;
+    setRoiSize(sizes[preset]);
+  }
+
+  // Role buttons — shared helper
+  function setActiveRole(roleId, color) {
+    const allRoleBtns = [
+      { id: 'btn-role-signal', defaultColor: '#4a5568' },
+      { id: 'btn-role-bg',     defaultColor: '#4a5568' },
+      { id: 'btn-role-nps',    defaultColor: '#4a5568' },
+    ];
+    allRoleBtns.forEach(b => {
+      const el = $(b.id);
+      el.classList.remove('active');
+      el.style.borderColor = '#e2e8f0';
+      el.style.color = b.defaultColor;
+    });
+    const active = $(roleId);
+    active.classList.add('active');
+    active.style.borderColor = color;
+    active.style.color = color;
+
+    // サイズヒント更新 & デフォルトサイズ適用
+    const sizes = ROLE_SIZES[currentRole] || ROLE_SIZES.signal;
+    $('size-hint').textContent = '（' + (sizes.label || '半径 px') + '）';
+    updateSizePresetButtons(currentSizePreset);
+  }
+
+  $('btn-role-signal').addEventListener('click', function() {
+    currentRole = 'signal';
+    setActiveRole('btn-role-signal', '#d69e2e');
+  });
+  $('btn-role-bg').addEventListener('click', function() {
+    currentRole = 'background';
+    setActiveRole('btn-role-bg', '#3182ce');
+  });
+  $('btn-role-nps').addEventListener('click', function() {
+    currentRole = 'nps';
+    setActiveRole('btn-role-nps', '#38a169');
+  });
+
+  // S/M/L プリセットボタン
+  ['s','m','l'].forEach(preset => {
+    $('btn-size-' + preset).addEventListener('click', function() {
+      updateSizePresetButtons(preset);
+    });
+  });
+
+  // 数値入力で手動変更した場合はプリセット選択を外す
+  $('roi-size-input').addEventListener('input', function() {
+    const sizes = ROLE_SIZES[currentRole] || ROLE_SIZES.signal;
+    const val = parseInt(this.value);
+    ['s','m','l'].forEach(p => {
+      $('btn-size-' + p).classList.toggle('active', val === sizes[p]);
+    });
+    currentSizePreset = ['s','m','l'].find(p => val === sizes[p]) || currentSizePreset;
+  });
+
+  // Clear ROIs
+  $('btn-clear-rois').addEventListener('click', function() {
+    rois = [];
+    roiIdCounter = 0;
+    selectedRoiId = null;
+    lastNpsResult = null;
+    drawOverlay();
+    updateStatsTable();
+    updateCNR();
+    $('nps-result').classList.add('hidden');
+    $('dprime-result').classList.add('hidden');
+    $('dprime-vis').classList.add('hidden');
+  });
+
+  // WW/WL sliders
+  $('ww-slider').addEventListener('input', function() {
+    dicomWW = parseFloat(this.value);
+    $('ww-val').textContent = Math.round(dicomWW);
+    if (rawPixelData) applyWindowLevel(rawPixelData, imgWidth, imgHeight, dicomWW, dicomWL);
+  });
+  $('wl-slider').addEventListener('input', function() {
+    dicomWL = parseFloat(this.value);
+    $('wl-val').textContent = Math.round(dicomWL);
+    if (rawPixelData) applyWindowLevel(rawPixelData, imgWidth, imgHeight, dicomWW, dicomWL);
+  });
+  $('btn-ww-reset').addEventListener('click', function() {
+    dicomWW = dicomDefaultWW;
+    dicomWL = dicomDefaultWL;
+    $('ww-slider').value = dicomWW;
+    $('wl-slider').value = dicomWL;
+    $('ww-val').textContent = Math.round(dicomWW);
+    $('wl-val').textContent = Math.round(dicomWL);
+    if (rawPixelData) applyWindowLevel(rawPixelData, imgWidth, imgHeight, dicomWW, dicomWL);
+  });
+
+  // Canvas interactions
+  const overlay = $('canvas-overlay');
+
+  function getCanvasCoords(e) {
+    const rect = overlay.getBoundingClientRect();
+    const scaleX = overlay.width / rect.width;
+    const scaleY = overlay.height / rect.height;
+    return {
+      x: Math.round((e.clientX - rect.left) * scaleX),
+      y: Math.round((e.clientY - rect.top) * scaleY)
+    };
+  }
+
+  function hitTestRoi(px, py) {
+    // Reverse order (top-most first)
+    for (let i = rois.length - 1; i >= 0; i--) {
+      const r = rois[i];
+      if (r.type === 'circle') {
+        const dx = px - r.cx, dy = py - r.cy;
+        if (Math.sqrt(dx * dx + dy * dy) <= r.radius) return r.id;
+      } else {
+        if (px >= r.x && px <= r.x + r.width && py >= r.y && py <= r.y + r.height) return r.id;
+      }
+    }
+    return null;
+  }
+
+  overlay.addEventListener('mousedown', function(e) {
+    if (!rawPixelData) return;
+    const pos = getCanvasCoords(e);
+    const hitId = hitTestRoi(pos.x, pos.y);
+
+    if (hitId !== null) {
+      // Start dragging existing ROI
+      selectedRoiId = hitId;
+      const roi = rois.find(r => r.id === hitId);
+      dragState = {
+        roiId: hitId,
+        startX: pos.x,
+        startY: pos.y,
+        origCx: roi.type === 'circle' ? roi.cx : roi.x,
+        origCy: roi.type === 'circle' ? roi.cy : roi.y
+      };
+      drawOverlay();
+    } else {
+      // Create new ROI
+      const size = parseInt($('roi-size-input').value) || 30;
+      roiIdCounter++;
+      const newRoi = {
+        id: roiIdCounter,
+        type: currentShape,
+        role: currentRole,
+        stats: null
+      };
+
+      if (currentShape === 'circle') {
+        newRoi.cx = pos.x;
+        newRoi.cy = pos.y;
+        newRoi.radius = size;
+      } else {
+        newRoi.x = pos.x - size / 2;
+        newRoi.y = pos.y - size / 2;
+        newRoi.width = size;
+        newRoi.height = size;
+      }
+
+      rois.push(newRoi);
+      selectedRoiId = newRoi.id;
+      drawOverlay();
+      updateStatsTable();
+      updateCNR();
+    }
+  });
+
+  overlay.addEventListener('mousemove', function(e) {
+    if (!dragState) return;
+    const pos = getCanvasCoords(e);
+    const roi = rois.find(r => r.id === dragState.roiId);
+    if (!roi) return;
+
+    const dx = pos.x - dragState.startX;
+    const dy = pos.y - dragState.startY;
+
+    if (roi.type === 'circle') {
+      roi.cx = Math.max(roi.radius, Math.min(imgWidth - roi.radius, dragState.origCx + dx));
+      roi.cy = Math.max(roi.radius, Math.min(imgHeight - roi.radius, dragState.origCy + dy));
+    } else {
+      roi.x = Math.max(0, Math.min(imgWidth - roi.width, dragState.origCx + dx));
+      roi.y = Math.max(0, Math.min(imgHeight - roi.height, dragState.origCy + dy));
+    }
+
+    drawOverlay();
+  });
+
+  overlay.addEventListener('mouseup', function() {
+    if (dragState) {
+      dragState = null;
+      updateStatsTable();
+      updateCNR();
+    }
+  });
+
+  overlay.addEventListener('mouseleave', function() {
+    if (dragState) {
+      dragState = null;
+      updateStatsTable();
+      updateCNR();
+    }
+  });
+
+  // Delete selected ROI
+  document.addEventListener('keydown', function(e) {
+    if ((e.key === 'Delete' || e.key === 'Backspace') && selectedRoiId !== null) {
+      // Don't delete if user is typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      rois = rois.filter(r => r.id !== selectedRoiId);
+      selectedRoiId = null;
+      drawOverlay();
+      updateStatsTable();
+      updateCNR();
+    }
+  });
+
+  // NPS calculation
+  $('btn-calc-nps').addEventListener('click', function() {
+    clearMsg('nps-msg');
+    if (!rawPixelData) {
+      addMsg('nps-msg', '画像を先にアップロードしてください。', 'error');
+      return;
+    }
+    const result = computeNPS();
+    if (result) {
+      lastNpsResult = result;
+
+      // Update CNRlow
+      const signalRoi = rois.find(r => r.role === 'signal' && r.stats);
+      const bgRoi = rois.find(r => r.role === 'background' && r.stats);
+      if (signalRoi && bgRoi) {
+        const contrast = Math.abs(signalRoi.stats.mean - bgRoi.stats.mean);
+        updateCNRlow(contrast);
+      }
+
+      showNpsChart(result);
+      $('section-dprime').classList.remove('hidden');
+      addMsg('nps-msg', 'NPS算出完了（' + result.numRois + '個のROI使用）。√∫NPS = ' + result.npsIntegralSqrt.toFixed(2) + ' HU', 'success');
+    }
+  });
+
+  // d' calculation
+  $('btn-calc-dprime').addEventListener('click', function() {
+    clearMsg('dprime-msg');
+    computeDetectabilityIndex();
+  });
+});
+</script>
+
+</body>
+</html>
