@@ -506,7 +506,14 @@
 
 </main>
 
-<footer>&copy; 2025 RT-Lab — ブラウザ完結型・無料 Web ツール for 放射線技師</footer>
+<footer>
+  <div>&copy; 2025 RT-Lab — ブラウザ完結型・無料 Web ツール for 放射線技師</div>
+  <div style="margin-top:8px; font-size:0.8rem;">
+    <a href="/about/">サイトについて</a> |
+    <a href="/privacy/">プライバシーポリシー</a> |
+    <a href="/contact/">お問い合わせ</a>
+  </div>
+</footer>
 
 <script>
 'use strict';
@@ -594,14 +601,15 @@ function parseDicom(arrayBuffer) {
     return { tagKey, vr, valueOffset, valueLength };
   }
 
-  // Detect Transfer Syntax
+  // Detect Transfer Syntax (meta header は常に Explicit VR で読む)
+  let bodyIsExplicit = true;
   while (offset < bytes.length && offset < 500) {
     const savedOffset = offset;
-    const t = readTag();
+    const t = readTag(); // isExplicit=true のまま読む
     if (!t) break;
     if (t.tagKey === 0x00020010 && t.valueOffset !== undefined) {
       const ts = new TextDecoder().decode(bytes.slice(t.valueOffset, t.valueOffset + t.valueLength)).trim().replace(/\0/g, '');
-      if (ts === '1.2.840.10008.1.2') isExplicit = false; // Implicit VR Little Endian
+      if (ts === '1.2.840.10008.1.2') bodyIsExplicit = false; // body 用フラグのみ変更
       tags[t.tagKey] = ts;
     }
     // End of File Meta Information — back up to re-read this tag in main loop
@@ -610,6 +618,7 @@ function parseDicom(arrayBuffer) {
       break;
     }
   }
+  isExplicit = bodyIsExplicit; // メタヘッダー読み終えてから body 用フラグを適用
 
   // Parse rest of tags
   const importantTags = new Set([
@@ -640,10 +649,12 @@ function parseDicom(arrayBuffer) {
     }
 
     if (importantTags.has(t.tagKey)) {
-      // US (Unsigned Short) tags: read as binary uint16
-      if (t.vr === 'US' && t.valueLength === 2) {
+      // Implicit VR では vr が空になるため、既知タグの VR を辞書で補完する
+      const implicitVrUS = new Set([0x00280010, 0x00280011, 0x00280100, 0x00280101, 0x00280102, 0x00280103]);
+      const effectiveVr = t.vr || (implicitVrUS.has(t.tagKey) ? 'US' : '');
+      if (effectiveVr === 'US' && t.valueLength === 2) {
         tags[t.tagKey] = dv.getUint16(t.valueOffset, true).toString();
-      } else if (t.vr === 'SS' && t.valueLength === 2) {
+      } else if (effectiveVr === 'SS' && t.valueLength === 2) {
         tags[t.tagKey] = dv.getInt16(t.valueOffset, true).toString();
       } else {
         const raw = bytes.slice(t.valueOffset, t.valueOffset + t.valueLength);

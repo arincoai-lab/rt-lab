@@ -498,7 +498,14 @@
 
 </main>
 
-<footer>&copy; 2025 RT-Lab — ブラウザ完結型・無料 Web ツール for 放射線技師</footer>
+<footer>
+  <div>&copy; 2025 RT-Lab — ブラウザ完結型・無料 Web ツール for 放射線技師</div>
+  <div style="margin-top:8px; font-size:0.8rem;">
+    <a href="/about/">サイトについて</a> |
+    <a href="/privacy/">プライバシーポリシー</a> |
+    <a href="/contact/">お問い合わせ</a>
+  </div>
+</footer>
 
 <script>
 'use strict';
@@ -1065,19 +1072,21 @@ function parseDicom(arrayBuffer) {
     const valueBytes = new Uint8Array(arrayBuffer, offset, valueLength);
     offset += valueLength;
 
-    // Decode based on VR
+    // Decode based on VR (Implicit VR では vr='' になるため既知タグを辞書で補完)
+    const implicitVrUS = new Set([0x00280010, 0x00280011, 0x00280100, 0x00280101, 0x00280102, 0x00280103]);
+    const effectiveVr = vr || (implicitVrUS.has(tagKey) ? 'US' : '');
     let value;
-    if (vr === 'US') {
+    if (effectiveVr === 'US') {
       value = valueLength >= 2 ? dv.getUint16(offset - valueLength, littleEndian) : 0;
-    } else if (vr === 'SS') {
+    } else if (effectiveVr === 'SS') {
       value = valueLength >= 2 ? dv.getInt16(offset - valueLength, littleEndian) : 0;
-    } else if (vr === 'UL') {
+    } else if (effectiveVr === 'UL') {
       value = valueLength >= 4 ? dv.getUint32(offset - valueLength, littleEndian) : 0;
-    } else if (vr === 'SL') {
+    } else if (effectiveVr === 'SL') {
       value = valueLength >= 4 ? dv.getInt32(offset - valueLength, littleEndian) : 0;
-    } else if (vr === 'FL') {
+    } else if (effectiveVr === 'FL') {
       value = valueLength >= 4 ? dv.getFloat32(offset - valueLength, littleEndian) : 0;
-    } else if (vr === 'FD') {
+    } else if (effectiveVr === 'FD') {
       value = valueLength >= 8 ? dv.getFloat64(offset - valueLength, littleEndian) : 0;
     } else {
       // String-like VRs
@@ -1087,11 +1096,12 @@ function parseDicom(arrayBuffer) {
     return { tagKey, vr, value };
   }
 
-  // Check Transfer Syntax in meta header
-  // Read meta header (group 0002) first
+  // Check Transfer Syntax in meta header (meta header は常に Explicit VR で読む)
+  let bodyExplicitVR = true;
+  let bodyLittleEndian = true;
   while (offset < len) {
     const saved = offset;
-    const tag = readTag();
+    const tag = readTag(); // explicitVR=true のまま読む
     if (!tag) break;
 
     const group = (tag.tagKey >>> 16) & 0xFFFF;
@@ -1105,21 +1115,17 @@ function parseDicom(arrayBuffer) {
     if (tag.tagKey === 0x00020010) {
       const ts = String(tag.value).trim();
       if (ts === '1.2.840.10008.1.2') {
-        // Implicit VR Little Endian
-        explicitVR = false;
-        littleEndian = true;
+        bodyExplicitVR = false; littleEndian = true;
       } else if (ts === '1.2.840.10008.1.2.1') {
-        // Explicit VR Little Endian
-        explicitVR = true;
-        littleEndian = true;
+        bodyExplicitVR = true; bodyLittleEndian = true;
       } else if (ts === '1.2.840.10008.1.2.2') {
-        // Explicit VR Big Endian
-        explicitVR = true;
-        littleEndian = false;
+        bodyExplicitVR = true; bodyLittleEndian = false;
       }
-      // Other transfer syntaxes (compressed) — try explicit LE as fallback
     }
   }
+  // メタヘッダー読み終えてから body 用フラグを適用
+  explicitVR = bodyExplicitVR;
+  littleEndian = bodyLittleEndian;
 
   // Read remaining tags
   while (offset < len) {
