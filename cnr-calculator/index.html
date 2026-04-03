@@ -739,19 +739,20 @@ function parseDicom(arrayBuffer) {
     return { tagKey, vr, valueOffset, valueLength };
   }
 
-  // Meta header (always Explicit VR Little Endian)
+  // Meta header は常に Explicit VR Little Endian で読む
+  // Transfer Syntax を先に取得してから body 用フラグを設定する
+  let bodyIsExplicit = true;
   while (offset < bytes.length && offset < 500) {
     const savedOffset = offset;
-    const t = readTag();
+    const t = readTag(); // isExplicit=true のまま読む
     if (!t) break;
     if (t.tagKey === 0x00020010 && t.valueOffset !== undefined) {
       const ts = new TextDecoder().decode(bytes.slice(t.valueOffset, t.valueOffset + t.valueLength)).trim().replace(/\0/g, '');
       if (ts === '1.2.840.10008.1.2') {
-        isExplicit = false;
+        bodyIsExplicit = false; // body 用フラグのみ変更、メタヘッダー読み中は isExplicit を変えない
       } else if (ts === '1.2.840.10008.1.2.2') {
         isLittleEndian = false;
       }
-      // Check for compressed transfer syntaxes
       if (ts.startsWith('1.2.840.10008.1.2.4') || ts === '1.2.840.10008.1.2.5') {
         throw new Error('圧縮されたDICOMファイルには対応していません（Transfer Syntax: ' + ts + '）');
       }
@@ -762,6 +763,7 @@ function parseDicom(arrayBuffer) {
       break;
     }
   }
+  isExplicit = bodyIsExplicit; // メタヘッダー読み終えてから body 用フラグを適用
 
   const importantTags = new Set([
     0x00280010, 0x00280011, 0x00280030,
@@ -784,9 +786,14 @@ function parseDicom(arrayBuffer) {
     }
 
     if (importantTags.has(t.tagKey)) {
-      if (t.vr === 'US' && t.valueLength === 2) {
+      // Implicit VR では vr フィールドがないため、タグ辞書で VR を補完する
+      const implicitVrUS = new Set([
+        0x00280010, 0x00280011, 0x00280100, 0x00280101, 0x00280102, 0x00280103,
+      ]);
+      const effectiveVr = t.vr || (implicitVrUS.has(t.tagKey) ? 'US' : 'DS');
+      if (effectiveVr === 'US' && t.valueLength === 2) {
         tags[t.tagKey] = dv.getUint16(t.valueOffset, isLittleEndian).toString();
-      } else if (t.vr === 'SS' && t.valueLength === 2) {
+      } else if (effectiveVr === 'SS' && t.valueLength === 2) {
         tags[t.tagKey] = dv.getInt16(t.valueOffset, isLittleEndian).toString();
       } else {
         tags[t.tagKey] = new TextDecoder().decode(bytes.slice(t.valueOffset, t.valueOffset + t.valueLength)).trim().replace(/\0/g, '');
