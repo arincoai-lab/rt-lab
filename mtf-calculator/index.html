@@ -139,6 +139,15 @@
     .upload-text strong { color: #1a56db; }
     .upload-hint { font-size: 0.75rem; color: #718096; margin-top: 6px; }
 
+    .btn-demo {
+      display: block; margin: 12px auto 0; padding: 8px 20px;
+      background: #f0f4ff; color: #1a5f9e;
+      border: 1px solid #a0b4d6; border-radius: 6px;
+      font-size: 0.82rem; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-demo:hover { background: #dbeafe; }
+
     /* ── Messages ── */
     .msg { padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; margin-top: 10px; }
     .msg-error   { background: #fff5f5; border: 1px solid #fc8181; color: #c53030; }
@@ -388,6 +397,7 @@
       </div>
       <div class="upload-hint">対応形式: DICOM (.dcm) / PNG / TIFF / BMP</div>
     </div>
+    <button class="btn-demo" id="btn-demo">🧪 デモ画像で試す（円形エッジファントム）</button>
     <div id="msg-area"></div>
   </div>
 
@@ -919,6 +929,39 @@ uploadArea.addEventListener('drop', e => {
 });
 fileInput.addEventListener('change', e => {
   if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+// ── デモ画像（円形エッジファントム） ──
+document.getElementById('btn-demo').addEventListener('click', function() {
+  const SIZE = 512;
+  const cx = SIZE / 2, cy = SIZE / 2, r = 180;
+  const canvas = document.createElement('canvas');
+  canvas.width = SIZE; canvas.height = SIZE;
+  const ctx = canvas.getContext('2d');
+  const imgData = ctx.createImageData(SIZE, SIZE);
+  const d = imgData.data;
+
+  // ガウシアンカーネルでエッジをブラー（MTFが測定できる程度のシャープさ）
+  const sigma = 1.5;
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+      // シグモイド関数でぼかしたエッジ
+      const t = 1 / (1 + Math.exp((dist - r) / sigma));
+      // 内側: 200 (高CT値風), 外側: 50 (低CT値風), ノイズ追加
+      const noise = (Math.random() - 0.5) * 8;
+      const v = Math.round(50 + t * 150 + noise);
+      const val = Math.max(0, Math.min(255, v));
+      const i = (y * SIZE + x) * 4;
+      d[i] = d[i+1] = d[i+2] = val; d[i+3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  canvas.toBlob(function(blob) {
+    const file = new File([blob], 'demo_circular_edge.png', { type: 'image/png' });
+    handleFile(file);
+  }, 'image/png');
 });
 
 function handleFile(file) {

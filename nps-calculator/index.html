@@ -139,6 +139,15 @@
     .upload-text strong { color: #1a56db; }
     .upload-hint { font-size: 0.75rem; color: #718096; margin-top: 6px; }
 
+    .btn-demo {
+      display: block; margin: 12px auto 0; padding: 8px 20px;
+      background: #f0f4ff; color: #1a5f9e;
+      border: 1px solid #a0b4d6; border-radius: 6px;
+      font-size: 0.82rem; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-demo:hover { background: #dbeafe; }
+
     /* ── Messages ── */
     .msg { padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; margin-top: 10px; }
     .msg-error   { background: #fff5f5; border: 1px solid #fc8181; color: #c53030; }
@@ -394,6 +403,7 @@
       </div>
       <div class="upload-hint">対応形式: DICOM (.dcm)</div>
     </div>
+    <button class="btn-demo" id="btn-demo">🧪 デモ画像で試す（均一ファントム）</button>
     <div id="msg-area"></div>
   </div>
 
@@ -1297,6 +1307,67 @@ function handleFile(file) {
   };
   reader.readAsArrayBuffer(file);
 }
+
+// ── デモ画像（均一ファントム）──
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('btn-demo').addEventListener('click', function() {
+    const W = 512, H = 512;
+    // 均一ファントム: CT値 0 HU 相当（RescaleIntercept=-1024なら1024、ここは直接値）
+    // ノイズはガウシアン近似（Box-Muller）で σ=20 HU
+    const rawData = new Float64Array(W * H);
+    const mean = 0; // 水ファントム相当
+    for (let i = 0; i < W * H; i++) {
+      // Box-Muller transform
+      const u1 = Math.random(), u2 = Math.random();
+      const noise = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2) * 20;
+      rawData[i] = mean + noise;
+    }
+
+    imgWidth = W;
+    imgHeight = H;
+    rawPixelData = rawData;
+    pixelSpacing = [0.625, 0.625];
+    dicomWW = 400; dicomWL = 0;
+    dicomDefaultWW = dicomWW; dicomDefaultWL = dicomWL;
+
+    document.getElementById('pixel-size').value = '0.6250';
+    document.getElementById('ps-auto').classList.remove('hidden');
+    document.getElementById('ww-slider').value = dicomWW;
+    document.getElementById('wl-slider').value = dicomWL;
+    document.getElementById('ww-val').textContent = dicomWW;
+    document.getElementById('wl-val').textContent = dicomWL;
+    document.getElementById('ww-wl-controls').classList.remove('hidden');
+
+    const canvas = document.getElementById('canvas-preview');
+    const overlay = document.getElementById('canvas-overlay');
+    canvas.width = W; canvas.height = H;
+    overlay.width = W; overlay.height = H;
+    applyWindowLevel(rawData, W, H, dicomWW, dicomWL);
+
+    const infoEl = document.getElementById('dicom-info');
+    infoEl.classList.remove('hidden');
+    infoEl.innerHTML = '<span class="dicom-tag"><strong>サイズ:</strong> 512×512</span>' +
+      '<span class="dicom-tag"><strong>PixelSpacing:</strong> 0.625 mm</span>' +
+      '<span class="dicom-tag"><strong>種別:</strong> デモ（均一ファントム, σ=20HU）</span>';
+
+    document.getElementById('image-info').textContent = '512 × 512 px | デモデータ';
+    const roiCxEl = document.getElementById('roi-cx');
+    const roiCyEl = document.getElementById('roi-cy');
+    const roiRadiusEl = document.getElementById('roi-radius');
+    roiCxEl.max = W; roiCyEl.max = H; roiRadiusEl.max = Math.min(W, H) / 2;
+    roiCxEl.value = Math.round(W / 2);
+    roiCyEl.value = Math.round(H / 2);
+    roiRadiusEl.value = Math.round(Math.min(W, H) * 0.45);
+    document.getElementById('roi-cx-val').textContent = roiCxEl.value;
+    document.getElementById('roi-cy-val').textContent = roiCyEl.value;
+    document.getElementById('roi-radius-val').textContent = roiRadiusEl.value;
+
+    document.getElementById('section-image').classList.remove('hidden');
+    isDicom = true;
+    drawOverlay();
+    addMsg(document.getElementById('msg-area'), 'デモ画像（均一ファントム, σ=20HU, PixelSpacing=0.625mm）を読み込みました。ROI領域を確認して「NPS算出」をクリックしてください。', 'success');
+  });
+});
 
 // ================================================================
 //  イベントハンドラ

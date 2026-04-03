@@ -83,6 +83,15 @@
     .upload-text { font-size: 0.9rem; color: #4a5568; }
     .upload-text strong { color: #1a56db; }
     .upload-hint { font-size: 0.75rem; color: #718096; margin-top: 6px; }
+
+    .btn-demo {
+      display: block; margin: 12px auto 0; padding: 8px 20px;
+      background: #f0f4ff; color: #1a5f9e;
+      border: 1px solid #a0b4d6; border-radius: 6px;
+      font-size: 0.82rem; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-demo:hover { background: #dbeafe; }
     .upload-filename { display: none; margin-top: 10px; font-size: 0.82rem; color: #276749; font-weight: 600; }
 
     .msg { padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; margin-top: 10px; }
@@ -223,6 +232,7 @@
       <div class="upload-hint">対応形式: CSV（UTF-8 または Shift-JIS）</div>
       <div class="upload-filename" id="upload-filename"></div>
     </div>
+    <button class="btn-demo" id="btn-demo">🧪 サンプルデータで試す（CT・成人）</button>
     <div id="col-info" style="margin-top:10px; font-size:0.8rem; color:#718096;"></div>
     <div id="msg-area"></div>
   </div>
@@ -716,6 +726,36 @@ uploadArea.addEventListener('drop', e => {
   if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 });
 fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+// ── サンプルデータ（CT成人・代表的プロトコール）──
+document.getElementById('btn-demo').addEventListener('click', function() {
+  const csv = `検査プロトコール,CTDIvol,DLP
+頭部単純ルーチン,47,960
+頭部単純ルーチン,52,1040
+頭部単純ルーチン,43,890
+頭部単純ルーチン,55,1100
+頭部単純ルーチン,49,980
+胸部Ⅰ相,8.2,340
+胸部Ⅰ相,9.5,390
+胸部Ⅰ相,7.8,320
+胸部Ⅰ相,10.1,415
+胸部Ⅰ相,8.8,360
+肝臓ダイナミック(3相以上),14.5,1450
+肝臓ダイナミック(3相以上),16.2,1620
+肝臓ダイナミック(3相以上),13.8,1380
+肝臓ダイナミック(3相以上),15.0,1500
+冠動脈,52,880
+冠動脈,58,950
+冠動脈,49,820
+冠動脈,61,1010
+腹部骨盤単純,10.5,650
+腹部骨盤単純,11.8,730
+腹部骨盤単純,9.9,610
+腹部骨盤単純,12.3,760`;
+
+  const file = new File([csv], 'サンプルCT成人.csv', { type: 'text/csv' });
+  handleFile(file);
+});
 
 function readAsText(file, enc) {
   return new Promise((resolve, reject) => {
