@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>心臓CT 最適位相決定ツール | RT-Lab</title>
+  <meta name="description" content="心臓CTの最適な再構成位相を心拍数・装置・再構成モードから算出。ECG画像アップロード対応：R波自動検出で実際の心電図上に位相ウィンドウを重ねて表示。ブラウザ完結・無料。">
+  <meta property="og:title" content="心臓CT 最適位相決定ツール | RT-Lab">
+  <meta property="og:description" content="ECG画像アップロードでR波自動検出。拡張中期・収縮末期の推奨位相ウィンドウを心電図上に可視化。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rt-ai-lab.com/cardiac-phase-optimizer/">
+  <link rel="canonical" href="https://rt-ai-lab.com/cardiac-phase-optimizer/">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"心臓CT 最適位相決定ツール","url":"https://rt-ai-lab.com/cardiac-phase-optimizer/","applicationCategory":"HealthApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f4f8; color: #2d3748; line-height: 1.6; font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #1a56db; color: #fff; padding: 14px 24px;
+      display: flex; align-items: center; gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 100;
+    }
+    .logo { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.06em; }
+    .logo a { color: #fff; text-decoration: none; }
+    .tool-name-header { font-size: 0.95rem; opacity: 0.88; padding-left: 16px; border-left: 2px solid rgba(255,255,255,0.35); }
+
+    /* ── Layout ── */
+    main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 40px; }
+    .tool-desc {
+      background: #fff; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px;
+      border-left: 4px solid #1a56db;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+    }
+    .tool-desc h1 { font-size: 1.2rem; font-weight: 700; color: #1a202c; margin-bottom: 6px; }
+    .tool-desc p { color: #4a5568; font-size: 0.9rem; line-height: 1.7; }
+    .main-grid { display: grid; grid-template-columns: 340px 1fr; gap: 18px; align-items: start; }
+    @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ── Card ── */
+    .card {
+      background: #fff; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+    }
+    .card-title {
+      font-size: 0.82rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+      color: #4a5568; margin-bottom: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title-opt { font-weight: 400; text-transform: none; letter-spacing: 0; color: #a0aec0; font-size: 0.76rem; }
+
+    /* ── Form controls ── */
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-child { margin-bottom: 0; }
+    label { display: block; font-weight: 600; font-size: 0.82rem; color: #4a5568; margin-bottom: 5px; letter-spacing: 0.04em; }
+    select, input[type="number"] {
+      width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e0; border-radius: 7px;
+      font-size: 0.92rem; color: #2d3748; background: #fff; transition: border-color 0.15s; -webkit-appearance: none;
+    }
+    select:focus, input[type="number"]:focus {
+      outline: none; border-color: #1a56db; box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+    }
+    input[type="range"] {
+      width: 100%; height: 6px; -webkit-appearance: none; appearance: none;
+      background: #e2e8f0; border-radius: 3px; outline: none; margin-top: 8px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+      border-radius: 50%; background: #1a56db; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .hr-display { font-size: 2rem; font-weight: 800; color: #1a56db; text-align: center; margin: 4px 0; }
+    .hr-unit { font-size: 0.9rem; font-weight: 400; color: #718096; }
+
+    /* ── Segmented control ── */
+    .seg-control { display: flex; border: 1.5px solid #cbd5e0; border-radius: 7px; overflow: hidden; }
+    .seg-control button {
+      flex: 1; padding: 8px 6px; border: none; background: #fff; font-size: 0.8rem;
+      font-weight: 500; color: #718096; cursor: pointer; transition: all 0.15s;
+      border-right: 1px solid #cbd5e0;
+    }
+    .seg-control button:last-child { border-right: none; }
+    .seg-control button.active { background: #1a56db; color: #fff; font-weight: 700; }
+    .seg-control button:hover:not(.active) { background: #f7fafc; }
+
+    /* ── ECG Upload ── */
+    .ecg-drop {
+      border: 2px dashed #cbd5e0; border-radius: 8px; cursor: pointer;
+      transition: all 0.15s; overflow: hidden; text-align: center;
+    }
+    .ecg-drop:hover, .ecg-drop.dragging { border-color: #1a56db; background: #eff6ff; }
+    .ecg-drop-prompt { padding: 20px 12px; }
+    .ecg-drop-prompt .icon { font-size: 2rem; opacity: 0.45; margin-bottom: 6px; }
+    .ecg-drop-prompt p { font-size: 0.85rem; color: #718096; line-height: 1.5; }
+    .ecg-drop-prompt .sub { font-size: 0.74rem; color: #a0aec0; margin-top: 4px; }
+    #ecgThumbImg {
+      width: 100%; display: block; max-height: 100px; object-fit: cover; border-radius: 6px;
+    }
+
+    /* ── Detection results ── */
+    .detect-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .detect-cell { background: #f7fafc; border-radius: 7px; padding: 8px 10px; border: 1px solid #e2e8f0; }
+    .detect-label { font-size: 0.72rem; color: #718096; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .detect-val { font-size: 1.1rem; font-weight: 700; color: #2d3748; margin-top: 2px; }
+    .detect-rr-list { font-size: 0.72rem; color: #a0aec0; margin-top: 2px; }
+
+    /* ── Arrhythmia warning ── */
+    .arrhythmia-box {
+      background: #fef2f2; border: 1.5px solid #fca5a5; border-radius: 7px;
+      padding: 10px 12px; margin-top: 10px; font-size: 0.82rem; color: #991b1b;
+    }
+    .arrhythmia-box strong { display: block; margin-bottom: 3px; }
+    .arrhythmia-ok {
+      background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 7px;
+      padding: 10px 12px; margin-top: 10px; font-size: 0.82rem; color: #15803d;
+    }
+
+    /* ── Auto HR strip ── */
+    .auto-hr-row {
+      display: flex; gap: 6px; align-items: center; margin-top: 8px; flex-wrap: wrap;
+    }
+    .auto-hr-row input[type="number"] { width: 70px; flex-shrink: 0; }
+    .auto-hr-val { font-size: 1rem; font-weight: 800; color: #1a56db; min-width: 55px; }
+    .btn-apply {
+      padding: 6px 12px; background: #1a56db; color: #fff; border: none; border-radius: 6px;
+      font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background 0.15s;
+    }
+    .btn-apply:hover { background: #1648c0; }
+    .btn-apply:disabled { background: #a0aec0; cursor: default; }
+    .btn-clear {
+      width: 100%; margin-top: 10px; padding: 7px; background: #fff; border: 1.5px solid #e2e8f0;
+      border-radius: 6px; font-size: 0.8rem; color: #718096; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-clear:hover { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+
+    /* ── Demo button ── */
+    .demo-btn {
+      display: block; width: 100%; padding: 9px; background: #f7fafc; border: 1.5px dashed #a0aec0;
+      border-radius: 7px; color: #4a5568; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      transition: all 0.15s; margin-bottom: 16px; text-align: center;
+    }
+    .demo-btn:hover { background: #edf2f7; border-color: #1a56db; color: #1a56db; }
+
+    /* ── DSCT info ── */
+    .dsct-info {
+      background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 7px;
+      padding: 10px 12px; margin-bottom: 14px; font-size: 0.82rem; color: #5b21b6;
+    }
+
+    /* ── TR display ── */
+    .tr-box {
+      background: #f7fafc; border-radius: 8px; padding: 14px 16px; border: 1px solid #e2e8f0;
+    }
+    .tr-box .label { font-size: 0.75rem; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .tr-box .val { font-size: 2.2rem; font-weight: 900; color: #7c3aed; line-height: 1; }
+    .tr-box .note { font-size: 0.82rem; color: #718096; margin-top: 2px; }
+
+    /* ── ECG overlay canvas ── */
+    #ecgOverlayCanvas { width: 100%; display: block; border-radius: 6px; border: 1px solid #e2e8f0; }
+
+    /* ── Phase canvas ── */
+    #phaseCanvas { width: 100%; display: block; border-radius: 6px; border: 1px solid #e2e8f0; }
+
+    /* ── Canvas legend ── */
+    .canvas-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; font-size: 0.78rem; color: #4a5568; }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-dot { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ── Metrics grid ── */
+    .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
+    .metric-cell { background: #f7fafc; border-radius: 8px; padding: 12px 14px; border: 1px solid #e2e8f0; }
+    .metric-label { font-size: 0.73rem; color: #718096; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 3px; }
+    .metric-value { font-size: 1.3rem; font-weight: 800; color: #2d3748; line-height: 1.2; }
+    .metric-unit { font-size: 0.78rem; font-weight: 400; color: #718096; }
+    .metric-note { font-size: 0.72rem; color: #a0aec0; margin-top: 2px; }
+
+    /* ── Recommendation ── */
+    .recommendation { border-radius: 10px; padding: 16px 20px; margin-top: 14px; border-width: 2px; border-style: solid; }
+    .recommendation.diastolic { background: #f0fdf4; border-color: #16a34a; }
+    .recommendation.systolic { background: #eff6ff; border-color: #2563eb; }
+    .recommendation.dual { background: #fefce8; border-color: #d97706; }
+    .rec-title { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+    .recommendation.diastolic .rec-title { color: #16a34a; }
+    .recommendation.systolic .rec-title { color: #2563eb; }
+    .recommendation.dual .rec-title { color: #d97706; }
+    .rec-main { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+    .rec-phase { font-size: 2rem; font-weight: 900; line-height: 1; }
+    .recommendation.diastolic .rec-phase { color: #16a34a; }
+    .recommendation.systolic .rec-phase { color: #2563eb; }
+    .recommendation.dual .rec-phase { color: #d97706; font-size: 1.6rem; }
+    .rec-sub { font-size: 0.82rem; color: #4a5568; line-height: 1.5; }
+    .rec-reason { font-size: 0.8rem; color: #718096; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.08); }
+    .risk-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
+    .risk-low { background: #dcfce7; color: #16a34a; }
+    .risk-moderate { background: #fef9c3; color: #a16207; }
+    .risk-high { background: #fee2e2; color: #dc2626; }
+
+    /* ── Comparison table ── */
+    .phase-table-wrap { overflow-x: auto; margin-top: 10px; }
+    .phase-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .phase-table th { background: #f7fafc; padding: 8px 12px; text-align: left; font-weight: 700; color: #4a5568; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+    .phase-table td { padding: 8px 12px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+    .phase-table tr:hover td { background: #f7fafc; }
+    .phase-table .hl td { background: #f0fdf4; font-weight: 700; }
+    .phase-table .hl.sys td { background: #eff6ff; }
+
+    /* ── Theory accordion ── */
+    .theory-toggle {
+      display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 14px 20px;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; font-weight: 700;
+      font-size: 0.9rem; color: #4a5568; user-select: none; transition: background 0.15s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 18px;
+    }
+    .theory-toggle:hover { background: #f7fafc; }
+    .theory-toggle .chev { margin-left: auto; font-size: 0.75rem; transition: transform 0.2s; }
+    .theory-toggle.open .chev { transform: rotate(180deg); }
+    .theory-content {
+      display: none; background: #fff; border: 1px solid #e2e8f0; border-top: none;
+      border-radius: 0 0 10px 10px; padding: 20px 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .theory-content.open { display: block; }
+    .theory-content h3 { font-size: 0.95rem; font-weight: 700; color: #2d3748; margin: 16px 0 8px; }
+    .theory-content h3:first-child { margin-top: 0; }
+    .theory-content p, .theory-content li { font-size: 0.85rem; color: #4a5568; line-height: 1.75; margin-bottom: 6px; }
+    .theory-content ul { padding-left: 20px; }
+    .formula { background: #f7fafc; border-left: 3px solid #1a56db; padding: 10px 14px; border-radius: 0 6px 6px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #2d3748; margin: 10px 0; }
+    .ref { font-size: 0.78rem; color: #a0aec0; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+
+    /* ── Footer ── */
+    footer { text-align: center; padding: 20px; font-size: 0.78rem; color: #a0aec0; border-top: 1px solid #e2e8f0; margin-top: 30px; }
+    footer a { color: #718096; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    #customRotGroup { display: none; margin-top: 10px; }
+    #customRotGroup.visible { display: block; }
+    #segGroup { display: none; }
+    #dsctInfoBox { display: none; }
+    #ecgDetectionResult { display: none; }
+    #ecgPreviewCard { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><a href="../">RT-Lab</a></div>
+  <div class="tool-name-header">心臓CT 最適位相決定ツール</div>
+</header>
+
+<main>
+  <div class="tool-desc">
+    <h1>心臓CT 最適位相決定ツール</h1>
+    <p>ECG画像をアップロードすると R波を自動検出し、実際の心電図上に拡張中期（Diastasis）・収縮末期の推奨位相ウィンドウをオーバーレイ表示します。CT装置・再構成モードの時間分解能と静止期の関係も定量的に評価します。データはブラウザ内で完結し、外部に送信されません。</p>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- =========================================================
+         LEFT PANEL
+    ========================================================== -->
+    <div>
+
+      <!-- ECG Image Upload -->
+      <div class="card">
+        <div class="card-title">
+          ECG画像アップロード
+          <span class="card-title-opt">（オプション）</span>
+        </div>
+
+        <div class="ecg-drop" id="ecgDrop">
+          <input type="file" id="ecgFileInput" accept="image/*" style="display:none">
+          <div class="ecg-drop-prompt" id="ecgDropPrompt">
+            <div class="icon">📈</div>
+            <p>ECG画像をドロップ<br>またはクリックして選択</p>
+            <p class="sub">JPG · PNG · BMP 対応 · データ外部送信なし</p>
+          </div>
+          <img id="ecgThumbImg" alt="ECG" style="display:none">
+        </div>
+        <button class="demo-btn" id="demoECGBtn" style="margin-top:10px;margin-bottom:0">
+          デモ ECG 画像を読み込む（62 bpm・8拍・洞調律）
+        </button>
+
+        <!-- Detection results -->
+        <div id="ecgDetectionResult">
+          <div class="detect-grid">
+            <div class="detect-cell">
+              <div class="detect-label">検出 R 波</div>
+              <div class="detect-val" id="detectedPeakCount">—</div>
+            </div>
+            <div class="detect-cell">
+              <div class="detect-label">R-R 変動係数</div>
+              <div class="detect-val" id="detectedRRcv">—</div>
+            </div>
+          </div>
+          <div id="rrListDisplay" class="detect-rr-list" style="margin-top:6px; word-break:break-all;"></div>
+
+          <!-- Arrhythmia indicator -->
+          <div id="rhythmBox"></div>
+
+          <!-- Auto HR estimation -->
+          <div style="margin-top:12px">
+            <label style="font-size:0.8rem">ストリップ時間（秒）から HR を自動推定</label>
+            <div class="auto-hr-row">
+              <input type="number" id="stripDuration" value="10" min="1" max="120" step="1">
+              <span style="font-size:0.82rem; color:#4a5568">秒 →</span>
+              <span class="auto-hr-val" id="autoHRVal">— bpm</span>
+              <button class="btn-apply" id="applyAutoHRBtn" disabled>適用</button>
+            </div>
+          </div>
+
+          <button class="btn-clear" id="clearECGBtn">画像を削除</button>
+        </div>
+      </div><!-- /ECG upload card -->
+
+      <!-- Settings -->
+      <div class="card">
+        <div class="card-title">パラメータ設定</div>
+
+        <button class="demo-btn" id="demoBtn">デモデータを読み込む（HR 58 bpm / Canon ONE）</button>
+
+        <!-- Scanner -->
+        <div class="form-group">
+          <label>CT 装置 / 回転時間プリセット</label>
+          <select id="scannerSelect">
+            <optgroup label="Canon">
+              <option value="0.275|false|canon_one_genesis">Canon Aquilion ONE GENESIS / Precision（0.275 s）</option>
+              <option value="0.275|false|canon_one_vision">Canon Aquilion ONE Vision（0.275 s）</option>
+              <option value="0.35|false|canon_prime">Canon Aquilion Prime SP / Exceed（0.35 s）</option>
+            </optgroup>
+            <optgroup label="Siemens Healthineers">
+              <option value="0.25|true|siemens_force">Siemens SOMATOM Force — DSCT（0.25 s）</option>
+              <option value="0.25|true|siemens_drive">Siemens SOMATOM Drive — DSCT（0.25 s）</option>
+              <option value="0.28|false|siemens_edge">Siemens SOMATOM Edge Plus（0.28 s）</option>
+              <option value="0.33|false|siemens_as">Siemens SOMATOM Definition AS+（0.33 s）</option>
+            </optgroup>
+            <optgroup label="GE HealthCare">
+              <option value="0.28|false|ge_revolution">GE Revolution CT / Apex（0.28 s）</option>
+              <option value="0.35|false|ge_optima">GE Optima CT660（0.35 s）</option>
+            </optgroup>
+            <optgroup label="Philips">
+              <option value="0.27|false|philips_ict">Philips Brilliance iCT 256（0.27 s）</option>
+              <option value="0.33|false|philips_iqon">Philips IQon Spectral CT（0.33 s）</option>
+            </optgroup>
+            <optgroup label="UIH">
+              <option value="0.25|false|uih_uct960">UIH uCT960+（0.25 s）</option>
+            </optgroup>
+            <optgroup label="カスタム">
+              <option value="custom|false|custom">カスタム（手動入力）</option>
+            </optgroup>
+          </select>
+          <div id="customRotGroup">
+            <label style="margin-top:10px">回転時間（s）</label>
+            <input type="number" id="customRotTime" value="0.35" min="0.2" max="0.8" step="0.005">
+          </div>
+        </div>
+
+        <div class="dsct-info" id="dsctInfoBox">
+          <strong>DSCT 装置が選択されています。</strong><br>
+          2 管球収集により時間分解能は Trot/4（90° オフセット）になります。
+        </div>
+
+        <!-- HR -->
+        <div class="form-group">
+          <label>心拍数</label>
+          <div class="hr-display"><span id="hrDisplay">58</span> <span class="hr-unit">bpm</span></div>
+          <input type="range" id="hrSlider" min="40" max="120" step="1" value="58">
+          <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:#a0aec0;margin-top:4px">
+            <span>40 bpm</span><span>80 bpm</span><span>120 bpm</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <div style="flex:1">
+              <label style="font-size:0.75rem">直接入力（bpm）</label>
+              <input type="number" id="hrInput" value="58" min="40" max="120" step="1">
+            </div>
+            <div style="flex:1">
+              <label style="font-size:0.75rem">R-R 間隔（ms）</label>
+              <input type="number" id="rrInput" value="1034" min="500" max="1500" step="1">
+            </div>
+          </div>
+        </div>
+
+        <!-- Recon mode -->
+        <div class="form-group">
+          <label>再構成モード</label>
+          <div class="seg-control" id="reconModeCtrl">
+            <button class="active" data-mode="half">ハーフ再構成</button>
+            <button data-mode="seg">マルチセグメント</button>
+          </div>
+        </div>
+        <div id="segGroup" class="form-group">
+          <label>セグメント数 N</label>
+          <div class="seg-control" id="segCtrl">
+            <button class="active" data-seg="2">2 セグメント</button>
+            <button data-seg="3">3 セグメント</button>
+            <button data-seg="4">4 セグメント</button>
+          </div>
+          <p style="font-size:0.74rem;color:#718096;margin-top:6px;line-height:1.5">
+            複数心拍のデータを合成します。心拍が不整の場合はアーチファクトが増加します。
+          </p>
+        </div>
+
+        <!-- TR box -->
+        <div class="tr-box">
+          <div class="label">時間分解能</div>
+          <div class="val" id="trDisplay">138</div>
+          <div class="note">ms　<span id="trFormula">Trot / 2</span></div>
+        </div>
+      </div><!-- /settings card -->
+
+    </div><!-- /left -->
+
+    <!-- =========================================================
+         RIGHT PANEL
+    ========================================================== -->
+    <div>
+
+      <!-- ECG Image Preview (shown when image uploaded) -->
+      <div class="card" id="ecgPreviewCard">
+        <div class="card-title">ECG 画像 — 位相ウィンドウ表示</div>
+        <canvas id="ecgOverlayCanvas" width="800" height="240"></canvas>
+        <div class="canvas-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(22,163,74,0.3);border:2px solid #16a34a"></div>拡張中期（Diastasis）</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(37,99,235,0.22);border:2px solid #3b82f6"></div>収縮末期静止期</div>
+          <div class="legend-item">
+            <div style="width:16px;height:2px;background:#ef4444;margin-right:4px;flex-shrink:0"></div>R 波
+          </div>
+          <div class="legend-item">
+            <div style="width:16px;height:2px;border-top:2.5px dashed #16a34a;margin-right:4px;flex-shrink:0"></div>最適位相
+          </div>
+          <div class="legend-item">
+            <div style="width:16px;height:10px;background:rgba(124,58,237,0.18);border:1px solid #7c3aed;margin-right:4px;border-radius:2px;flex-shrink:0"></div>TR 幅
+          </div>
+        </div>
+      </div>
+
+      <!-- Cardiac cycle visualization -->
+      <div class="card">
+        <div class="card-title">心周期 ビジュアライゼーション</div>
+        <canvas id="phaseCanvas" width="800" height="290"></canvas>
+        <div class="canvas-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#fecaca"></div>収縮期</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#bfdbfe;border:2px solid #3b82f6"></div>収縮末期静止期</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#fed7aa"></div>等容弛緩期</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#bae6fd"></div>急速流入期（E 波）</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#bbf7d0;border:2px solid #16a34a"></div>拡張中期（Diastasis）</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#e9d5ff"></div>心房収縮期（A 波）</div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="card">
+        <div class="card-title">計算結果</div>
+        <div class="metrics-grid">
+          <div class="metric-cell">
+            <div class="metric-label">R-R 間隔</div>
+            <div class="metric-value"><span id="rrDisplay">1034</span> <span class="metric-unit">ms</span></div>
+            <div class="metric-note" id="hrVerify">≈ 58 bpm</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label">時間分解能</div>
+            <div class="metric-value"><span id="trDisplaySub">138</span> <span class="metric-unit">ms</span></div>
+            <div class="metric-note" id="trFormulaNote">Trot/2</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label">拡張中期（Diastasis）</div>
+            <div class="metric-value"><span id="diastasisDurEl">494</span> <span class="metric-unit">ms</span></div>
+            <div class="metric-note" id="diastasisPctEl">47–89% R-R</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label">収縮末期静止窓</div>
+            <div class="metric-value"><span id="systolicDurEl">80</span> <span class="metric-unit">ms</span></div>
+            <div class="metric-note" id="systolicPctEl">≈26% R-R</div>
+          </div>
+        </div>
+        <!-- Recommendation -->
+        <div class="recommendation diastolic" id="recBox">
+          <div class="rec-title" id="recTitle">推奨位相：拡張中期（Diastasis）</div>
+          <div class="rec-main">
+            <div class="rec-phase" id="recPhase">75% R-R</div>
+            <div>
+              <div style="font-size:0.9rem;font-weight:700;color:#374151" id="recAbsMs">（777 ms 後）</div>
+              <span class="risk-badge risk-low" id="riskBadge">モーションリスク：低</span>
+            </div>
+          </div>
+          <div class="rec-sub" id="recSub">拡張中期（緩速流入期）は心臓の動きが最も少ない時相です。</div>
+          <div class="rec-reason" id="recReason">Diastasis 持続時間 &gt; 時間分解能。余裕のある静止窓が確保できます。</div>
+        </div>
+      </div>
+
+      <!-- Comparison table -->
+      <div class="card">
+        <div class="card-title">再構成モード別比較（現在の心拍数）</div>
+        <div class="phase-table-wrap">
+          <table class="phase-table">
+            <thead>
+              <tr>
+                <th>モード</th>
+                <th>TR</th>
+                <th>Diastasis 余裕</th>
+                <th>推奨位相</th>
+                <th>評価</th>
+              </tr>
+            </thead>
+            <tbody id="compTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /right -->
+  </div><!-- /main-grid -->
+
+  <!-- Theory -->
+  <div class="theory-toggle" id="theoryToggle">
+    理論・背景 <span class="chev">▼</span>
+  </div>
+  <div class="theory-content" id="theoryContent">
+    <h3>心臓の静止位相（Still period）</h3>
+    <p>心臓 CT では心臓が静止している時相でデータを収集することが重要です。静止位相は 1 心周期に 2 つあります。</p>
+    <ul>
+      <li><strong>収縮末期静止位相</strong>：等容弛緩期直前の駆出末期（R 波後 約 250–300 ms）。高心拍数でも比較的確保しやすい。</li>
+      <li><strong>拡張中期静止位相（Diastasis / 緩速流入期）</strong>：急速流入（E 波）終了後〜心房収縮（A 波）開始前。僧帽弁流入が一時的に停止し、心室の動きが最も少ない。低〜中心拍数では長時間持続する。</li>
+    </ul>
+    <h3>Diastasis の持続時間モデル</h3>
+    <div class="formula">
+      収縮期（0 → 300 ms）+ IVRT（300 → 370 ms）+ E 波（370 → 490 ms）：計 490 ms<br>
+      Diastasis 開始：≈ 490 ms（絶対値）<br>
+      Diastasis 終了：≈ RR − 110 ms（心房収縮 110 ms の直前）<br>
+      Diastasis 持続 = max(0, RR − 600 ms)
+    </div>
+    <p>HR 上昇 → RR 短縮 → Diastasis が急速に消失。HR ≥ 100 bpm ではほぼ消失します（個人差あり）。</p>
+    <h3>時間分解能の計算</h3>
+    <div class="formula">
+      ハーフ再構成：TR = Trot ÷ 2<br>
+      N セグメント（シングルソース）：TR = Trot ÷ (2N)<br>
+      DSCT ネイティブ：TR = Trot ÷ 4<br>
+      DSCT N セグメント：TR = Trot ÷ (4N)
+    </div>
+    <h3>ECG 画像からの R 波検出アルゴリズム</h3>
+    <p>アップロードされた画像から以下の手順で R 波を検出します。</p>
+    <ul>
+      <li>輝度（Luminance）変換 → 背景の明暗を判定（明背景：反転）</li>
+      <li>行分散の最大バンドを探索（ECG 波形が存在する領域を特定）</li>
+      <li>各列の信号最大値から 1D 波形を抽出 → ガウス平滑化</li>
+      <li>適応的閾値（信号範囲の 55%）と最小距離制約でピーク検出</li>
+      <li>R-R 間隔の変動係数（CV）で不整脈リスクを評価</li>
+    </ul>
+    <h3>位相ウィンドウのオーバーレイ</h3>
+    <p>心拍数から換算した R-R ms と検出済み R 波位置（ピクセル）の比率を使い、各 R-R 区間に拡張中期・収縮末期の位相ウィンドウを重ね描きします。TR 幅も同スケールで可視化します。</p>
+    <div class="ref">
+      参考：Husmann L, et al. AJR 2007. Halliburton SS, et al. SCCT J Cardiovasc Comput Tomogr 2011.<br>
+      本ツールは教育・参考目的です。個人差・装置較正状況により最適位相は変動します。実際の臨床判断は医療従事者が行ってください。
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p><a href="../">RT-Lab トップ</a> | データはブラウザ内のみで処理されます。外部送信なし。</p>
+</footer>
+
+<script>
+// ================================================================
+//  Cardiac Phase Optimizer — RT-Lab
+//  ECG image upload + R-peak detection + phase overlay
+// ================================================================
+
+// ── DOM refs ──────────────────────────────────────────────────
+const scannerSelect   = document.getElementById('scannerSelect');
+const customRotGroup  = document.getElementById('customRotGroup');
+const customRotInput  = document.getElementById('customRotTime');
+const dsctInfoBox     = document.getElementById('dsctInfoBox');
+const hrSlider        = document.getElementById('hrSlider');
+const hrInput         = document.getElementById('hrInput');
+const rrInput         = document.getElementById('rrInput');
+const hrDisplay       = document.getElementById('hrDisplay');
+const reconModeCtrl   = document.querySelectorAll('#reconModeCtrl button');
+const segGroup        = document.getElementById('segGroup');
+const segCtrl         = document.querySelectorAll('#segCtrl button');
+const trDisplay       = document.getElementById('trDisplay');
+const trFormula       = document.getElementById('trFormula');
+
+// ── State ──────────────────────────────────────────────────────
+const state = { hr: 58, rrMs: 1034, rotTime: 0.275, isDSCT: false, reconMode: 'half', nSeg: 2 };
+
+// ── ECG image state ────────────────────────────────────────────
+const ecg = { image: null, peaks: [], meanRRpx: 0, rrCV: 0, procW: 0, procH: 0 };
+
+// ── Cardiac phase constants (ms) ──────────────────────────────
+const C = { SYSTOLE: 300, IVRT: 70, RAPID_FILL: 120, A_WAVE: 110,
+            SYS_CENTER: 270, SYS_WIDTH: 80 };
+
+// ================================================================
+//  Calculation helpers
+// ================================================================
+function calcTR(rotTime, isDSCT, reconMode, nSeg) {
+  const base = isDSCT ? 4 : 2;
+  return (rotTime * 1000) / (base * (reconMode === 'seg' ? nSeg : 1));
+}
+function trFormulaStr(isDSCT, reconMode, nSeg) {
+  const d = isDSCT ? 4 : 2;
+  return reconMode === 'seg' ? `Trot / (${d}×${nSeg})` : `Trot / ${d}`;
+}
+function calcPhases(rrMs) {
+  const dStart = C.SYSTOLE + C.IVRT + C.RAPID_FILL; // 490
+  const dEnd   = Math.max(dStart, rrMs - C.A_WAVE);
+  const dDur   = Math.max(0, dEnd - dStart);
+  const dMid   = dDur > 0 ? (dStart + dEnd) / 2 : 0;
+  return {
+    systoleEnd:   C.SYSTOLE,
+    ivrtEnd:      C.SYSTOLE + C.IVRT,
+    rapidFillEnd: dStart,
+    dStart, dEnd, dDur, dMid,
+    aStart:  rrMs - C.A_WAVE,
+    sysCenter:  Math.min(C.SYS_CENTER, rrMs * 0.45),
+    sysStart:   Math.min(C.SYS_CENTER, rrMs * 0.45) - C.SYS_WIDTH / 2,
+    sysEnd:     Math.min(C.SYS_CENTER, rrMs * 0.45) + C.SYS_WIDTH / 2,
+    sysWidth:   C.SYS_WIDTH,
+  };
+}
+function getRecommendation(phases, trMs, rrMs) {
+  const { dDur, dMid, dStart, dEnd, sysCenter } = phases;
+  const dPctS = +(dStart / rrMs * 100).toFixed(0);
+  const dPctE = +(dEnd   / rrMs * 100).toFixed(0);
+  const dPctM = dDur > 0 ? +(dMid  / rrMs * 100).toFixed(0) : 0;
+  const sPct  = +(sysCenter / rrMs * 100).toFixed(0);
+
+  if (dDur >= trMs * 1.5 && dDur > 0) {
+    return { type:'diastolic', phase:dPctM, phaseMs:Math.round(dMid), risk:'low',
+      title:'推奨位相：拡張中期（Diastasis）',
+      sub:'拡張中期（緩速流入期）は心臓の動きが最も少ない時相です。',
+      reason:`Diastasis 持続時間 (${Math.round(dDur)} ms) が時間分解能 (${Math.round(trMs)} ms) の 1.5 倍以上。余裕のある静止窓が確保できます。`,
+      dPctS, dPctE, dPctM, sPct };
+  } else if (dDur >= trMs && dDur > 0) {
+    return { type:'dual', phase:dPctM, phaseMs:Math.round(dMid), risk:'moderate',
+      title:'境界域：拡張中期または収縮末期',
+      sub:`拡張中期 ${dPctS}–${dPctE}% と収縮末期 ${sPct}% を比較撮影するか、βブロッカーによる心拍数低下を検討。`,
+      reason:`Diastasis 持続時間 (${Math.round(dDur)} ms) ≈ 時間分解能 (${Math.round(trMs)} ms)。マルチセグメント再構成や心拍数低下で余裕を確保できます。`,
+      dPctS, dPctE, dPctM, sPct };
+  } else {
+    return { type:'systolic', phase:sPct, phaseMs:Math.round(sysCenter), risk: dDur===0?'moderate':'high',
+      title:'推奨位相：収縮末期静止位相',
+      sub:`高心拍数のため拡張中期が消失または不十分です。収縮末期（${sPct}% R-R）を使用してください。`,
+      reason: dDur>0
+        ? `Diastasis 持続時間 (${Math.round(dDur)} ms) < 時間分解能 (${Math.round(trMs)} ms)。`
+        : 'Diastasis が消失しています。収縮末期が唯一の静止窓です。',
+      dPctS, dPctE, dPctM, sPct };
+  }
+}
+
+// ================================================================
+//  ECG image processing
+// ================================================================
+function gaussSmooth1D(arr, sigma) {
+  const ks = Math.ceil(3 * sigma) * 2 + 1;
+  const half = (ks - 1) / 2;
+  const k = new Float32Array(ks);
+  let ks2 = 0;
+  for (let i = 0; i < ks; i++) { k[i] = Math.exp(-0.5 * ((i - half) / sigma) ** 2); ks2 += k[i]; }
+  for (let i = 0; i < ks; i++) k[i] /= ks2;
+  const out = new Float32Array(arr.length);
+  for (let i = 0; i < arr.length; i++) {
+    let s = 0;
+    for (let j = 0; j < ks; j++) {
+      const idx = i - half + j;
+      if (idx >= 0 && idx < arr.length) s += arr[idx] * k[j];
+    }
+    out[i] = s;
+  }
+  return out;
+}
+
+function detectPeaks(signal, threshold, minDist) {
+  const peaks = [];
+  for (let i = minDist; i < signal.length - minDist; i++) {
+    if (signal[i] < threshold) continue;
+    let ok = true;
+    for (let j = i - minDist; j <= i + minDist; j++) {
+      if (j !== i && signal[j] >= signal[i]) { ok = false; break; }
+    }
+    if (ok) peaks.push(i);
+  }
+  return peaks;
+}
+
+function processECGImage(img) {
+  const maxW = 1400;
+  const scl = Math.min(1, maxW / img.width);
+  const pW = Math.round(img.width * scl);
+  const pH = Math.round(img.height * scl);
+
+  const pc = document.createElement('canvas');
+  pc.width = pW; pc.height = pH;
+  const pCtx = pc.getContext('2d');
+  pCtx.drawImage(img, 0, 0, pW, pH);
+  const idat = pCtx.getImageData(0, 0, pW, pH).data;
+
+  // Luminance + bg detection
+  const lum = new Float32Array(pW * pH);
+  let lumSum = 0;
+  for (let i = 0; i < pW * pH; i++) {
+    lum[i] = 0.299 * idat[i*4] + 0.587 * idat[i*4+1] + 0.114 * idat[i*4+2];
+    lumSum += lum[i];
+  }
+  const isLightBg = (lumSum / (pW * pH)) > 128;
+
+  // Signal: high = trace
+  const sig = new Float32Array(pW * pH);
+  for (let i = 0; i < pW * pH; i++) sig[i] = isLightBg ? 255 - lum[i] : lum[i];
+
+  // Find ECG band by row-variance sliding window
+  const winH = Math.max(40, Math.floor(pH / 3));
+  const rowVar = new Float32Array(pH);
+  for (let y = 0; y < pH; y++) {
+    let s = 0, s2 = 0;
+    for (let x = 0; x < pW; x++) { const v = sig[y*pW+x]; s += v; s2 += v*v; }
+    const m = s / pW;
+    rowVar[y] = Math.max(0, s2 / pW - m * m);
+  }
+  let bestY = 0, bestScore = -1;
+  for (let y = 0; y <= pH - winH; y++) {
+    let score = 0;
+    for (let dy = 0; dy < winH; dy++) score += rowVar[y + dy];
+    if (score > bestScore) { bestScore = score; bestY = y; }
+  }
+
+  // 1D trace: y-pos of max signal per column (inverted = amplitude)
+  const trace = new Float32Array(pW);
+  for (let x = 0; x < pW; x++) {
+    let maxV = -1, maxDy = 0;
+    for (let dy = 0; dy < winH; dy++) {
+      const v = sig[(bestY + dy) * pW + x];
+      if (v > maxV) { maxV = v; maxDy = dy; }
+    }
+    trace[x] = winH - maxDy;
+  }
+
+  const smoothed = gaussSmooth1D(trace, 3);
+  const sMin = Math.min(...smoothed), sMax = Math.max(...smoothed), sR = sMax - sMin;
+  const norm = sR > 0 ? smoothed.map(v => (v - sMin) / sR) : new Float32Array(pW).fill(0.5);
+
+  const minDist = Math.max(15, Math.floor(pW / 20));
+  const peaks = detectPeaks(norm, 0.55, minDist);
+
+  // R-R statistics
+  const rrPx = [];
+  for (let i = 1; i < peaks.length; i++) rrPx.push(peaks[i] - peaks[i-1]);
+  const meanRR = rrPx.length > 0 ? rrPx.reduce((a,b)=>a+b,0)/rrPx.length : 0;
+  let rrCV = 0;
+  if (rrPx.length > 1) {
+    const varRR = rrPx.reduce((s,v)=>s+(v-meanRR)**2, 0) / rrPx.length;
+    rrCV = Math.sqrt(varRR) / meanRR * 100;
+  }
+
+  ecg.image = img; ecg.peaks = peaks; ecg.meanRRpx = meanRR;
+  ecg.rrCV = rrCV; ecg.procW = pW; ecg.procH = pH;
+
+  // Update detection UI
+  document.getElementById('detectedPeakCount').textContent = `${peaks.length} 個`;
+  document.getElementById('detectedRRcv').textContent = rrPx.length > 1 ? `${rrCV.toFixed(1)} %` : '—';
+
+  if (rrPx.length > 0) {
+    document.getElementById('rrListDisplay').textContent =
+      'R-R: ' + rrPx.map(v => Math.round(v) + 'px').join(' / ');
+  }
+
+  // Rhythm assessment
+  const rhythmBox = document.getElementById('rhythmBox');
+  if (peaks.length < 2) {
+    rhythmBox.innerHTML = `<div class="arrhythmia-box"><strong>⚠️ R 波検出不十分</strong>検出数 ${peaks.length} 個。画像のコントラストを確認するか、ECG 部分だけをトリミングして再アップロードしてください。</div>`;
+  } else if (rrCV > 20) {
+    rhythmBox.innerHTML = `<div class="arrhythmia-box"><strong>⚠️ 著明な不整脈の可能性（CV ${rrCV.toFixed(0)} %）</strong>マルチセグメント再構成は禁忌です。後ろ向きゲーティングでハーフ再構成を使用してください。</div>`;
+  } else if (rrCV > 10) {
+    rhythmBox.innerHTML = `<div class="arrhythmia-box"><strong>⚠️ 軽度の心拍変動（CV ${rrCV.toFixed(0)} %）</strong>マルチセグメント再構成でアーチファクトが増加する可能性があります。</div>`;
+  } else if (peaks.length >= 3) {
+    rhythmBox.innerHTML = `<div class="arrhythmia-ok">✅ 洞調律（CV ${rrCV.toFixed(1)} %）— マルチセグメント再構成が適用できます。</div>`;
+  } else {
+    rhythmBox.innerHTML = '';
+  }
+
+  updateAutoHR();
+  document.getElementById('ecgDetectionResult').style.display = 'block';
+  document.getElementById('ecgPreviewCard').style.display   = 'block';
+  document.getElementById('ecgDropPrompt').style.display    = 'none';
+  document.getElementById('ecgThumbImg').style.display      = 'block';
+  document.getElementById('ecgThumbImg').src                = img.src;
+}
+
+function updateAutoHR() {
+  const dur = parseFloat(document.getElementById('stripDuration').value) || 10;
+  const n   = ecg.peaks.length;
+  if (n > 0 && ecg.meanRRpx > 0 && ecg.procW > 0) {
+    // R-R interval based: mean_rr_ms = mean_rr_px / procW * dur_ms
+    // HR = 60000 / mean_rr_ms — more accurate than beat-count method
+    const meanRRms = ecg.meanRRpx / ecg.procW * (dur * 1000);
+    const hr = Math.round(60000 / meanRRms);
+    document.getElementById('autoHRVal').textContent = `${hr} bpm`;
+    document.getElementById('applyAutoHRBtn').disabled = false;
+    document.getElementById('applyAutoHRBtn').dataset.hr = hr;
+  } else {
+    document.getElementById('autoHRVal').textContent = '— bpm';
+    document.getElementById('applyAutoHRBtn').disabled = true;
+  }
+}
+function applyAutoHR() {
+  const hr = parseInt(document.getElementById('applyAutoHRBtn').dataset.hr) || 60;
+  const clamped = Math.min(120, Math.max(40, hr));
+  state.hr = clamped; state.rrMs = Math.round(60000 / clamped);
+  hrSlider.value = clamped; hrInput.value = clamped;
+  rrInput.value = state.rrMs; hrDisplay.textContent = clamped;
+  update();
+}
+function clearECGImage() {
+  ecg.image = null; ecg.peaks = []; ecg.meanRRpx = 0; ecg.rrCV = 0;
+  document.getElementById('ecgDropPrompt').style.display   = 'flex';
+  document.getElementById('ecgThumbImg').style.display     = 'none';
+  document.getElementById('ecgDetectionResult').style.display = 'none';
+  document.getElementById('ecgPreviewCard').style.display  = 'none';
+  document.getElementById('ecgFileInput').value            = '';
+  update();
+}
+
+// ================================================================
+//  ECG Overlay Canvas drawing
+// ================================================================
+function drawECGOverlay(phases, trMs, rec, rrMs) {
+  if (!ecg.image || ecg.peaks.length < 1 || ecg.procW === 0) return;
+  const canvas = document.getElementById('ecgOverlayCanvas');
+  const ctx = canvas.getContext('2d');
+  const dW = canvas.clientWidth || 800;
+  const dH = Math.round(dW * ecg.image.height / ecg.image.width);
+  if (canvas.width !== dW || canvas.height !== dH) { canvas.width = dW; canvas.height = dH; }
+
+  // Draw image
+  ctx.drawImage(ecg.image, 0, 0, dW, dH);
+
+  if (ecg.peaks.length < 1) return;
+
+  const scaleX = dW / ecg.procW;
+  const peaks  = ecg.peaks.map(p => Math.round(p * scaleX));
+  const meanRR = ecg.meanRRpx * scaleX;
+
+  // Helper: convert phase fraction to x within an interval
+  function phasePx(xR, dx, fracMs) { return xR + (fracMs / rrMs) * dx; }
+
+  // Phase windows per interval (including one extrapolated after last peak)
+  for (let i = 0; i <= peaks.length - 1; i++) {
+    const x1 = peaks[i];
+    const x2 = i < peaks.length - 1 ? peaks[i+1] : Math.round(x1 + meanRR);
+    const dx = x2 - x1;
+    if (dx <= 0) continue;
+
+    // Diastasis window (green)
+    if (phases.dDur > 0) {
+      const gx1 = phasePx(x1, dx, phases.dStart);
+      const gx2 = phasePx(x1, dx, phases.dEnd);
+      ctx.fillStyle = 'rgba(22,163,74,0.22)';
+      ctx.fillRect(gx1, 0, gx2 - gx1, dH);
+      // Dashed border
+      ctx.strokeStyle = 'rgba(22,163,74,0.7)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([4,3]);
+      ctx.strokeRect(gx1 + 0.5, 0.5, gx2 - gx1 - 1, dH - 1);
+      ctx.setLineDash([]);
+    }
+
+    // Systolic still window (blue)
+    const bx1 = phasePx(x1, dx, phases.sysStart);
+    const bx2 = phasePx(x1, dx, phases.sysEnd);
+    ctx.fillStyle = 'rgba(37,99,235,0.18)';
+    ctx.fillRect(bx1, 0, bx2 - bx1, dH);
+
+    // TR window (purple fill) around optimal phase
+    const optX = phasePx(x1, dx, rec.phaseMs);
+    const trPx = (trMs / rrMs) * dx;
+    ctx.fillStyle = 'rgba(124,58,237,0.13)';
+    ctx.fillRect(optX - trPx / 2, 0, trPx, dH);
+
+    // Optimal phase dashed line
+    const lineCol = rec.type === 'diastolic' ? '#16a34a' : rec.type === 'systolic' ? '#2563eb' : '#d97706';
+    ctx.strokeStyle = lineCol;
+    ctx.lineWidth   = 1.8;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(optX, 0); ctx.lineTo(optX, dH); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // R peak markers
+  peaks.forEach(px => {
+    ctx.strokeStyle = 'rgba(239,68,68,0.85)';
+    ctx.lineWidth   = 1.5;
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, dH); ctx.stroke();
+  });
+
+  // Label on first interval
+  if (peaks.length >= 2 && ecg.meanRRpx > 0) {
+    const x1 = peaks[0];
+    const dx = (peaks[1] || Math.round(x1 + ecg.meanRRpx * dW / ecg.procW)) - x1;
+    const optX = x1 + (rec.phaseMs / rrMs) * dx;
+    const lineCol = rec.type === 'diastolic' ? '#16a34a' : rec.type === 'systolic' ? '#2563eb' : '#d97706';
+    const label = `${rec.phase}% R-R`;
+    ctx.font = 'bold 12px sans-serif';
+    const lw = ctx.measureText(label).width + 10;
+    ctx.fillStyle = lineCol;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(optX - lw/2, 4, lw, 18, 3); else ctx.rect(optX - lw/2, 4, lw, 18);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, optX, 16);
+
+    // TR bracket below
+    const trPx = (trMs / rrMs) * dx;
+    const brY = dH - 22;
+    ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 1.5; ctx.fillStyle = '#7c3aed';
+    ctx.beginPath(); ctx.moveTo(optX - trPx/2, brY); ctx.lineTo(optX + trPx/2, brY); ctx.stroke();
+    [optX - trPx/2, optX + trPx/2].forEach(bx => {
+      ctx.beginPath(); ctx.moveTo(bx, brY-4); ctx.lineTo(bx, brY+4); ctx.stroke();
+    });
+    ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(`TR ${Math.round(trMs)} ms`, optX, brY + 14);
+  }
+}
+
+// ================================================================
+//  Cardiac cycle canvas (stylized ECG visualization)
+// ================================================================
+function gauss(t, m, s) { return Math.exp(-0.5 * ((t - m) / s) ** 2); }
+function ecgVolt(ms, rrMs) {
+  return 0.18 * gauss(ms, rrMs*0.10, rrMs*0.038)
+       - 0.10 * gauss(ms, 3,  9)
+       + 1.00 * gauss(ms, 0,  14)
+       - 0.22 * gauss(ms, 22, 11)
+       + 0.32 * gauss(ms, rrMs*0.225, rrMs*0.065);
+}
+
+function drawPhaseCanvas(rrMs, phases, trMs, rec) {
+  const canvas = document.getElementById('phaseCanvas');
+  const ctx    = canvas.getContext('2d');
+  const dW = canvas.clientWidth || 800;
+  const dH = Math.max(270, Math.round(dW * 0.33));
+  if (canvas.width !== dW || canvas.height !== dH) { canvas.width = dW; canvas.height = dH; }
+
+  const mg = { top:30, right:20, bottom:70, left:56 };
+  const pW = dW - mg.left - mg.right;
+  const pH = dH - mg.top  - mg.bottom;
+
+  ctx.clearRect(0, 0, dW, dH);
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0, 0, dW, dH);
+
+  const msX = ms => mg.left + (ms / rrMs) * pW;
+  const ecgY0 = mg.top + pH * 0.52;
+  const ecgSc = pH * 0.36;
+  const vY  = v  => ecgY0 - v * ecgSc;
+
+  // Phase backgrounds
+  [
+    { s:0,               e:phases.systoleEnd,   col:'#fecaca' },
+    { s:phases.systoleEnd, e:phases.ivrtEnd,    col:'#fed7aa' },
+    { s:phases.ivrtEnd,  e:phases.rapidFillEnd, col:'#bae6fd' },
+    { s:phases.dStart,   e:phases.dEnd,         col:'#bbf7d0' },
+    { s:phases.aStart,   e:rrMs,                col:'#e9d5ff' },
+  ].forEach(({s,e,col}) => {
+    if (s >= e) return;
+    ctx.fillStyle = col;
+    ctx.fillRect(msX(s), mg.top, msX(e)-msX(s), pH);
+  });
+
+  // Systolic still highlight
+  const sx1 = msX(phases.sysStart), sx2 = msX(phases.sysEnd);
+  ctx.fillStyle = 'rgba(191,219,254,0.55)';
+  ctx.fillRect(sx1, mg.top, sx2-sx1, pH);
+  ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 1.8;
+  ctx.setLineDash([5,3]); ctx.strokeRect(sx1+1, mg.top+1, sx2-sx1-2, pH-2); ctx.setLineDash([]);
+
+  // Diastasis highlight
+  if (phases.dDur > 0) {
+    const dx1 = msX(phases.dStart), dx2 = msX(phases.dEnd);
+    ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2;
+    ctx.setLineDash([5,3]); ctx.strokeRect(dx1+1, mg.top+1, dx2-dx1-2, pH-2); ctx.setLineDash([]);
+  }
+
+  // Grid
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 0.5;
+  for (let p = 0; p <= 10; p++) {
+    const x = msX(rrMs * p / 10);
+    ctx.beginPath(); ctx.moveTo(x, mg.top); ctx.lineTo(x, mg.top+pH); ctx.stroke();
+  }
+  ctx.strokeStyle = '#cbd5e0'; ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(mg.left, ecgY0); ctx.lineTo(mg.left+pW, ecgY0); ctx.stroke();
+
+  // ECG waveform
+  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  let first = true;
+  const step = Math.max(1, Math.round(rrMs / 600));
+  for (let ms = 0; ms <= rrMs; ms += step) {
+    const x = msX(ms), y = vY(ecgVolt(ms, rrMs));
+    first ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    first = false;
+  }
+  ctx.stroke();
+
+  // Optimal phase line
+  const optX = msX(rec.phaseMs);
+  const lc = rec.type==='diastolic'?'#16a34a':rec.type==='systolic'?'#2563eb':'#d97706';
+  ctx.strokeStyle = lc; ctx.lineWidth = 2.5;
+  ctx.setLineDash([7,4]);
+  ctx.beginPath(); ctx.moveTo(optX, mg.top); ctx.lineTo(optX, mg.top+pH); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = lc; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(`${rec.phase}% R-R`, optX, mg.top - 8);
+
+  // TR bracket
+  const trPx  = (trMs / rrMs) * pW;
+  const brY   = mg.top + pH + 26;
+  const clamp = v => Math.max(mg.left, Math.min(mg.left+pW, v));
+  const bx1 = clamp(optX - trPx/2), bx2 = clamp(optX + trPx/2);
+  ctx.strokeStyle = '#7c3aed'; ctx.fillStyle = '#7c3aed'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(bx1, brY); ctx.lineTo(bx2, brY); ctx.stroke();
+  [bx1, bx2].forEach(bx => { ctx.beginPath(); ctx.moveTo(bx, brY-5); ctx.lineTo(bx, brY+5); ctx.stroke(); });
+  ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(`TR: ${Math.round(trMs)} ms`, (bx1+bx2)/2, brY + 14);
+
+  // X-axis % labels
+  ctx.fillStyle = '#64748b'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+  for (let p = 0; p <= 10; p++) ctx.fillText(`${p*10}%`, msX(rrMs*p/10), mg.top+pH+13);
+
+  // Mini phase labels
+  const lY = mg.top + pH - 6;
+  const miniLabels = [
+    {ms:150,          text:'収縮期',   col:'#b91c1c'},
+    {ms:phases.ivrtEnd - 35, text:'IVRT',    col:'#c2410c'},
+    {ms:(phases.ivrtEnd + phases.rapidFillEnd)/2, text:'E波', col:'#0369a1'},
+    {ms:phases.dMid,  text:'Diastasis', col:'#15803d'},
+    {ms:phases.aStart+55, text:'A波',   col:'#6d28d9'},
+  ];
+  ctx.font = 'bold 9px sans-serif';
+  miniLabels.forEach(({ms:t,text,col}) => {
+    if (t<=0||t>rrMs) return;
+    if (text==='Diastasis'&&phases.dDur<40) return;
+    ctx.fillStyle=col; ctx.textAlign='center'; ctx.fillText(text, msX(t), lY);
+  });
+  if (sx2-sx1>22) {
+    ctx.fillStyle='#1d4ed8'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('収縮末期', (sx1+sx2)/2, lY);
+  }
+
+  // Y-axis label
+  ctx.save(); ctx.fillStyle='#94a3b8'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+  ctx.translate(14, mg.top+pH/2); ctx.rotate(-Math.PI/2); ctx.fillText('ECG',0,0); ctx.restore();
+}
+
+// ================================================================
+//  Comparison table
+// ================================================================
+const COMP_MODES = [
+  {label:'ハーフ再構成',     mode:'half', n:1, dsct:false},
+  {label:'2 セグメント',    mode:'seg',  n:2, dsct:false},
+  {label:'3 セグメント',    mode:'seg',  n:3, dsct:false},
+  {label:'DSCT ネイティブ', mode:'half', n:1, dsct:true, requireDSCT:true},
+];
+function buildCompTable(phases, rrMs, rotTime, isDSCT, currentTrMs) {
+  const tbody = document.getElementById('compTableBody');
+  tbody.innerHTML = '';
+  COMP_MODES.forEach(m => {
+    if (m.requireDSCT && !isDSCT) return;
+    const effDSCT = m.requireDSCT || (isDSCT && m.mode==='half');
+    const tr = calcTR(rotTime, effDSCT, m.mode, m.n);
+    const rec = getRecommendation(phases, tr, rrMs);
+    const isActive = Math.abs(tr - currentTrMs) < 0.5;
+    const margin = phases.dDur - tr;
+    let marginTxt, evalTxt;
+    if (phases.dDur===0) { marginTxt='Diastasis なし'; evalTxt='<span style="color:#2563eb;font-weight:700">収縮末期のみ</span>'; }
+    else if (margin > tr*0.5) { marginTxt=`+${Math.round(margin)} ms`; evalTxt='<span style="color:#16a34a;font-weight:700">拡張中期◎</span>'; }
+    else if (margin > 0)      { marginTxt=`+${Math.round(margin)} ms`; evalTxt='<span style="color:#d97706;font-weight:700">拡張中期△</span>'; }
+    else                      { marginTxt=`${Math.round(margin)} ms 不足`; evalTxt='<span style="color:#2563eb;font-weight:700">収縮末期推奨</span>'; }
+
+    const rowEl = document.createElement('tr');
+    if (isActive) rowEl.className = rec.type==='systolic' ? 'hl sys' : 'hl';
+    rowEl.innerHTML = `
+      <td>${m.label}${isActive?' <strong>←現在</strong>':''}</td>
+      <td>${Math.round(tr)} ms</td>
+      <td>${marginTxt}</td>
+      <td>${rec.phase}% R-R</td>
+      <td>${evalTxt}</td>`;
+    tbody.appendChild(rowEl);
+  });
+}
+
+// ================================================================
+//  Main update
+// ================================================================
+function update() {
+  const {hr, rrMs, rotTime, isDSCT, reconMode, nSeg} = state;
+  const trMs   = calcTR(rotTime, isDSCT, reconMode, nSeg);
+  const fmla   = trFormulaStr(isDSCT, reconMode, nSeg);
+  const phases = calcPhases(rrMs);
+  const rec    = getRecommendation(phases, trMs, rrMs);
+
+  // TR
+  trDisplay.textContent      = Math.round(trMs);
+  trFormula.textContent      = fmla;
+  document.getElementById('trDisplaySub').textContent  = Math.round(trMs);
+  document.getElementById('trFormulaNote').textContent = fmla;
+
+  // RR / HR
+  document.getElementById('rrDisplay').textContent = rrMs;
+  document.getElementById('hrVerify').textContent  = `≈ ${Math.round(60000/rrMs)} bpm`;
+
+  // Phases
+  document.getElementById('diastasisDurEl').textContent = Math.round(phases.dDur);
+  document.getElementById('diastasisPctEl').textContent = phases.dDur>0
+    ? `${+(phases.dStart/rrMs*100).toFixed(0)}–${+(phases.dEnd/rrMs*100).toFixed(0)}% R-R`
+    : '消失（高心拍数）';
+  document.getElementById('systolicDurEl').textContent = phases.sysWidth;
+  document.getElementById('systolicPctEl').textContent = `≈${+(phases.sysCenter/rrMs*100).toFixed(0)}% R-R`;
+
+  // Recommendation
+  const recBox = document.getElementById('recBox');
+  recBox.className = `recommendation ${rec.type==='dual'?'dual':rec.type}`;
+  document.getElementById('recTitle').textContent  = rec.title;
+  document.getElementById('recPhase').textContent  = rec.type==='dual'
+    ? `${rec.dPctM||rec.phase}% / ${rec.sPct}%` : `${rec.phase}% R-R`;
+  document.getElementById('recAbsMs').textContent  = `（R 波後 ${rec.phaseMs} ms）`;
+  document.getElementById('recSub').textContent    = rec.sub;
+  document.getElementById('recReason').textContent = rec.reason;
+  const rb = document.getElementById('riskBadge');
+  rb.className = `risk-badge risk-${rec.risk}`;
+  rb.textContent = {low:'モーションリスク：低', moderate:'モーションリスク：中', high:'モーションリスク：高'}[rec.risk];
+
+  // Canvases
+  drawPhaseCanvas(rrMs, phases, trMs, rec);
+  if (ecg.image) drawECGOverlay(phases, trMs, rec, rrMs);
+
+  // Comparison table
+  buildCompTable(phases, rrMs, rotTime, isDSCT, trMs);
+}
+
+// ================================================================
+//  Event listeners
+// ================================================================
+function syncHR(newHR) {
+  state.hr = newHR; state.rrMs = Math.round(60000/newHR);
+  hrSlider.value = newHR; hrInput.value = newHR;
+  rrInput.value = state.rrMs; hrDisplay.textContent = newHR;
+  update();
+}
+
+hrSlider.addEventListener('input', () => syncHR(parseInt(hrSlider.value)));
+hrInput.addEventListener('change', () => {
+  const v = Math.min(120, Math.max(40, parseInt(hrInput.value)||60));
+  hrInput.value = v; syncHR(v);
+});
+rrInput.addEventListener('change', () => {
+  const rr = Math.min(1500, Math.max(500, parseInt(rrInput.value)||1000));
+  rrInput.value = rr; state.rrMs = rr; state.hr = Math.round(60000/rr);
+  hrSlider.value = Math.min(120, Math.max(40, state.hr));
+  hrInput.value = state.hr; hrDisplay.textContent = state.hr; update();
+});
+
+scannerSelect.addEventListener('change', () => {
+  const v = scannerSelect.value;
+  if (v.startsWith('custom')) {
+    customRotGroup.classList.add('visible');
+    state.rotTime = parseFloat(customRotInput.value)||0.35;
+    state.isDSCT  = false;
+    dsctInfoBox.style.display = 'none';
+  } else {
+    customRotGroup.classList.remove('visible');
+    const parts = v.split('|');
+    state.rotTime = parseFloat(parts[0]);
+    state.isDSCT  = parts[1]==='true';
+    dsctInfoBox.style.display = state.isDSCT ? 'block' : 'none';
+  }
+  update();
+});
+customRotInput.addEventListener('input', () => { state.rotTime = parseFloat(customRotInput.value)||0.35; update(); });
+
+reconModeCtrl.forEach(btn => btn.addEventListener('click', () => {
+  reconModeCtrl.forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  state.reconMode = btn.dataset.mode;
+  segGroup.style.display = state.reconMode==='seg' ? 'block' : 'none';
+  update();
+}));
+segCtrl.forEach(btn => btn.addEventListener('click', () => {
+  segCtrl.forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  state.nSeg = parseInt(btn.dataset.seg); update();
+}));
+
+// ECG upload
+const ecgDrop = document.getElementById('ecgDrop');
+const ecgFileInput = document.getElementById('ecgFileInput');
+ecgDrop.addEventListener('click', () => ecgFileInput.click());
+ecgDrop.addEventListener('dragover', e => { e.preventDefault(); ecgDrop.classList.add('dragging'); });
+ecgDrop.addEventListener('dragleave', () => ecgDrop.classList.remove('dragging'));
+ecgDrop.addEventListener('drop', e => {
+  e.preventDefault(); ecgDrop.classList.remove('dragging');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) loadECGFile(f);
+});
+ecgFileInput.addEventListener('change', () => { if (ecgFileInput.files[0]) loadECGFile(ecgFileInput.files[0]); });
+document.getElementById('clearECGBtn').addEventListener('click', clearECGImage);
+document.getElementById('stripDuration').addEventListener('input', updateAutoHR);
+document.getElementById('applyAutoHRBtn').addEventListener('click', applyAutoHR);
+
+function loadECGFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => processECGImage(img);
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Demo ECG generator ────────────────────────────────────────
+function generateDemoECGCanvas(hr = 62, beats = 8, width = 900, height = 200) {
+  const c = document.createElement('canvas');
+  c.width = width; c.height = height;
+  const ctx = c.getContext('2d');
+
+  const rrMs = 60000 / hr;
+  const totalMs = beats * rrMs;
+  const pxPerMs = width / totalMs;
+
+  // Background: light pink paper
+  ctx.fillStyle = '#fff0f0';
+  ctx.fillRect(0, 0, width, height);
+
+  // Grid
+  const largeSqMs = 200;   // 200ms = large square at 25mm/s
+  const smallSqMs = 40;    // 40ms  = small square
+  const drawGrid = (stepMs, col) => {
+    ctx.strokeStyle = col; ctx.lineWidth = 0.6;
+    let t = 0;
+    while (t <= totalMs) {
+      const x = t * pxPerMs;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+      t += stepMs;
+    }
+    const rows = 5;
+    for (let r = 0; r <= rows; r++) {
+      const y = (r / rows) * height;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+    }
+    const subRows = 25;
+    for (let r = 0; r <= subRows; r++) {
+      const y = (r / subRows) * height;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+    }
+  };
+  drawGrid(smallSqMs, '#f0c0c0');
+  drawGrid(largeSqMs, '#d08080');
+
+  // ECG trace
+  const midY  = height * 0.55;
+  const ampPx = height * 0.32;
+  ctx.strokeStyle = '#1a1a60'; ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath();
+  let started = false;
+  for (let xi = 0; xi < width; xi++) {
+    const tMs       = xi / pxPerMs;
+    const tFromR    = tMs % rrMs;
+    const v = ecgVolt(tFromR, rrMs);
+    const yi = midY - v * ampPx;
+    if (!started) { ctx.moveTo(xi, yi); started = true; } else { ctx.lineTo(xi, yi); }
+  }
+  ctx.stroke();
+  return c;
+}
+
+function loadDemoECG() {
+  const demoHR = 62, demoBeats = 8;
+  // Exact strip duration: beats × RR_ms / 1000
+  const exactDurSec = +(demoBeats * 60000 / demoHR / 1000).toFixed(2); // 7.74s
+  const demoCanvas = generateDemoECGCanvas(demoHR, demoBeats);
+  const dataURL = demoCanvas.toDataURL('image/png');
+  const img = new Image();
+  img.onload = () => {
+    document.getElementById('stripDuration').value = exactDurSec;
+    processECGImage(img);
+    // Auto-apply HR after detection settles
+    setTimeout(() => {
+      const btn = document.getElementById('applyAutoHRBtn');
+      if (!btn.disabled) btn.click();
+    }, 80);
+  };
+  img.src = dataURL;
+}
+
+document.getElementById('demoECGBtn').addEventListener('click', loadDemoECG);
+
+// Demo button
+document.getElementById('demoBtn').addEventListener('click', () => {
+  scannerSelect.value = '0.275|false|canon_one_genesis';
+  customRotGroup.classList.remove('visible');
+  dsctInfoBox.style.display = 'none';
+  state.rotTime = 0.275; state.isDSCT = false; state.reconMode = 'half'; state.nSeg = 2;
+  reconModeCtrl.forEach((b,i)=>{b.classList.toggle('active',i===0);}); segGroup.style.display='none';
+  syncHR(58);
+});
+
+// Theory accordion
+document.getElementById('theoryToggle').addEventListener('click', () => {
+  document.getElementById('theoryToggle').classList.toggle('open');
+  document.getElementById('theoryContent').classList.toggle('open');
+});
+
+// Responsive canvas resize
+const ro = new ResizeObserver(() => update());
+ro.observe(document.getElementById('phaseCanvas'));
+const ro2 = new ResizeObserver(() => { if (ecg.image) update(); });
+ro2.observe(document.getElementById('ecgOverlayCanvas'));
+
+// ── Init ────────────────────────────────────────────────────────
+update();
+</script>
+</body>
+</html>
