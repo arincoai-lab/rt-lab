@@ -28,6 +28,7 @@
 | CT Dose Estimator（CT線量推定ツール） | ✅ 公開中 | `ct-dose-estimator/index.html` |
 | 脳画像差分ツール（CT/MRI） | ✅ 公開中 | `brain-diff/index.html` |
 | CNR計測ツール | ✅ 公開中 | `cnr-calculator/index.html` |
+| 心臓CT 最適位相決定ツール | ✅ 公開中 | `cardiac-phase-optimizer/index.html` |
 | 一般撮影条件参照 | 🚧 開発中 | 未作成 |
 | MRI QA/QC自動計測ツール | 📋 計画中 | 未作成 |
 | 各モダリティ 計測・QAQCツール | 📋 計画中 | 未作成 |
@@ -55,6 +56,8 @@ rt-lab/
 │   └── index.html          ← 脳画像差分ツール（公開中）
 ├── cnr-calculator/
 │   └── index.html          ← CNR計測ツール（公開中）
+├── cardiac-phase-optimizer/
+│   └── index.html          ← 心臓CT 最適位相決定ツール（公開中）
 └── .claude/
     └── launch.json         ← ローカルサーバー設定
 ```
@@ -78,3 +81,4 @@ rt-lab/
 | 2026-03-27 | CT Dose Estimator 実装・公開。AAPM Report 204ベースのSSDE計算、DLP→実効線量換算、Japan DRL 2025比較機能搭載。GitHub Pages初期セットアップ |
 | 2026-03-29 | 脳画像差分ツール 実装・公開。2シリーズDICOM入力、剛体→affine→弱いB-spline非剛体位置合わせ、差分オーバーレイ可視化。Web Worker非同期処理 |
 | 2026-03-29 | CNR計測ツール 実装・公開。ROI設定（円形/矩形）、CNR・CNRlow（NPSベース）・Detectability Index (d' NPWE)・Visibility（Rose基準）計測機能搭載 |
+| 2026-04-07 | 心臓CT 最適位相決定ツール 実装・公開。心拍数・CT装置・再構成モードから最適位相を算出。Diastasis時間窓・時間分解能の比較、ECG心周期ビジュアライゼーション、DSCT対応 |
