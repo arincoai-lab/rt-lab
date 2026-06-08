@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CT Dose Estimator | RT-Lab</title>
-  <meta name="description" content="CT線量推定ツール。SSDE（AAPM Report 204）、実効線量（ICRP 103）、DRL 2025比較をブラウザ上でリアルタイム計算。インストール不要・無料。">
-  <meta property="og:title" content="CT Dose Estimator | RT-Lab">
-  <meta property="og:description" content="CT線量推定ツール。SSDE・実効線量・DRL比較をブラウザ上でリアルタイム計算。">
+  <title>SSDE計算ツール｜CT線量推定（実効線量・DRL2025比較）| RT-Lab</title>
+  <meta name="description" content="SSDEの求め方・計算方法をブラウザで自動計算。CTDIvolと患者径（実効径）からSSDE（AAPM Report 204）、実効線量（ICRP 103）、Japan DRL 2025比較をリアルタイム表示。インストール不要・無料。">
+  <meta property="og:title" content="SSDE計算ツール｜CT線量推定（実効線量・DRL比較）| RT-Lab">
+  <meta property="og:description" content="SSDEの求め方・計算式（SSDE = CTDIvol × 換算係数）をブラウザで自動計算。実効線量・DRL比較も対応。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://rt-ai-lab.com/ct-dose-estimator/">
   <link rel="canonical" href="https://rt-ai-lab.com/ct-dose-estimator/">
@@ -29,6 +29,38 @@
     "itemListElement": [
       { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
       { "@type": "ListItem", "position": 2, "name": "CT Dose Estimator", "item": "https://rt-ai-lab.com/ct-dose-estimator/" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "SSDEとは何ですか？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SSDE（Size-Specific Dose Estimate／被検者サイズ別線量推定値）は、CTの線量指標CTDIvolを患者の体格に合わせて補正した推定線量です。CTDIvolは標準ファントム基準のため体格差を反映しませんが、SSDEは換算係数で補正し実被ばくに近い値を推定します（AAPM Report 204）。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "SSDEの求め方・計算式は？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SSDE = CTDIvol × 換算係数f で求めます。換算係数fは患者の実効径Deffから決まり、実効径はDeff = √(AP径 × LAT径)で計算します。体幹部は32cm、頭部は16cmファントム基準の換算表を用います。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "CTDIvolとSSDEの違いは？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "CTDIvolは標準ファントム基準で患者の体格を反映しない装置出力の指標、SSDEは体格補正後の患者線量推定値です。線量管理では両者を区別して扱います。"
+        }
+      }
     ]
   }
   </script>
@@ -376,7 +408,7 @@
 
 <!-- ===== Steps ===== -->
 <div class="card">
-  <div class="card-title">CT線量推定ツール</div>
+  <h1 class="card-title">CT線量推定ツール｜SSDE・実効線量の求め方を自動計算</h1>
   <div class="steps">
     <div class="step">
       <div class="step-num">1</div>
@@ -535,6 +567,37 @@
     <div class="chart-container" style="height:300px;">
       <canvas id="drlChartDlp"></canvas>
     </div>
+  </div>
+</div>
+
+<!-- ===== SSDE 解説 (SEO/解説コンテンツ) ===== -->
+<div class="card">
+  <h2 class="card-title">SSDEとは｜求め方・計算方法</h2>
+  <div class="references" style="line-height:1.8;">
+    <p style="margin-bottom:12px;">
+      <strong>SSDE（Size-Specific Dose Estimate／被検者サイズ別線量推定値）</strong>とは、CTの線量指標である CTDIvol を患者の体格に合わせて補正した推定線量です。CTDIvol は直径32cm（体幹部）または16cm（頭部）の標準ファントムを基準とした値のため、痩せた患者・体格の大きい患者では実際の被ばく線量と乖離します。SSDE はこの体格差を換算係数で補正し、実被ばくに近い線量を推定します（AAPM Report 204）。
+    </p>
+    <p style="margin-bottom:12px;">
+      <strong>SSDE の求め方・計算式：</strong><br>
+      <span style="display:inline-block; background:#eef2ff; padding:8px 14px; border-radius:6px; margin:6px 0; font-weight:700;">SSDE = CTDIvol × 換算係数 f</span><br>
+      換算係数 f は患者の<strong>実効径（D<sub>eff</sub>）</strong>から AAPM Report 204 の表をもとに決まります。実効径は前後径（AP）と左右径（LAT）から次式で求めます：
+      <span style="display:inline-block; background:#eef2ff; padding:8px 14px; border-radius:6px; margin:6px 0; font-weight:700;">D<sub>eff</sub> = √(AP径 × LAT径)</span>
+    </p>
+    <p style="margin-bottom:12px;">
+      <strong>計算手順（このツールの動作）：</strong>
+    </p>
+    <ol style="margin:0 0 12px 22px;">
+      <li>検査部位を選び、体幹部は32cm・頭部は16cmファントム基準を自動判定</li>
+      <li>AP径・LAT径から実効径 D<sub>eff</sub> = √(AP×LAT) を計算</li>
+      <li>D<sub>eff</sub> に対応する換算係数 f を AAPM 204 の表から内挿</li>
+      <li>SSDE = CTDIvol × f を算出し、実効線量・Japan DRL 2025 比較も同時表示</li>
+    </ol>
+    <p style="margin-bottom:12px;">
+      <strong>CTDIvol と SSDE の違い：</strong>CTDIvol は標準ファントム基準で患者の体格を反映しない装置出力の指標、SSDE は体格補正後の患者線量推定値です。線量管理では両者を区別して扱う必要があります。
+    </p>
+    <p style="font-size:0.85rem; opacity:0.8;">
+      ※ 換算係数表は AAPM Report 204（体幹部32cm・16cm）および Report 293（頭部）に基づきます。本ツールはすべてブラウザ内で計算し、入力データを外部送信しません。
+    </p>
   </div>
 </div>
 
