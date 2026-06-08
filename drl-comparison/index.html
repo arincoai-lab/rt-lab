@@ -3,8 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DRL比較ツール | RT-Lab</title>
-  <meta name="description" content="施設の線量データをCSVで読み込み、Japan DRLs 2025と比較。CT・一般撮影・マンモグラフィ・IVR・核医学・歯科・小児CTに対応。">
+  <title>DRLs2025比較ツール｜施設線量と診断参考レベルの比較 | RT-Lab</title>
+  <meta name="description" content="施設の線量データをCSVで読み込み、Japan DRLs 2025（診断参考レベル）と自動比較。CT・一般撮影・マンモグラフィ・IVR・核医学・歯科・小児CTに対応。インストール不要・無料。">
+  <meta property="og:title" content="DRLs2025比較ツール｜施設線量と診断参考レベルの比較 | RT-Lab">
+  <meta property="og:description" content="施設の線量データをCSVで読み込み、Japan DRLs 2025と自動比較。CT・一般撮影・マンモ・IVR・核医学等に対応。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rt-ai-lab.com/drl-comparison/">
+  <link rel="canonical" href="https://rt-ai-lab.com/drl-comparison/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "DRLs2025比較ツール（DRL比較ツール）",
+    "url": "https://rt-ai-lab.com/drl-comparison/",
+    "description": "施設の線量データをCSVで読み込み、Japan DRLs 2025（診断参考レベル）と比較するツール。CT・一般撮影・マンモグラフィ・IVR・核医学・歯科・小児CTに対応。",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
+      { "@type": "ListItem", "position": 2, "name": "DRLs2025比較ツール", "item": "https://rt-ai-lab.com/drl-comparison/" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "DRL（診断参考レベル）とは何ですか？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "DRL（Diagnostic Reference Level／診断参考レベル）は、医療被ばくを最適化するための目安値です。標準的な体格の患者で、各施設の線量がDRLを大きく超えていないかを確認するために用います。個々の患者の線量限度ではありません。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "DRLs2025とは？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "DRLs2025は、J-RIME（医療被ばく研究情報ネットワーク）が公表した日本の最新の診断参考レベル（2025年版）です。CT（CTDIvol・DLP）、一般撮影、マンモグラフィ、IVR、核医学、歯科、小児CTなどモダリティ別に設定されています。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "施設の線量がDRLを超えたらどうする？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "DRLは線量限度ではなく最適化の指標です。施設の代表値（中央値など）がDRLを超える場合は、画質を確保しつつ撮影条件（プロトコール）の見直しを検討します。"
+        }
+      }
+    ]
+  }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <style>
@@ -195,6 +254,12 @@
 <div class="modality-bar" id="modality-bar"></div>
 
 <main>
+  <!-- SEO: 概要 + h1 -->
+  <div class="card">
+    <h1 class="card-title">DRLs2025比較ツール｜施設線量と診断参考レベルの比較</h1>
+    <p style="margin-top:6px;">施設のCT・一般撮影・マンモグラフィ・IVR・核医学・歯科・小児CTの線量データをCSVで読み込み、Japan DRLs 2025（診断参考レベル）と自動比較します。すべてブラウザ内で処理し、データを外部に送信しません。</p>
+  </div>
+
   <!-- Step instructions -->
   <div class="card">
     <div class="card-title">使い方</div>
@@ -308,6 +373,17 @@
       <div class="source">
         出典：医療被ばく研究情報ネットワーク（J-RIME）、日本の診断参考レベル（2025年版）
       </div>
+    </div>
+  </div>
+
+  <!-- SEO: DRL解説 -->
+  <div class="card">
+    <h2 class="card-title">DRL（診断参考レベル）とは｜DRLs2025の比較方法</h2>
+    <div style="line-height:1.8;">
+      <p style="margin-bottom:12px;"><strong>DRL（Diagnostic Reference Level／診断参考レベル）</strong>は、医療被ばくを最適化するための目安値です。標準的な体格の患者で、各施設の線量が他施設と比べて著しく高くなっていないかを確認するために用います。<strong>個々の患者に対する線量限度ではありません</strong>。</p>
+      <p style="margin-bottom:12px;"><strong>DRLs2025とは：</strong>J-RIME（医療被ばく研究情報ネットワーク）が公表した日本の最新の診断参考レベル（2025年版）です。CT（CTDIvol・DLP）、一般撮影、マンモグラフィ、IVR、核医学、歯科、小児CTなど、モダリティ別・検査部位別に値が設定されています。</p>
+      <p style="margin-bottom:12px;"><strong>比較方法：</strong>施設で収集した線量データの代表値（一般に中央値や75パーセンタイル）を、対応するDRL値と比較します。代表値がDRLを超えている場合は、画質を確保しつつ撮影条件（プロトコール）の見直しを検討します。</p>
+      <p style="font-size:0.85rem; opacity:0.8;">※ 本ツールはCSVデータをすべてブラウザ内で処理し、外部送信しません。出典：J-RIME 日本の診断参考レベル（2025年版）。</p>
     </div>
   </div>
 </main>

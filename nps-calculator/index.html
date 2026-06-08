@@ -32,6 +32,38 @@
     ]
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "NPSとは何ですか？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "NPS（Noise Power Spectrum／ノイズパワースペクトル）は、画像ノイズを空間周波数ごとに分解して表した指標です。ノイズの大きさだけでなく周波数特性（質感）まで評価でき、全周波数で積分するとノイズ分散に対応します。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "2D-NPSの求め方は？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "均一画像から複数のROIを切り出し、背景トレンドを除去してから2次元フーリエ変換し、パワー（振幅の2乗）を複数ROIで平均して求めます。動径方向に平均すると1D-NPSが得られます。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "NPSとノイズの標準偏差の関係は？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "NPSを全空間周波数にわたって積分するとノイズの分散（標準偏差の2乗）に一致します。NPSはノイズSDを周波数成分に分解したものといえます。"
+        }
+      }
+    ]
+  }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -337,6 +369,12 @@
 
 <main>
 
+  <!-- SEO: 概要 + h1 -->
+  <div class="card">
+    <h1 class="card-title">NPS計算ツール（2D-NPS）｜ノイズパワースペクトルの求め方</h1>
+    <p style="margin-top:6px;">DICOM画像のROIから 2D-NPS（Noise Power Spectrum／ノイズパワースペクトル）を自動計算し、Radial Average で 1D-NPS を可視化します。すべてブラウザ内で処理し、画像は外部に送信しません。</p>
+  </div>
+
   <!-- ① 手順説明 -->
   <div class="card">
     <div class="card-title">📋 使い方</div>
@@ -511,6 +549,23 @@
       <p>・NPS積分値の平方根はSD（標準偏差）に近い値となり、画像のノイズレベルの指標となります。</p>
       <p>・本ツールは研究・教育目的であり、医療機器としての認証を受けていません。</p>
       <p>・アップロードされた画像はブラウザ内のみで処理され、外部サーバーには送信されません。DICOM画像の患者情報はツール内で使用・表示しません。</p>
+    </div>
+  </div>
+
+  <!-- SEO: NPS解説 -->
+  <div class="card">
+    <h2 class="card-title">NPSとは｜求め方・計算方法</h2>
+    <div style="line-height:1.8;">
+      <p style="margin-bottom:12px;"><strong>NPS（Noise Power Spectrum／ノイズパワースペクトル）</strong>は、画像ノイズを空間周波数ごとに分解して表した指標です。ノイズの大きさ（標準偏差）だけでなく、ノイズの「質感」＝周波数特性まで評価でき、再構成関数やノイズ低減処理の比較に用いられます。NPSを全周波数で積分するとノイズ分散（SD²）に対応します。</p>
+      <p style="margin-bottom:12px;"><strong>2D-NPSの求め方：</strong></p>
+      <ol style="margin:0 0 12px 22px;">
+        <li>均一なファントム画像から関心領域（ROI）を複数切り出す</li>
+        <li>各ROIの背景トレンド（低周波の濃度ムラ）を除去する</li>
+        <li>2次元フーリエ変換し、パワー（振幅の2乗）を算出する</li>
+        <li>複数ROIで平均して 2D-NPS を求める</li>
+      </ol>
+      <p style="margin-bottom:12px;"><strong>1D-NPSへの変換：</strong>2D-NPS を動径方向（radial）に平均すると、空間周波数に対する1次元プロファイル（1D-NPS）が得られ、ピーク周波数などを読み取れます。</p>
+      <p style="font-size:0.85rem; opacity:0.8;">※ MTFと組み合わせることで NEQ・DQE の評価にも利用できます。本ツールはすべてブラウザ内で計算し、入力画像を外部送信しません。</p>
     </div>
   </div>
 

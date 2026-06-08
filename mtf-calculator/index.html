@@ -32,6 +32,38 @@
     ]
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "MTFとは何ですか？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "MTF（Modulation Transfer Function／変調伝達関数）は、画像システムの空間分解能を空間周波数ごとの応答（コントラスト伝達率）で表した指標です。高周波で高い値を保つほど細かい構造を描出できます。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Circular Edge法でのMTFの求め方は？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "円形エッジ画像からエッジ中心の距離順にピクセルを並べてESF（Edge Spread Function）をオーバーサンプリング取得し、微分してLSF（Line Spread Function）を求め、フーリエ変換して正規化するとMTFが得られます。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "MTF10%・MTF50%とは？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "MTFが50%・10%になる空間周波数のことです。MTF50%は中間周波数応答、MTF10%は限界分解能の目安として、装置や再構成関数の分解能比較に用いられます。"
+        }
+      }
+    ]
+  }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -327,6 +359,12 @@
 
 <main>
 
+  <!-- SEO: 概要 + h1 -->
+  <div class="card">
+    <h1 class="card-title">MTF計算ツール（Circular Edge法）｜空間分解能の求め方</h1>
+    <p style="margin-top:6px;">DICOM/PNG/TIFF画像から ESF→LSF→MTF を自動算出し、MTF 10%値・50%値を数値表示します。円形エッジ（Circular Edge）法によるオーバーサンプリングで高精度に測定。ブラウザ完結・外部送信なし。</p>
+  </div>
+
   <!-- ① 手順説明 -->
   <div class="card">
     <div class="card-title">📋 使い方</div>
@@ -503,6 +541,23 @@
       <p>・ピクセルサイズの入力値がMTFの周波数軸に直接影響します。PNG画像の場合はDICOM情報から正確な値を入力してください。</p>
       <p>・本ツールは研究・教育目的であり、医療機器としての認証を受けていません。</p>
       <p>・アップロードされた画像はブラウザ内のみで処理され、外部サーバーには送信されません。DICOM画像の患者情報はツール内で使用・表示しません。</p>
+    </div>
+  </div>
+
+  <!-- SEO: MTF解説 -->
+  <div class="card">
+    <h2 class="card-title">MTFとは｜Circular Edge法での求め方</h2>
+    <div style="line-height:1.8;">
+      <p style="margin-bottom:12px;"><strong>MTF（Modulation Transfer Function／変調伝達関数）</strong>は、画像システムの空間分解能を空間周波数ごとの応答（コントラストの伝達率）で表した指標です。値が1に近いほど、その周波数の構造を忠実に再現できることを意味し、高周波で高い値を保つほど細かい構造を描出できます。</p>
+      <p style="margin-bottom:12px;"><strong>Circular Edge法によるMTFの求め方：</strong></p>
+      <ol style="margin:0 0 12px 22px;">
+        <li>円形エッジ（高コントラストのディスク）画像を用意する</li>
+        <li>エッジ中心からの距離でピクセルを並べ替え、<strong>ESF（Edge Spread Function）</strong>をオーバーサンプリング取得</li>
+        <li>ESFを微分して<strong>LSF（Line Spread Function）</strong>を求める</li>
+        <li>LSFをフーリエ変換して正規化し、<strong>MTF</strong>を算出する</li>
+      </ol>
+      <p style="margin-bottom:12px;"><strong>評価指標：</strong>MTF 50%は中間周波数応答の目安、MTF 10%は限界分解能の目安として用いられます。円周方向のオーバーサンプリングにより、ピクセルピッチ以上の細かさで滑らかなMTF曲線が得られるのが Circular Edge 法の利点です。</p>
+      <p style="font-size:0.85rem; opacity:0.8;">※ NPSと組み合わせることで NEQ・DQE の評価にも利用できます。本ツールはすべてブラウザ内で計算し、入力画像を外部送信しません。</p>
     </div>
   </div>
 
