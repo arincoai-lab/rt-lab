@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task-based IQ評価ツール | RT-Lab</title>
+  <meta name="description" content="CT低コントラスト条件比較のためのTask-based IQ評価ツール。DICOM画像からCNR、NPS、対象ROI由来TTF、NPWE d'をブラウザ内で算出します。">
+  <meta property="og:title" content="Task-based IQ評価ツール | RT-Lab">
+  <meta property="og:description" content="CT低コントラスト条件比較向けに、CNR・NPS・TTF・NPWE d'をローカルブラウザ内で評価します。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rt-ai-lab.com/task-based-iq/">
+  <link rel="canonical" href="https://rt-ai-lab.com/task-based-iq/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Task-based IQ評価ツール",
+    "url": "https://rt-ai-lab.com/task-based-iq/",
+    "description": "CT低コントラスト条件比較向けTask-based IQ評価ツール。DICOM画像対応。",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f6f8;
+      color: #24313d;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    header {
+      background: #183c5a;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo { font-size: 1.3rem; font-weight: 800; letter-spacing: 0.06em; }
+    .logo a { color: #fff; text-decoration: none; }
+    .tool-name {
+      font-size: 0.94rem;
+      opacity: 0.9;
+      padding-left: 16px;
+      border-left: 2px solid rgba(255, 255, 255, 0.35);
+    }
+
+    main {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 24px 16px 44px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #d9e2ea;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    .card-title {
+      color: #183c5a;
+      font-weight: 800;
+      font-size: 1rem;
+      margin-bottom: 14px;
+    }
+
+    .lead {
+      color: #526272;
+      max-width: 920px;
+      margin-bottom: 14px;
+    }
+
+    .notice {
+      background: #fff8e6;
+      border: 1px solid #f0d28a;
+      border-radius: 6px;
+      color: #6a4a00;
+      padding: 12px 14px;
+      font-size: 0.86rem;
+      margin-top: 12px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px;
+    }
+
+    .step {
+      background: #f7fafc;
+      border: 1px solid #dfe7ee;
+      border-radius: 7px;
+      padding: 12px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: #183c5a;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .step strong { display: block; margin-bottom: 2px; }
+    .step span { color: #526272; font-size: 0.82rem; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width: 920px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      header { align-items: flex-start; flex-direction: column; gap: 6px; }
+      .tool-name { border-left: 0; padding-left: 0; }
+    }
+
+    .upload-area {
+      border: 2px dashed #afbdc9;
+      border-radius: 8px;
+      padding: 34px 18px;
+      text-align: center;
+      cursor: pointer;
+      color: #526272;
+      position: relative;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .upload-area:hover, .upload-area.dragover {
+      background: #eef7ff;
+      border-color: #216a9b;
+    }
+
+    .upload-area input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-area strong { color: #183c5a; }
+    .upload-hint { font-size: 0.78rem; color: #6c7b88; margin-top: 6px; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #435364;
+      margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      border: 1px solid #c7d2dc;
+      border-radius: 5px;
+      padding: 7px 9px;
+      font-size: 0.88rem;
+      color: #24313d;
+      background: #fff;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #216a9b;
+      box-shadow: 0 0 0 2px rgba(33, 106, 155, 0.16);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 6px;
+      padding: 9px 16px;
+      font-size: 0.86rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.1s, background 0.15s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: #183c5a; color: #fff; }
+    .btn-primary:hover { background: #0f2e47; }
+    .btn-secondary { background: #e8eef3; color: #24313d; border: 1px solid #cbd7e1; }
+    .btn-secondary:hover { background: #dce6ee; }
+    .btn-ghost { background: #fff; color: #183c5a; border: 1px solid #b7c8d7; }
+    .btn-ghost:hover { background: #f3f8fb; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .mode-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .mode-btn {
+      border: 1px solid #c7d2dc;
+      background: #fff;
+      color: #435364;
+      border-radius: 5px;
+      padding: 7px 11px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .mode-btn.active {
+      background: #183c5a;
+      border-color: #183c5a;
+      color: #fff;
+    }
+
+    .dicom-info {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .dicom-tag {
+      background: #edf2f6;
+      color: #435364;
+      border-radius: 5px;
+      padding: 4px 9px;
+      font-size: 0.78rem;
+    }
+
+    .viewer-wrap {
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .canvas-container {
+      display: inline-block;
+      position: relative;
+      background: #101820;
+      border-radius: 8px;
+      overflow: hidden;
+      max-width: 100%;
+    }
+
+    .canvas-container canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    #canvas-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+
+    .wwwl {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 12px 0;
+    }
+
+    .wwwl label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .wwwl input[type="range"] { width: 145px; }
+    .small-text { color: #6c7b88; font-size: 0.8rem; }
+
+    .msg { padding: 10px 12px; border-radius: 6px; font-size: 0.83rem; margin-top: 10px; }
+    .msg-info { background: #eef7ff; border: 1px solid #9ed0ee; color: #17537a; }
+    .msg-success { background: #eefaf2; border: 1px solid #9ed7ad; color: #166534; }
+    .msg-warning { background: #fff8e6; border: 1px solid #f0d28a; color: #6a4a00; }
+    .msg-error { background: #fff0f0; border: 1px solid #f1a8a8; color: #912020; }
+    .hidden { display: none !important; }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .result-item {
+      background: #f7fafc;
+      border: 1px solid #dfe7ee;
+      border-radius: 7px;
+      padding: 12px;
+    }
+
+    .result-label {
+      color: #6c7b88;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .result-value {
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: #183c5a;
+      line-height: 1.1;
+      word-break: break-word;
+    }
+
+    .result-unit { color: #6c7b88; font-size: 0.76rem; margin-top: 2px; }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .chart-card {
+      border: 1px solid #dfe7ee;
+      border-radius: 7px;
+      padding: 12px;
+      background: #fbfdfe;
+    }
+
+    .chart-card h3 {
+      color: #183c5a;
+      font-size: 0.92rem;
+      margin-bottom: 8px;
+    }
+
+    .chart-card canvas {
+      width: 100%;
+      height: 240px;
+      background: #fff;
+      border-radius: 5px;
+    }
+
+    .table-wrap { overflow-x: auto; margin-top: 12px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      min-width: 860px;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #dfe7ee;
+      text-align: left;
+    }
+
+    th {
+      background: #f2f6f9;
+      color: #435364;
+      font-weight: 800;
+    }
+
+    tr:hover td { background: #f8fbfd; }
+    .status-pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      background: #eefaf2;
+      color: #166534;
+    }
+    .status-pill.warn { background: #fff8e6; color: #6a4a00; }
+
+    .ref-list {
+      padding-left: 18px;
+      color: #526272;
+      font-size: 0.84rem;
+    }
+
+    .ref-list a { color: #1c638f; }
+  </style>
+  <link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+  <header>
+    <div class="logo"><a href="/">RT-Lab</a></div>
+    <div class="tool-name">Task-based IQ評価ツール</div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="card-title">CT低コントラスト条件比較</div>
+      <p class="lead">
+        CT DICOM画像から低コントラスト対象と背景を半自動ROIで指定し、CNR、NPS、対象ROI由来TTF、NPWE d'を同じ画面で評価します。
+        結果は撮影・再構成条件どうしの比較用であり、臨床診断性能や病変検出保証を示すものではありません。
+      </p>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div><strong>DICOM入力</strong><span>非圧縮CT DICOMをブラウザ内で読み込みます。</span></div></div>
+        <div class="step"><div class="step-num">2</div><div><strong>ROI指定</strong><span>対象中心と均一背景をクリックします。</span></div></div>
+        <div class="step"><div class="step-num">3</div><div><strong>統合評価</strong><span>CNR、NPS、TTF、NPWE d'を算出します。</span></div></div>
+        <div class="step"><div class="step-num">4</div><div><strong>条件比較</strong><span>複数条件を表とCSVで比較します。</span></div></div>
+      </div>
+      <div class="notice">
+        本ツールは研究公開の条件比較ツールです。診断用途、病変検出の可否判断、読影医の代替には使用しないでください。DICOM画像はローカルブラウザ内で処理し、外部送信しません。
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div>
+        <section class="card">
+          <div class="card-title">1. 画像入力</div>
+          <div id="upload-area" class="upload-area">
+            <p><strong>DICOM画像をドラッグ&ドロップ</strong></p>
+            <p>またはクリックしてファイルを選択</p>
+            <div class="upload-hint">対応形式: 非圧縮DICOM（Little Endian Explicit/Implicit, 8/16bit）</div>
+            <input type="file" id="file-input" accept=".dcm,.DCM,.dicom,*">
+          </div>
+          <div class="button-row">
+            <button class="btn btn-secondary" id="btn-demo">デモ画像を読み込む</button>
+            <button class="btn btn-ghost" id="btn-reset-image" disabled>表示を初期化</button>
+          </div>
+          <div id="msg-area"></div>
+          <div id="dicom-info" class="dicom-info hidden"></div>
+        </section>
+
+        <section class="card hidden" id="viewer-card">
+          <div class="card-title">2. 画像表示と半自動ROI</div>
+          <div class="mode-row">
+            <button class="mode-btn active" data-mode="target" id="mode-target">対象中心</button>
+            <button class="mode-btn" data-mode="background" id="mode-background">背景ROI</button>
+          </div>
+          <p class="small-text" id="mode-help">低コントラスト対象の中心をクリックしてください。</p>
+          <div class="wwwl">
+            <label>WW <input type="range" id="ww-slider" min="1" max="2000" value="400"><span id="ww-val">400</span></label>
+            <label>WL <input type="range" id="wl-slider" min="-1000" max="1000" value="40"><span id="wl-val">40</span></label>
+            <button class="btn btn-ghost" id="btn-wwwl-reset">WW/WL初期化</button>
+          </div>
+          <div class="viewer-wrap">
+            <div class="canvas-container">
+              <canvas id="canvas-preview"></canvas>
+              <canvas id="canvas-overlay"></canvas>
+            </div>
+          </div>
+          <div class="small-text" id="roi-summary">ROI未指定</div>
+        </section>
+      </div>
+
+      <aside>
+        <section class="card">
+          <div class="card-title">3. 解析パラメータ</div>
+          <div class="form-grid">
+            <div>
+              <label for="condition-label">条件名</label>
+              <input type="text" id="condition-label" value="Condition 1">
+            </div>
+            <div>
+              <label for="target-diameter">対象径 (mm)</label>
+              <input type="number" id="target-diameter" value="8" min="1" max="80" step="0.5">
+            </div>
+            <div>
+              <label for="background-radius">背景ROI半径 (mm)</label>
+              <input type="number" id="background-radius" value="48" min="4" max="120" step="1">
+            </div>
+            <div>
+              <label for="nps-roi-size">NPSタイル (px)</label>
+              <select id="nps-roi-size">
+                <option value="32" selected>32</option>
+                <option value="64">64</option>
+                <option value="128">128</option>
+              </select>
+            </div>
+          </div>
+          <div class="button-row">
+            <button class="btn btn-primary" id="btn-calc" disabled>解析して条件追加</button>
+            <button class="btn btn-secondary" id="btn-download-csv" disabled>CSV出力</button>
+          </div>
+          <div id="analysis-msg"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-title">評価の範囲</div>
+          <ul class="ref-list">
+            <li>条件間の相対比較を目的とします。</li>
+            <li>NPWE d'は低コントラスト円盤タスクの参考指標です。</li>
+            <li>TTFは対象ROIの円形エッジから推定します。低コントラストや小径対象では不安定になることがあります。</li>
+            <li>参考: <a href="https://www.aapm.org/pubs/reports/RPT_233.pdf">AAPM TG233</a>、<a href="https://www.icru.org/report/medical-imaging-the-assessment-of-image-quality-report-54/">ICRU Report 54</a></li>
+          </ul>
+        </section>
+      </aside>
+    </section>
+
+    <section class="card hidden" id="result-card">
+      <div class="card-title">4. 最新解析結果</div>
+      <div class="result-grid">
+        <div class="result-item"><div class="result-label">低コントラスト差分</div><div class="result-value" id="contrast-value">--</div><div class="result-unit">HU</div></div>
+        <div class="result-item"><div class="result-label">CNR</div><div class="result-value" id="cnr-value">--</div><div class="result-unit">Signal / background SD</div></div>
+        <div class="result-item"><div class="result-label">NPS積分ノイズ</div><div class="result-value" id="nps-noise-value">--</div><div class="result-unit">HU</div></div>
+        <div class="result-item"><div class="result-label">TTF 50%</div><div class="result-value" id="ttf50-value">--</div><div class="result-unit">cycles/mm</div></div>
+        <div class="result-item"><div class="result-label">TTF 10%</div><div class="result-value" id="ttf10-value">--</div><div class="result-unit">cycles/mm</div></div>
+        <div class="result-item"><div class="result-label">NPWE d'</div><div class="result-value" id="dprime-value">--</div><div class="result-unit">条件比較用</div></div>
+      </div>
+      <div id="result-warnings"></div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h3>NPS radial average</h3>
+          <canvas id="chart-nps" width="520" height="260"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>対象ROI由来TTF</h3>
+          <canvas id="chart-ttf" width="520" height="260"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">5. 条件比較テーブル</div>
+      <p class="small-text">d'相対値は、この表の最大d'を1.00として表示します。しきい値判定や検出可否判定は行いません。</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>条件</th>
+              <th>差分 HU</th>
+              <th>CNR</th>
+              <th>NPSノイズ HU</th>
+              <th>TTF50</th>
+              <th>TTF10</th>
+              <th>NPWE d'</th>
+              <th>相対d'</th>
+              <th>状態</th>
+            </tr>
+          </thead>
+          <tbody id="comparison-body">
+            <tr><td colspan="9">まだ解析結果がありません。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    let rawPixelData = null;
+    let imgWidth = 0;
+    let imgHeight = 0;
+    let pixelSpacing = [1, 1];
+    let dicomWW = 400;
+    let dicomWL = 40;
+    let dicomDefaultWW = 400;
+    let dicomDefaultWL = 40;
+    let currentMode = "target";
+    let targetPoint = null;
+    let backgroundPoint = null;
+    let results = [];
+
+    function setMessage(containerId, text, type) {
+      const el = $(containerId);
+      if (!text) {
+        el.innerHTML = "";
+        return;
+      }
+      el.innerHTML = '<div class="msg msg-' + type + '">' + escapeHtml(text) + '</div>';
+    }
+
+    function appendMessage(containerId, text, type) {
+      const el = $(containerId);
+      const div = document.createElement("div");
+      div.className = "msg msg-" + type;
+      div.textContent = text;
+      el.appendChild(div);
+    }
+
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[c]));
+    }
+
+    function parseDicom(arrayBuffer) {
+      const dv = new DataView(arrayBuffer);
+      const bytes = new Uint8Array(arrayBuffer);
+      if (bytes.length < 132) throw new Error("ファイルサイズが小さすぎます");
+      const magic = String.fromCharCode(bytes[128], bytes[129], bytes[130], bytes[131]);
+      if (magic !== "DICM") throw new Error("DICOM形式ではありません");
+
+      let offset = 132;
+      let isExplicit = true;
+      let isLittleEndian = true;
+      const tags = {};
+      let pixelDataOffset = -1;
+      let pixelDataLength = 0;
+
+      function readTag() {
+        if (offset + 4 > bytes.length) return null;
+        const group = dv.getUint16(offset, isLittleEndian);
+        const elem = dv.getUint16(offset + 2, isLittleEndian);
+        offset += 4;
+        const tagKey = ((group << 16) | elem) >>> 0;
+        let vr = "";
+        let valueLength = 0;
+
+        if (isExplicit && group !== 0xFFFE) {
+          if (offset + 2 > bytes.length) return null;
+          vr = String.fromCharCode(bytes[offset], bytes[offset + 1]);
+          offset += 2;
+          if (["OB", "OW", "OF", "SQ", "UC", "UN", "UT", "OD", "OL", "OV", "SV", "UV"].includes(vr)) {
+            offset += 2;
+            if (offset + 4 > bytes.length) return null;
+            valueLength = dv.getUint32(offset, isLittleEndian);
+            offset += 4;
+          } else {
+            if (offset + 2 > bytes.length) return null;
+            valueLength = dv.getUint16(offset, isLittleEndian);
+            offset += 2;
+          }
+        } else {
+          if (offset + 4 > bytes.length) return null;
+          valueLength = dv.getUint32(offset, isLittleEndian);
+          offset += 4;
+        }
+
+        if (valueLength === 0xFFFFFFFF) {
+          return { tagKey, vr, undefinedLength: true };
+        }
+        if (offset + valueLength > bytes.length) return null;
+        const valueOffset = offset;
+        offset += valueLength;
+        return { tagKey, vr, valueOffset, valueLength };
+      }
+
+      let bodyIsExplicit = true;
+      while (offset < bytes.length && offset < 4096) {
+        const savedOffset = offset;
+        const t = readTag();
+        if (!t) break;
+        if (t.tagKey > 0x0002FFFF) {
+          offset = savedOffset;
+          break;
+        }
+        if (t.tagKey === 0x00020010 && t.valueOffset !== undefined) {
+          const ts = new TextDecoder().decode(bytes.slice(t.valueOffset, t.valueOffset + t.valueLength)).trim().replace(/\0/g, "");
+          tags[t.tagKey] = ts;
+          if (ts === "1.2.840.10008.1.2") bodyIsExplicit = false;
+          if (ts === "1.2.840.10008.1.2.2") isLittleEndian = false;
+          if (ts.startsWith("1.2.840.10008.1.2.4") || ts === "1.2.840.10008.1.2.5") {
+            throw new Error("圧縮DICOMには対応していません（Transfer Syntax: " + ts + "）");
+          }
+        }
+      }
+      isExplicit = bodyIsExplicit;
+
+      const importantTags = new Set([
+        0x00080060, 0x00080008, 0x00180050, 0x00180060, 0x00181210,
+        0x00280010, 0x00280011, 0x00280030, 0x00280100, 0x00280101,
+        0x00280102, 0x00280103, 0x00281050, 0x00281051, 0x00281052,
+        0x00281053, 0x7FE00010
+      ]);
+      const implicitVrUS = new Set([
+        0x00280010, 0x00280011, 0x00280100, 0x00280101, 0x00280102, 0x00280103
+      ]);
+
+      while (offset < bytes.length - 4) {
+        const t = readTag();
+        if (!t) break;
+        if (t.undefinedLength) continue;
+        if (t.valueOffset === undefined) continue;
+        if (t.tagKey === 0x7FE00010) {
+          pixelDataOffset = t.valueOffset;
+          pixelDataLength = t.valueLength;
+          break;
+        }
+        if (importantTags.has(t.tagKey)) {
+          const effectiveVr = t.vr || (implicitVrUS.has(t.tagKey) ? "US" : "DS");
+          if (effectiveVr === "US" && t.valueLength === 2) {
+            tags[t.tagKey] = dv.getUint16(t.valueOffset, isLittleEndian).toString();
+          } else if (effectiveVr === "SS" && t.valueLength === 2) {
+            tags[t.tagKey] = dv.getInt16(t.valueOffset, isLittleEndian).toString();
+          } else {
+            tags[t.tagKey] = new TextDecoder().decode(bytes.slice(t.valueOffset, t.valueOffset + t.valueLength)).trim().replace(/\0/g, "");
+          }
+        }
+      }
+
+      const rows = parseInt(tags[0x00280010]) || 0;
+      const cols = parseInt(tags[0x00280011]) || 0;
+      const bitsAlloc = parseInt(tags[0x00280100]) || 16;
+      const pixelRep = parseInt(tags[0x00280103]) || 0;
+      const slope = parseFloat(tags[0x00281053]) || 1;
+      const intercept = parseFloat(tags[0x00281052]) || 0;
+      const psStr = tags[0x00280030] || "";
+      let ps = null;
+      if (psStr) {
+        const parts = psStr.split("\\").map(parseFloat);
+        if (parts.length >= 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1])) ps = [parts[0], parts[1]];
+      }
+      const wc = tags[0x00281050] ? parseFloat(tags[0x00281050].split("\\")[0]) : null;
+      const ww = tags[0x00281051] ? parseFloat(tags[0x00281051].split("\\")[0]) : null;
+      if (pixelDataOffset < 0 || rows === 0 || cols === 0) throw new Error("PixelDataまたは画像サイズが見つかりません");
+      if (!ps) throw new Error("PixelSpacingが見つかりません。Task-based IQ計算にはmm単位が必要です。");
+
+      const numPixels = rows * cols;
+      if (pixelDataLength > 0 && pixelDataOffset + Math.min(pixelDataLength, numPixels) > bytes.length) {
+        throw new Error("PixelData長が不正です");
+      }
+      const rawData = new Float64Array(numPixels);
+      if (bitsAlloc === 16) {
+        for (let i = 0; i < numPixels; i++) {
+          const byteIdx = pixelDataOffset + i * 2;
+          let val = dv.getUint16(byteIdx, isLittleEndian);
+          if (pixelRep === 1 && val >= 32768) val -= 65536;
+          rawData[i] = val * slope + intercept;
+        }
+      } else if (bitsAlloc === 8) {
+        for (let i = 0; i < numPixels; i++) rawData[i] = bytes[pixelDataOffset + i] * slope + intercept;
+      } else {
+        throw new Error("未対応のBitsAllocatedです: " + bitsAlloc);
+      }
+
+      return {
+        rows, cols, rawData, pixelSpacing: ps, windowCenter: wc, windowWidth: ww,
+        modality: tags[0x00080060] || "", kernel: tags[0x00181210] || "",
+        sliceThickness: tags[0x00180050] || "", kvp: tags[0x00180060] || "",
+        imageType: tags[0x00080008] || ""
+      };
+    }
+
+    function loadDicomResult(result, sourceLabel) {
+      rawPixelData = result.rawData;
+      imgWidth = result.cols;
+      imgHeight = result.rows;
+      pixelSpacing = result.pixelSpacing || [1, 1];
+      dicomWW = result.windowWidth || estimateWindowWidth(rawPixelData);
+      dicomWL = result.windowCenter || estimateWindowCenter(rawPixelData);
+      dicomDefaultWW = dicomWW;
+      dicomDefaultWL = dicomWL;
+      targetPoint = null;
+      backgroundPoint = null;
+      currentMode = "target";
+
+      $("viewer-card").classList.remove("hidden");
+      $("btn-reset-image").disabled = false;
+      $("btn-calc").disabled = false;
+      $("ww-slider").max = Math.max(2000, Math.round(dicomWW * 3));
+      $("ww-slider").value = Math.round(dicomWW);
+      $("wl-slider").min = Math.round(dicomWL - dicomWW * 2);
+      $("wl-slider").max = Math.round(dicomWL + dicomWW * 2);
+      $("wl-slider").value = Math.round(dicomWL);
+      $("ww-val").textContent = Math.round(dicomWW);
+      $("wl-val").textContent = Math.round(dicomWL);
+
+      const canvas = $("canvas-preview");
+      const overlay = $("canvas-overlay");
+      canvas.width = imgWidth;
+      canvas.height = imgHeight;
+      overlay.width = imgWidth;
+      overlay.height = imgHeight;
+      applyWindowLevel();
+      drawOverlay();
+      setMode("target");
+      updateRoiSummary();
+      renderDicomInfo(result, sourceLabel);
+      setMessage("msg-area", "画像を読み込みました。対象中心をクリックしてください。", "success");
+      setMessage("analysis-msg", "", "info");
+    }
+
+    function renderDicomInfo(result, sourceLabel) {
+      const info = $("dicom-info");
+      const items = [
+        ["Source", sourceLabel],
+        ["Size", imgWidth + "x" + imgHeight],
+        ["PixelSpacing", pixelSpacing[0].toFixed(3) + " mm"],
+        ["Modality", result.modality || "CT"],
+        ["Kernel", result.kernel || "-"],
+        ["Slice", result.sliceThickness ? result.sliceThickness + " mm" : "-"],
+        ["kVp", result.kvp || "-"]
+      ];
+      info.innerHTML = "";
+      items.forEach(([label, value]) => {
+        const span = document.createElement("span");
+        span.className = "dicom-tag";
+        span.innerHTML = "<strong>" + escapeHtml(label) + ":</strong> " + escapeHtml(value);
+        info.appendChild(span);
+      });
+      info.classList.remove("hidden");
+    }
+
+    function estimateWindowWidth(data) {
+      let min = Infinity;
+      let max = -Infinity;
+      const step = Math.max(1, Math.floor(data.length / 20000));
+      for (let i = 0; i < data.length; i += step) {
+        const v = data[i];
+        if (v < min) min = v;
+        if (v > max) max = v;
+      }
+      return Math.max(1, max - min);
+    }
+
+    function estimateWindowCenter(data) {
+      let min = Infinity;
+      let max = -Infinity;
+      const step = Math.max(1, Math.floor(data.length / 20000));
+      for (let i = 0; i < data.length; i += step) {
+        const v = data[i];
+        if (v < min) min = v;
+        if (v > max) max = v;
+      }
+      return (min + max) / 2;
+    }
+
+    function applyWindowLevel() {
+      if (!rawPixelData) return;
+      const canvas = $("canvas-preview");
+      const ctx = canvas.getContext("2d");
+      const img = ctx.createImageData(imgWidth, imgHeight);
+      const lower = dicomWL - dicomWW / 2;
+      const upper = dicomWL + dicomWW / 2;
+      const range = Math.max(1, upper - lower);
+      for (let i = 0; i < rawPixelData.length; i++) {
+        let v = (rawPixelData[i] - lower) / range;
+        v = Math.max(0, Math.min(1, v));
+        const g = Math.round(v * 255);
+        img.data[i * 4] = g;
+        img.data[i * 4 + 1] = g;
+        img.data[i * 4 + 2] = g;
+        img.data[i * 4 + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll(".mode-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.mode === mode);
+      });
+      $("mode-help").textContent = mode === "target"
+        ? "低コントラスト対象の中心をクリックしてください。"
+        : "均一な背景領域の中心をクリックしてください。";
+    }
+
+    function canvasEventToImagePoint(e) {
+      const rect = $("canvas-overlay").getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (imgWidth / rect.width);
+      const y = (e.clientY - rect.top) * (imgHeight / rect.height);
+      return { x: Math.max(0, Math.min(imgWidth - 1, x)), y: Math.max(0, Math.min(imgHeight - 1, y)) };
+    }
+
+    function drawOverlay() {
+      const canvas = $("canvas-overlay");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!rawPixelData) return;
+      const ps = pixelSpacing[0];
+      const targetRadiusPx = getTargetRadiusPx();
+      const bgRadiusPx = getBackgroundRadiusPx();
+
+      if (targetPoint) {
+        drawCircle(ctx, targetPoint.x, targetPoint.y, targetRadiusPx, "#f59e0b", "Target");
+        drawCircle(ctx, targetPoint.x, targetPoint.y, targetRadiusPx * 0.55, "rgba(245, 158, 11, 0.65)", "Mean");
+      }
+      if (backgroundPoint) {
+        drawCircle(ctx, backgroundPoint.x, backgroundPoint.y, bgRadiusPx, "#38a169", "Background");
+        drawNpsTiles(ctx, backgroundPoint, bgRadiusPx, parseInt($("nps-roi-size").value), ps);
+      }
+    }
+
+    function drawCircle(ctx, cx, cy, r, color, label) {
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = Math.max(1.5, imgWidth / 360);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.font = Math.max(12, Math.round(imgWidth / 42)) + "px sans-serif";
+      ctx.fillText(label, cx + r + 4, cy - 4);
+      ctx.restore();
+    }
+
+    function drawNpsTiles(ctx, center, radiusPx, tileSize) {
+      const tiles = computeTilePositions(center, radiusPx, tileSize);
+      ctx.save();
+      ctx.strokeStyle = "rgba(56, 161, 105, 0.72)";
+      ctx.lineWidth = 1;
+      for (const tile of tiles) {
+        ctx.strokeRect(tile.x, tile.y, tileSize, tileSize);
+      }
+      ctx.restore();
+    }
+
+    function updateRoiSummary() {
+      if (!rawPixelData) {
+        $("roi-summary").textContent = "ROI未指定";
+        return;
+      }
+      const items = [];
+      if (targetPoint) items.push("対象中心: x=" + Math.round(targetPoint.x) + ", y=" + Math.round(targetPoint.y));
+      if (backgroundPoint) items.push("背景ROI: x=" + Math.round(backgroundPoint.x) + ", y=" + Math.round(backgroundPoint.y));
+      $("roi-summary").textContent = items.length ? items.join(" / ") : "ROI未指定";
+    }
+
+    function getTargetRadiusPx() {
+      const diameter = parseFloat($("target-diameter").value) || 8;
+      return Math.max(2, diameter / 2 / pixelSpacing[0]);
+    }
+
+    function getBackgroundRadiusPx() {
+      const radius = parseFloat($("background-radius").value) || 24;
+      return Math.max(8, radius / pixelSpacing[0]);
+    }
+
+    function circleStats(cx, cy, radius) {
+      const values = [];
+      const r2 = radius * radius;
+      const minX = Math.max(0, Math.floor(cx - radius));
+      const maxX = Math.min(imgWidth - 1, Math.ceil(cx + radius));
+      const minY = Math.max(0, Math.floor(cy - radius));
+      const maxY = Math.min(imgHeight - 1, Math.ceil(cy + radius));
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          const dx = x - cx;
+          const dy = y - cy;
+          if (dx * dx + dy * dy <= r2) values.push(rawPixelData[y * imgWidth + x]);
+        }
+      }
+      if (!values.length) return null;
+      let mean = values.reduce((a, b) => a + b, 0) / values.length;
+      let variance = 0;
+      let min = Infinity;
+      let max = -Infinity;
+      for (const v of values) {
+        const d = v - mean;
+        variance += d * d;
+        if (v < min) min = v;
+        if (v > max) max = v;
+      }
+      return { mean, sd: Math.sqrt(variance / Math.max(1, values.length - 1)), min, max, n: values.length };
+    }
+
+    function computeTilePositions(center, radiusPx, tileSize) {
+      const tiles = [];
+      const half = tileSize / 2;
+      const scanMin = -Math.ceil(radiusPx / tileSize) * tileSize;
+      const scanMax = Math.ceil(radiusPx / tileSize) * tileSize;
+      for (let dy = scanMin; dy <= scanMax; dy += tileSize) {
+        for (let dx = scanMin; dx <= scanMax; dx += tileSize) {
+          const x = Math.round(center.x + dx - half);
+          const y = Math.round(center.y + dy - half);
+          const corners = [[x, y], [x + tileSize, y], [x, y + tileSize], [x + tileSize, y + tileSize]];
+          const inside = corners.every(([px, py]) => {
+            const ddx = px - center.x;
+            const ddy = py - center.y;
+            return Math.sqrt(ddx * ddx + ddy * ddy) <= radiusPx;
+          });
+          if (inside && x >= 0 && y >= 0 && x + tileSize <= imgWidth && y + tileSize <= imgHeight) {
+            tiles.push({ x, y });
+          }
+        }
+      }
+      return tiles;
+    }
+
+    function fft1d(re, im) {
+      const n = re.length;
+      let j = 0;
+      for (let i = 1; i < n; i++) {
+        let bit = n >> 1;
+        while (j & bit) {
+          j ^= bit;
+          bit >>= 1;
+        }
+        j ^= bit;
+        if (i < j) {
+          const tr = re[i]; re[i] = re[j]; re[j] = tr;
+          const ti = im[i]; im[i] = im[j]; im[j] = ti;
+        }
+      }
+      for (let len = 2; len <= n; len <<= 1) {
+        const angle = -2 * Math.PI / len;
+        const wlenRe = Math.cos(angle);
+        const wlenIm = Math.sin(angle);
+        for (let i = 0; i < n; i += len) {
+          let wRe = 1;
+          let wIm = 0;
+          for (let k = 0; k < len / 2; k++) {
+            const uRe = re[i + k];
+            const uIm = im[i + k];
+            const vRe = re[i + k + len / 2] * wRe - im[i + k + len / 2] * wIm;
+            const vIm = re[i + k + len / 2] * wIm + im[i + k + len / 2] * wRe;
+            re[i + k] = uRe + vRe;
+            im[i + k] = uIm + vIm;
+            re[i + k + len / 2] = uRe - vRe;
+            im[i + k + len / 2] = uIm - vIm;
+            const nextRe = wRe * wlenRe - wIm * wlenIm;
+            wIm = wRe * wlenIm + wIm * wlenRe;
+            wRe = nextRe;
+          }
+        }
+      }
+    }
+
+    function fft2d(re, im, n) {
+      for (let y = 0; y < n; y++) {
+        const rowRe = new Float64Array(n);
+        const rowIm = new Float64Array(n);
+        for (let x = 0; x < n; x++) {
+          rowRe[x] = re[y * n + x];
+          rowIm[x] = im[y * n + x];
+        }
+        fft1d(rowRe, rowIm);
+        for (let x = 0; x < n; x++) {
+          re[y * n + x] = rowRe[x];
+          im[y * n + x] = rowIm[x];
+        }
+      }
+      for (let x = 0; x < n; x++) {
+        const colRe = new Float64Array(n);
+        const colIm = new Float64Array(n);
+        for (let y = 0; y < n; y++) {
+          colRe[y] = re[y * n + x];
+          colIm[y] = im[y * n + x];
+        }
+        fft1d(colRe, colIm);
+        for (let y = 0; y < n; y++) {
+          re[y * n + x] = colRe[y];
+          im[y * n + x] = colIm[y];
+        }
+      }
+    }
+
+    function getSubpixel(x, y) {
+      const x0 = Math.floor(x);
+      const y0 = Math.floor(y);
+      const x1 = Math.min(imgWidth - 1, x0 + 1);
+      const y1 = Math.min(imgHeight - 1, y0 + 1);
+      const dx = x - x0;
+      const dy = y - y0;
+      const v00 = rawPixelData[y0 * imgWidth + x0];
+      const v10 = rawPixelData[y0 * imgWidth + x1];
+      const v01 = rawPixelData[y1 * imgWidth + x0];
+      const v11 = rawPixelData[y1 * imgWidth + x1];
+      return v00 * (1 - dx) * (1 - dy) + v10 * dx * (1 - dy) + v01 * (1 - dx) * dy + v11 * dx * dy;
+    }
+
+    function computeNPS() {
+      const n = parseInt($("nps-roi-size").value);
+      const tiles = computeTilePositions(backgroundPoint, getBackgroundRadiusPx(), n);
+      if (tiles.length < 3) {
+        throw new Error("背景ROI内のNPSタイルが不足しています。背景ROI半径を大きくするか、NPSタイルを小さくしてください。");
+      }
+      const ps = pixelSpacing[0];
+      const nps2d = new Float64Array(n * n);
+      let totalMean = 0;
+      let totalVar = 0;
+
+      for (const tile of tiles) {
+        const data = new Float64Array(n * n);
+        let mean = 0;
+        for (let y = 0; y < n; y++) {
+          for (let x = 0; x < n; x++) {
+            const v = rawPixelData[(tile.y + y) * imgWidth + tile.x + x];
+            data[y * n + x] = v;
+            mean += v;
+          }
+        }
+        mean /= n * n;
+        totalMean += mean;
+        let variance = 0;
+        for (let i = 0; i < data.length; i++) {
+          data[i] -= mean;
+          variance += data[i] * data[i];
+        }
+        totalVar += variance / data.length;
+        const re = new Float64Array(data);
+        const im = new Float64Array(n * n);
+        fft2d(re, im, n);
+        for (let i = 0; i < n * n; i++) {
+          nps2d[i] += re[i] * re[i] + im[i] * im[i];
+        }
+      }
+
+      const numTiles = tiles.length;
+      const scale = (ps * ps) / (n * n * numTiles);
+      for (let i = 0; i < nps2d.length; i++) nps2d[i] *= scale;
+      const shifted = new Float64Array(n * n);
+      const half = n / 2;
+      for (let y = 0; y < n; y++) {
+        for (let x = 0; x < n; x++) {
+          const sy = (y + half) % n;
+          const sx = (x + half) % n;
+          shifted[sy * n + sx] = nps2d[y * n + x];
+        }
+      }
+
+      const freqStep = 1 / (n * ps);
+      const radialSum = new Float64Array(half + 1);
+      const radialCount = new Uint32Array(half + 1);
+      for (let y = 0; y < n; y++) {
+        for (let x = 0; x < n; x++) {
+          const fx = x - half;
+          const fy = y - half;
+          const bin = Math.round(Math.sqrt(fx * fx + fy * fy));
+          if (bin <= half) {
+            radialSum[bin] += shifted[y * n + x];
+            radialCount[bin]++;
+          }
+        }
+      }
+      const freq = [];
+      const nps1d = [];
+      for (let i = 1; i <= half; i++) {
+        if (radialCount[i] > 0) {
+          freq.push(i * freqStep);
+          nps1d.push(radialSum[i] / radialCount[i]);
+        }
+      }
+
+      let integral2d = 0;
+      for (let i = 1; i < freq.length; i++) {
+        const fMid = (freq[i - 1] + freq[i]) / 2;
+        const npsMid = (nps1d[i - 1] + nps1d[i]) / 2;
+        integral2d += 2 * Math.PI * fMid * npsMid * (freq[i] - freq[i - 1]);
+      }
+
+      return {
+        N: n,
+        freq,
+        nps1d,
+        nps2dShifted: shifted,
+        pixelSize: ps,
+        freqStep,
+        numTiles,
+        meanCT: totalMean / numTiles,
+        sd: Math.sqrt(totalVar / numTiles),
+        npsIntegralSqrt: Math.sqrt(Math.max(0, integral2d))
+      };
+    }
+
+    function computeTTF() {
+      const radius = getTargetRadiusPx();
+      const ps = pixelSpacing[0];
+      const halfWidth = Math.max(8, Math.round(radius * 1.2));
+      const numAngles = 180;
+      const profiles = [];
+      const edgeContrasts = [];
+
+      for (let ai = 0; ai < numAngles; ai++) {
+        const angle = (2 * Math.PI * ai) / numAngles;
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
+        const profile = [];
+        let valid = true;
+        for (let d = -halfWidth; d <= halfWidth; d++) {
+          const px = targetPoint.x + (radius + d) * cosA;
+          const py = targetPoint.y + (radius + d) * sinA;
+          if (px < 1 || px >= imgWidth - 2 || py < 1 || py >= imgHeight - 2) {
+            valid = false;
+            break;
+          }
+          profile.push(getSubpixel(px, py));
+        }
+        if (!valid) continue;
+        const q = Math.max(2, Math.floor(profile.length / 5));
+        const inside = mean(profile.slice(0, q));
+        const outside = mean(profile.slice(profile.length - q));
+        const contrast = inside - outside;
+        if (Math.abs(contrast) < 1e-3) continue;
+        edgeContrasts.push(Math.abs(contrast));
+        const norm = profile.map((v) => (v - outside) / contrast);
+        profiles.push(norm);
+      }
+
+      if (profiles.length < 24) {
+        throw new Error("TTF推定に使えるエッジプロファイルが不足しています。対象中心や対象径を確認してください。");
+      }
+
+      const length = profiles[0].length;
+      const esf = new Float64Array(length);
+      for (let i = 0; i < length; i++) {
+        let sum = 0;
+        for (const p of profiles) sum += p[i];
+        esf[i] = sum / profiles.length;
+      }
+
+      const lsfLen = length - 1;
+      let fftLen = 1;
+      while (fftLen < lsfLen * 2) fftLen <<= 1;
+      const re = new Float64Array(fftLen);
+      const im = new Float64Array(fftLen);
+      for (let i = 0; i < lsfLen; i++) {
+        const hanning = 0.5 * (1 - Math.cos((2 * Math.PI * i) / Math.max(1, lsfLen - 1)));
+        re[i] = (esf[i] - esf[i + 1]) * hanning;
+      }
+      fft1d(re, im);
+
+      const dc = Math.max(1e-12, Math.sqrt(re[0] * re[0] + im[0] * im[0]));
+      const ttfLen = Math.floor(fftLen / 2);
+      const freq = [];
+      const ttf = [];
+      for (let i = 0; i < ttfLen; i++) {
+        const f = i / (fftLen * ps);
+        if (f > 0.5 / ps) break;
+        freq.push(f);
+        ttf.push(Math.sqrt(re[i] * re[i] + im[i] * im[i]) / dc);
+      }
+
+      const warnings = [];
+      const medianContrast = median(edgeContrasts);
+      if (medianContrast < 5) warnings.push("TTF推定注意: 対象エッジのコントラストが低いです。");
+      if (profiles.length < 60) warnings.push("TTF推定注意: 有効プロファイル数が少なめです。");
+      const f50 = findCrossing(freq, ttf, 0.5);
+      const f10 = findCrossing(freq, ttf, 0.1);
+      if (f50 === null || f10 === null) warnings.push("TTF推定注意: TTF 50%または10%交点が取得できません。");
+
+      return { freq, ttf, f50, f10, profiles: profiles.length, medianContrast, warnings };
+    }
+
+    function besselJ1(x) {
+      const ax = Math.abs(x);
+      if (ax < 1e-8) return x / 2;
+      if (ax < 8) {
+        const y = x * x;
+        const r1 = x * (72362614232.0 + y * (-7895059235.0 + y * (242396853.1 +
+          y * (-2972611.439 + y * (15704.48260 + y * (-30.16036606))))));
+        const r2 = 144725228442.0 + y * (2300535178.0 + y * (18583304.74 +
+          y * (99447.43394 + y * (376.9991397 + y))));
+        return r1 / r2;
+      }
+      const z = 8.0 / ax;
+      const y = z * z;
+      const xx = ax - 2.356194491;
+      const p0 = 1.0 + y * (0.183105e-2 + y * (-0.3516396496e-4 + y * 0.2457520174e-5));
+      const q0 = 0.04687499995 + y * (-0.2002690873e-3 + y * (0.8449199065e-5 + y * (-0.88228987e-6)));
+      const ans = Math.sqrt(0.636619772 / ax) * (Math.cos(xx) * p0 - z * Math.sin(xx) * q0);
+      return x < 0 ? -ans : ans;
+    }
+
+    function taskDiskFT(diameterMm, f) {
+      const r = diameterMm / 2;
+      if (f < 1e-10) return Math.PI * r * r;
+      const arg = 2 * Math.PI * f * r;
+      return Math.PI * r * r * 2 * besselJ1(arg) / arg;
+    }
+
+    function eyeFilter(f) {
+      const c = 120;
+      return Math.pow(Math.max(f, 0), 1.3) * Math.exp(-c * f * f);
+    }
+
+    function computeDprime(contrast, nps, ttf, diameterMm) {
+      const N = nps.N;
+      const half = N / 2;
+      const freqStep = nps.freqStep;
+      const df2 = freqStep * freqStep;
+      let numerator = 0;
+      let denominator = 0;
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          const fx = (x - half) * freqStep;
+          const fy = (y - half) * freqStep;
+          const f = Math.sqrt(fx * fx + fy * fy);
+          if (f < 1e-10 || f > 0.5 / nps.pixelSize) continue;
+          const task = taskDiskFT(diameterMm, f) * interpolateCurve(ttf.freq, ttf.ttf, f);
+          const e = eyeFilter(f);
+          const w2e2 = task * task * e * e;
+          const npsVal = Math.max(1e-20, nps.nps2dShifted[y * N + x]);
+          numerator += w2e2 * df2;
+          denominator += w2e2 * npsVal * df2;
+        }
+      }
+      if (denominator <= 0 || numerator <= 0) return 0;
+      return contrast * numerator / Math.sqrt(denominator);
+    }
+
+    function runAnalysis() {
+      setMessage("analysis-msg", "", "info");
+      if (!rawPixelData) {
+        setMessage("analysis-msg", "先にDICOM画像を読み込んでください。", "error");
+        return;
+      }
+      if (!targetPoint || !backgroundPoint) {
+        setMessage("analysis-msg", "対象中心と背景ROIの両方を指定してください。", "error");
+        return;
+      }
+      try {
+        const diameterMm = parseFloat($("target-diameter").value) || 8;
+        const label = ($("condition-label").value || "Condition " + (results.length + 1)).trim();
+        const targetRadius = getTargetRadiusPx();
+        const targetStats = circleStats(targetPoint.x, targetPoint.y, Math.max(1.5, targetRadius * 0.55));
+        const bgStats = circleStats(backgroundPoint.x, backgroundPoint.y, getBackgroundRadiusPx());
+        if (!targetStats || !bgStats) throw new Error("ROI統計を取得できません。ROI位置を確認してください。");
+        const contrast = Math.abs(targetStats.mean - bgStats.mean);
+        const cnr = bgStats.sd > 0 ? contrast / bgStats.sd : 0;
+        const nps = computeNPS();
+        const ttf = computeTTF();
+        const dprime = computeDprime(contrast, nps, ttf, diameterMm);
+        const warnings = [];
+        if (nps.numTiles < 10) warnings.push("NPSタイル数が少なめです。背景ROI半径またはタイルサイズを確認してください。");
+        warnings.push(...ttf.warnings);
+        const result = {
+          label, contrast, cnr, npsNoise: nps.npsIntegralSqrt,
+          ttf50: ttf.f50, ttf10: ttf.f10, dprime,
+          npsTiles: nps.numTiles, ttfProfiles: ttf.profiles,
+          warnings, nps, ttf
+        };
+        results.push(result);
+        renderLatestResult(result);
+        renderComparisonTable();
+        $("btn-download-csv").disabled = false;
+        setMessage("analysis-msg", "解析して条件比較テーブルに追加しました。", warnings.length ? "warning" : "success");
+      } catch (err) {
+        setMessage("analysis-msg", err.message || String(err), "error");
+      }
+    }
+
+    function renderLatestResult(result) {
+      $("result-card").classList.remove("hidden");
+      $("contrast-value").textContent = result.contrast.toFixed(1);
+      $("cnr-value").textContent = result.cnr.toFixed(2);
+      $("nps-noise-value").textContent = result.npsNoise.toFixed(2);
+      $("ttf50-value").textContent = result.ttf50 === null ? "--" : result.ttf50.toFixed(3);
+      $("ttf10-value").textContent = result.ttf10 === null ? "--" : result.ttf10.toFixed(3);
+      $("dprime-value").textContent = result.dprime.toFixed(2);
+      const warningBox = $("result-warnings");
+      warningBox.innerHTML = "";
+      if (result.warnings.length) {
+        result.warnings.forEach((warning) => appendMessage("result-warnings", warning, "warning"));
+      } else {
+        appendMessage("result-warnings", "条件比較用の参考指標として算出しました。臨床診断性能は示しません。", "info");
+      }
+      plotCurve("chart-nps", result.nps.freq, result.nps.nps1d, {
+        yLog: true,
+        xLabel: "cycles/mm",
+        yLabel: "NPS"
+      });
+      plotCurve("chart-ttf", result.ttf.freq, result.ttf.ttf, {
+        yLog: false,
+        yMin: 0,
+        yMax: 1.1,
+        xLabel: "cycles/mm",
+        yLabel: "TTF"
+      });
+    }
+
+    function renderComparisonTable() {
+      const body = $("comparison-body");
+      body.innerHTML = "";
+      if (!results.length) {
+        body.innerHTML = '<tr><td colspan="9">まだ解析結果がありません。</td></tr>';
+        return;
+      }
+      const maxDprime = Math.max(...results.map((r) => r.dprime), 1e-12);
+      results.forEach((r) => {
+        const tr = document.createElement("tr");
+        const status = r.warnings.length ? '<span class="status-pill warn">参考扱い</span>' : '<span class="status-pill">比較可</span>';
+        tr.innerHTML = [
+          escapeHtml(r.label),
+          r.contrast.toFixed(1),
+          r.cnr.toFixed(2),
+          r.npsNoise.toFixed(2),
+          r.ttf50 === null ? "--" : r.ttf50.toFixed(3),
+          r.ttf10 === null ? "--" : r.ttf10.toFixed(3),
+          r.dprime.toFixed(2),
+          (r.dprime / maxDprime).toFixed(2),
+          status
+        ].map((v, i) => i === 8 ? "<td>" + v + "</td>" : "<td>" + v + "</td>").join("");
+        body.appendChild(tr);
+      });
+    }
+
+    function downloadCsv() {
+      if (!results.length) return;
+      const maxDprime = Math.max(...results.map((r) => r.dprime), 1e-12);
+      const rows = [[
+        "label", "contrast_HU", "CNR", "NPS_integral_noise_HU", "TTF50_cycles_per_mm",
+        "TTF10_cycles_per_mm", "NPWE_dprime", "relative_dprime", "NPS_tiles",
+        "TTF_profiles", "warnings"
+      ]];
+      for (const r of results) {
+        rows.push([
+          r.label, r.contrast, r.cnr, r.npsNoise, r.ttf50 ?? "", r.ttf10 ?? "",
+          r.dprime, r.dprime / maxDprime, r.npsTiles, r.ttfProfiles, r.warnings.join(" / ")
+        ]);
+      }
+      const csv = rows.map((row) => row.map(csvEscape).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "task_based_iq_results.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function csvEscape(value) {
+      const s = String(value);
+      if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+
+    function plotCurve(canvasId, x, y, options) {
+      const canvas = $(canvasId);
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, w, h);
+      if (!x.length || !y.length) return;
+      const padL = 52;
+      const padR = 16;
+      const padT = 18;
+      const padB = 42;
+      const xMax = Math.max(...x);
+      let yVals = y.filter((v) => Number.isFinite(v) && v > 0);
+      if (!yVals.length) yVals = [0, 1];
+      let yMin = options.yMin ?? Math.min(...yVals);
+      let yMax = options.yMax ?? Math.max(...yVals);
+      if (options.yLog) {
+        yMin = Math.max(1e-12, yMin);
+        yMax = Math.max(yMin * 10, yMax);
+      } else if (yMax === yMin) {
+        yMax = yMin + 1;
+      }
+
+      function px(v) { return padL + (v / xMax) * (w - padL - padR); }
+      function py(v) {
+        let t;
+        if (options.yLog) {
+          t = (Math.log10(Math.max(v, yMin)) - Math.log10(yMin)) / (Math.log10(yMax) - Math.log10(yMin));
+        } else {
+          t = (v - yMin) / (yMax - yMin);
+        }
+        return h - padB - t * (h - padT - padB);
+      }
+
+      ctx.strokeStyle = "#d7e0e7";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padL, padT);
+      ctx.lineTo(padL, h - padB);
+      ctx.lineTo(w - padR, h - padB);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#1f6f9f";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      x.forEach((vx, i) => {
+        const xx = px(vx);
+        const yy = py(y[i]);
+        if (i === 0) ctx.moveTo(xx, yy);
+        else ctx.lineTo(xx, yy);
+      });
+      ctx.stroke();
+
+      ctx.fillStyle = "#526272";
+      ctx.font = "12px sans-serif";
+      ctx.fillText(options.xLabel || "", w / 2 - 28, h - 12);
+      ctx.save();
+      ctx.translate(14, h / 2 + 32);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(options.yLabel || "", 0, 0);
+      ctx.restore();
+      ctx.fillText("0", padL - 6, h - padB + 16);
+      ctx.fillText(xMax.toFixed(2), w - padR - 34, h - padB + 16);
+    }
+
+    function interpolateCurve(x, y, target) {
+      if (!x.length) return 0;
+      if (target <= x[0]) return y[0];
+      for (let i = 1; i < x.length; i++) {
+        if (target <= x[i]) {
+          const t = (target - x[i - 1]) / Math.max(1e-12, x[i] - x[i - 1]);
+          return y[i - 1] * (1 - t) + y[i] * t;
+        }
+      }
+      return y[y.length - 1];
+    }
+
+    function findCrossing(x, y, threshold) {
+      for (let i = 1; i < y.length; i++) {
+        if (y[i - 1] >= threshold && y[i] <= threshold) {
+          const denom = y[i] - y[i - 1];
+          if (Math.abs(denom) < 1e-12) return x[i];
+          const t = (threshold - y[i - 1]) / denom;
+          return x[i - 1] + t * (x[i] - x[i - 1]);
+        }
+      }
+      return null;
+    }
+
+    function mean(values) {
+      return values.reduce((a, b) => a + b, 0) / Math.max(1, values.length);
+    }
+
+    function median(values) {
+      if (!values.length) return 0;
+      const sorted = [...values].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
+    function randn() {
+      let u = 0;
+      let v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+
+    function loadDemo() {
+      const w = 512;
+      const h = 512;
+      const ps = 0.625;
+      const data = new Float64Array(w * h);
+      const cx = 210;
+      const cy = 255;
+      const radiusPx = 8 / 2 / ps;
+      const contrast = 45;
+      const sigmaPx = 1.1;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const r = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+          const disk = contrast / (1 + Math.exp((r - radiusPx) / sigmaPx));
+          const slowTrend = 4 * Math.sin(x / 80) + 3 * Math.cos(y / 95);
+          data[y * w + x] = slowTrend + disk + randn() * 16;
+        }
+      }
+      loadDicomResult({
+        rows: h, cols: w, rawData: data, pixelSpacing: [ps, ps], windowCenter: 20, windowWidth: 180,
+        modality: "CT", kernel: "Demo", sliceThickness: "5", kvp: "120"
+      }, "Demo");
+      $("condition-label").value = "Demo condition";
+      $("target-diameter").value = "8";
+      $("background-radius").value = "48";
+      targetPoint = { x: cx, y: cy };
+      backgroundPoint = { x: 350, y: 255 };
+      drawOverlay();
+      updateRoiSummary();
+      setMode("background");
+    }
+
+    function resetImageView() {
+      if (!rawPixelData) return;
+      targetPoint = null;
+      backgroundPoint = null;
+      dicomWW = dicomDefaultWW;
+      dicomWL = dicomDefaultWL;
+      $("ww-slider").value = Math.round(dicomWW);
+      $("wl-slider").value = Math.round(dicomWL);
+      $("ww-val").textContent = Math.round(dicomWW);
+      $("wl-val").textContent = Math.round(dicomWL);
+      applyWindowLevel();
+      drawOverlay();
+      updateRoiSummary();
+      setMode("target");
+      setMessage("analysis-msg", "", "info");
+    }
+
+    $("file-input").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const result = parseDicom(ev.target.result);
+          loadDicomResult(result, file.name);
+        } catch (err) {
+          setMessage("msg-area", err.message || String(err), "error");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    const uploadArea = $("upload-area");
+    uploadArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      uploadArea.classList.add("dragover");
+    });
+    uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("dragover"));
+    uploadArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const result = parseDicom(ev.target.result);
+          loadDicomResult(result, file.name);
+        } catch (err) {
+          setMessage("msg-area", err.message || String(err), "error");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    $("canvas-overlay").addEventListener("click", (e) => {
+      if (!rawPixelData) return;
+      const point = canvasEventToImagePoint(e);
+      if (currentMode === "target") {
+        targetPoint = point;
+        setMode("background");
+      } else {
+        backgroundPoint = point;
+      }
+      drawOverlay();
+      updateRoiSummary();
+    });
+
+    document.querySelectorAll(".mode-btn").forEach((btn) => {
+      btn.addEventListener("click", () => setMode(btn.dataset.mode));
+    });
+
+    ["target-diameter", "background-radius", "nps-roi-size"].forEach((id) => {
+      $(id).addEventListener("input", () => {
+        drawOverlay();
+        updateRoiSummary();
+      });
+    });
+
+    $("ww-slider").addEventListener("input", (e) => {
+      dicomWW = parseFloat(e.target.value);
+      $("ww-val").textContent = Math.round(dicomWW);
+      applyWindowLevel();
+    });
+
+    $("wl-slider").addEventListener("input", (e) => {
+      dicomWL = parseFloat(e.target.value);
+      $("wl-val").textContent = Math.round(dicomWL);
+      applyWindowLevel();
+    });
+
+    $("btn-wwwl-reset").addEventListener("click", () => {
+      dicomWW = dicomDefaultWW;
+      dicomWL = dicomDefaultWL;
+      $("ww-slider").value = Math.round(dicomWW);
+      $("wl-slider").value = Math.round(dicomWL);
+      $("ww-val").textContent = Math.round(dicomWW);
+      $("wl-val").textContent = Math.round(dicomWL);
+      applyWindowLevel();
+    });
+
+    $("btn-demo").addEventListener("click", loadDemo);
+    $("btn-reset-image").addEventListener("click", resetImageView);
+    $("btn-calc").addEventListener("click", runAnalysis);
+    $("btn-download-csv").addEventListener("click", downloadCsv);
+  </script>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>
