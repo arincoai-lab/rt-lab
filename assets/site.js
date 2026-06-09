@@ -10,7 +10,7 @@
   // ===== 設定：値が用意でき次第ここを埋める（空のままなら各機能は無効） =====
   var CONFIG = {
     // Cloudflare Web Analytics のトークン（Cookieなし・IP非保存）。空文字 = 解析オフ
-    cfAnalyticsToken: ""
+    cfAnalyticsToken: "f020587134574ebab5e0ca5f8068a12b"
   };
 
   // ---- Cookieレス アクセス解析 ----
