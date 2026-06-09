@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>造影剤クイック計算（ヨード量・注入速度）| RT-Lab</title>
+  <meta name="description" content="体重とヨード濃度から造影剤量(mL)・必要ヨード量(gI)・注入速度(mL/s)・注入時間を即計算。300/350/370 mgI/mL対応、生理食塩水後押し・希釈にも対応。ブラウザ完結・無料・データ外部送信なし。">
+  <meta property="og:title" content="造影剤クイック計算（ヨード量・注入速度）| RT-Lab">
+  <meta property="og:description" content="体重と濃度から造影剤量・ヨード量・注入速度を即計算。造影剤量[mL] = 体重 × 目標ヨード量 × 1000 ÷ ヨード濃度。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rt-ai-lab.com/contrast-quick/">
+  <link rel="canonical" href="https://rt-ai-lab.com/contrast-quick/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "造影剤クイック計算ツール",
+    "url": "https://rt-ai-lab.com/contrast-quick/",
+    "description": "体重とヨード濃度から造影剤量(mL)・必要ヨード量(gI)・注入速度(mL/s)・注入時間を計算する造影剤クイック計算ツール。",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
+      { "@type": "ListItem", "position": 2, "name": "造影剤クイック計算ツール", "item": "https://rt-ai-lab.com/contrast-quick/" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "造影剤量（ヨード量）の計算式は？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "体重比例法では、必要ヨード総量[gI] = 体重[kg] × 目標ヨード量[gI/kg]。造影剤量[mL] = 体重[kg] × 目標ヨード量[gI/kg] × 1000 ÷ ヨード濃度[mgI/mL] で求めます。例：体重60kg・目標0.5gI/kg・350mgI/mLなら、ヨード総量30gI、造影剤量は約85.7mLです。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "造影剤の注入速度の計算式は？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ヨード注入速度(IDR)を指定する場合、注入速度[mL/s] = ヨード注入速度[gI/s] × 1000 ÷ ヨード濃度[mgI/mL]。注入時間を固定する場合、注入速度[mL/s] = 造影剤量[mL] ÷ 注入時間[s] で求めます。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "ヨード濃度 mgI/mL の換算とは？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "造影剤のヨード濃度（300・350・370 mgI/mL など）は1mLあたりのヨード量を表します。1gI = 1000mgI なので、必要ヨード量[gI]を濃度[mgI/mL]で割って1000を掛けると必要な造影剤量[mL]が得られます。"
+        }
+      }
+    ]
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #1a56db;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.06em; }
+    .logo a { color: #fff; text-decoration: none; }
+    .tool-name-header {
+      font-size: 0.95rem;
+      opacity: 0.88;
+      padding-left: 16px;
+      border-left: 2px solid rgba(255,255,255,0.35);
+    }
+
+    /* ── Layout ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 40px; }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    h1.card-title, .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a56db;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    h1.card-title { font-size: 1.15rem; line-height: 1.5; }
+    .lead { font-size: 0.9rem; color: #4a5568; margin-top: -6px; }
+
+    /* ── Steps ── */
+    .steps { display: flex; gap: 12px; flex-wrap: wrap; }
+    .step {
+      flex: 1; min-width: 180px;
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px; background: #f7fafc;
+      border-radius: 8px; border: 1px solid #e2e8f0;
+    }
+    .step-num {
+      width: 26px; height: 26px; background: #1a56db; color: #fff;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+    }
+    .step-body strong { display: block; font-weight: 600; color: #2d3748; margin-bottom: 3px; }
+    .step-body span { color: #4a5568; font-size: 0.82rem; }
+
+    /* ── Buttons / presets ── */
+    .preset-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .preset-btn {
+      padding: 8px 18px; border: 2px solid #e2e8f0; border-radius: 6px;
+      background: #fff; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; color: #2d3748;
+    }
+    .preset-btn:hover { border-color: #1a56db; color: #1a56db; }
+    .preset-btn.active { background: #1a56db; color: #fff; border-color: #1a56db; }
+
+    /* ── Form controls ── */
+    .form-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 8px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 0.8rem; font-weight: 600; color: #4a5568; }
+    .form-group input, .form-group select {
+      padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 5px;
+      font-size: 0.9rem; width: 150px; color: #2d3748;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none; border-color: #1a56db; box-shadow: 0 0 0 2px rgba(26,86,219,0.15);
+    }
+    .form-hint { font-size: 0.72rem; color: #718096; margin-top: 2px; }
+
+    .radio-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .radio-pill {
+      padding: 8px 16px; border: 2px solid #e2e8f0; border-radius: 6px;
+      font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #2d3748; background: #fff;
+    }
+    .radio-pill.active { background: #1a56db; color: #fff; border-color: #1a56db; }
+
+    .checkbox-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.85rem; cursor: pointer; color: #2d3748; font-weight: 600;
+    }
+    .checkbox-label input { cursor: pointer; }
+
+    /* ── Summary cards ── */
+    .summary-cards { display: flex; gap: 16px; flex-wrap: wrap; }
+    .summary-card { flex: 1; min-width: 160px; padding: 20px; border-radius: 10px; text-align: center; }
+    .summary-card .label { font-size: 0.78rem; font-weight: 600; margin-bottom: 6px; }
+    .summary-card .value { font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
+    .summary-card .unit { font-size: 0.8rem; font-weight: 500; opacity: 0.8; }
+    .summary-vol    { background: linear-gradient(135deg, #ebf8ff, #bee3f8); color: #2b6cb0; }
+    .summary-iodine { background: linear-gradient(135deg, #faf5ff, #e9d8fd); color: #6b46c1; }
+    .summary-rate   { background: linear-gradient(135deg, #f0fff4, #c6f6d5); color: #276749; }
+    .summary-time   { background: linear-gradient(135deg, #fffaf0, #feebc8); color: #9c4221; }
+
+    .detail-row { font-size: 0.82rem; color: #4a5568; margin-top: 14px; }
+    .detail-row strong { color: #2d3748; }
+
+    .opt-box {
+      background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+      padding: 14px 16px; margin-top: 10px;
+    }
+    .opt-result { font-size: 0.85rem; color: #2b6cb0; font-weight: 600; margin-top: 8px; }
+
+    .formula {
+      display: inline-block; background: #eef2ff; padding: 8px 14px;
+      border-radius: 6px; margin: 6px 0; font-weight: 700; color: #2d3748;
+    }
+    .explain { line-height: 1.85; }
+    .explain p { margin-bottom: 12px; }
+    .explain ol { margin: 0 0 12px 22px; }
+
+    .references { font-size: 0.75rem; color: #a0aec0; margin-top: 12px; line-height: 1.8; }
+    .references strong { color: #718096; }
+
+    .crosslink a { color: #1a56db; font-weight: 600; text-decoration: none; }
+    .crosslink a:hover { text-decoration: underline; }
+
+    .disclaimer-note {
+      font-size: 0.78rem; color: #718096; background: #fffaf0;
+      border: 1px solid #feebc8; border-radius: 6px; padding: 10px 14px; margin-top: 4px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      background: #2d3748; color: rgba(255,255,255,0.7);
+      text-align: center; padding: 24px 16px; font-size: 0.75rem; line-height: 1.8;
+    }
+    footer a { color: rgba(255,255,255,0.85); text-decoration: none; }
+    footer a:hover { color: #fff; }
+    .footer-disclaimer { max-width: 640px; margin: 10px auto 0; font-size: 0.7rem; opacity: 0.65; }
+
+    @media (max-width: 640px) {
+      .summary-card .value { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header>
+  <div class="logo"><a href="/">RT-Lab</a></div>
+  <div class="tool-name-header">造影剤クイック計算</div>
+</header>
+
+<main>
+
+  <!-- ===== Hero / h1 ===== -->
+  <div class="card">
+    <h1 class="card-title">造影剤クイック計算ツール｜ヨード量・注入速度の求め方</h1>
+    <p class="lead">体重とヨード濃度から、造影剤量(mL)・必要ヨード量(gI)・注入速度(mL/s)・注入時間を瞬時に計算します。生理食塩水の後押し、希釈にも対応。すべてブラウザ内で計算し、入力データは外部に送信しません。</p>
+  </div>
+
+  <!-- ===== Steps ===== -->
+  <div class="card">
+    <div class="card-title">📋 使い方</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body"><strong>体重と濃度を入力</strong><span>患者体重・造影剤のヨード濃度（300/350/370 mgI/mL）・目標ヨード量</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body"><strong>注入条件を選択</strong><span>ヨード注入速度(gI/s)または注入時間(秒)から指定</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body"><strong>結果を確認</strong><span>造影剤量・総ヨード量・注入速度・注入時間を自動表示</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Input ===== -->
+  <div class="card">
+    <div class="card-title">1. 患者・造影剤の入力</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="weight">体重 (kg)</label>
+        <input type="number" id="weight" value="60" min="1" max="200" step="0.5">
+      </div>
+      <div class="form-group">
+        <label for="dose">目標ヨード量 (gI/kg)</label>
+        <input type="number" id="dose" value="0.5" min="0.1" max="1.0" step="0.05">
+        <span class="form-hint">施設プロトコルにより 0.4〜0.7 程度</span>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:8px;">
+      <label>ヨード濃度 (mgI/mL)</label>
+      <div class="preset-group" id="concPresets" style="margin-top:4px;">
+        <button class="preset-btn" data-conc="300">300</button>
+        <button class="preset-btn active" data-conc="350">350</button>
+        <button class="preset-btn" data-conc="370">370</button>
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:10px;">
+      <div class="form-group">
+        <label for="conc">濃度 (mgI/mL) 自由入力</label>
+        <input type="number" id="conc" value="350" min="100" max="500" step="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Injection setting ===== -->
+  <div class="card">
+    <div class="card-title">2. 注入条件</div>
+    <div class="radio-group" id="modeGroup">
+      <button class="radio-pill active" data-mode="idr">ヨード注入速度から (gI/s)</button>
+      <button class="radio-pill" data-mode="time">注入時間から (秒)</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group" id="idrField">
+        <label for="idr">ヨード注入速度 IDR (gI/s)</label>
+        <input type="number" id="idr" value="1.5" min="0.3" max="3.0" step="0.1">
+        <span class="form-hint">一般的に 1.0〜2.0 gI/s 程度</span>
+      </div>
+      <div class="form-group hidden" id="timeField">
+        <label for="time">注入時間 (秒)</label>
+        <input type="number" id="time" value="30" min="5" max="120" step="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Results ===== -->
+  <div class="card">
+    <div class="card-title">📊 計算結果</div>
+    <div class="summary-cards">
+      <div class="summary-card summary-vol">
+        <div class="label">造影剤量</div>
+        <div class="value" id="rVol">--</div>
+        <div class="unit">mL</div>
+      </div>
+      <div class="summary-card summary-iodine">
+        <div class="label">総ヨード量</div>
+        <div class="value" id="rIodine">--</div>
+        <div class="unit">gI</div>
+      </div>
+      <div class="summary-card summary-rate">
+        <div class="label">注入速度</div>
+        <div class="value" id="rRate">--</div>
+        <div class="unit">mL/s</div>
+      </div>
+      <div class="summary-card summary-time">
+        <div class="label">注入時間</div>
+        <div class="value" id="rTime">--</div>
+        <div class="unit">秒</div>
+      </div>
+    </div>
+    <div class="detail-row" id="detailRow"></div>
+  </div>
+
+  <!-- ===== Options ===== -->
+  <div class="card">
+    <div class="card-title">3. オプション（任意）</div>
+
+    <label class="checkbox-label"><input type="checkbox" id="salineChk"> 生理食塩水で後押し（saline flush）</label>
+    <div class="opt-box hidden" id="salineBox">
+      <div class="form-row" style="margin-bottom:0;">
+        <div class="form-group">
+          <label for="saline">生食量 (mL)</label>
+          <input type="number" id="saline" value="20" min="0" max="100" step="5">
+        </div>
+      </div>
+      <div class="opt-result" id="salineResult"></div>
+    </div>
+
+    <label class="checkbox-label" style="margin-top:14px;"><input type="checkbox" id="diluteChk"> 希釈する（造影剤:生食）</label>
+    <div class="opt-box hidden" id="diluteBox">
+      <div class="form-row" style="margin-bottom:0;">
+        <div class="form-group">
+          <label for="ratioA">造影剤の比</label>
+          <input type="number" id="ratioA" value="7" min="1" max="10" step="1">
+        </div>
+        <div class="form-group">
+          <label for="ratioB">生食の比</label>
+          <input type="number" id="ratioB" value="3" min="0" max="10" step="1">
+        </div>
+      </div>
+      <div class="opt-result" id="diluteResult"></div>
+    </div>
+  </div>
+
+  <!-- ===== Explanation (SEO) ===== -->
+  <div class="card">
+    <h2 class="card-title">造影剤量・注入速度の求め方｜計算式</h2>
+    <div class="explain">
+      <p>CT造影検査では、患者の体格に応じたヨード量を投与するために<strong>体重比例法</strong>がよく用いられます。目標とする体重あたりのヨード量（gI/kg）を決め、造影剤のヨード濃度（mgI/mL）から必要な造影剤量を求めます。</p>
+      <p><strong>必要ヨード総量と造影剤量：</strong></p>
+      <span class="formula">必要ヨード総量[gI] = 体重[kg] × 目標ヨード量[gI/kg]</span><br>
+      <span class="formula">造影剤量[mL] = 体重[kg] × 目標ヨード量[gI/kg] × 1000 ÷ ヨード濃度[mgI/mL]</span>
+      <p style="margin-top:12px;"><strong>注入速度：</strong>2通りの指定方法があります。</p>
+      <ol>
+        <li>ヨード注入速度（IDR, gI/s）を指定 → <span class="formula">注入速度[mL/s] = IDR[gI/s] × 1000 ÷ ヨード濃度[mgI/mL]</span></li>
+        <li>注入時間（秒）を固定 → <span class="formula">注入速度[mL/s] = 造影剤量[mL] ÷ 注入時間[s]</span></li>
+      </ol>
+      <p><strong>計算例：</strong>体重60kg・目標ヨード量0.5gI/kg・濃度350mgI/mLの場合、必要ヨード総量は30gI、造影剤量は約85.7mL。ヨード注入速度1.5gI/sなら注入速度は約4.3mL/s、注入時間は約20秒です。</p>
+      <p style="font-size:0.85rem; opacity:0.85;">※ 体重比例法を主軸としています。除脂肪体重（LBM）ベースの設定や心拍出量を考慮した時間濃度曲線シミュレーションは将来拡張・別ツールで対応予定です。</p>
+    </div>
+    <p class="crosslink" style="margin-top:14px;">▶ 時間濃度曲線（TDC）の薬物動態シミュレーションは <a href="/contrast-simulator/">CT Contrast Simulator</a> をご利用ください。</p>
+  </div>
+
+  <!-- ===== References ===== -->
+  <div class="card">
+    <div class="card-title">参考</div>
+    <div class="references">
+      <strong>[1]</strong> Bae KT. Intravenous contrast medium administration and scan timing at CT: considerations and approaches. Radiology. 2010;256(1):32-61.<br>
+      <strong>[2]</strong> 体重比例法によるヨード投与量設計（各施設の造影プロトコルに準拠してご利用ください）。
+    </div>
+    <div class="disclaimer-note">
+      本ツールは計算補助を目的とした参考値を提供するものであり、医療機器ではありません。実際の造影剤投与量・注入条件は、患者の状態・腎機能・検査目的および施設のプロトコルに基づき、医師・診療放射線技師の判断で決定してください。
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== Footer ===== -->
+<footer>
+  <div><a href="/">RT-Lab</a> | 放射線技師のためのWebツール集</div>
+  <div class="footer-disclaimer">
+    本ツールは医療機器ではありません。計算結果はあくまで参考値であり、臨床判断の根拠としての使用はご自身の責任においてご判断ください。
+  </div>
+  <div style="margin-top:10px; font-size:0.8rem;">
+    <a href="/about/">サイトについて</a> |
+    <a href="/privacy/">プライバシーポリシー</a> |
+    <a href="/contact/">お問い合わせ</a>
+  </div>
+  <div style="margin-top:10px; opacity:0.5;">&copy; 2025 RT-Lab</div>
+</footer>
+
+<script>
+// ====================================================================
+// 造影剤クイック計算 — すべてブラウザ内で計算（外部送信なし）
+// ====================================================================
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  let mode = "idr";
+
+  // ── concentration presets ──
+  document.querySelectorAll("#concPresets .preset-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#concPresets .preset-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      $("conc").value = btn.dataset.conc;
+      calc();
+    });
+  });
+  // typing a custom concentration clears preset highlight if not matching
+  $("conc").addEventListener("input", () => {
+    document.querySelectorAll("#concPresets .preset-btn").forEach((b) => {
+      b.classList.toggle("active", b.dataset.conc === $("conc").value);
+    });
+    calc();
+  });
+
+  // ── injection mode toggle ──
+  document.querySelectorAll("#modeGroup .radio-pill").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#modeGroup .radio-pill").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      mode = btn.dataset.mode;
+      $("idrField").classList.toggle("hidden", mode !== "idr");
+      $("timeField").classList.toggle("hidden", mode !== "time");
+      calc();
+    });
+  });
+
+  // ── option toggles ──
+  $("salineChk").addEventListener("change", () => {
+    $("salineBox").classList.toggle("hidden", !$("salineChk").checked);
+    calc();
+  });
+  $("diluteChk").addEventListener("change", () => {
+    $("diluteBox").classList.toggle("hidden", !$("diluteChk").checked);
+    calc();
+  });
+
+  // ── recalc on any input ──
+  ["weight", "dose", "conc", "idr", "time", "saline", "ratioA", "ratioB"].forEach((id) => {
+    $(id).addEventListener("input", calc);
+  });
+
+  function fmt(x, d) {
+    if (!isFinite(x)) return "--";
+    return x.toFixed(d);
+  }
+
+  function calc() {
+    const W = parseFloat($("weight").value);
+    const C = parseFloat($("conc").value);
+    const D = parseFloat($("dose").value);
+
+    const valid = W > 0 && C > 0 && D > 0;
+    if (!valid) {
+      $("rVol").textContent = "--";
+      $("rIodine").textContent = "--";
+      $("rRate").textContent = "--";
+      $("rTime").textContent = "--";
+      $("detailRow").innerHTML = "";
+      return;
+    }
+
+    // ── core: iodine total & contrast volume ──
+    const Itotal = W * D;              // gI
+    const V = (Itotal * 1000) / C;     // mL
+
+    // ── injection rate / time ──
+    let R, T;
+    if (mode === "idr") {
+      const IDR = parseFloat($("idr").value);
+      if (IDR > 0) {
+        R = (IDR * 1000) / C;          // mL/s
+        T = V / R;                     // s
+      }
+    } else {
+      T = parseFloat($("time").value);
+      if (T > 0) {
+        R = V / T;                     // mL/s
+      }
+    }
+    const IDRcalc = R > 0 ? (R * C) / 1000 : NaN; // gI/s
+
+    // ── render summary ──
+    $("rVol").textContent = fmt(V, 1);
+    $("rIodine").textContent = fmt(Itotal, 1);
+    $("rRate").textContent = R > 0 ? fmt(R, 2) : "--";
+    $("rTime").textContent = T > 0 ? fmt(T, 1) : "--";
+
+    $("detailRow").innerHTML =
+      "<strong>体重あたりヨード量:</strong> " + fmt(D * 1000, 0) + " mgI/kg　/　" +
+      "<strong>ヨード注入速度:</strong> " + (isFinite(IDRcalc) ? fmt(IDRcalc, 2) + " gI/s" : "--");
+
+    // ── saline flush ──
+    if ($("salineChk").checked) {
+      const saline = parseFloat($("saline").value) || 0;
+      const totalFluid = V + saline;
+      $("salineResult").innerHTML =
+        "総液量（造影剤 + 生食）: <strong>" + fmt(totalFluid, 1) + " mL</strong>" +
+        (R > 0 ? "　/　生食も同じ注入速度 " + fmt(R, 2) + " mL/s を推奨" : "");
+    }
+
+    // ── dilution helper ──
+    if ($("diluteChk").checked) {
+      const a = parseFloat($("ratioA").value) || 0;
+      const b = parseFloat($("ratioB").value) || 0;
+      if (a > 0 && a + b > 0) {
+        const Cdil = (C * a) / (a + b);              // mgI/mL after dilution
+        const totalDiluted = (Itotal * 1000) / Cdil; // mL to keep same iodine
+        const contrastPart = (totalDiluted * a) / (a + b);
+        const salinePart = totalDiluted - contrastPart;
+        $("diluteResult").innerHTML =
+          "希釈後濃度: <strong>" + fmt(Cdil, 0) + " mgI/mL</strong>　/　" +
+          "同じヨード量に必要な希釈液総量: <strong>" + fmt(totalDiluted, 1) + " mL</strong>" +
+          "（原液 " + fmt(contrastPart, 1) + " mL + 生食 " + fmt(salinePart, 1) + " mL）";
+      } else {
+        $("diluteResult").textContent = "比を正しく入力してください。";
+      }
+    }
+  }
+
+  // initial
+  calc();
+})();
+</script>
+
+</body>
+</html>
