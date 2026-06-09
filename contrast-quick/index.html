@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>造影剤クイック計算（ヨード量・注入速度）| RT-Lab</title>
-  <meta name="description" content="体重とヨード濃度から造影剤量(mL)・必要ヨード量(gI)・注入速度(mL/s)・注入時間を即計算。300/350/370 mgI/mL対応、生理食塩水後押し・希釈にも対応。ブラウザ完結・無料・データ外部送信なし。">
-  <meta property="og:title" content="造影剤クイック計算（ヨード量・注入速度）| RT-Lab">
-  <meta property="og:description" content="体重と濃度から造影剤量・ヨード量・注入速度を即計算。造影剤量[mL] = 体重 × 目標ヨード量 × 1000 ÷ ヨード濃度。">
+  <title>造影剤クイック計算｜体重法・体表面積法でヨード量・注入速度 | RT-Lab</title>
+  <meta name="description" content="体重比例法と体表面積法（BSA）の両方に対応した造影剤計算ツール。造影剤量(mL)・必要ヨード量(gI)・注入速度(mL/s)を即計算し、両法の相当値も自動換算。300/350/370 mgI/mL・生食後押し・希釈にも対応。ブラウザ完結・無料・データ外部送信なし。">
+  <meta property="og:title" content="造影剤クイック計算｜体重法・体表面積法でヨード量・注入速度 | RT-Lab">
+  <meta property="og:description" content="体重比例法と体表面積法（BSA）の両対応。造影剤量・ヨード量・注入速度を即計算し、両法の相当値も自動換算。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://rt-ai-lab.com/contrast-quick/">
   <link rel="canonical" href="https://rt-ai-lab.com/contrast-quick/">
@@ -59,6 +59,14 @@
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "造影剤のヨード濃度（300・350・370 mgI/mL など）は1mLあたりのヨード量を表します。1gI = 1000mgI なので、必要ヨード量[gI]を濃度[mgI/mL]で割って1000を掛けると必要な造影剤量[mL]が得られます。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "体重比例法と体表面積法（BSA）の違いは？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "体重比例法は必要ヨード量を「体重×目標ヨード量[gI/kg]」で求めます。体表面積法は体表面積BSA[m²]を用い「BSA×目標ヨード量[gI/m²]」で求めます。BSAは身長も反映し循環血液量との相関がよいとされ、体格による造影効果のばらつきを抑えやすい一方、体重法は簡便です。BSAはMostellerの式 BSA=√(体重[kg]×身長[cm]÷3600) で計算します。"
         }
       }
     ]
@@ -238,8 +246,8 @@
 
   <!-- ===== Hero / h1 ===== -->
   <div class="card">
-    <h1 class="card-title">造影剤クイック計算ツール｜ヨード量・注入速度の求め方</h1>
-    <p class="lead">体重とヨード濃度から、造影剤量(mL)・必要ヨード量(gI)・注入速度(mL/s)・注入時間を瞬時に計算します。生理食塩水の後押し、希釈にも対応。すべてブラウザ内で計算し、入力データは外部に送信しません。</p>
+    <h1 class="card-title">造影剤クイック計算ツール｜体重法・体表面積法でヨード量・注入速度を計算</h1>
+    <p class="lead">体重比例法と体表面積法（BSA）の両方に対応。造影剤量(mL)・必要ヨード量(gI)・注入速度(mL/s)・注入時間を瞬時に計算し、両法の相当値も自動換算します。生理食塩水の後押し、希釈にも対応。すべてブラウザ内で計算し、入力データは外部に送信しません。</p>
   </div>
 
   <!-- ===== Steps ===== -->
@@ -248,7 +256,7 @@
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <div class="step-body"><strong>体重と濃度を入力</strong><span>患者体重・造影剤のヨード濃度（300/350/370 mgI/mL）・目標ヨード量</span></div>
+        <div class="step-body"><strong>方法と患者情報を入力</strong><span>体重比例法／体表面積法を選び、体重・身長・濃度（300/350/370 mgI/mL）・目標ヨード量を入力</span></div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
@@ -263,16 +271,27 @@
 
   <!-- ===== Input ===== -->
   <div class="card">
-    <div class="card-title">1. 患者・造影剤の入力</div>
+    <div class="card-title">1. 投与量設計の方法と入力</div>
+
+    <div class="radio-group" id="methodGroup">
+      <button class="radio-pill active" data-method="weight">体重比例法</button>
+      <button class="radio-pill" data-method="bsa">体表面積法（BSA）</button>
+    </div>
+
     <div class="form-row">
       <div class="form-group">
         <label for="weight">体重 (kg)</label>
-        <input type="number" id="weight" value="60" min="1" max="200" step="0.5">
+        <input type="number" id="weight" value="60" min="1" max="250" step="0.5">
       </div>
       <div class="form-group">
-        <label for="dose">目標ヨード量 (gI/kg)</label>
-        <input type="number" id="dose" value="0.5" min="0.1" max="1.0" step="0.05">
-        <span class="form-hint">施設プロトコルにより 0.4〜0.7 程度</span>
+        <label for="height">身長 (cm)</label>
+        <input type="number" id="height" value="165" min="100" max="220" step="1">
+        <span class="form-hint">体表面積法・両法の比較に使用（Mosteller法）</span>
+      </div>
+      <div class="form-group">
+        <label for="dose" id="doseLabel">目標ヨード量 (gI/kg)</label>
+        <input type="number" id="dose" value="0.5" min="0.1" max="40" step="0.05">
+        <span class="form-hint" id="doseHint">施設プロトコルにより 0.4〜0.7 程度</span>
       </div>
     </div>
 
@@ -373,19 +392,33 @@
 
   <!-- ===== Explanation (SEO) ===== -->
   <div class="card">
-    <h2 class="card-title">造影剤量・注入速度の求め方｜計算式</h2>
+    <h2 class="card-title">造影剤量の求め方｜体重比例法と体表面積法（BSA）</h2>
     <div class="explain">
-      <p>CT造影検査では、患者の体格に応じたヨード量を投与するために<strong>体重比例法</strong>がよく用いられます。目標とする体重あたりのヨード量（gI/kg）を決め、造影剤のヨード濃度（mgI/mL）から必要な造影剤量を求めます。</p>
-      <p><strong>必要ヨード総量と造影剤量：</strong></p>
-      <span class="formula">必要ヨード総量[gI] = 体重[kg] × 目標ヨード量[gI/kg]</span><br>
-      <span class="formula">造影剤量[mL] = 体重[kg] × 目標ヨード量[gI/kg] × 1000 ÷ ヨード濃度[mgI/mL]</span>
+      <p>CT造影で必要なヨード量を決める代表的な方法に、<strong>体重比例法</strong>と<strong>体表面積法（BSA法）</strong>があります。どちらも「目標とするヨード量」から造影剤量と注入速度を求める点は同じですが、基準にする体格指標が異なります。</p>
+
+      <p><strong>① 体重比例法</strong>：体重あたりの目標ヨード量（gI/kg）を基準にします。簡便で広く使われます。</p>
+      <span class="formula">必要ヨード量[gI] = 体重[kg] × 目標ヨード量[gI/kg]</span><br>
+      <span class="formula">造影剤量[mL] = 必要ヨード量[gI] × 1000 ÷ ヨード濃度[mgI/mL]</span>
+
+      <p style="margin-top:12px;"><strong>② 体表面積法（BSA法）</strong>：体表面積あたりの目標ヨード量（gI/m²）を基準にします。BSAは身長も反映するため循環血液量・心拍出量との相関がよいとされ、体格差による造影効果のばらつきを抑えやすいのが利点です。本ツールはMostellerの式でBSAを求めます。</p>
+      <span class="formula">BSA[m²] = √( 体重[kg] × 身長[cm] ÷ 3600 )</span><br>
+      <span class="formula">必要ヨード量[gI] = BSA[m²] × 目標ヨード量[gI/m²]</span>
+
+      <p style="margin-top:12px;"><strong>体重法と体表面積法の使い分け：</strong></p>
+      <ul style="margin:0 0 12px 22px;">
+        <li>体重法は計算が簡単だが、肥満例では脂肪組織にも比例して増えるため過量になりやすい</li>
+        <li>体表面積法は身長を加味するぶん体格差の影響を受けにくく、肝実質などの増強の均一性を保ちやすい</li>
+        <li>本ツールは選んだ方法で計算しつつ、もう一方の方法での相当値（gI/kg ⇔ gI/m²）も自動表示するので、両者の差を確認できます</li>
+      </ul>
+
       <p style="margin-top:12px;"><strong>注入速度：</strong>2通りの指定方法があります。</p>
       <ol>
         <li>ヨード注入速度（IDR, gI/s）を指定 → <span class="formula">注入速度[mL/s] = IDR[gI/s] × 1000 ÷ ヨード濃度[mgI/mL]</span></li>
         <li>注入時間（秒）を固定 → <span class="formula">注入速度[mL/s] = 造影剤量[mL] ÷ 注入時間[s]</span></li>
       </ol>
-      <p><strong>計算例：</strong>体重60kg・目標ヨード量0.5gI/kg・濃度350mgI/mLの場合、必要ヨード総量は30gI、造影剤量は約85.7mL。ヨード注入速度1.5gI/sなら注入速度は約4.3mL/s、注入時間は約20秒です。</p>
-      <p style="font-size:0.85rem; opacity:0.85;">※ 体重比例法を主軸としています。除脂肪体重（LBM）ベースの設定や心拍出量を考慮した時間濃度曲線シミュレーションは将来拡張・別ツールで対応予定です。</p>
+
+      <p><strong>計算例：</strong>体重60kg・身長165cm（BSA約1.66m²）の場合、体重比例法0.5gI/kgでは必要ヨード量30gI・造影剤量約85.7mL（濃度350mgI/mL）。これは体表面積法では約18.1gI/m²に相当します。逆に体表面積法18gI/m²なら約29.9gI・約85.3mLとなり、ほぼ同等です。</p>
+      <p style="font-size:0.85rem; opacity:0.85;">※ 目標値は施設プロトコルにより異なります。除脂肪体重（LBM）法や、心拍出量を考慮した時間濃度曲線シミュレーションは将来拡張・別ツールで対応予定です。</p>
     </div>
     <p class="crosslink" style="margin-top:14px;">▶ 時間濃度曲線（TDC）の薬物動態シミュレーションは <a href="/contrast-simulator/">CT Contrast Simulator</a> をご利用ください。</p>
   </div>
@@ -433,6 +466,28 @@
   "use strict";
   const $ = (id) => document.getElementById(id);
   let mode = "idr";
+  let method = "weight";
+
+  // 方法ごとの目標ヨード量の既定値・表示
+  const DOSE_PRESET = {
+    weight: { val: "0.5", step: "0.05", label: "目標ヨード量 (gI/kg)", hint: "施設プロトコルにより 0.4〜0.7 程度" },
+    bsa:    { val: "18",  step: "0.5",  label: "目標ヨード量 (gI/m²)", hint: "施設プロトコル依存（体重比例法 0.5gI/kg にほぼ相当）" }
+  };
+
+  // ── 投与量設計の方法トグル（体重比例法 / 体表面積法）──
+  document.querySelectorAll("#methodGroup .radio-pill").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#methodGroup .radio-pill").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      method = btn.dataset.method;
+      const p = DOSE_PRESET[method];
+      $("dose").value = p.val;
+      $("dose").step = p.step;
+      $("doseLabel").textContent = p.label;
+      $("doseHint").textContent = p.hint;
+      calc();
+    });
+  });
 
   // ── concentration presets ──
   document.querySelectorAll("#concPresets .preset-btn").forEach((btn) => {
@@ -474,7 +529,7 @@
   });
 
   // ── recalc on any input ──
-  ["weight", "dose", "conc", "idr", "time", "saline", "ratioA", "ratioB"].forEach((id) => {
+  ["weight", "height", "dose", "conc", "idr", "time", "saline", "ratioA", "ratioB"].forEach((id) => {
     $(id).addEventListener("input", calc);
   });
 
@@ -485,21 +540,29 @@
 
   function calc() {
     const W = parseFloat($("weight").value);
+    const H = parseFloat($("height").value);
     const C = parseFloat($("conc").value);
     const D = parseFloat($("dose").value);
 
-    const valid = W > 0 && C > 0 && D > 0;
+    const baseValid = W > 0 && C > 0 && D > 0;
+    const hasHeight = H > 0;
+    const valid = baseValid && (method === "weight" || hasHeight);
     if (!valid) {
       $("rVol").textContent = "--";
       $("rIodine").textContent = "--";
       $("rRate").textContent = "--";
       $("rTime").textContent = "--";
-      $("detailRow").innerHTML = "";
+      $("detailRow").innerHTML =
+        (method === "bsa" && !hasHeight) ? "体表面積法には身長の入力が必要です。" : "";
       return;
     }
 
+    // ── 体表面積 BSA（Mosteller法）── BSA[m²] = √(W[kg] × H[cm] / 3600)
+    const BSA = hasHeight ? Math.sqrt((W * H) / 3600) : NaN;
+
     // ── core: iodine total & contrast volume ──
-    const Itotal = W * D;              // gI
+    // 体重比例法: Itotal[gI] = W × D[gI/kg]　／　体表面積法: Itotal[gI] = BSA × D[gI/m²]
+    const Itotal = method === "bsa" ? BSA * D : W * D; // gI
     const V = (Itotal * 1000) / C;     // mL
 
     // ── injection rate / time ──
@@ -524,9 +587,16 @@
     $("rRate").textContent = R > 0 ? fmt(R, 2) : "--";
     $("rTime").textContent = T > 0 ? fmt(T, 1) : "--";
 
-    $("detailRow").innerHTML =
-      "<strong>体重あたりヨード量:</strong> " + fmt(D * 1000, 0) + " mgI/kg　/　" +
-      "<strong>ヨード注入速度:</strong> " + (isFinite(IDRcalc) ? fmt(IDRcalc, 2) + " gI/s" : "--");
+    // ── detail：総ヨード量・BSA・もう一方の方法での相当値・ヨード注入速度 ──
+    let detail = "<strong>総ヨード量:</strong> " + fmt(Itotal, 1) + " gI";
+    if (isFinite(BSA)) detail += "　/　<strong>BSA:</strong> " + fmt(BSA, 2) + " m²";
+    if (method === "bsa") {
+      detail += "　/　体重比例法では <strong>" + fmt(Itotal / W, 2) + " gI/kg</strong> 相当";
+    } else if (isFinite(BSA)) {
+      detail += "　/　体表面積法では <strong>" + fmt(Itotal / BSA, 1) + " gI/m²</strong> 相当";
+    }
+    detail += "　/　<strong>ヨード注入速度:</strong> " + (isFinite(IDRcalc) ? fmt(IDRcalc, 2) + " gI/s" : "--");
+    $("detailRow").innerHTML = detail;
 
     // ── saline flush ──
     if ($("salineChk").checked) {
