@@ -30,7 +30,7 @@
 | CNR計測ツール | ✅ 公開中 | `cnr-calculator/index.html` |
 | 心臓CT 最適位相決定ツール | ✅ 公開中 | `cardiac-phase-optimizer/index.html` |
 | 造影剤クイック計算ツール | ✅ 公開中 | `contrast-quick/index.html` |
-| 一般撮影条件参照 | 🚧 開発中 | 未作成 |
+| 一般撮影条件参照ツール | ✅ 公開中 | `exposure-reference/index.html` |
 | MRI QA/QC自動計測ツール | 📋 計画中 | 未作成 |
 | 各モダリティ 計測・QAQCツール | 📋 計画中 | 未作成 |
 | CT臓器線量推定ツール | 📋 計画中 | 未作成 |
@@ -59,6 +59,10 @@ rt-lab/
 │   └── index.html          ← CNR計測ツール（公開中）
 ├── cardiac-phase-optimizer/
 │   └── index.html          ← 心臓CT 最適位相決定ツール（公開中）
+├── contrast-quick/
+│   └── index.html          ← 造影剤クイック計算ツール（公開中）
+├── exposure-reference/
+│   └── index.html          ← 一般撮影条件参照ツール（公開中）
 └── .claude/
     └── launch.json         ← ローカルサーバー設定
 ```
@@ -87,3 +91,4 @@ rt-lab/
 | 2026-06-09 | 造影剤クイック計算ツール 実装・公開。体重・ヨード濃度から造影剤量・総ヨード量・注入速度・注入時間を即計算。生食後押し・希釈対応。体重比例法ベース、ブラウザ完結・外部送信なし。サイト改善計画（毎日使う必須サイト化＋収益化）始動 |
 | 2026-06-09 | 収益化土台整備：Cloudflare Web Analytics（Cookieレス）導入、応援ページ`/support/`新設（OFUSE投げ銭・note導線・アフィリ枠）、共有アセット`assets/site.{js,css}`を全ページ展開、sitemap整備（cardiac/task-based追加）。About強化（運営者＝16年目RT・開発ストーリーnote導線でE-E-A-T） |
 | 2026-06-09 | 造影剤クイック計算ツールに体表面積法（BSA, Mostellerの式）を追加。体重比例法と体表面積法を切替可能にし、両法の相当値（gI/kg⇔gI/m²）を自動換算表示。解説・FAQ・SEO（title/h1）も両法対応に更新 |
+| 2026-06-10 | 一般撮影条件参照ツール 実装・公開（`exposure-reference/`）。全身約50項目の部位別撮影条件（kVp・mAs・SID・グリッド・焦点）を編集可能な早見表で提供。代表値プリセットを自施設値に編集しlocalStorage保存、行追加/削除・JSON書出/読込対応。kVp15%ルール・グリッド変換係数（Bucky factor）の補正計算搭載。FAQPage構造化データ・SEO対応。ブラウザ完結・外部送信なし |

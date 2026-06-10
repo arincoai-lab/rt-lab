@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>一般撮影条件参照｜部位別kVp・mAs・グリッド早見表＋補正計算 | RT-Lab</title>
+  <meta name="description" content="一般撮影（単純X線）の部位別・撮影方向別の標準的な撮影条件（kVp・mAs・SID・グリッド・焦点）を早見表で確認。代表値プリセットを自施設の値に編集してブラウザ内に保存可能。kVp15%ルール・グリッド変換係数の補正計算も搭載。新人教育・条件見直しに。無料・データ外部送信なし。">
+  <meta property="og:title" content="一般撮影条件参照｜部位別kVp・mAs・グリッド早見表＋補正計算 | RT-Lab">
+  <meta property="og:description" content="部位別の標準撮影条件を早見表で確認。代表値を自施設値に編集して保存でき、kVp15%ルール・グリッド変換係数の補正計算も可能。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rt-ai-lab.com/exposure-reference/">
+  <link rel="canonical" href="https://rt-ai-lab.com/exposure-reference/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "一般撮影条件参照ツール",
+    "url": "https://rt-ai-lab.com/exposure-reference/",
+    "description": "一般撮影（単純X線撮影）の部位別・撮影方向別の標準的な撮影条件（管電圧kVp・mAs・撮影距離SID・グリッド・焦点）を参照できる早見表。代表値プリセットを自施設の条件に編集してブラウザ内に保存でき、kVp15%ルール・グリッド変換係数の補正計算も行える。",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
+      { "@type": "ListItem", "position": 2, "name": "一般撮影条件参照ツール", "item": "https://rt-ai-lab.com/exposure-reference/" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "一般撮影の撮影条件（kVp・mAs）はどう決めますか？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "管電圧(kVp)はコントラストと透過力を、mAs（管電流×時間）は到達線量＝画像の濃度・粒状性を主に左右します。一般に厚みのある部位や高コントラストを避けたい部位ほど高kVp・低mAs、四肢など薄い部位は低kVp・低mAsが用いられます。ただし最適値は装置・検出器（FPD/CR）・グリッド・付加フィルタ・施設プロトコルに依存するため、本ツールの値は代表値であり、各施設の標準条件に合わせて調整してください。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "kVpの15%ルールとは何ですか？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "画像濃度を保ったまま管電圧を変える際の経験則です。kVpを約15%上げると到達線量はおよそ2倍になるため、濃度を保つにはmAsを半分にします。逆にkVpを約15%下げる場合はmAsを2倍にします。本ツールでは現在のkVp・mAsと目標kVpから必要mAsを mAs_new = mAs_old × 2^(−(kVp差)/(0.15×現kVp)) で計算します。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "グリッド変換係数（Bucky factor）とは？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "グリッドは散乱線を除去して画質を高めますが、一次線も一部吸収するため線量を増やす必要があります。グリッドなしを基準とした増加倍率がグリッド変換係数（Bucky factor）で、代表値は5:1≈2.5倍、6:1≈3.0倍、8:1≈3.5倍、10:1≈4.5倍、12:1≈5.5倍、16:1≈6.0倍です。グリッドを変更する際は mAs_new = mAs_old ×（変更後の係数 ÷ 変更前の係数）で補正します。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "表示される数値は自施設用に変更・保存できますか？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "できます。各セルをクリックして直接編集し、「自施設値を保存」を押すとお使いのブラウザ内（localStorage）に保存され、次回以降も保持されます。行の追加・削除、JSON形式での書き出し・読み込み（バックアップや端末間共有）にも対応します。データは外部送信されず、ブラウザ内のみに保存されます。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "この撮影条件をそのまま臨床で使ってよいですか？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "いいえ。掲載値は教科書的な代表値・初期テンプレートであり、装置・検出器・体格・撮影目的により最適条件は異なります。本ツールは医療機器ではなく教育・確認補助を目的としています。実際の撮影条件は各施設の標準プロトコルと診療放射線技師・医師の判断に基づいて決定してください。"
+        }
+      }
+    ]
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #1a56db;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.06em; }
+    .logo a { color: #fff; text-decoration: none; }
+    .tool-name-header {
+      font-size: 0.95rem;
+      opacity: 0.88;
+      padding-left: 16px;
+      border-left: 2px solid rgba(255,255,255,0.35);
+    }
+
+    /* ── Layout ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 40px; }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    h1.card-title, .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a56db;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    h1.card-title { font-size: 1.15rem; line-height: 1.5; }
+    .lead { font-size: 0.9rem; color: #4a5568; margin-top: -6px; }
+
+    /* ── Steps ── */
+    .steps { display: flex; gap: 12px; flex-wrap: wrap; }
+    .step {
+      flex: 1; min-width: 180px;
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px; background: #f7fafc;
+      border-radius: 8px; border: 1px solid #e2e8f0;
+    }
+    .step-num {
+      width: 26px; height: 26px; background: #1a56db; color: #fff;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+    }
+    .step-body strong { display: block; font-weight: 600; color: #2d3748; margin-bottom: 3px; }
+    .step-body span { color: #4a5568; font-size: 0.82rem; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 8px 16px; border: none; border-radius: 6px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: all 0.15s;
+    }
+    .btn-primary { background: #1a56db; color: #fff; }
+    .btn-primary:hover { background: #1648c0; }
+    .btn-secondary { background: #fff; color: #2d3748; border: 2px solid #e2e8f0; }
+    .btn-secondary:hover { border-color: #1a56db; color: #1a56db; }
+    .btn-danger { background: #fff; color: #c53030; border: 2px solid #feb2b2; }
+    .btn-danger:hover { background: #fff5f5; }
+    .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
+
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+    .toolbar .spacer { flex: 1 1 auto; }
+    .save-status { font-size: 0.78rem; color: #276749; font-weight: 600; }
+
+    /* ── Filter chips ── */
+    .chip-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .chip {
+      padding: 7px 14px; border: 2px solid #e2e8f0; border-radius: 999px;
+      background: #fff; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; color: #2d3748;
+    }
+    .chip:hover { border-color: #1a56db; color: #1a56db; }
+    .chip.active { background: #1a56db; color: #fff; border-color: #1a56db; }
+
+    .search-box {
+      width: 100%; max-width: 360px; padding: 9px 12px;
+      border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.9rem;
+      color: #2d3748; margin-bottom: 14px;
+    }
+    .search-box:focus { outline: none; border-color: #1a56db; box-shadow: 0 0 0 2px rgba(26,86,219,0.15); }
+
+    /* ── Condition table ── */
+    .table-wrap { overflow-x: auto; overflow-y: auto; max-height: 62vh; border: 1px solid #e2e8f0; border-radius: 8px; }
+    table.cond { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 820px; }
+    table.cond th, table.cond td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; vertical-align: top; }
+    table.cond thead th {
+      background: #1a56db; color: #fff; font-weight: 600; white-space: nowrap;
+      position: sticky; top: 0; z-index: 2;
+    }
+    table.cond tbody tr:nth-child(even) td { background: #fbfdff; }
+    table.cond td.editable { cursor: text; }
+    table.cond td.editable:hover { background: #eef6ff; }
+    table.cond td.editable:focus { outline: 2px solid #1a56db; background: #eef2ff; }
+    table.cond td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    table.cond tr.grp-row td {
+      background: #edf2f7; font-weight: 700; color: #1a56db; font-size: 0.84rem;
+    }
+    table.cond .row-del {
+      color: #c53030; cursor: pointer; font-weight: 700; text-align: center; user-select: none;
+    }
+    table.cond .row-del:hover { color: #9b2c2c; }
+    .col-region { min-width: 96px; }
+    .col-view { min-width: 96px; }
+    .col-note { min-width: 180px; }
+
+    .table-empty { padding: 24px; text-align: center; color: #a0aec0; font-size: 0.85rem; }
+
+    /* ── Calculators ── */
+    .calc-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+    .calc-box {
+      flex: 1; min-width: 280px; background: #f7fafc;
+      border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px;
+    }
+    .calc-box h3 { font-size: 0.9rem; color: #1a56db; margin-bottom: 12px; font-weight: 700; }
+    .form-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 10px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 0.78rem; font-weight: 600; color: #4a5568; }
+    .form-group input, .form-group select {
+      padding: 7px 9px; border: 1px solid #cbd5e0; border-radius: 5px;
+      font-size: 0.88rem; width: 120px; color: #2d3748; font-family: inherit;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none; border-color: #1a56db; box-shadow: 0 0 0 2px rgba(26,86,219,0.15);
+    }
+    .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .pill {
+      padding: 6px 12px; border: 2px solid #e2e8f0; border-radius: 6px;
+      background: #fff; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: #2d3748;
+    }
+    .pill:hover { border-color: #1a56db; color: #1a56db; }
+    .calc-result {
+      margin-top: 10px; padding: 12px 14px; background: #ebf8ff;
+      border-radius: 6px; color: #2b6cb0; font-weight: 700; font-size: 0.92rem;
+    }
+    .calc-result .big { font-size: 1.4rem; }
+    .calc-note { font-size: 0.74rem; color: #718096; margin-top: 8px; line-height: 1.7; }
+
+    .formula {
+      display: inline-block; background: #eef2ff; padding: 8px 14px;
+      border-radius: 6px; margin: 6px 0; font-weight: 700; color: #2d3748;
+    }
+    .explain { line-height: 1.85; }
+    .explain p { margin-bottom: 12px; }
+    .explain ul { margin: 0 0 12px 22px; }
+
+    .references { font-size: 0.75rem; color: #a0aec0; margin-top: 12px; line-height: 1.8; }
+    .references strong { color: #718096; }
+
+    .crosslink a { color: #1a56db; font-weight: 600; text-decoration: none; }
+    .crosslink a:hover { text-decoration: underline; }
+
+    .disclaimer-note {
+      font-size: 0.78rem; color: #718096; background: #fffaf0;
+      border: 1px solid #feebc8; border-radius: 6px; padding: 10px 14px; margin-top: 4px;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ── Footer ── */
+    footer {
+      background: #2d3748; color: rgba(255,255,255,0.7);
+      text-align: center; padding: 24px 16px; font-size: 0.75rem; line-height: 1.8;
+    }
+    footer a { color: rgba(255,255,255,0.85); text-decoration: none; }
+    footer a:hover { color: #fff; }
+    .footer-disclaimer { max-width: 640px; margin: 10px auto 0; font-size: 0.7rem; opacity: 0.65; }
+
+    @media (max-width: 640px) {
+      main { padding: 16px 10px 32px; }
+      .card { padding: 18px 14px; }
+    }
+  </style>
+  <link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header>
+  <div class="logo"><a href="/">RT-Lab</a></div>
+  <div class="tool-name-header">一般撮影条件参照</div>
+</header>
+
+<main>
+
+  <!-- ===== Hero / h1 ===== -->
+  <div class="card">
+    <h1 class="card-title">一般撮影条件参照ツール｜部位別 kVp・mAs・グリッド 早見表</h1>
+    <p class="lead">一般撮影（単純X線）の部位別・撮影方向別の標準的な撮影条件（管電圧 kVp・mAs・撮影距離 SID・グリッド・焦点）を早見表で確認できます。掲載値は教科書ベースの代表値で、各セルを直接編集して<strong>自施設の条件としてブラウザ内に保存</strong>できます。kVp15%ルール・グリッド変換係数の補正計算も搭載。新人教育・撮影条件の見直しにご活用ください。すべてブラウザ内で処理し、入力データを外部送信しません。</p>
+  </div>
+
+  <!-- ===== Steps ===== -->
+  <div class="card">
+    <div class="card-title">📋 使い方</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body"><strong>部位を絞り込む</strong><span>カテゴリチップや検索ボックスで目的の部位・撮影方向をすばやく表示</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body"><strong>条件を確認・編集</strong><span>kVp・mAs・SID・グリッド・焦点を確認。セルを直接編集して自施設の値に変更</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body"><strong>保存・補正</strong><span>「自施設値を保存」でブラウザに保存。kVp15%ルール・グリッド変換で条件を補正</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Condition table ===== -->
+  <div class="card">
+    <div class="card-title">📑 撮影条件 早見表（編集可能）</div>
+
+    <div class="chip-group" id="groupChips"></div>
+    <input type="text" id="searchBox" class="search-box" placeholder="🔍 部位・撮影方向・備考で検索（例：胸部、側面、腰椎）">
+
+    <div class="toolbar">
+      <button class="btn btn-secondary btn-sm" id="addRowBtn">＋ 行を追加</button>
+      <button class="btn btn-secondary btn-sm" id="exportBtn">⬇ 書き出し(JSON)</button>
+      <button class="btn btn-secondary btn-sm" id="importBtn">⬆ 読み込み</button>
+      <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+      <span class="spacer"></span>
+      <span class="save-status" id="saveStatus"></span>
+      <button class="btn btn-danger btn-sm" id="resetBtn">初期値に戻す</button>
+      <button class="btn btn-primary btn-sm" id="saveBtn">💾 自施設値を保存</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="cond">
+        <thead>
+          <tr>
+            <th class="col-region">部位</th>
+            <th class="col-view">撮影方向</th>
+            <th>kVp</th>
+            <th>mAs</th>
+            <th>SID<br>(cm)</th>
+            <th>グリッド</th>
+            <th>焦点</th>
+            <th class="col-note">備考（体位・中心線・呼吸 等）</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="condBody"></tbody>
+      </table>
+    </div>
+    <div class="table-empty hidden" id="tableEmpty">該当する条件が見つかりません。検索条件を変えてください。</div>
+    <div class="disclaimer-note" style="margin-top:14px;">
+      掲載値は <strong>DR/FPD を想定した教科書的な代表値・初期テンプレート</strong>です。最適条件は装置・検出器・付加フィルタ・体格・撮影目的・施設プロトコルにより異なります。必ず自施設の標準条件に編集のうえご利用ください。保存データはお使いのブラウザ内（localStorage）にのみ保存され、外部に送信されません。
+    </div>
+  </div>
+
+  <!-- ===== Calculators ===== -->
+  <div class="card">
+    <div class="card-title">🧮 撮影条件の補正計算</div>
+    <div class="calc-grid">
+
+      <!-- kVp 15% rule -->
+      <div class="calc-box">
+        <h3>kVp 15%ルール（濃度維持のmAs換算）</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="kvpCur">現在の kVp</label>
+            <input type="number" id="kvpCur" value="80" min="40" max="150" step="1">
+          </div>
+          <div class="form-group">
+            <label for="masCur">現在の mAs</label>
+            <input type="number" id="masCur" value="20" min="0.1" max="2000" step="0.5">
+          </div>
+          <div class="form-group">
+            <label for="kvpTar">目標 kVp</label>
+            <input type="number" id="kvpTar" value="92" min="40" max="150" step="1">
+          </div>
+        </div>
+        <div class="pill-row">
+          <button class="pill" id="kvpUp">＋15% kVp</button>
+          <button class="pill" id="kvpDown">−15% kVp</button>
+        </div>
+        <div class="calc-result" id="kvpResult">--</div>
+        <div class="calc-note">kVpを約15%上げると到達線量は約2倍になるため、濃度を保つにはmAsを約半分に。逆に15%下げるとmAsは約2倍。計算式：mAs<sub>new</sub> = mAs<sub>old</sub> × 2<sup>−(kVp<sub>目標</sub>−kVp<sub>現在</sub>)/(0.15×kVp<sub>現在</sub>)</sup></div>
+      </div>
+
+      <!-- Grid conversion -->
+      <div class="calc-box">
+        <h3>グリッド変換係数（Bucky factor）</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="gridMas">現在の mAs</label>
+            <input type="number" id="gridMas" value="20" min="0.1" max="2000" step="0.5">
+          </div>
+          <div class="form-group">
+            <label for="gridFrom">変更前グリッド</label>
+            <select id="gridFrom"></select>
+          </div>
+          <div class="form-group">
+            <label for="gridTo">変更後グリッド</label>
+            <select id="gridTo"></select>
+          </div>
+        </div>
+        <div class="calc-result" id="gridResult">--</div>
+        <div class="calc-note">グリッドは一次線も一部吸収するため線量補正が必要です。代表的な係数（グリッドなし=1基準）：5:1≈2.5、6:1≈3.0、8:1≈3.5、10:1≈4.5、12:1≈5.5、16:1≈6.0。計算式：mAs<sub>new</sub> = mAs<sub>old</sub> ×（変更後係数 ÷ 変更前係数）</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== Explanation (SEO) ===== -->
+  <div class="card">
+    <h2 class="card-title">一般撮影条件の基本｜kVp・mAs・グリッドの考え方</h2>
+    <div class="explain">
+      <p>単純X線撮影の撮影条件は、主に<strong>管電圧(kVp)</strong>・<strong>mAs（管電流×照射時間）</strong>・<strong>撮影距離(SID)</strong>・<strong>グリッド</strong>・<strong>焦点サイズ</strong>の組み合わせで決まります。それぞれの役割を理解すると、体格や目的に応じた調整がしやすくなります。</p>
+
+      <p><strong>① 管電圧 kVp：</strong>X線の透過力（質）を決め、画像コントラストに影響します。kVpを上げると透過力が増し、コントラストは低下（階調は広く）します。厚い部位や被ばく低減を狙う場合は高kVp＋低mAsが基本です。</p>
+
+      <p><strong>② mAs：</strong>到達線量（X線の量）を決め、画像濃度と粒状性（ノイズ）を左右します。mAsを増やすとノイズは減りますが被ばくは増えます。AEC（自動露出制御）を使う場合はmAsが自動調整されます。</p>
+
+      <p><strong>③ SID（撮影距離）：</strong>距離が変わると逆二乗則で到達線量が変化します。胸部立位は拡大率低減のため180cmなど長めのSIDが使われます。</p>
+
+      <p><strong>④ グリッド：</strong>散乱線を除去しコントラストを改善しますが、一次線も一部吸収するため線量増加（グリッド変換係数）が必要です。一般に厚い部位（腹部・腰椎・骨盤など）で使用し、四肢など薄い部位では省略されることが多いです。</p>
+
+      <p><strong>⑤ 焦点サイズ：</strong>細部の描出が重要な四肢・末梢では小焦点、線量を多く要する厚い部位では大焦点が用いられる傾向があります。</p>
+
+      <p><strong>条件補正の代表的な経験則：</strong></p>
+      <ul>
+        <li><strong>kVp 15%ルール：</strong>kVpを約15%上げる＝mAsを半分にしても濃度は概ね維持される</li>
+        <li><strong>グリッド変換係数：</strong>グリッドの有無・グリッド比を変えるときはBucky factorの比でmAsを補正する</li>
+      </ul>
+      <span class="formula">mAs<sub>new</sub> = mAs<sub>old</sub> × 2<sup>−(目標kVp − 現kVp)/(0.15 × 現kVp)</sup></span><br>
+      <span class="formula">mAs<sub>new</sub> = mAs<sub>old</sub> ×（変更後グリッド係数 ÷ 変更前グリッド係数）</span>
+
+      <p style="margin-top:12px; font-size:0.85rem; opacity:0.85;">※ 本表の数値は教育・初期テンプレート用途の代表値です。FPDとCR、装置メーカー、付加フィルタ、被写体厚により最適値は変わります。自施設の標準条件に編集してお使いください。</p>
+    </div>
+    <p class="crosslink" style="margin-top:14px;">▶ 被ばく線量の比較・評価は <a href="/drl-comparison/">DRL比較ツール</a>、CTの線量推定は <a href="/ct-dose-estimator/">CT Dose Estimator</a> もご利用ください。</p>
+  </div>
+
+  <!-- ===== note 導線 ===== -->
+  <div class="card">
+    <div class="card-title">📝 RT-Lab について（note）</div>
+    <p style="font-size:0.88rem; color:#4a5568; margin-bottom:10px;">RT-Lab は現役の放射線技師が AI を活用して開発しています。開発の舞台裏や「放射線技師 × AI」の実践を note で発信中です。</p>
+    <a class="btn btn-secondary" href="https://note.com/ri_ai_lab" target="_blank" rel="noopener">noteで読む →</a>
+  </div>
+
+  <!-- ===== References ===== -->
+  <div class="card">
+    <div class="card-title">参考</div>
+    <div class="references">
+      <strong>[1]</strong> 日本放射線技術学会 監修『放射線技術学シリーズ 撮影技術学（X線撮影法）』等の標準的撮影法テキストに基づく代表的撮影条件。<br>
+      <strong>[2]</strong> Bushong SC. Radiologic Science for Technologists: Physics, Biology, and Protection. Elsevier.（15%ルール・グリッド変換係数の基礎）<br>
+      <strong>[3]</strong> 掲載条件は各施設の標準プロトコルに準拠してご利用ください。
+    </div>
+    <div class="disclaimer-note">
+      本ツールは教育・確認補助を目的とした参考値を提供するものであり、医療機器ではありません。実際の撮影条件は、患者の体格・撮影目的・使用装置および施設のプロトコルに基づき、診療放射線技師・医師の判断で決定してください。
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== Footer ===== -->
+<footer>
+  <div><a href="/">RT-Lab</a> | 放射線技師のためのWebツール集</div>
+  <div class="footer-disclaimer">
+    本ツールは医療機器ではありません。表示・計算結果はあくまで参考値であり、臨床判断の根拠としての使用はご自身の責任においてご判断ください。
+  </div>
+  <div style="margin-top:10px; font-size:0.8rem;">
+    <a href="/about/">サイトについて</a> |
+    <a href="/privacy/">プライバシーポリシー</a> |
+    <a href="/contact/">お問い合わせ</a>
+  </div>
+  <div style="margin-top:10px; opacity:0.5;">&copy; 2025 RT-Lab</div>
+</footer>
+
+<script>
+// ====================================================================
+// 一般撮影条件参照ツール — すべてブラウザ内で処理（外部送信なし）
+// ====================================================================
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const STORAGE_KEY = "rtlab.exposure-reference.v1";
+
+  // ── グリッド変換係数（Bucky factor、グリッドなし=1 基準の代表値）──
+  const GRID_FACTORS = {
+    "なし":  1.0,
+    "5:1":  2.5,
+    "6:1":  3.0,
+    "8:1":  3.5,
+    "10:1": 4.5,
+    "12:1": 5.5,
+    "16:1": 6.0
+  };
+
+  // ── kVp 15%ルールの基準（15%変化で線量2倍）──
+  const KVP_RULE_PCT = 0.15;
+
+  // ── 撮影条件プリセット（DR/FPD 想定の代表値。要施設校正）──
+  // group / region / view / kvp / mas / sid / grid / focus / note
+  const PRESETS = [
+    // ─ 胸部・腹部 ─
+    ["胸部・腹部", "胸部", "PA（立位）", "120", "2", "180", "10:1", "大", "深吸気止め・正中後前方向"],
+    ["胸部・腹部", "胸部", "側面（立位）", "125", "8", "180", "10:1", "大", "左側面・深吸気止め"],
+    ["胸部・腹部", "胸部", "AP（臥位/ポータブル）", "90", "3", "100", "なし", "大", "仰臥位・呼気短縮に注意"],
+    ["胸部・腹部", "胸部", "側臥位（decubitus）", "120", "6", "180", "10:1", "大", "気胸・液体貯留の確認"],
+    ["胸部・腹部", "肋骨", "上位肋骨 AP", "70", "12", "100", "8:1", "大", "吸気止め"],
+    ["胸部・腹部", "肋骨", "下位肋骨 AP", "75", "25", "100", "8:1", "大", "呼気止め"],
+    ["胸部・腹部", "腹部", "AP 臥位（KUB）", "80", "25", "100", "10:1", "大", "呼気止め・恥骨〜横隔膜下"],
+    ["胸部・腹部", "腹部", "立位", "85", "30", "100", "10:1", "大", "遊離ガス・鏡面像の確認"],
+    ["胸部・腹部", "腹部", "側臥位（decubitus）", "85", "35", "100", "10:1", "大", "左側臥位で遊離ガス確認"],
+
+    // ─ 頭頸部 ─
+    ["頭頸部", "頭部", "PA（後頭前頭）", "75", "30", "100", "10:1", "小", "OMライン直交"],
+    ["頭頸部", "頭部", "側面", "70", "20", "100", "10:1", "小", "正中矢状面をフィルム平行"],
+    ["頭頸部", "頭部", "Towne（半軸位）", "80", "40", "100", "10:1", "小", "尾頭方向30°"],
+    ["頭頸部", "副鼻腔", "Waters（後頭頤位）", "75", "30", "100", "10:1", "小", "立位・上顎洞の含気確認"],
+    ["頭頸部", "副鼻腔", "Caldwell（後頭前頭斜位）", "75", "30", "100", "10:1", "小", "前頭洞・篩骨洞"],
+    ["頭頸部", "鼻骨", "側面", "55", "6", "100", "なし", "小", "軟部条件"],
+    ["頭頸部", "下顎骨", "PA / 斜位", "70", "20", "100", "10:1", "小", "左右比較撮影"],
+    ["頭頸部", "頸部軟部", "側面", "70", "8", "150", "なし", "小", "吸気・喉頭/気道評価"],
+
+    // ─ 脊椎 ─
+    ["脊椎", "頸椎", "正面（AP）", "75", "18", "100", "10:1", "小", "頭側15〜20°"],
+    ["脊椎", "頸椎", "側面", "75", "12", "150", "なし", "小", "肩を下げる"],
+    ["脊椎", "頸椎", "斜位", "75", "18", "100", "10:1", "小", "椎間孔の評価"],
+    ["脊椎", "頸椎", "開口位（歯突起）", "75", "18", "100", "10:1", "小", "環軸椎"],
+    ["脊椎", "胸椎", "正面（AP）", "80", "30", "100", "10:1", "大", "呼気止め"],
+    ["脊椎", "胸椎", "側面", "85", "50", "100", "10:1", "大", "呼吸併用法も可"],
+    ["脊椎", "腰椎", "正面（AP）", "80", "40", "100", "10:1", "大", "膝立てで前弯軽減"],
+    ["脊椎", "腰椎", "側面", "90", "80", "100", "10:1", "大", "ウエストにスポンジ"],
+    ["脊椎", "腰椎", "斜位", "85", "50", "100", "10:1", "大", "スコッチテリア像"],
+    ["脊椎", "腰仙移行部", "側面", "95", "100", "100", "10:1", "大", "L5/S椎間"],
+
+    // ─ 骨盤・股関節 ─
+    ["骨盤・股関節", "骨盤", "AP", "80", "30", "100", "10:1", "大", "下肢を15°内旋"],
+    ["骨盤・股関節", "股関節", "AP", "80", "30", "100", "10:1", "大", "患側内旋15°"],
+    ["骨盤・股関節", "股関節", "側面（ラウエンシュタイン）", "80", "30", "100", "10:1", "大", "蛙肢位"],
+    ["骨盤・股関節", "仙骨", "AP", "80", "40", "100", "10:1", "大", "頭側15°"],
+    ["骨盤・股関節", "尾骨", "AP", "75", "30", "100", "10:1", "大", "尾側10°"],
+    ["骨盤・股関節", "仙腸関節", "斜位", "85", "45", "100", "10:1", "大", "左右比較"],
+
+    // ─ 上肢 ─
+    ["上肢", "肩関節", "AP", "70", "10", "100", "なし", "小", "内旋/外旋で2方向"],
+    ["上肢", "鎖骨", "AP", "65", "8", "100", "なし", "小", "頭側15°も"],
+    ["上肢", "肩甲骨", "AP / 側面（Y）", "70", "12", "100", "なし", "小", "外転位"],
+    ["上肢", "上腕骨", "AP / 側面", "65", "6", "100", "なし", "小", "肩・肘を含める"],
+    ["上肢", "肘関節", "AP / 側面", "60", "4", "100", "なし", "小", "側面は90°屈曲"],
+    ["上肢", "前腕", "AP / 側面", "58", "3", "100", "なし", "小", "手・肘を含める"],
+    ["上肢", "手関節", "PA / 側面 / 斜位", "55", "3", "100", "なし", "小", "舟状骨は尺屈位追加"],
+    ["上肢", "手", "PA / 斜位 / 側面", "50", "2.5", "100", "なし", "小", "指は分離して伸展"],
+    ["上肢", "指", "PA / 側面", "48", "2", "100", "なし", "小", "対象指を中心"],
+
+    // ─ 下肢 ─
+    ["下肢", "大腿骨", "AP / 側面", "75", "12", "100", "8:1", "大", "股・膝を含める"],
+    ["下肢", "膝関節", "AP / 側面", "60", "6", "100", "なし", "小", "側面20〜30°屈曲"],
+    ["下肢", "膝蓋骨", "軸位（スカイライン）", "60", "5", "100", "なし", "小", "膝屈曲位"],
+    ["下肢", "下腿", "AP / 側面", "60", "5", "100", "なし", "小", "膝・足を含める"],
+    ["下肢", "足関節", "AP / 側面", "58", "4", "100", "なし", "小", "APは内旋15〜20°（モーティス）"],
+    ["下肢", "足部", "DP / 斜位 / 側面", "55", "3", "100", "なし", "小", "DPは10〜15°頭側"],
+    ["下肢", "踵骨", "軸位 / 側面", "60", "6", "100", "なし", "小", "背屈位"]
+  ];
+
+  const FIELDS = ["group", "region", "view", "kvp", "mas", "sid", "grid", "focus", "note"];
+  const NUM_FIELDS = new Set(["kvp", "mas", "sid"]);
+
+  function presetToObjects() {
+    return PRESETS.map((r) => {
+      const o = {};
+      FIELDS.forEach((f, i) => { o[f] = r[i]; });
+      return o;
+    });
+  }
+
+  // ── state ──
+  let data = loadData();
+  let activeGroup = "すべて";
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length) return sanitize(parsed);
+      }
+    } catch (e) {
+      console.warn("保存データの読み込みに失敗しました。初期値を使用します。", e);
+    }
+    return presetToObjects();
+  }
+
+  function sanitize(arr) {
+    return arr.map((o) => {
+      const c = {};
+      FIELDS.forEach((f) => { c[f] = (o && o[f] != null) ? String(o[f]) : ""; });
+      return c;
+    });
+  }
+
+  // ── group chips ──
+  function buildGroups() {
+    const groups = ["すべて"];
+    data.forEach((o) => { if (groups.indexOf(o.group) === -1) groups.push(o.group); });
+    const box = $("groupChips");
+    box.innerHTML = "";
+    groups.forEach((g) => {
+      const b = document.createElement("button");
+      b.className = "chip" + (g === activeGroup ? " active" : "");
+      b.textContent = g;
+      b.addEventListener("click", () => {
+        commitEdits();
+        activeGroup = g;
+        document.querySelectorAll("#groupChips .chip").forEach((c) => c.classList.remove("active"));
+        b.classList.add("active");
+        render();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  // ── render table ──
+  function render() {
+    const body = $("condBody");
+    body.innerHTML = "";
+    const q = $("searchBox").value.trim().toLowerCase();
+
+    let lastGroup = null;
+    let shown = 0;
+
+    data.forEach((o, idx) => {
+      if (activeGroup !== "すべて" && o.group !== activeGroup) return;
+      if (q) {
+        const hay = (o.region + " " + o.view + " " + o.note + " " + o.group).toLowerCase();
+        if (hay.indexOf(q) === -1) return;
+      }
+      shown++;
+
+      // group header row
+      if (o.group !== lastGroup) {
+        lastGroup = o.group;
+        const gr = document.createElement("tr");
+        gr.className = "grp-row";
+        const gc = document.createElement("td");
+        gc.colSpan = 9;
+        gc.textContent = o.group;
+        gr.appendChild(gc);
+        body.appendChild(gr);
+      }
+
+      const tr = document.createElement("tr");
+      tr.dataset.idx = idx;
+      const cells = ["region", "view", "kvp", "mas", "sid", "grid", "focus", "note"];
+      cells.forEach((f) => {
+        const td = document.createElement("td");
+        td.className = "editable" + (NUM_FIELDS.has(f) ? " num" : "");
+        if (f === "region") td.classList.add("col-region");
+        if (f === "view") td.classList.add("col-view");
+        if (f === "note") td.classList.add("col-note");
+        td.setAttribute("contenteditable", "true");
+        td.dataset.field = f;
+        td.textContent = o[f];
+        tr.appendChild(td);
+      });
+      // delete
+      const del = document.createElement("td");
+      del.className = "row-del";
+      del.title = "この行を削除";
+      del.textContent = "✕";
+      del.addEventListener("click", () => {
+        commitEdits();
+        data.splice(idx, 1);
+        markUnsaved();
+        render();
+      });
+      tr.appendChild(del);
+      body.appendChild(tr);
+    });
+
+    $("tableEmpty").classList.toggle("hidden", shown > 0);
+  }
+
+  // ── commit DOM edits back to state ──
+  function commitEdits() {
+    // IME未確定文字を確定させてから読み取る
+    const ae = document.activeElement;
+    if (ae && ae.isContentEditable) ae.blur();
+    document.querySelectorAll("#condBody tr[data-idx]").forEach((tr) => {
+      const idx = parseInt(tr.dataset.idx, 10);
+      if (isNaN(idx) || !data[idx]) return;
+      tr.querySelectorAll("td[data-field]").forEach((td) => {
+        data[idx][td.dataset.field] = td.textContent.trim();
+      });
+    });
+  }
+
+  // ── save status helpers ──
+  let saveTimer = null;
+  function setStatus(msg, color) {
+    const el = $("saveStatus");
+    el.textContent = msg;
+    el.style.color = color || "#276749";
+    if (saveTimer) clearTimeout(saveTimer);
+    if (msg) saveTimer = setTimeout(() => { el.textContent = ""; }, 4000);
+  }
+  function markUnsaved() { setStatus("未保存の変更があります", "#c05621"); }
+
+  // ── toolbar actions ──
+  $("saveBtn").addEventListener("click", () => {
+    commitEdits();
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      setStatus("✅ 保存しました", "#276749");
+    } catch (e) {
+      console.error("保存に失敗しました", e);
+      setStatus("保存に失敗しました", "#c53030");
+    }
+  });
+
+  $("resetBtn").addEventListener("click", () => {
+    if (!window.confirm("編集内容を破棄して初期値（代表値プリセット）に戻します。よろしいですか？")) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+    data = presetToObjects();
+    activeGroup = "すべて";
+    $("searchBox").value = "";
+    buildGroups();
+    render();
+    setStatus("初期値に戻しました", "#276749");
+  });
+
+  $("addRowBtn").addEventListener("click", () => {
+    commitEdits();
+    const g = activeGroup !== "すべて" ? activeGroup : (data.length ? data[data.length - 1].group : "その他");
+    const o = {}; FIELDS.forEach((f) => { o[f] = ""; }); o.group = g;
+    data.push(o);
+    markUnsaved();
+    buildGroups();
+    render();
+  });
+
+  // ── search ──
+  $("searchBox").addEventListener("input", () => { commitEdits(); render(); });
+
+  // ── export / import ──
+  $("exportBtn").addEventListener("click", () => {
+    commitEdits();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "rt-lab-exposure-conditions.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  $("importBtn").addEventListener("click", () => $("importFile").click());
+  $("importFile").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (!Array.isArray(parsed) || !parsed.length) throw new Error("配列ではありません");
+        data = sanitize(parsed);
+        activeGroup = "すべて";
+        $("searchBox").value = "";
+        buildGroups();
+        render();
+        markUnsaved();
+        setStatus("読み込みました（未保存）", "#c05621");
+      } catch (err) {
+        console.error("読み込みに失敗しました", err);
+        window.alert("JSONの読み込みに失敗しました。書き出したファイル形式かご確認ください。");
+      }
+      $("importFile").value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  // ====================================================================
+  // 補正計算
+  // ====================================================================
+  function fmt(x, d) { return isFinite(x) ? x.toFixed(d) : "--"; }
+
+  // ── kVp 15% rule ──
+  const KVP_MIN = 40, KVP_MAX = 150;
+  function calcKvp() {
+    const cur = parseFloat($("kvpCur").value);
+    const mas = parseFloat($("masCur").value);
+    const tar = parseFloat($("kvpTar").value);
+    if (!(cur > 0 && mas > 0 && tar > 0)) { $("kvpResult").textContent = "--"; return; }
+    if (cur < KVP_MIN || cur > KVP_MAX || tar < KVP_MIN || tar > KVP_MAX) {
+      $("kvpResult").textContent = "kVp は " + KVP_MIN + "〜" + KVP_MAX + " の範囲で入力してください";
+      return;
+    }
+    const factor = Math.pow(2, -(tar - cur) / (KVP_RULE_PCT * cur));
+    const newMas = mas * factor;
+    $("kvpResult").innerHTML =
+      "必要 mAs ≒ <span class=\"big\">" + fmt(newMas, 1) + "</span> mAs" +
+      "　（" + fmt(cur, 0) + "kVp/" + fmt(mas, 1) + "mAs → " + fmt(tar, 0) + "kVp）" +
+      "<br><span style=\"font-size:0.8rem; font-weight:600;\">線量倍率 約 " + fmt(1 / factor, 2) + "倍ぶんを mAs で補正</span>";
+  }
+  $("kvpUp").addEventListener("click", () => {
+    const cur = parseFloat($("kvpCur").value) || 0;
+    $("kvpTar").value = Math.round(cur * (1 + KVP_RULE_PCT));
+    calcKvp();
+  });
+  $("kvpDown").addEventListener("click", () => {
+    const cur = parseFloat($("kvpCur").value) || 0;
+    $("kvpTar").value = Math.round(cur * (1 - KVP_RULE_PCT));
+    calcKvp();
+  });
+  ["kvpCur", "masCur", "kvpTar"].forEach((id) => $(id).addEventListener("input", calcKvp));
+
+  // ── grid conversion ──
+  function buildGridSelects() {
+    const opts = Object.keys(GRID_FACTORS)
+      .map((k) => '<option value="' + k + '">' + k + "（×" + GRID_FACTORS[k] + "）</option>")
+      .join("");
+    $("gridFrom").innerHTML = opts;
+    $("gridTo").innerHTML = opts;
+    $("gridFrom").value = "なし";
+    $("gridTo").value = "10:1";
+  }
+  function calcGrid() {
+    const mas = parseFloat($("gridMas").value);
+    const fFrom = GRID_FACTORS[$("gridFrom").value];
+    const fTo = GRID_FACTORS[$("gridTo").value];
+    if (!(mas > 0 && fFrom > 0 && fTo > 0)) { $("gridResult").textContent = "--"; return; }
+    const newMas = mas * (fTo / fFrom);
+    $("gridResult").innerHTML =
+      "補正後 mAs ≒ <span class=\"big\">" + fmt(newMas, 1) + "</span> mAs" +
+      "　（係数 " + fFrom + " → " + fTo + "、×" + fmt(fTo / fFrom, 2) + "）";
+  }
+  ["gridMas", "gridFrom", "gridTo"].forEach((id) => $(id).addEventListener("input", calcGrid));
+  ["gridFrom", "gridTo"].forEach((id) => $(id).addEventListener("change", calcGrid));
+
+  // ── init ──
+  buildGroups();
+  render();
+  buildGridSelects();
+  calcKvp();
+  calcGrid();
+})();
+</script>
+<script src="/assets/site.js" defer></script>
+
+</body>
+</html>
