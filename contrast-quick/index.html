@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>造影剤クイック計算｜体重法・体表面積法でヨード量・注入速度 | RT-Lab</title>
-  <meta name="description" content="体重比例法と体表面積法（BSA）の両方に対応した造影剤計算ツール。造影剤量(mL)・必要ヨード量(gI)・注入速度(mL/s)を即計算し、両法の相当値も自動換算。300/350/370 mgI/mL・生食後押し・希釈にも対応。ブラウザ完結・無料・データ外部送信なし。">
+  <meta name="description" content="体重比例法と体表面積法（BSA）の両方に対応した造影剤計算ツール。相ごとにヨード量（mgI/kg・mgI/kg/s）と注入時間を設定し、造影剤量(mL)・注入速度(mL/s)を即計算。結果はインジェクタにそのまま入力できるフェーズ表示。二段階注入・分割注入・クロス注入のプリセット搭載。ブラウザ完結・無料・データ外部送信なし。">
   <meta property="og:title" content="造影剤クイック計算｜体重法・体表面積法でヨード量・注入速度 | RT-Lab">
-  <meta property="og:description" content="体重比例法と体表面積法（BSA）の両対応。造影剤量・ヨード量・注入速度を即計算し、両法の相当値も自動換算。">
+  <meta property="og:description" content="相ごとにヨード量（mgI/kg・mgI/kg/s）と注入時間を設定してインジェクタ設定をそのまま作れる造影剤計算ツール。二段階・分割・クロス注入プリセット搭載。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://rt-ai-lab.com/contrast-quick/">
   <link rel="canonical" href="https://rt-ai-lab.com/contrast-quick/">
@@ -16,7 +16,7 @@
     "@type": "WebApplication",
     "name": "造影剤クイック計算ツール",
     "url": "https://rt-ai-lab.com/contrast-quick/",
-    "description": "体重とヨード濃度から造影剤量(mL)・必要ヨード量(gI)・注入速度(mL/s)・注入時間を計算する造影剤クイック計算ツール。",
+    "description": "体重とヨード濃度から造影剤量(mL)・必要ヨード量(mgI)・注入速度(mL/s)・注入時間を計算し、インジェクタ設定風に表示する造影剤クイック計算ツール。",
     "applicationCategory": "HealthApplication",
     "operatingSystem": "Any",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
@@ -42,7 +42,15 @@
         "name": "造影剤量（ヨード量）の計算式は？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "体重比例法では、必要ヨード総量[gI] = 体重[kg] × 目標ヨード量[gI/kg]。造影剤量[mL] = 体重[kg] × 目標ヨード量[gI/kg] × 1000 ÷ ヨード濃度[mgI/mL] で求めます。例：体重60kg・目標0.5gI/kg・350mgI/mLなら、ヨード総量30gI、造影剤量は約85.7mLです。"
+          "text": "体重比例法では、必要ヨード量[mgI] = 体重[kg] × 目標ヨード量[mgI/kg]。造影剤量[mL] = 必要ヨード量[mgI] ÷ ヨード濃度[mgI/mL] で求めます。例：体重60kg・目標500mgI/kg・350mgI/mLなら、必要ヨード量30,000mgI、造影剤量は約85.7mLです。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "mgI/kg と mgI/kg/s の違いは？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "mgI/kg は体重あたりの「総ヨード投与量」で、注入時間で割ると注入速度が決まります（例：500mgI/kgを30秒で注入）。mgI/kg/s は体重あたりの「1秒あたりのヨード注入量」で、体重あたりヨード注入速度を一定にしたいプロトコル（冠動脈CTAなど）で使われます（例：16.7mgI/kg/s × 30秒 = 500mgI/kg）。"
         }
       },
       {
@@ -50,15 +58,7 @@
         "name": "造影剤の注入速度の計算式は？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "ヨード注入速度(IDR)を指定する場合、注入速度[mL/s] = ヨード注入速度[gI/s] × 1000 ÷ ヨード濃度[mgI/mL]。注入時間を固定する場合、注入速度[mL/s] = 造影剤量[mL] ÷ 注入時間[s] で求めます。"
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "ヨード濃度 mgI/mL の換算とは？",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "造影剤のヨード濃度（300・350・370 mgI/mL など）は1mLあたりのヨード量を表します。1gI = 1000mgI なので、必要ヨード量[gI]を濃度[mgI/mL]で割って1000を掛けると必要な造影剤量[mL]が得られます。"
+          "text": "注入速度[mL/s] = 造影剤量[mL] ÷ 注入時間[s]。mgI/kg/s モードでは、注入速度[mL/s] = 体重[kg] × 目標ヨード注入速度[mgI/kg/s] ÷ ヨード濃度[mgI/mL] で直接求まります。"
         }
       },
       {
@@ -66,7 +66,15 @@
         "name": "体重比例法と体表面積法（BSA）の違いは？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "体重比例法は必要ヨード量を「体重×目標ヨード量[gI/kg]」で求めます。体表面積法は体表面積BSA[m²]を用い「BSA×目標ヨード量[gI/m²]」で求めます。BSAは身長も反映し循環血液量との相関がよいとされ、体格による造影効果のばらつきを抑えやすい一方、体重法は簡便です。BSAはMostellerの式 BSA=√(体重[kg]×身長[cm]÷3600) で計算します。"
+          "text": "体重比例法は必要ヨード量を「体重×目標ヨード量[mgI/kg]」で求めます。体表面積法は体表面積BSA[m²]を用い「BSA×目標ヨード量[mgI/m²]」で求めます。BSAは身長も反映し循環血液量との相関がよいとされ、体格による造影効果のばらつきを抑えやすい一方、体重法は簡便です。BSAはMostellerの式 BSA=√(体重[kg]×身長[cm]÷3600) で計算します。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "二段階注入・分割注入・クロス注入とは？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "二段階注入は造影剤を前半は速く・後半は遅く注入してTDCのプラトーを作る方法で、相ごとにヨード量と注入時間を設定します。分割注入（split bolus）は造影剤を2回に分けて時間を空けて注入し、複数の造影相を1回のスキャンで得る方法（CT urographyなど）。クロス注入（同時注入）は造影剤と生食を混合して注入する相を設け、右心系のアーチファクト低減などに用います（心臓CTなど）。"
         }
       }
     ]
@@ -155,17 +163,17 @@
     .preset-btn.active { background: #1a56db; color: #fff; border-color: #1a56db; }
 
     /* ── Form controls ── */
-    .form-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 8px; }
+    .form-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 8px; }
     .form-group { display: flex; flex-direction: column; gap: 4px; }
     .form-group label { font-size: 0.8rem; font-weight: 600; color: #4a5568; }
     .form-group input, .form-group select {
       padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 5px;
-      font-size: 0.9rem; width: 150px; color: #2d3748;
+      font-size: 0.9rem; width: 150px; color: #2d3748; background: #fff;
     }
     .form-group input:focus, .form-group select:focus {
       outline: none; border-color: #1a56db; box-shadow: 0 0 0 2px rgba(26,86,219,0.15);
     }
-    .form-hint { font-size: 0.72rem; color: #718096; margin-top: 2px; }
+    .form-hint { font-size: 0.72rem; color: #718096; margin-top: 2px; max-width: 220px; }
 
     .radio-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
     .radio-pill {
@@ -174,31 +182,125 @@
     }
     .radio-pill.active { background: #1a56db; color: #fff; border-color: #1a56db; }
 
-    .checkbox-label {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 0.85rem; cursor: pointer; color: #2d3748; font-weight: 600;
+    /* ── Phase editor ── */
+    .pe-row {
+      display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap;
+      background: #f7fafc; border: 1px solid #e2e8f0; border-left: 5px solid #718096;
+      border-radius: 8px; padding: 14px 16px; margin-bottom: 10px;
     }
-    .checkbox-label input { cursor: pointer; }
+    .pe-row.pe-contrast { border-left-color: #48bb78; }
+    .pe-row.pe-dilute   { border-left-color: #ecc94b; }
+    .pe-row.pe-saline   { border-left-color: #4299e1; }
+    .pe-row.pe-pause    { border-left-color: #a0aec0; background: #fbfcfd; }
+    .pe-num {
+      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.9rem; color: #fff; background: #718096;
+      margin-top: 22px;
+    }
+    .pe-contrast .pe-num { background: #48bb78; }
+    .pe-dilute   .pe-num { background: #d69e2e; }
+    .pe-saline   .pe-num { background: #4299e1; }
+    .pe-pause    .pe-num { background: #a0aec0; }
+    .pe-row .form-group input { width: 130px; }
+    .pe-row .form-group select { width: 170px; }
+    .pe-del {
+      margin-left: auto; margin-top: 22px;
+      border: 1px solid #e2e8f0; background: #fff; color: #a0aec0;
+      width: 30px; height: 30px; border-radius: 6px; cursor: pointer;
+      font-size: 0.95rem; font-weight: 700; line-height: 1;
+    }
+    .pe-del:hover { color: #c53030; border-color: #fc8181; }
+    .add-phase-btn {
+      width: 100%; padding: 11px; border: 2px dashed #cbd5e0; border-radius: 8px;
+      background: #fff; color: #4a5568; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+    }
+    .add-phase-btn:hover { border-color: #1a56db; color: #1a56db; }
+    .alloc-status { font-size: 0.8rem; font-weight: 700; margin: 6px 0 12px; color: #276749; }
+    .alloc-status.warn { color: #c53030; }
+    .pattern-hint { font-size: 0.78rem; color: #718096; margin: -6px 0 12px; }
 
-    /* ── Summary cards ── */
-    .summary-cards { display: flex; gap: 16px; flex-wrap: wrap; }
-    .summary-card { flex: 1; min-width: 160px; padding: 20px; border-radius: 10px; text-align: center; }
-    .summary-card .label { font-size: 0.78rem; font-weight: 600; margin-bottom: 6px; }
-    .summary-card .value { font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
-    .summary-card .unit { font-size: 0.8rem; font-weight: 500; opacity: 0.8; }
-    .summary-vol    { background: linear-gradient(135deg, #ebf8ff, #bee3f8); color: #2b6cb0; }
-    .summary-iodine { background: linear-gradient(135deg, #faf5ff, #e9d8fd); color: #6b46c1; }
-    .summary-rate   { background: linear-gradient(135deg, #f0fff4, #c6f6d5); color: #276749; }
-    .summary-time   { background: linear-gradient(135deg, #fffaf0, #feebc8); color: #9c4221; }
+    /* ── Result: condition chips ── */
+    .cond-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .chip {
+      font-size: 0.76rem; font-weight: 700; padding: 4px 12px; border-radius: 999px;
+      background: #ebf4ff; color: #1a56db; border: 1px solid #c3dafe;
+    }
+    .chip.chip-opt { background: #f0fff4; color: #276749; border-color: #c6f6d5; }
 
-    .detail-row { font-size: 0.82rem; color: #4a5568; margin-top: 14px; }
+    /* ── Result: injector panel ── */
+    .injector-panel {
+      background: linear-gradient(160deg, #1a202c, #232b3b);
+      border-radius: 14px;
+      padding: 20px 22px;
+      color: #e2e8f0;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 4px 14px rgba(0,0,0,0.25);
+    }
+    .injector-head {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 8px;
+      padding-bottom: 14px; margin-bottom: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .injector-head .panel-title {
+      font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em;
+      color: #90cdf4; text-transform: uppercase;
+    }
+    .injector-totals { display: flex; gap: 22px; flex-wrap: wrap; }
+    .injector-totals .tot { text-align: right; }
+    .injector-totals .tot .t-label { font-size: 0.68rem; color: #a0aec0; font-weight: 600; }
+    .injector-totals .tot .t-value {
+      font-size: 1.25rem; font-weight: 800; color: #fff;
+      font-variant-numeric: tabular-nums; line-height: 1.2;
+    }
+    .injector-totals .tot .t-value small { font-size: 0.7rem; font-weight: 600; color: #a0aec0; margin-left: 2px; }
+
+    .phase-row {
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+      padding: 14px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.045);
+      margin-bottom: 10px;
+      border-left: 5px solid #718096;
+    }
+    .phase-row:last-child { margin-bottom: 0; }
+    .phase-row.ph-contrast { border-left-color: #48bb78; }
+    .phase-row.ph-saline   { border-left-color: #4299e1; }
+    .phase-row.ph-mix      { border-left-color: #ecc94b; }
+    .phase-row.ph-pause    { border-left-color: #718096; background: rgba(255,255,255,0.02); }
+
+    .phase-id { display: flex; align-items: center; gap: 10px; min-width: 150px; flex: 1; }
+    .phase-num {
+      width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.95rem; color: #1a202c; background: #cbd5e0;
+    }
+    .ph-contrast .phase-num { background: #48bb78; }
+    .ph-saline   .phase-num { background: #4299e1; color: #fff; }
+    .ph-mix      .phase-num { background: #ecc94b; }
+    .phase-type .ph-name { font-weight: 700; font-size: 0.95rem; color: #fff; display: block; line-height: 1.3; }
+    .phase-type .ph-sub  { font-size: 0.72rem; color: #a0aec0; }
+
+    .phase-metrics { display: flex; gap: 26px; flex-wrap: wrap; }
+    .pm { text-align: right; min-width: 86px; }
+    .pm .pm-label { font-size: 0.66rem; font-weight: 700; color: #a0aec0; letter-spacing: 0.06em; }
+    .pm .pm-value {
+      font-size: 2rem; font-weight: 800; line-height: 1.15; color: #fff;
+      font-variant-numeric: tabular-nums;
+    }
+    .pm .pm-unit { font-size: 0.72rem; font-weight: 600; color: #a0aec0; }
+    .pm-rate .pm-value { color: #9ae6b4; }
+    .ph-saline .pm-rate .pm-value { color: #90cdf4; }
+    .ph-mix .pm-rate .pm-value { color: #faf089; }
+    .pm-time .pm-value { font-size: 1.4rem; color: #cbd5e0; }
+
+    .injector-note { font-size: 0.74rem; color: #a0aec0; margin-top: 12px; line-height: 1.7; }
+    .injector-error {
+      font-size: 0.9rem; font-weight: 700; color: #feb2b2; padding: 8px 4px;
+    }
+
+    .detail-row { font-size: 0.82rem; color: #4a5568; margin-top: 14px; line-height: 2; }
     .detail-row strong { color: #2d3748; }
-
-    .opt-box {
-      background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-      padding: 14px 16px; margin-top: 10px;
-    }
-    .opt-result { font-size: 0.85rem; color: #2b6cb0; font-weight: 600; margin-top: 8px; }
 
     .formula {
       display: inline-block; background: #eef2ff; padding: 8px 14px;
@@ -207,6 +309,7 @@
     .explain { line-height: 1.85; }
     .explain p { margin-bottom: 12px; }
     .explain ol { margin: 0 0 12px 22px; }
+    .explain ul { margin: 0 0 12px 22px; }
 
     .references { font-size: 0.75rem; color: #a0aec0; margin-top: 12px; line-height: 1.8; }
     .references strong { color: #718096; }
@@ -229,7 +332,12 @@
     .footer-disclaimer { max-width: 640px; margin: 10px auto 0; font-size: 0.7rem; opacity: 0.65; }
 
     @media (max-width: 640px) {
-      .summary-card .value { font-size: 1.6rem; }
+      .pm .pm-value { font-size: 1.5rem; }
+      .pm { min-width: 70px; }
+      .phase-metrics { gap: 16px; width: 100%; justify-content: space-between; }
+      .injector-panel { padding: 14px; }
+      .pe-row .form-group input { width: 120px; }
+      .pe-row .form-group select { width: 150px; }
     }
   </style>
   <link rel="stylesheet" href="/assets/site.css">
@@ -247,7 +355,7 @@
   <!-- ===== Hero / h1 ===== -->
   <div class="card">
     <h1 class="card-title">造影剤クイック計算ツール｜体重法・体表面積法でヨード量・注入速度を計算</h1>
-    <p class="lead">体重比例法と体表面積法（BSA）の両方に対応。造影剤量(mL)・必要ヨード量(gI)・注入速度(mL/s)・注入時間を瞬時に計算し、両法の相当値も自動換算します。生理食塩水の後押し、希釈にも対応。すべてブラウザ内で計算し、入力データは外部に送信しません。</p>
+    <p class="lead">体重比例法と体表面積法（BSA）の両方に対応。相（造影剤・希釈・生食・待機）ごとに必要ヨード量（mgI/kg または mgI/kg/s）と注入時間を設定して、インジェクタにそのまま入力できる注入プロトコルを作れます。二段階注入・分割注入・クロス注入のプリセット搭載。すべてブラウザ内で計算し、入力データは外部に送信しません。</p>
   </div>
 
   <!-- ===== Steps ===== -->
@@ -256,29 +364,38 @@
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <div class="step-body"><strong>方法と患者情報を入力</strong><span>体重比例法／体表面積法を選び、体重・身長・濃度（300/350/370 mgI/mL）・目標ヨード量を入力</span></div>
+        <div class="step-body"><strong>患者情報を入力</strong><span>体重比例法／体表面積法とヨード量の指定モード（mgI/kg・mgI/kg/s）を選び、体重・身長・濃度を入力</span></div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <div class="step-body"><strong>注入条件を選択</strong><span>ヨード注入速度(gI/s)または注入時間(秒)から指定</span></div>
+        <div class="step-body"><strong>相ごとにヨード量と時間を設定</strong><span>各相で必要ヨード量と注入時間を入力。二段階・分割・クロスのプリセットもワンタップ</span></div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <div class="step-body"><strong>結果を確認</strong><span>造影剤量・総ヨード量・注入速度・注入時間を自動表示</span></div>
+        <div class="step-body"><strong>インジェクタ設定を確認</strong><span>相ごとの注入速度(mL/s)・量(mL)・時間(秒)を、そのままインジェクタに入力</span></div>
       </div>
     </div>
   </div>
 
   <!-- ===== Input ===== -->
   <div class="card">
-    <div class="card-title">1. 投与量設計の方法と入力</div>
+    <div class="card-title">1. 投与量設計</div>
 
     <div class="radio-group" id="methodGroup">
       <button class="radio-pill active" data-method="weight">体重比例法</button>
       <button class="radio-pill" data-method="bsa">体表面積法（BSA）</button>
     </div>
 
-    <div class="form-row">
+    <div class="form-group" style="margin-bottom:4px;">
+      <label>ヨード量の指定モード</label>
+      <div class="radio-group" id="doseModeGroup" style="margin-bottom:0; margin-top:4px;">
+        <button class="radio-pill active" data-dosemode="total" id="doseModeTotalBtn">総量で指定 (mgI/kg)</button>
+        <button class="radio-pill" data-dosemode="rate" id="doseModeRateBtn">注入速度で指定 (mgI/kg/s)</button>
+      </div>
+      <span class="form-hint" id="doseModeHint" style="max-width:none;">総量モード：各相で「ヨード量(mgI/kg)＋注入時間」を入力します。モードを切り替えると各相の値は自動換算されます</span>
+    </div>
+
+    <div class="form-row" style="margin-top:12px;">
       <div class="form-group">
         <label for="weight">体重 (kg)</label>
         <input type="number" id="weight" value="60" min="1" max="250" step="0.5">
@@ -287,11 +404,6 @@
         <label for="height">身長 (cm)</label>
         <input type="number" id="height" value="165" min="100" max="220" step="1">
         <span class="form-hint">体表面積法・両法の比較に使用（Mosteller法）</span>
-      </div>
-      <div class="form-group">
-        <label for="dose" id="doseLabel">目標ヨード量 (gI/kg)</label>
-        <input type="number" id="dose" value="0.5" min="0.1" max="40" step="0.05">
-        <span class="form-hint" id="doseHint">施設プロトコルにより 0.4〜0.7 程度</span>
       </div>
     </div>
 
@@ -311,83 +423,58 @@
     </div>
   </div>
 
-  <!-- ===== Injection setting ===== -->
+  <!-- ===== Injection protocol (phase builder) ===== -->
   <div class="card">
-    <div class="card-title">2. 注入条件</div>
-    <div class="radio-group" id="modeGroup">
-      <button class="radio-pill active" data-mode="idr">ヨード注入速度から (gI/s)</button>
-      <button class="radio-pill" data-mode="time">注入時間から (秒)</button>
+    <div class="card-title">2. 注入プロトコル（相の設定）</div>
+
+    <div class="form-group" style="margin:0 0 4px;">
+      <label>よく使うパターン（プリセット）</label>
+      <div class="preset-group" style="margin-top:4px;">
+        <button class="preset-btn" data-preset="single">単相＋後押し</button>
+        <button class="preset-btn" data-preset="biphasic">二段階注入</button>
+        <button class="preset-btn" data-preset="split">分割注入</button>
+        <button class="preset-btn" data-preset="cross">クロス注入</button>
+      </div>
+      <span class="form-hint" style="max-width:none;">押すと下の相リストが置き換わります。そのまま自由に編集できます</span>
     </div>
-    <div class="form-row">
-      <div class="form-group" id="idrField">
-        <label for="idr">ヨード注入速度 IDR (gI/s)</label>
-        <input type="number" id="idr" value="1.5" min="0.3" max="3.0" step="0.1">
-        <span class="form-hint">一般的に 1.0〜2.0 gI/s 程度</span>
-      </div>
-      <div class="form-group hidden" id="timeField">
-        <label for="time">注入時間 (秒)</label>
-        <input type="number" id="time" value="30" min="5" max="120" step="1">
-      </div>
+
+    <div style="margin-top:18px;">
+      <div class="pattern-hint">相は上から順番に注入されます。「薬剤」で造影剤（原液）／希釈造影剤（造影剤+生食）／生食／待機を選び、造影剤の相ごとに必要ヨード量と注入時間を入力します。</div>
+      <div id="phaseEditor"></div>
+      <div class="alloc-status" id="allocStatus"></div>
+      <button class="add-phase-btn" id="addPhaseBtn">＋ 相を追加</button>
     </div>
   </div>
 
   <!-- ===== Results ===== -->
   <div class="card">
-    <div class="card-title">📊 計算結果</div>
-    <div class="summary-cards">
-      <div class="summary-card summary-vol">
-        <div class="label">造影剤量</div>
-        <div class="value" id="rVol">--</div>
-        <div class="unit">mL</div>
+    <div class="card-title">📊 計算結果 — インジェクタ設定</div>
+
+    <div class="cond-chips" id="condChips"></div>
+
+    <div class="injector-panel">
+      <div class="injector-head">
+        <div class="panel-title">Injector Protocol</div>
+        <div class="injector-totals">
+          <div class="tot">
+            <div class="t-label">造影剤量（原液）</div>
+            <div class="t-value" id="totVol">--<small>mL</small></div>
+          </div>
+          <div class="tot">
+            <div class="t-label">総ヨード量</div>
+            <div class="t-value" id="totIodine">--<small>mgI</small></div>
+          </div>
+          <div class="tot">
+            <div class="t-label">総注入時間</div>
+            <div class="t-value" id="totTime">--<small>秒</small></div>
+          </div>
+        </div>
       </div>
-      <div class="summary-card summary-iodine">
-        <div class="label">総ヨード量</div>
-        <div class="value" id="rIodine">--</div>
-        <div class="unit">gI</div>
-      </div>
-      <div class="summary-card summary-rate">
-        <div class="label">注入速度</div>
-        <div class="value" id="rRate">--</div>
-        <div class="unit">mL/s</div>
-      </div>
-      <div class="summary-card summary-time">
-        <div class="label">注入時間</div>
-        <div class="value" id="rTime">--</div>
-        <div class="unit">秒</div>
-      </div>
+      <div id="phaseList"></div>
+      <div class="injector-note" id="injectorNote"></div>
     </div>
+
     <div class="detail-row" id="detailRow"></div>
-  </div>
-
-  <!-- ===== Options ===== -->
-  <div class="card">
-    <div class="card-title">3. オプション（任意）</div>
-
-    <label class="checkbox-label"><input type="checkbox" id="salineChk"> 生理食塩水で後押し（saline flush）</label>
-    <div class="opt-box hidden" id="salineBox">
-      <div class="form-row" style="margin-bottom:0;">
-        <div class="form-group">
-          <label for="saline">生食量 (mL)</label>
-          <input type="number" id="saline" value="20" min="0" max="100" step="5">
-        </div>
-      </div>
-      <div class="opt-result" id="salineResult"></div>
-    </div>
-
-    <label class="checkbox-label" style="margin-top:14px;"><input type="checkbox" id="diluteChk"> 希釈する（造影剤:生食）</label>
-    <div class="opt-box hidden" id="diluteBox">
-      <div class="form-row" style="margin-bottom:0;">
-        <div class="form-group">
-          <label for="ratioA">造影剤の比</label>
-          <input type="number" id="ratioA" value="7" min="1" max="10" step="1">
-        </div>
-        <div class="form-group">
-          <label for="ratioB">生食の比</label>
-          <input type="number" id="ratioB" value="3" min="0" max="10" step="1">
-        </div>
-      </div>
-      <div class="opt-result" id="diluteResult"></div>
-    </div>
   </div>
 
   <!-- ===== Explanation (SEO) ===== -->
@@ -396,28 +483,29 @@
     <div class="explain">
       <p>CT造影で必要なヨード量を決める代表的な方法に、<strong>体重比例法</strong>と<strong>体表面積法（BSA法）</strong>があります。どちらも「目標とするヨード量」から造影剤量と注入速度を求める点は同じですが、基準にする体格指標が異なります。</p>
 
-      <p><strong>① 体重比例法</strong>：体重あたりの目標ヨード量（gI/kg）を基準にします。簡便で広く使われます。</p>
-      <span class="formula">必要ヨード量[gI] = 体重[kg] × 目標ヨード量[gI/kg]</span><br>
-      <span class="formula">造影剤量[mL] = 必要ヨード量[gI] × 1000 ÷ ヨード濃度[mgI/mL]</span>
+      <p><strong>① 体重比例法</strong>：体重あたりの目標ヨード量（mgI/kg）を基準にします。簡便で広く使われます。</p>
+      <span class="formula">必要ヨード量[mgI] = 体重[kg] × 目標ヨード量[mgI/kg]</span><br>
+      <span class="formula">造影剤量[mL] = 必要ヨード量[mgI] ÷ ヨード濃度[mgI/mL]</span>
 
-      <p style="margin-top:12px;"><strong>② 体表面積法（BSA法）</strong>：体表面積あたりの目標ヨード量（gI/m²）を基準にします。BSAは身長も反映するため循環血液量・心拍出量との相関がよいとされ、体格差による造影効果のばらつきを抑えやすいのが利点です。本ツールはMostellerの式でBSAを求めます。</p>
+      <p style="margin-top:12px;"><strong>② 体表面積法（BSA法）</strong>：体表面積あたりの目標ヨード量（mgI/m²）を基準にします。BSAは身長も反映するため循環血液量・心拍出量との相関がよいとされ、体格差による造影効果のばらつきを抑えやすいのが利点です。本ツールはMostellerの式でBSAを求めます。</p>
       <span class="formula">BSA[m²] = √( 体重[kg] × 身長[cm] ÷ 3600 )</span><br>
-      <span class="formula">必要ヨード量[gI] = BSA[m²] × 目標ヨード量[gI/m²]</span>
+      <span class="formula">必要ヨード量[mgI] = BSA[m²] × 目標ヨード量[mgI/m²]</span>
 
-      <p style="margin-top:12px;"><strong>体重法と体表面積法の使い分け：</strong></p>
-      <ul style="margin:0 0 12px 22px;">
-        <li>体重法は計算が簡単だが、肥満例では脂肪組織にも比例して増えるため過量になりやすい</li>
-        <li>体表面積法は身長を加味するぶん体格差の影響を受けにくく、肝実質などの増強の均一性を保ちやすい</li>
-        <li>本ツールは選んだ方法で計算しつつ、もう一方の方法での相当値（gI/kg ⇔ gI/m²）も自動表示するので、両者の差を確認できます</li>
-      </ul>
-
-      <p style="margin-top:12px;"><strong>注入速度：</strong>2通りの指定方法があります。</p>
+      <p style="margin-top:12px;"><strong>ヨード量の2つの指定モード：</strong>本ツールでは相（フェーズ）ごとに必要ヨード量と注入時間を入力します。</p>
       <ol>
-        <li>ヨード注入速度（IDR, gI/s）を指定 → <span class="formula">注入速度[mL/s] = IDR[gI/s] × 1000 ÷ ヨード濃度[mgI/mL]</span></li>
-        <li>注入時間（秒）を固定 → <span class="formula">注入速度[mL/s] = 造影剤量[mL] ÷ 注入時間[s]</span></li>
+        <li><strong>総量で指定（mgI/kg）</strong>：相に投与する総ヨード量を決め、注入時間で割って注入速度を求めます。腹部ダイナミック等の一般的なプロトコルで使用 → <span class="formula">注入速度[mL/s] = 造影剤量[mL] ÷ 注入時間[s]</span></li>
+        <li><strong>注入速度で指定（mgI/kg/s）</strong>：体重あたりの1秒あたりヨード注入量を指定します。冠動脈CTA等、ヨード注入速度（IDR）が造影効果を規定する検査で使用 → <span class="formula">注入速度[mL/s] = 体重[kg] × 目標[mgI/kg/s] ÷ ヨード濃度[mgI/mL]</span>。相の投与量は「× 注入時間」で決まります</li>
       </ol>
 
-      <p><strong>計算例：</strong>体重60kg・身長165cm（BSA約1.66m²）の場合、体重比例法0.5gI/kgでは必要ヨード量30gI・造影剤量約85.7mL（濃度350mgI/mL）。これは体表面積法では約18.1gI/m²に相当します。逆に体表面積法18gI/m²なら約29.9gI・約85.3mLとなり、ほぼ同等です。</p>
+      <p style="margin-top:12px;"><strong>注入プロトコル（相）：</strong>インジェクタの設定と同じように相を1つずつ追加してプロトコルを組めます。二段階・分割注入では相ごとに必要ヨード量と注入時間を設定します。代表的なパターンはプリセットで呼び出せます。</p>
+      <ul>
+        <li><strong>単相注入</strong>：全量を一定速度で注入し、生食で後押しする標準的な方法</li>
+        <li><strong>二段階注入（biphasic）</strong>：前半は多く（速く）・後半は少なく（遅く）注入し、時間濃度曲線（TDC）のプラトーを作って造影効果を持続させる方法</li>
+        <li><strong>分割注入（split bolus）</strong>：造影剤を2回に分け、間に待機時間を置いて注入。実質相と排泄相など複数の造影相を1回のスキャンで得る方法（CT urography 等）</li>
+        <li><strong>クロス注入（同時注入）</strong>：純造影剤相のあとに造影剤と生食を混合した相（希釈造影剤）を注入。右心系の高濃度造影剤によるアーチファクト低減などに用いる方法（心臓CT等）</li>
+      </ul>
+
+      <p><strong>計算例：</strong>体重60kg・身長165cm（BSA約1.66m²）の場合、体重比例法500mgI/kgでは必要ヨード量30,000mgI・造影剤量約85.7mL（濃度350mgI/mL）。30秒注入なら約2.9mL/sです。これは体表面積法では約18,100mgI/m²、注入速度指定では約16.7mgI/kg/sに相当します。</p>
       <p style="font-size:0.85rem; opacity:0.85;">※ 目標値は施設プロトコルにより異なります。除脂肪体重（LBM）法や、心拍出量を考慮した時間濃度曲線シミュレーションは将来拡張・別ツールで対応予定です。</p>
     </div>
     <p class="crosslink" style="margin-top:14px;">▶ 時間濃度曲線（TDC）の薬物動態シミュレーションは <a href="/contrast-simulator/">CT Contrast Simulator</a> をご利用ください。</p>
@@ -465,26 +553,106 @@
 (function () {
   "use strict";
   const $ = (id) => document.getElementById(id);
-  let mode = "idr";
-  let method = "weight";
+  let method = "weight";    // weight | bsa
+  let doseMode = "total";   // total (mgI/kg, mgI/m²) | rate (mgI/kg/s, mgI/m²/s)
 
-  // 方法ごとの目標ヨード量の既定値・表示
-  const DOSE_PRESET = {
-    weight: { val: "0.5", step: "0.05", label: "目標ヨード量 (gI/kg)", hint: "施設プロトコルにより 0.4〜0.7 程度" },
-    bsa:    { val: "18",  step: "0.5",  label: "目標ヨード量 (gI/m²)", hint: "施設プロトコル依存（体重比例法 0.5gI/kg にほぼ相当）" }
+  // ── 相リスト ──
+  // kind: contrast(造影剤原液) | dilute(希釈造影剤) | saline(生食) | pause(待機)
+  // contrast: {dose, sec} / dilute: {dose, sec, mixPct(造影剤%)} / saline: {vol(mL), rate?(mL/s, 空欄=直前と同じ)} / pause: {sec}
+  // dose の単位は現在の method × doseMode に従う（mgI/kg, mgI/kg/s, mgI/m², mgI/m²/s）
+  let phases = [];
+
+  // プリセットは「体重比例法 × 総量モード（mgI/kg）」基準で定義し、適用時に現在の単位へ換算
+  const PRESETS = {
+    single: [
+      { kind: "contrast", dose: 500, sec: 30 },
+      { kind: "saline", vol: 20, rate: NaN }
+    ],
+    biphasic: [
+      { kind: "contrast", dose: 300, sec: 15 },
+      { kind: "contrast", dose: 200, sec: 20 },
+      { kind: "saline", vol: 20, rate: NaN }
+    ],
+    split: [
+      { kind: "contrast", dose: 250, sec: 15 },
+      { kind: "pause", sec: 60 },
+      { kind: "contrast", dose: 250, sec: 15 },
+      { kind: "saline", vol: 20, rate: NaN }
+    ],
+    cross: [
+      { kind: "contrast", dose: 400, sec: 24 },
+      { kind: "dilute", dose: 100, sec: 12, mixPct: 50 },
+      { kind: "saline", vol: 20, rate: NaN }
+    ]
   };
+  const KIND_LABEL = { contrast: "造影剤（原液）", dilute: "希釈造影剤（造影剤+生食）", saline: "生食", pause: "待機（ポーズ）" };
+
+  function getBSA() {
+    const W = parseFloat($("weight").value);
+    const H = parseFloat($("height").value);
+    return W > 0 && H > 0 ? Math.sqrt((W * H) / 3600) : NaN;
+  }
+  // 体重法(kg基準)の値 → 現在の方法の単位への係数（同じ総ヨード量になるように換算）
+  function methodFactor() {
+    if (method === "weight") return 1;
+    const W = parseFloat($("weight").value);
+    const BSA = getBSA();
+    return W > 0 && BSA > 0 ? W / BSA : NaN;
+  }
+  function doseUnit() {
+    return "mgI/" + (method === "bsa" ? "m²" : "kg") + (doseMode === "rate" ? "/s" : "");
+  }
+  function roundDose(x) {
+    if (!isFinite(x)) return x;
+    return doseMode === "rate" ? Math.round(x * 10) / 10 : Math.round(x);
+  }
+
+  function updateModeUI() {
+    $("doseModeTotalBtn").textContent = method === "bsa" ? "総量で指定 (mgI/m²)" : "総量で指定 (mgI/kg)";
+    $("doseModeRateBtn").textContent = method === "bsa" ? "注入速度で指定 (mgI/m²/s)" : "注入速度で指定 (mgI/kg/s)";
+    $("doseModeHint").textContent = doseMode === "total"
+      ? "総量モード：各相で「ヨード量(" + doseUnit() + ")＋注入時間」を入力します。モードを切り替えると各相の値は自動換算されます"
+      : "速度モード：各相で「ヨード注入速度(" + doseUnit() + ")＋注入時間」を入力します。相の投与量は 速度×時間 で決まります";
+  }
 
   // ── 投与量設計の方法トグル（体重比例法 / 体表面積法）──
   document.querySelectorAll("#methodGroup .radio-pill").forEach((btn) => {
     btn.addEventListener("click", () => {
+      if (btn.dataset.method === method) return;
       document.querySelectorAll("#methodGroup .radio-pill").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
+      // 各相の dose を kg基準 ⇔ m²基準 に換算（総ヨード量を保存）
+      const oldFactor = methodFactor();
       method = btn.dataset.method;
-      const p = DOSE_PRESET[method];
-      $("dose").value = p.val;
-      $("dose").step = p.step;
-      $("doseLabel").textContent = p.label;
-      $("doseHint").textContent = p.hint;
+      const newFactor = methodFactor();
+      if (isFinite(oldFactor) && isFinite(newFactor) && oldFactor > 0) {
+        phases.forEach((p) => {
+          if ((p.kind === "contrast" || p.kind === "dilute") && isFinite(p.dose)) {
+            p.dose = roundDose(p.dose * newFactor / oldFactor);
+          }
+        });
+      }
+      updateModeUI();
+      renderEditor();
+      calc();
+    });
+  });
+
+  // ── ヨード量の指定モード（総量 / 注入速度）──
+  document.querySelectorAll("#doseModeGroup .radio-pill").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (btn.dataset.dosemode === doseMode) return;
+      document.querySelectorAll("#doseModeGroup .radio-pill").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      doseMode = btn.dataset.dosemode;
+      // 各相の dose を 総量 ⇔ 速度 に換算（注入時間を使用）
+      phases.forEach((p) => {
+        if ((p.kind === "contrast" || p.kind === "dilute") && isFinite(p.dose) && p.sec > 0) {
+          p.dose = roundDose(doseMode === "rate" ? p.dose / p.sec : p.dose * p.sec);
+        }
+      });
+      updateModeUI();
+      renderEditor();
       calc();
     });
   });
@@ -498,7 +666,6 @@
       calc();
     });
   });
-  // typing a custom concentration clears preset highlight if not matching
   $("conc").addEventListener("input", () => {
     document.querySelectorAll("#concPresets .preset-btn").forEach((b) => {
       b.classList.toggle("active", b.dataset.conc === $("conc").value);
@@ -506,127 +673,250 @@
     calc();
   });
 
-  // ── injection mode toggle ──
-  document.querySelectorAll("#modeGroup .radio-pill").forEach((btn) => {
+  // ── pattern presets（kg×総量基準 → 現在の単位へ換算して適用）──
+  document.querySelectorAll("[data-preset]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll("#modeGroup .radio-pill").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      mode = btn.dataset.mode;
-      $("idrField").classList.toggle("hidden", mode !== "idr");
-      $("timeField").classList.toggle("hidden", mode !== "time");
+      const f = methodFactor();
+      phases = PRESETS[btn.dataset.preset].map((src) => {
+        const p = Object.assign({}, src);
+        if ((p.kind === "contrast" || p.kind === "dilute") && isFinite(f)) {
+          let d = p.dose * f;                       // kg基準 → 現在の方法
+          if (doseMode === "rate") d = d / p.sec;   // 総量 → 速度
+          p.dose = roundDose(d);
+        }
+        return p;
+      });
+      renderEditor();
       calc();
     });
   });
 
-  // ── option toggles ──
-  $("salineChk").addEventListener("change", () => {
-    $("salineBox").classList.toggle("hidden", !$("salineChk").checked);
-    calc();
-  });
-  $("diluteChk").addEventListener("change", () => {
-    $("diluteBox").classList.toggle("hidden", !$("diluteChk").checked);
-    calc();
-  });
-
-  // ── recalc on any input ──
-  ["weight", "height", "dose", "conc", "idr", "time", "saline", "ratioA", "ratioB"].forEach((id) => {
+  // ── recalc on basic inputs ──
+  ["weight", "height", "conc"].forEach((id) => {
     $(id).addEventListener("input", calc);
   });
 
+  // ====================================================================
+  // 相エディタ
+  // ====================================================================
+  function numField(idx, field, label, value, step, min, max, placeholder) {
+    const v = isFinite(value) ? value : "";
+    return '<div class="form-group"><label>' + label + '</label>' +
+      '<input type="number" data-idx="' + idx + '" data-field="' + field + '" value="' + v + '" step="' + step + '" min="' + min + '" max="' + max + '"' +
+      (placeholder ? ' placeholder="' + placeholder + '"' : "") + '></div>';
+  }
+
+  function doseFieldLabel() {
+    return (doseMode === "rate" ? "ヨード注入速度 (" : "ヨード量 (") + doseUnit() + ")";
+  }
+
+  function peRow(p, idx) {
+    let fields = "";
+    const doseStep = doseMode === "rate" ? 0.5 : 10;
+    if (p.kind === "contrast") {
+      fields = numField(idx, "dose", doseFieldLabel(), p.dose, doseStep, 0, 99999) +
+               numField(idx, "sec", "注入時間 (秒)", p.sec, 1, 1, 300);
+    } else if (p.kind === "dilute") {
+      fields = numField(idx, "dose", doseFieldLabel(), p.dose, doseStep, 0, 99999) +
+               numField(idx, "sec", "注入時間 (秒)", p.sec, 1, 1, 300) +
+               numField(idx, "mixPct", "混合比：造影剤 (%)", p.mixPct, 5, 5, 95);
+    } else if (p.kind === "saline") {
+      fields = numField(idx, "vol", "量 (mL)", p.vol, 5, 0, 200) +
+               numField(idx, "rate", "速度 (mL/s)", p.rate, 0.1, 0.1, 10, "自動（直前と同じ）");
+    } else {
+      fields = numField(idx, "sec", "待機時間 (秒)", p.sec, 10, 0, 900);
+    }
+    const opts = Object.keys(KIND_LABEL).map((k) =>
+      '<option value="' + k + '"' + (p.kind === k ? " selected" : "") + ">" + KIND_LABEL[k] + "</option>").join("");
+    return '<div class="pe-row pe-' + p.kind + '">' +
+      '<div class="pe-num">' + (idx + 1) + '</div>' +
+      '<div class="form-group"><label>薬剤</label><select data-idx="' + idx + '" data-kindsel>' + opts + '</select></div>' +
+      fields +
+      (phases.length > 1 ? '<button class="pe-del" data-del="' + idx + '" title="この相を削除">✕</button>' : "") +
+    '</div>';
+  }
+
+  function renderEditor() {
+    $("phaseEditor").innerHTML = phases.map(peRow).join("");
+  }
+
+  function kindDefaults(kind) {
+    const f = isFinite(methodFactor()) ? methodFactor() : 1;
+    const hasContrast = phases.some((p) => p.kind === "contrast" || p.kind === "dilute");
+    if (kind === "contrast" || kind === "dilute") {
+      // 最初の造影剤相は標準量、追加の相は少なめの既定値
+      const baseDose = hasContrast ? 100 : 500;
+      const baseSec = hasContrast ? 10 : 30;
+      const d = roundDose(doseMode === "rate" ? baseDose * f / baseSec : baseDose * f);
+      return kind === "contrast"
+        ? { kind: "contrast", dose: d, sec: baseSec }
+        : { kind: "dilute", dose: d, sec: baseSec, mixPct: 50 };
+    }
+    if (kind === "saline") return { kind: "saline", vol: 20, rate: NaN };
+    return { kind: "pause", sec: 60 };
+  }
+
+  $("phaseEditor").addEventListener("input", (e) => {
+    const f = e.target.dataset.field;
+    if (f === undefined) return;
+    phases[+e.target.dataset.idx][f] = parseFloat(e.target.value);
+    calc();
+  });
+  $("phaseEditor").addEventListener("change", (e) => {
+    if (e.target.dataset.kindsel === undefined) return;
+    const idx = +e.target.dataset.idx;
+    phases[idx] = kindDefaults(e.target.value);
+    renderEditor();
+    calc();
+  });
+  $("phaseEditor").addEventListener("click", (e) => {
+    const del = e.target.closest("[data-del]");
+    if (!del) return;
+    phases.splice(+del.dataset.del, 1);
+    renderEditor();
+    calc();
+  });
+  $("addPhaseBtn").addEventListener("click", () => {
+    const hasContrast = phases.some((p) => p.kind === "contrast" || p.kind === "dilute");
+    phases.push(kindDefaults(hasContrast ? "saline" : "contrast"));
+    renderEditor();
+    calc();
+  });
+
+  // ====================================================================
+  // 計算・表示
+  // ====================================================================
   function fmt(x, d) {
     if (!isFinite(x)) return "--";
     return x.toFixed(d);
   }
+  function fmtComma(x, d) {
+    if (!isFinite(x)) return "--";
+    return x.toLocaleString("ja-JP", { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+
+  function showEmpty(msg) {
+    $("totVol").innerHTML = "--<small>mL</small>";
+    $("totIodine").innerHTML = "--<small>mgI</small>";
+    $("totTime").innerHTML = "--<small>秒</small>";
+    $("phaseList").innerHTML = msg ? '<div class="injector-error">' + msg + "</div>" : "";
+    $("injectorNote").textContent = "";
+    $("condChips").innerHTML = "";
+    $("detailRow").innerHTML = "";
+    $("allocStatus").textContent = "";
+  }
+
+  function phaseRowHTML(num, cls, name, sub, rate, vol, time) {
+    return '<div class="phase-row ' + cls + '">' +
+      '<div class="phase-id">' +
+        '<div class="phase-num">' + num + '</div>' +
+        '<div class="phase-type"><span class="ph-name">' + name + '</span>' +
+        (sub ? '<span class="ph-sub">' + sub + '</span>' : "") + '</div>' +
+      '</div>' +
+      '<div class="phase-metrics">' +
+        '<div class="pm pm-rate"><div class="pm-label">注入速度</div><div class="pm-value">' + (rate !== null ? fmt(rate, 1) : "—") + '</div><div class="pm-unit">' + (rate !== null ? "mL/s" : "") + '</div></div>' +
+        '<div class="pm"><div class="pm-label">量</div><div class="pm-value">' + (vol !== null ? fmt(vol, 0) : "—") + '</div><div class="pm-unit">' + (vol !== null ? "mL" : "") + '</div></div>' +
+        '<div class="pm pm-time"><div class="pm-label">時間</div><div class="pm-value">' + fmt(time, 0) + '</div><div class="pm-unit">秒</div></div>' +
+      '</div>' +
+    '</div>';
+  }
 
   function calc() {
     const W = parseFloat($("weight").value);
-    const H = parseFloat($("height").value);
     const C = parseFloat($("conc").value);
-    const D = parseFloat($("dose").value);
+    const BSA = getBSA();
+    const base = method === "bsa" ? BSA : W; // 体格指標（kg or m²）
 
-    const baseValid = W > 0 && C > 0 && D > 0;
-    const hasHeight = H > 0;
-    const valid = baseValid && (method === "weight" || hasHeight);
-    if (!valid) {
-      $("rVol").textContent = "--";
-      $("rIodine").textContent = "--";
-      $("rRate").textContent = "--";
-      $("rTime").textContent = "--";
-      $("detailRow").innerHTML =
-        (method === "bsa" && !hasHeight) ? "体表面積法には身長の入力が必要です。" : "";
-      return;
-    }
+    if (!(W > 0) || !(C > 0)) { showEmpty("体重と濃度を入力してください。"); return; }
+    if (method === "bsa" && !isFinite(BSA)) { showEmpty("体表面積法には身長の入力が必要です。"); return; }
 
-    // ── 体表面積 BSA（Mosteller法）── BSA[m²] = √(W[kg] × H[cm] / 3600)
-    const BSA = hasHeight ? Math.sqrt((W * H) / 3600) : NaN;
+    const unit = doseUnit();
 
-    // ── core: iodine total & contrast volume ──
-    // 体重比例法: Itotal[gI] = W × D[gI/kg]　／　体表面積法: Itotal[gI] = BSA × D[gI/m²]
-    const Itotal = method === "bsa" ? BSA * D : W * D; // gI
-    const V = (Itotal * 1000) / C;     // mL
+    // ── 各相の速度・量・時間・ヨード量 ──
+    const rows = [];
+    let Itotal = 0, Vneat = 0, injTime = 0, pauseTime = 0, salineTotal = 0;
+    let prevRate = NaN, err = "";
 
-    // ── injection rate / time ──
-    let R, T;
-    if (mode === "idr") {
-      const IDR = parseFloat($("idr").value);
-      if (IDR > 0) {
-        R = (IDR * 1000) / C;          // mL/s
-        T = V / R;                     // s
-      }
-    } else {
-      T = parseFloat($("time").value);
-      if (T > 0) {
-        R = V / T;                     // mL/s
-      }
-    }
-    const IDRcalc = R > 0 ? (R * C) / 1000 : NaN; // gI/s
-
-    // ── render summary ──
-    $("rVol").textContent = fmt(V, 1);
-    $("rIodine").textContent = fmt(Itotal, 1);
-    $("rRate").textContent = R > 0 ? fmt(R, 2) : "--";
-    $("rTime").textContent = T > 0 ? fmt(T, 1) : "--";
-
-    // ── detail：総ヨード量・BSA・もう一方の方法での相当値・ヨード注入速度 ──
-    let detail = "<strong>総ヨード量:</strong> " + fmt(Itotal, 1) + " gI";
-    if (isFinite(BSA)) detail += "　/　<strong>BSA:</strong> " + fmt(BSA, 2) + " m²";
-    if (method === "bsa") {
-      detail += "　/　体重比例法では <strong>" + fmt(Itotal / W, 2) + " gI/kg</strong> 相当";
-    } else if (isFinite(BSA)) {
-      detail += "　/　体表面積法では <strong>" + fmt(Itotal / BSA, 1) + " gI/m²</strong> 相当";
-    }
-    detail += "　/　<strong>ヨード注入速度:</strong> " + (isFinite(IDRcalc) ? fmt(IDRcalc, 2) + " gI/s" : "--");
-    $("detailRow").innerHTML = detail;
-
-    // ── saline flush ──
-    if ($("salineChk").checked) {
-      const saline = parseFloat($("saline").value) || 0;
-      const totalFluid = V + saline;
-      $("salineResult").innerHTML =
-        "総液量（造影剤 + 生食）: <strong>" + fmt(totalFluid, 1) + " mL</strong>" +
-        (R > 0 ? "　/　生食も同じ注入速度 " + fmt(R, 2) + " mL/s を推奨" : "");
-    }
-
-    // ── dilution helper ──
-    if ($("diluteChk").checked) {
-      const a = parseFloat($("ratioA").value) || 0;
-      const b = parseFloat($("ratioB").value) || 0;
-      if (a > 0 && a + b > 0) {
-        const Cdil = (C * a) / (a + b);              // mgI/mL after dilution
-        const totalDiluted = (Itotal * 1000) / Cdil; // mL to keep same iodine
-        const contrastPart = (totalDiluted * a) / (a + b);
-        const salinePart = totalDiluted - contrastPart;
-        $("diluteResult").innerHTML =
-          "希釈後濃度: <strong>" + fmt(Cdil, 0) + " mgI/mL</strong>　/　" +
-          "同じヨード量に必要な希釈液総量: <strong>" + fmt(totalDiluted, 1) + " mL</strong>" +
-          "（原液 " + fmt(contrastPart, 1) + " mL + 生食 " + fmt(salinePart, 1) + " mL）";
+    phases.forEach((p) => {
+      if (err) return;
+      if (p.kind === "contrast" || p.kind === "dilute") {
+        const mix = p.kind === "dilute" ? (p.mixPct || 0) / 100 : 1;
+        if (!(p.dose > 0) || !(p.sec > 0) || !(mix > 0)) { err = "造影剤の相にヨード量と注入時間を入力してください。"; return; }
+        // 総量モード: iodine = base×dose。速度モード: iodine = base×dose×sec
+        const iodine = doseMode === "total" ? base * p.dose : base * p.dose * p.sec; // mgI
+        const neat = iodine / C;          // 原液 mL
+        const vol = neat / mix;           // 注入液量 mL
+        const rate = vol / p.sec;         // mL/s
+        const doseTotalEq = doseMode === "total" ? p.dose : p.dose * p.sec;
+        const sub = (doseMode === "rate" ? p.dose + " " + unit + "（計 " + roundDose(doseTotalEq) + " " + unit.replace("/s", "") + "）" : p.dose + " " + unit) +
+          (p.kind === "dilute" ? "　造影剤 " + Math.round(mix * 100) + "% : 生食 " + Math.round((1 - mix) * 100) + "%（造影剤 " + fmt(neat, 0) + " mL + 生食 " + fmt(vol - neat, 0) + " mL、" + fmt(C * mix, 0) + " mgI/mL）" : "");
+        rows.push({ cls: p.kind === "dilute" ? "ph-mix" : "ph-contrast", name: p.kind === "dilute" ? "希釈造影剤" : "造影剤", sub, rate, vol, time: p.sec });
+        Itotal += iodine; Vneat += neat; injTime += p.sec; prevRate = rate;
+      } else if (p.kind === "saline") {
+        const vol = parseFloat(p.vol) || 0;
+        if (vol <= 0) return; // 0mLの生食相は表示しない
+        const rate = p.rate > 0 ? p.rate : prevRate;
+        if (!(rate > 0)) { err = "生食相の速度を入力してください（最初の相のため自動設定できません）。"; return; }
+        rows.push({ cls: "ph-saline", name: "生食", sub: "saline flush" + (p.rate > 0 ? "" : "（直前の相と同じ速度）"), rate, vol, time: vol / rate });
+        injTime += vol / rate; salineTotal += vol; prevRate = rate;
       } else {
-        $("diluteResult").textContent = "比を正しく入力してください。";
+        const sec = parseFloat(p.sec) || 0;
+        rows.push({ cls: "ph-pause", name: "待機", sub: "インジェクタの Pause / Hold", rate: null, vol: null, time: sec, pause: true });
+        pauseTime += sec;
       }
+    });
+    if (err) { showEmpty(err); $("allocStatus").textContent = "⚠ " + err; $("allocStatus").classList.add("warn"); return; }
+    if (rows.length === 0) { showEmpty("相を追加してください。"); return; }
+
+    // ── エディタ下の合計表示 ──
+    const st = $("allocStatus");
+    if (Itotal > 0) {
+      const totalUnit = "mgI/" + (method === "bsa" ? "m²" : "kg");
+      st.textContent = "合計投与量: " + fmtComma(Itotal / base, 0) + " " + totalUnit + "（" + fmtComma(Itotal, 0) + " mgI）";
+      st.classList.remove("warn");
+    } else {
+      st.textContent = "⚠ 造影剤を含む相がありません";
+      st.classList.add("warn");
     }
+
+    // ── render: totals ──
+    $("totVol").innerHTML = fmt(Vneat, 0) + "<small>mL</small>";
+    $("totIodine").innerHTML = fmtComma(Itotal, 0) + "<small>mgI</small> <small>（" + fmt(Itotal / 1000, 1) + " gI）</small>";
+    $("totTime").innerHTML = fmt(injTime, 0) + "<small>秒</small>" + (pauseTime > 0 ? " <small>＋待機 " + fmt(pauseTime, 0) + " 秒</small>" : "");
+
+    // ── render: phases ──
+    let n = 0;
+    $("phaseList").innerHTML = rows.map((r) => phaseRowHTML(r.pause ? "⏸" : ++n, r.cls, r.name, r.sub, r.rate, r.vol, r.time)).join("");
+    $("injectorNote").textContent = "※ 相の速度・量をそのままインジェクタに入力できます。実際の設定は施設プロトコルに従ってください。";
+
+    // ── render: condition chips ──
+    const chips = [];
+    chips.push('<span class="chip">' + (method === "bsa" ? "体表面積法" : "体重比例法") + '</span>');
+    chips.push('<span class="chip">' + (doseMode === "total" ? "総量指定 " : "速度指定 ") + unit + '</span>');
+    chips.push('<span class="chip">' + C + " mgI/mL</span>");
+    if (Itotal > 0) chips.push('<span class="chip">計 ' + fmtComma(Itotal / base, 0) + " mgI/" + (method === "bsa" ? "m²" : "kg") + '</span>');
+    if (salineTotal > 0) chips.push('<span class="chip chip-opt">生食 計 ' + fmt(salineTotal, 0) + ' mL</span>');
+    $("condChips").innerHTML = chips.join("");
+
+    // ── render: detail（BSA・もう一方の方法での相当値）──
+    let detail = "";
+    if (isFinite(BSA)) detail += "<strong>BSA:</strong> " + fmt(BSA, 2) + " m²";
+    if (Itotal > 0) {
+      if (method === "bsa") {
+        detail += "　/　体重比例法では <strong>" + fmtComma(Itotal / W, 0) + " mgI/kg</strong> 相当";
+      } else if (isFinite(BSA)) {
+        detail += "　/　体表面積法では <strong>" + fmtComma(Itotal / BSA, 0) + " mgI/m²</strong> 相当";
+      }
+      detail += "　/　<strong>ヨード注入速度（最大）:</strong> " +
+        fmt(Math.max.apply(null, rows.filter((r) => r.cls !== "ph-pause" && r.cls !== "ph-saline" && r.rate > 0).map((r) => r.rate * C * (r.cls === "ph-mix" ? 0.5 : 1))) / W, 1) + " mgI/kg/s 相当";
+    }
+    $("detailRow").innerHTML = detail;
   }
 
   // initial
+  phases = PRESETS.single.map((p) => Object.assign({}, p));
+  updateModeUI();
+  renderEditor();
   calc();
 })();
 </script>
