@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subtractionツール（脳CT/MRI差分）デモ | RT-Lab</title>
+<meta name="description" content="2時点の脳CT/MRIを位置合わせして差分を確認する Subtractionツールの出力例（研究公開デモ）。位置合わせ後の差分オーバーレイ、代表スライスのプレビュー、レポート出力の例を掲載しています。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:title" content="Subtractionツール（脳CT/MRI差分）デモ | RT-Lab">
+<meta property="og:description" content="2時点の脳CT/MRIを位置合わせして差分を見る Subtractionツールの出力例を掲載した研究公開デモです。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rt-ai-lab.com/subtraction-demo/">
+<link rel="canonical" href="https://rt-ai-lab.com/subtraction-demo/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Subtractionツール（脳CT/MRI差分）デモ",
+  "url": "https://rt-ai-lab.com/subtraction-demo/",
+  "description": "2時点の脳CT/MRIを位置合わせして差分を確認する Subtractionツールの研究公開デモです。",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "RT-Lab",
+    "url": "https://rt-ai-lab.com/"
+  }
+}
+</script>
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --main: #1a5f9e;
+  --main-light: #2980b9;
+  --bg: #f5f7fb;
+  --text: #243447;
+  --muted: #5b6b7d;
+  --white: #ffffff;
+  --line: #dbe4ee;
+  --warning-bg: #fdf3f2;
+  --warning-line: #f0c4bf;
+  --warning-text: #a03428;
+}
+
+body {
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.8;
+}
+
+.header {
+  background: linear-gradient(135deg, var(--main) 0%, var(--main-light) 100%);
+  color: var(--white);
+  padding: 1.25rem 1.5rem;
+}
+
+.header-inner,
+.main,
+.footer {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.brand {
+  color: var(--white);
+  text-decoration: none;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.subnav {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.subnav a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+
+.main {
+  padding: 2rem 1.5rem 3rem;
+}
+
+.hero,
+.panel {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(26, 95, 158, 0.08);
+}
+
+.hero {
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  color: var(--main-light);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.hero h1 {
+  font-size: 2rem;
+  margin-bottom: 0.8rem;
+}
+
+.hero p {
+  color: var(--muted);
+}
+
+.status-tag {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: #eaf2fb;
+  color: var(--main);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.actions {
+  margin-top: 1.4rem;
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.7rem 1.3rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: var(--main);
+  color: var(--white);
+}
+
+.btn-primary:hover {
+  background: var(--main-light);
+}
+
+.btn-secondary {
+  background: var(--white);
+  color: var(--main);
+  border: 1px solid var(--main);
+}
+
+.btn-secondary:hover {
+  background: #eaf2fb;
+}
+
+.notice {
+  margin-bottom: 1.5rem;
+  padding: 1.1rem 1.3rem;
+  border: 1px solid var(--warning-line);
+  border-radius: 12px;
+  background: var(--warning-bg);
+}
+
+.notice h2 {
+  font-size: 1rem;
+  color: var(--warning-text);
+  margin-bottom: 0.5rem;
+}
+
+.notice ul {
+  padding-left: 1.2rem;
+}
+
+.notice li {
+  color: var(--warning-text);
+  font-size: 0.92rem;
+}
+
+.section-title {
+  font-size: 1.15rem;
+  margin: 1.75rem 0 0.9rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.panel {
+  padding: 1.4rem;
+}
+
+.panel h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.7rem;
+}
+
+.panel p,
+.panel li {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.panel ul {
+  padding-left: 1.2rem;
+}
+
+.panel a,
+.footer a {
+  color: var(--main);
+}
+
+.shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.shot {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.9rem;
+  text-align: center;
+}
+
+.shot img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #0e1620;
+  image-rendering: pixelated;
+}
+
+.shot figcaption {
+  margin-top: 0.6rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.footer {
+  padding: 0 1.5rem 2rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .hero h1 {
+    font-size: 1.55rem;
+  }
+}
+</style>
+  <link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<header class="header">
+  <div class="header-inner">
+    <a class="brand" href="/">RT-Lab</a>
+    <nav class="subnav">
+      <a href="/#tools">ツール一覧</a>
+      <a href="/privacy/">プライバシーポリシー</a>
+      <a href="/contact/">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="main">
+  <section class="hero">
+    <p class="eyebrow">Subtraction Demo</p>
+    <h1>Subtractionツールの出力例</h1>
+    <p>2時点の脳CT/MRIシリーズ（baseline と follow-up）を入力し、位置合わせを行ったうえで差分画像を確認するためのツールです。このページでは、どのような差分表示・レポートになるかを合成データのサンプルで確認できます。</p>
+    <span class="status-tag">研究公開デモ</span>
+    <div class="actions">
+      <a class="btn btn-primary" href="/samples/rt_lab_subtraction_report.html">レポート例を見る</a>
+      <a class="btn btn-secondary" href="/samples/rt_lab_subtraction_contact_sheet.png">差分コンタクトシートを見る</a>
+    </div>
+  </section>
+
+  <section class="notice">
+    <h2>ご利用前の注意</h2>
+    <ul>
+      <li>掲載中のサンプル画像は合成データによる表示例です。</li>
+      <li>診断用途ではありません。</li>
+      <li>現時点ではローカル実行ベースのデモ公開です。</li>
+    </ul>
+  </section>
+
+  <h2 class="section-title">出力サンプル</h2>
+  <div class="shots">
+    <figure class="shot">
+      <img src="/samples/rt_lab_subtraction_contact_sheet.png" alt="位置合わせ後の差分を並べたコンタクトシート（合成データ）" loading="lazy">
+      <figcaption>差分コンタクトシート（代表スライス一覧）</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="/samples/overlay_02.png" alt="位置合わせ後の差分オーバーレイ画像（合成データ）" loading="lazy">
+      <figcaption>差分オーバーレイ（1スライス）</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="/samples/rt_lab_subtraction_preview_02.png" alt="代表スライスの差分プレビュー（合成データ）" loading="lazy">
+      <figcaption>代表スライスのプレビュー</figcaption>
+    </figure>
+  </div>
+
+  <h2 class="section-title">概要</h2>
+  <section class="grid">
+    <article class="panel">
+      <h2>想定ユーザー</h2>
+      <p>2時点画像の差分を手早く確認したい放射線技師、研究・検証担当者向けです。</p>
+    </article>
+
+    <article class="panel">
+      <h2>このツールの流れ</h2>
+      <ul>
+        <li>baseline / follow-up の2シリーズを読み込む</li>
+        <li>剛体〜非剛体で位置合わせを行う</li>
+        <li>位置合わせ後の差分を計算・可視化する</li>
+        <li>差分画像とレポートをまとめて出力する</li>
+      </ul>
+    </article>
+
+    <article class="panel">
+      <h2>入力</h2>
+      <ul>
+        <li>2時点の脳CT/MRIシリーズ</li>
+        <li>同一モダリティ・同一系列を前提とした比較</li>
+        <li>baseline と follow-up の2シリーズを入力</li>
+      </ul>
+    </article>
+
+    <article class="panel">
+      <h2>主なアウトプット</h2>
+      <ul>
+        <li>位置合わせ後の差分オーバーレイ画像</li>
+        <li>代表スライスのプレビュー</li>
+        <li>比較結果をまとめた <code>report.html</code> と <code>summary.json</code></li>
+      </ul>
+    </article>
+
+    <article class="panel">
+      <h2>特徴</h2>
+      <ul>
+        <li>2シリーズをそろえて差分を確認</li>
+        <li>位置合わせ後の変化を見やすく表示</li>
+        <li>差分画像とレポートをまとめて出力</li>
+      </ul>
+    </article>
+
+    <article class="panel">
+      <h2>データの扱い</h2>
+      <p>入力画像は原則としてローカルで処理する設計です。本ページは出力例（合成データ）の掲載のみで、画像のアップロードは行いません。</p>
+    </article>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-links">
+    <a href="/">トップ</a>
+    <a href="/#tools">ツール一覧</a>
+    <a href="/privacy/">プライバシーポリシー</a>
+    <a href="/contact/">お問い合わせ</a>
+  </div>
+  <div>&copy; 2025 RT-Lab</div>
+</footer>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>
