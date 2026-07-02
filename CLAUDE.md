@@ -4,8 +4,20 @@
 
 **オーナー:** Hiroki
 **Notionページ:** https://www.notion.so/32b108a56b1a8115bcadf380aef7bf6e
+**本番URL:** https://rt-ai-lab.com/ （GitHub Pages / `main` へのpushで自動デプロイ）
+**リポジトリ:** https://github.com/arincoai-lab/rt-lab
 **ローカルパス:** `/Users/Ahiroki/rt-lab/`
 **ローカル確認:** `python3 -m http.server 8080` → http://localhost:8080
+
+---
+
+## 構成方針（重要）
+
+- **純粋な静的HTMLサイト**。ビルド不要で、各ツールは自己完結型の `index.html`。
+- リポジトリのルートがそのまま本番（`.github/workflows/deploy.yml` が公開対象を絞り込んでアップロード）。
+- 共有アセットは `assets/site.{css,js}`（応援フッター帯・Cookieレス解析の注入）。
+- 外部CDN（Chart.js / PapaParse）は SRI（`integrity` + `crossorigin`）付きで読み込む。
+- ~~Next.js版~~ は未デプロイの死蔵コードだったため 2026-07-03 に撤去済み（履歴参照）。
 
 ---
 
@@ -31,6 +43,8 @@
 | 心臓CT 最適位相決定ツール | ✅ 公開中 | `cardiac-phase-optimizer/index.html` |
 | 造影剤クイック計算ツール | ✅ 公開中 | `contrast-quick/index.html` |
 | 一般撮影条件参照ツール | ✅ 公開中 | `exposure-reference/index.html` |
+| Task-based IQ評価ツール | 🔬 研究公開 | `task-based-iq/index.html` |
+| Subtractionツール（脳CT/MRI差分）デモ | 🔬 研究公開 | `subtraction-demo/index.html`（サンプルは `samples/`） |
 | MRI QA/QC自動計測ツール | 📋 計画中 | 未作成 |
 | 各モダリティ 計測・QAQCツール | 📋 計画中 | 未作成 |
 | CT臓器線量推定ツール | 📋 計画中 | 未作成 |
@@ -63,6 +77,14 @@ rt-lab/
 │   └── index.html          ← 造影剤クイック計算ツール（公開中）
 ├── exposure-reference/
 │   └── index.html          ← 一般撮影条件参照ツール（公開中）
+├── task-based-iq/
+│   └── index.html          ← Task-based IQ評価ツール（研究公開）
+├── subtraction-demo/
+│   └── index.html          ← Subtractionツール デモ（研究公開）
+├── samples/                ← Subtraction等のサンプル出力（合成データ）
+├── assets/
+│   ├── site.css            ← 共有スタイル（応援フッター帯）
+│   └── site.js             ← 共有スクリプト（解析注入・フッター帯）
 └── .claude/
     └── launch.json         ← ローカルサーバー設定
 ```
@@ -92,3 +114,4 @@ rt-lab/
 | 2026-06-09 | 収益化土台整備：Cloudflare Web Analytics（Cookieレス）導入、応援ページ`/support/`新設（OFUSE投げ銭・note導線・アフィリ枠）、共有アセット`assets/site.{js,css}`を全ページ展開、sitemap整備（cardiac/task-based追加）。About強化（運営者＝16年目RT・開発ストーリーnote導線でE-E-A-T） |
 | 2026-06-09 | 造影剤クイック計算ツールに体表面積法（BSA, Mostellerの式）を追加。体重比例法と体表面積法を切替可能にし、両法の相当値（gI/kg⇔gI/m²）を自動換算表示。解説・FAQ・SEO（title/h1）も両法対応に更新 |
 | 2026-06-10 | 一般撮影条件参照ツール 実装・公開（`exposure-reference/`）。全身約50項目の部位別撮影条件（kVp・mAs・SID・グリッド・焦点）を編集可能な早見表で提供。代表値プリセットを自施設値に編集しlocalStorage保存、行追加/削除・JSON書出/読込対応。kVp15%ルール・グリッド変換係数（Bucky factor）の補正計算搭載。FAQPage構造化データ・SEO対応。ブラウザ完結・外部送信なし |
+| 2026-07-03 | サイト構成を静的HTMLに一本化。未デプロイのNext.js版（`app/`・`lib/`・`components/`・`next.config.ts`等）を撤去。Subtractionのサンプル資産を`public/samples/`→`samples/`へ退避し、静的ショーケース`subtraction-demo/`を新設（トップのツール一覧に研究公開カードとして掲載）。CDNスクリプト（Chart.js/PapaParse）にSRI（integrity+crossorigin+referrerpolicy）を付与。deployワークフローを公開対象ファイル限定に変更（CLAUDE.md/AGENTS.md/test-data/.claude等を非公開化）。CLAUDE.md/AGENTS.md/sitemapを実態に更新 |
