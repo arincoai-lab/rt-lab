@@ -26,10 +26,27 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      # Assemble only public files into _site/ so internal docs, dev
+      # fixtures, CI config and VCS metadata are never published.
+      - name: Assemble public site
+        run: |
+          mkdir -p _site
+          rsync -a ./ _site/ \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.claude' \
+            --exclude '_site' \
+            --exclude 'test-data' \
+            --exclude 'CLAUDE.md' \
+            --exclude 'AGENTS.md' \
+            --exclude '.gitignore' \
+            --exclude 'brain-diff/generate_test_data.py' \
+            --exclude '.DS_Store'
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment

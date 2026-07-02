@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subtraction Report | RT-Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    :root {
+      --main: #1a5f9e;
+      --main-light: #2980b9;
+      --accent: #2ecc71;
+      --warning: #e74c3c;
+      --bg: #f8f9fa;
+      --text: #2c3e50;
+      --gray: #95a5a6;
+      --white: #ffffff;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--main);
+      color: var(--white);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .header-inner {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      color: var(--white);
+      text-decoration: none;
+    }
+    .brand-mark {
+      font-size: 1.5rem;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+    }
+    .brand small {
+      font-size: 0.75rem;
+      font-weight: 400;
+      opacity: 0.85;
+    }
+    .tag {
+      color: var(--white);
+      font-size: 0.875rem;
+      opacity: 0.9;
+    }
+    .hero {
+      background: linear-gradient(135deg, var(--main) 0%, var(--main-light) 100%);
+      color: var(--white);
+      text-align: center;
+      padding: 4.5rem 2rem 4rem;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      letter-spacing: 0.02em;
+    }
+    h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    p {
+      margin: 0 0 10px;
+    }
+    .lead {
+      font-size: 1.05rem;
+      font-weight: 400;
+      max-width: 760px;
+      margin: 0 auto 1.5rem;
+      opacity: 0.92;
+      line-height: 1.9;
+    }
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1.25rem;
+    }
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.25rem 0.75rem;
+      border-radius: 100px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .badge-live {
+      background: #e8f8f0;
+      color: #1a9a54;
+    }
+    .badge-dev {
+      background: #eee;
+      color: #888;
+    }
+    .badge-blocked {
+      background: #fdecec;
+      color: #c0392b;
+    }
+    .hero-cta {
+      display: inline-block;
+      background: var(--white);
+      color: var(--main);
+      font-size: 1rem;
+      font-weight: 500;
+      padding: 0.85rem 2rem;
+      border-radius: 6px;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+    }
+    .hero-note {
+      max-width: 760px;
+      margin: 1rem auto 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    .hero-note-strong {
+      font-weight: 500;
+    }
+    .section {
+      padding: 4rem 2rem;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 2.5rem;
+      position: relative;
+    }
+    .section-title::after {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 3px;
+      background: var(--main);
+      margin: 0.75rem auto 0;
+      border-radius: 2px;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+    }
+    .feature-card,
+    .tool-card {
+      background: var(--white);
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .feature-card {
+      text-align: center;
+      padding: 2rem 1.5rem;
+    }
+    .feature-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .feature-desc {
+      font-size: 0.875rem;
+      color: #555;
+      line-height: 1.7;
+    }
+    .tools {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    .tool-card {
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+    .tool-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .tool-desc {
+      font-size: 0.85rem;
+      color: #555;
+      line-height: 1.8;
+      margin-bottom: 1rem;
+      flex: 1;
+    }
+    .mini-list {
+      list-style: none;
+      margin-top: 1rem;
+      text-align: left;
+      font-size: 0.85rem;
+      color: #555;
+      line-height: 1.8;
+    }
+    .mini-list li + li {
+      margin-top: 0.4rem;
+    }
+    .tool-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: auto;
+      flex-wrap: wrap;
+    }
+    .tool-link {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--main);
+      text-decoration: none;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    .data-table th,
+    .data-table td {
+      text-align: left;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid #e8e8e8;
+    }
+    .data-table th {
+      color: #555;
+      font-weight: 500;
+      width: 52%;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    figure {
+      margin: 0;
+      background: var(--white);
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #111827;
+    }
+    figcaption {
+      padding: 0.85rem 1rem 1rem;
+      font-size: 0.85rem;
+      color: #555;
+    }
+    .footer {
+      background: var(--text);
+      color: rgba(255,255,255,0.8);
+      text-align: center;
+      padding: 2.5rem 2rem;
+      font-size: 0.8rem;
+      line-height: 1.9;
+    }
+    .footer-title {
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+      color: var(--white);
+    }
+    .footer-copy {
+      margin-top: 1rem;
+      opacity: 0.6;
+      font-size: 0.75rem;
+    }
+    @media (max-width: 860px) {
+      .features {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 768px) {
+      .site-header {
+        padding: 0 1rem;
+      }
+      .tag {
+        display: none;
+      }
+      .hero {
+        padding: 3.5rem 1.5rem;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      .lead {
+        font-size: 0.95rem;
+      }
+      .section {
+        padding: 3rem 1.25rem;
+      }
+      .tools,
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-mark">RT-Lab</span>
+        <span>
+          <small>放射線技師のためのWebツール</small>
+        </span>
+      </div>
+      <span class="tag">Subtraction Preview Report</span>
+    </div>
+  </header>
+  <section class="hero">
+    <h1>2時点差分を、レビューしやすい形で。</h1>
+    <p class="lead">同一モダリティ・同一系列の脳CT/MRIを対象に、比較可否の判定、QA指標、差分オーバーレイをローカル実行でまとめた研究・検証用レポートです。</p>
+    <div class="hero-actions">
+      <span class="badge badge-live">比較可能です</span>
+      <span class="hero-cta">Profile: brain_ct</span>
+    </div>
+    <p class="hero-note">Comparison completed successfully.</p>
+    <p class="hero-note hero-note-strong">この表示は合成データによるサンプル例です。実症例ではありません。</p>
+    <p class="hero-note">研究・検証用途を前提とした出力です。診断や医療判断の代替としての利用は想定していません。</p>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">今回の比較サマリー</h2>
+    <div class="features">
+      <div class="feature-card">
+        <h3 class="feature-title">判定ステータス</h3>
+        <p class="feature-desc"><strong>comparable</strong><br>比較可能です</p>
+      </div>
+      <div class="feature-card">
+        <h3 class="feature-title">プレビュー画像</h3>
+        <p class="feature-desc">3 枚の代表スライスを出力しています。</p>
+      </div>
+      <div class="feature-card">
+        <h3 class="feature-title">確認ポイント</h3>
+        <p class="feature-desc">0 件の判定理由と 6 項目の QA 指標を確認できます。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">入力と判定</h2>
+    <div class="tools">
+      <article class="tool-card">
+        <h3 class="tool-name">入力情報</h3>
+        <p class="tool-desc">比較に使用したベースライン画像とフォローアップ画像、および選択した比較プロファイルです。</p>
+        <ul class="mini-list">
+          <li>Baseline: /Users/Ahiroki/Documents/codex tests/examples/rt_lab_sample_assets/sample_baseline.npy</li>
+          <li>Follow-up: /Users/Ahiroki/Documents/codex tests/examples/rt_lab_sample_assets/sample_followup.npy</li>
+          <li>Profile: brain_ct</li>
+        </ul>
+      </article>
+      <article class="tool-card">
+        <h3 class="tool-name">判定理由</h3>
+        <p class="tool-desc">比較条件を満たさない場合や、注意して確認したい項目を一覧で示します。</p>
+        <ul class="mini-list">
+          <li>追加の警告やブロック理由はありません。</li>
+        </ul>
+      </article>
+      <article class="tool-card">
+        <h3 class="tool-name">QA Metrics</h3>
+        <p class="tool-desc">位置合わせ後の類似度やマスク重なりなど、レビュー時の目安となる指標です。</p>
+        <table class="data-table">
+          <tbody>
+            <tr><th>global_similarity</th><td>0.7792</td></tr>
+<tr><th>mask_overlap</th><td>0.9700</td></tr>
+<tr><th>deformation_magnitude</th><td>0.1695</td></tr>
+<tr><th>usable_voxel_ratio</th><td>0.9969</td></tr>
+<tr><th>residual_p95</th><td>66.3449</td></tr>
+<tr><th>spacing_mismatch</th><td>1.0000</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">プレビュー画像</h2>
+    <div class="gallery">
+      <figure><img src="overlay_01.png" alt="overlay_01.png"><figcaption>overlay_01.png</figcaption></figure>
+<figure><img src="overlay_02.png" alt="overlay_02.png"><figcaption>overlay_02.png</figcaption></figure>
+<figure><img src="overlay_03.png" alt="overlay_03.png"><figcaption>overlay_03.png</figcaption></figure>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-title">RT-Lab | 放射線技師のためのWebツール集</div>
+    <p>掲載用サンプル画像は合成データから生成した表示例です。</p>
+    <p>本レポートは研究・検証用途の出力です。比較結果は参考情報として扱い、臨床判断には使用しないでください。</p>
+    <p class="footer-copy">&copy; 2026 RT-Lab</p>
+  </footer>
+</body>
+</html>
