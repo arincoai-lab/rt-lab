@@ -43,6 +43,7 @@
 | 心臓CT 最適位相決定ツール | ✅ 公開中 | `cardiac-phase-optimizer/index.html` |
 | 造影剤クイック計算ツール | ✅ 公開中 | `contrast-quick/index.html` |
 | 一般撮影条件参照ツール | ✅ 公開中 | `exposure-reference/index.html` |
+| MRIシミュレータ（教育用） | ✅ 公開中 | `mri-simulator/index.html` |
 | Task-based IQ評価ツール | 🔬 研究公開 | `task-based-iq/index.html` |
 | Subtractionツール（脳CT/MRI差分）デモ | 🔬 研究公開 | `subtraction-demo/index.html`（サンプルは `samples/`） |
 | MRI QA/QC自動計測ツール | 📋 計画中 | 未作成 |
@@ -77,6 +78,8 @@ rt-lab/
 │   └── index.html          ← 造影剤クイック計算ツール（公開中）
 ├── exposure-reference/
 │   └── index.html          ← 一般撮影条件参照ツール（公開中）
+├── mri-simulator/
+│   └── index.html          ← MRIシミュレータ（教育用・公開中）
 ├── task-based-iq/
 │   └── index.html          ← Task-based IQ評価ツール（研究公開）
 ├── subtraction-demo/
@@ -116,3 +119,4 @@ rt-lab/
 | 2026-06-10 | 一般撮影条件参照ツール 実装・公開（`exposure-reference/`）。全身約50項目の部位別撮影条件（kVp・mAs・SID・グリッド・焦点）を編集可能な早見表で提供。代表値プリセットを自施設値に編集しlocalStorage保存、行追加/削除・JSON書出/読込対応。kVp15%ルール・グリッド変換係数（Bucky factor）の補正計算搭載。FAQPage構造化データ・SEO対応。ブラウザ完結・外部送信なし |
 | 2026-06-12 | 造影剤クイック計算ツール 大幅改善。①結果表示をインジェクタ設定風のフェーズ表示に刷新（相ごとに注入速度mL/s・量mL・時間を大きく表示、そのままインジェクタに入力可能）②ヨード量をgI→mgI表記に統一（mgI/kg・mgI/m²）③ヨード量を総量（mgI/kg）と注入速度（mgI/kg/s）の2モード切替に変更、IDR(gI/s)直接入力を廃止 ④注入プロトコルをフェーズビルダー方式に刷新：相（造影剤原液／希釈造影剤／生食／待機）を1つずつ追加・編集・削除可能。**造影剤相ごとに「必要ヨード量（mgI/kg or mgI/kg/s）＋注入時間」を直接入力**（配分%方式から変更）→二段階・分割で相ごとに異なる速度を設定できる。単相＋後押し／二段階／分割／クロスのプリセット搭載。生食相は速度空欄で直前相と同速度を自動採用。方法・モード切替時は各相の値を総ヨード量保存で自動換算 ⑤設定内容を条件チップとフェーズ表示で結果に明示。入力欄の整列修正（ヨード量をモード直下に、体重・身長の高さ揃え）。FAQ構造化データ・解説も更新 |
 | 2026-07-03 | サイト構成を静的HTMLに一本化。未デプロイのNext.js版（`app/`・`lib/`・`components/`・`next.config.ts`等）を撤去。Subtractionのサンプル資産を`public/samples/`→`samples/`へ退避し、静的ショーケース`subtraction-demo/`を新設（トップのツール一覧に研究公開カードとして掲載）。CDNスクリプト（Chart.js/PapaParse）にSRI（integrity+crossorigin+referrerpolicy）を付与。deployワークフローを公開対象ファイル限定に変更（CLAUDE.md/AGENTS.md/test-data/.claude等を非公開化）。CLAUDE.md/AGENTS.md/sitemapを実態に更新 |
+| 2026-07-05 | MRIシミュレータ（教育用）実装・公開（`mri-simulator/`）。脳の模式デジタルファントム（各ピクセルに組織ラベル→T1/T2/T2*/PDを割当）に信号方程式を適用し、TE・TR・TI・FA・ノイズを動かすと画像コントラストがリアルタイム変化。SE `PD(1−e^−TR/T1)e^−TE/T2`／IR（TIで反転回復、FLAIR・STIRプリセットはTI≈ln2·T1で算出）／GRE（spoiled、FA・T2*）対応。教育的仕掛けとして①組織別の信号バー②自動重みづけ判定バッジ（T1/T2/PD強調）③A/B並列比較（共有スケール）④Ricianノイズ＋SNR表示。1.5T代表緩和値は教育用近似と明記。ブラウザ完結・外部送信なし。物理サニティ（T1でCSF暗・T2でCSF明・FLAIRでCSF抑制・STIRで脂肪抑制）をプレビューで検証。トップ`.tool-card`先頭・sitemap追加 |
