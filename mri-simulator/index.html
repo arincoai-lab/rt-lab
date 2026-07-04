@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MRIシミュレータ（TE・TR・TIで画像が変わる）| RT-Lab</title>
+  <meta name="description" content="脳の模式ファントムにSpin Echo・IR（FLAIR/STIR）・GREの信号方程式を適用し、TE・TR・TI・FAを動かすと画像コントラストがリアルタイムに変わる教育用MRIシミュレータ。T1/T2/PD強調の理屈を画像で学べる。ブラウザ完結・無料。">
+  <meta property="og:title" content="MRIシミュレータ（TE・TR・TIで画像が変わる）| RT-Lab">
+  <meta property="og:description" content="TE・TR・TI・FAを動かすと脳MRIのコントラストがリアルタイムに変化。T1/T2/PD強調の理屈を画像で学べる教育用シミュレータ。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rt-ai-lab.com/mri-simulator/">
+  <link rel="canonical" href="https://rt-ai-lab.com/mri-simulator/">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "MRIシミュレータ",
+    "url": "https://rt-ai-lab.com/mri-simulator/",
+    "description": "脳の模式ファントムに信号方程式を適用し、TE・TR・TI・FA・ノイズを動かすとMRI画像コントラストがリアルタイムに変わる教育用シミュレータ。SE / IR（FLAIR・STIR）/ GRE対応。",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
+      { "@type": "ListItem", "position": 2, "name": "MRIシミュレータ", "item": "https://rt-ai-lab.com/mri-simulator/" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "MRIシミュレータとは何ですか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "脳の模式的なデジタルファントム（各組織にT1・T2・T2*・プロトン密度を割り当てたモデル）に、Spin Echo・Inversion Recovery・Gradient Echoの信号方程式を適用し、TE・TR・TI・フリップ角を変えたときに画像コントラストがどう変わるかをブラウザ上でリアルタイムに再現する教育用ツールです。実画像ではなく物理式から信号を計算しています。" }
+      },
+      {
+        "@type": "Question",
+        "name": "なぜT1強調画像ではCSFが黒く、T2強調画像では白いのですか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "T1強調（短いTR・短いTE）ではT1の長いCSFが撮像間に十分縦磁化を回復できず低信号になります。T2強調（長いTR・長いTE）ではT2の長いCSFが横磁化を保ち続けるため高信号になります。本ツールでTE・TRを動かすと、この振る舞いを画像と組織別の信号バーで同時に確認できます。" }
+      },
+      {
+        "@type": "Question",
+        "name": "FLAIRやSTIRのTIはどう決めていますか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "反転回復では信号がゼロになる反転時間TIは概ね TI ≈ ln2 × T1 で与えられます。FLAIRはCSFのT1、STIRは脂肪のT1からこの式で算出したTIをプリセットしており、CSFや脂肪が抑制（低信号化）される様子を再現します。" }
+      },
+      {
+        "@type": "Question",
+        "name": "使われている数値はどれくらい正確ですか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "各組織の緩和値は1.5T付近の文献レンジを丸めた教育用の代表値です。個々の装置・被検者・撮像条件により実際の値は変動します。定量診断や装置QAの根拠ではなく、コントラスト形成の理屈を直感的に学ぶための近似モデルとしてご利用ください。" }
+      }
+    ]
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    header {
+      background: #1a56db;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.06em; }
+    .logo a { color: #fff; text-decoration: none; }
+    header .tagline { font-size: 0.82rem; opacity: 0.9; }
+    header .home-link { margin-left: auto; color: #fff; text-decoration: none; font-size: 0.85rem; opacity: 0.9; }
+    header .home-link:hover { opacity: 1; text-decoration: underline; }
+
+    main { max-width: 1080px; margin: 0 auto; padding: 20px 16px 40px; }
+
+    h1 { font-size: 1.4rem; color: #1a365d; margin-bottom: 6px; }
+    .lead { color: #4a5568; font-size: 0.9rem; margin-bottom: 18px; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 288px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 820px) { .app { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .panel h2 { font-size: 0.95rem; color: #1a365d; margin-bottom: 10px; }
+    .panel h3 { font-size: 0.8rem; color: #718096; text-transform: none; margin: 14px 0 6px; font-weight: 700; }
+
+    /* ── Sequence tabs ── */
+    .tabs { display: flex; gap: 6px; margin-bottom: 6px; }
+    .tab {
+      flex: 1; text-align: center; padding: 8px 0; font-size: 0.82rem; font-weight: 700;
+      border: 1px solid #cbd5e0; border-radius: 8px; background: #f7fafc; color: #4a5568; cursor: pointer;
+      transition: all .12s;
+    }
+    .tab:hover { border-color: #90cdf4; }
+    .tab.active { background: #1a56db; color: #fff; border-color: #1a56db; }
+    .tab-hint { font-size: 0.72rem; color: #a0aec0; margin-bottom: 8px; }
+
+    /* ── Sliders ── */
+    .ctrl { margin: 10px 0; }
+    .ctrl.hidden { display: none; }
+    .ctrl-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.82rem; }
+    .ctrl-row .name { color: #4a5568; font-weight: 700; }
+    .ctrl-row .val { color: #1a365d; font-variant-numeric: tabular-nums; font-weight: 700; }
+    input[type=range] { width: 100%; margin-top: 4px; accent-color: #1a56db; }
+
+    /* ── Presets ── */
+    .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+    .preset {
+      font-size: 0.75rem; padding: 5px 10px; border: 1px solid #cbd5e0; border-radius: 999px;
+      background: #fff; color: #2d3748; cursor: pointer; transition: all .12s;
+    }
+    .preset:hover { border-color: #1a56db; color: #1a56db; }
+
+    .checkline { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #4a5568; margin-top: 6px; }
+    .checkline input { accent-color: #1a56db; width: 16px; height: 16px; }
+
+    /* ── A/B edit toggle ── */
+    .seg { display: flex; gap: 0; border: 1px solid #cbd5e0; border-radius: 8px; overflow: hidden; margin-top: 8px; }
+    .seg.hidden { display: none; }
+    .seg button {
+      flex: 1; padding: 6px 0; font-size: 0.78rem; font-weight: 700; border: 0; background: #fff; color: #4a5568; cursor: pointer;
+    }
+    .seg button.active { background: #edf2f7; color: #1a365d; }
+
+    /* ── Image area ── */
+    .stage { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    .stage.compare { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 520px) { .stage.compare { grid-template-columns: 1fr; } }
+
+    .imgcard { background: #0b0f14; border-radius: 12px; padding: 10px; }
+    .imgcard .caption {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 0 2px;
+    }
+    .imgcard .caption .lbl { color: #cbd5e0; font-size: 0.78rem; font-weight: 700; letter-spacing: .05em; }
+    .badge {
+      font-size: 0.74rem; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+      background: #1e3a8a; color: #bfdbfe;
+    }
+    canvas.mri { width: 100%; height: auto; display: block; border-radius: 8px; background: #000; image-rendering: auto; }
+    .imgcard .cond { color: #718096; font-size: 0.72rem; margin-top: 8px; text-align: center; font-variant-numeric: tabular-nums; }
+
+    /* ── Signal bars ── */
+    .bars { margin-top: 4px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; margin: 7px 0; }
+    .bar-row .t { width: 92px; color: #4a5568; font-weight: 700; }
+    .bar-track { flex: 1; height: 10px; background: #edf2f7; border-radius: 5px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg,#3182ce,#1a56db); border-radius: 5px; transition: width .1s; }
+    .bar-row .v { width: 40px; text-align: right; color: #1a365d; font-variant-numeric: tabular-nums; }
+
+    .snr { display: flex; align-items: baseline; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #edf2f7; }
+    .snr .k { font-size: 0.78rem; color: #718096; }
+    .snr .v { font-size: 1.05rem; font-weight: 800; color: #1a365d; font-variant-numeric: tabular-nums; }
+    .snr .sub { font-size: 0.72rem; color: #a0aec0; }
+
+    /* ── Explainer ── */
+    .explain { margin-top: 28px; }
+    .explain .panel { margin-bottom: 16px; }
+    .explain p { font-size: 0.87rem; color: #4a5568; margin-bottom: 10px; }
+    .explain code { background: #edf2f7; padding: 1px 6px; border-radius: 4px; font-size: 0.8rem; color: #2b6cb0; }
+    .eq { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin: 8px 0; font-size: 0.82rem; color: #2d3748; overflow-x: auto; }
+    .eq b { color: #1a365d; }
+    details { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin: 8px 0; background: #fff; }
+    details summary { font-weight: 700; color: #2d3748; cursor: pointer; font-size: 0.87rem; }
+    details p { margin-top: 8px; }
+    .disclaimer { font-size: 0.78rem; color: #718096; background: #fffaf0; border: 1px solid #feebc8; border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
+    .tissue-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 8px; }
+    .tissue-table th, .tissue-table td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: center; }
+    .tissue-table th { background: #f7fafc; color: #4a5568; }
+    .tissue-table td:first-child { text-align: left; font-weight: 700; color: #2d3748; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo"><a href="/">RT-Lab</a></div>
+    <span class="tagline">MRIシミュレータ</span>
+    <a class="home-link" href="/#tools">← ツール一覧</a>
+  </header>
+
+  <main>
+    <h1>MRIシミュレータ — TE・TR・TIで画像が変わる</h1>
+    <p class="lead">脳の模式ファントムに信号方程式を適用。シーケンスとパラメータを動かすと、画像コントラストがリアルタイムに変化します。T1/T2/PD強調の理屈を「画像」で体感するための教育ツールです（実画像ではなく物理式から計算）。</p>
+
+    <div class="app">
+      <!-- ── 左：コントロール ── -->
+      <div class="panel" id="controls">
+        <h2>撮像条件</h2>
+        <div class="tabs" role="tablist" aria-label="パルスシーケンス">
+          <div class="tab active" data-seq="SE" role="tab" tabindex="0" aria-selected="true">SE</div>
+          <div class="tab" data-seq="IR" role="tab" tabindex="0" aria-selected="false">IR</div>
+          <div class="tab" data-seq="GRE" role="tab" tabindex="0" aria-selected="false">GRE</div>
+        </div>
+        <div class="tab-hint" id="seq-hint">Spin Echo：TE・TRでT1/T2/PD強調が連続的に変化</div>
+
+        <div class="ctrl" data-for="TE">
+          <div class="ctrl-row"><span class="name">TE（エコー時間）</span><span class="val"><span id="TE-val">15</span> ms</span></div>
+          <input type="range" id="TE" min="1" max="250" step="1" value="15" aria-label="TE エコー時間 ミリ秒">
+        </div>
+        <div class="ctrl" data-for="TR">
+          <div class="ctrl-row"><span class="name">TR（繰り返し時間）</span><span class="val"><span id="TR-val">500</span> ms</span></div>
+          <input type="range" id="TR" min="50" max="10000" step="10" value="500" aria-label="TR 繰り返し時間 ミリ秒">
+        </div>
+        <div class="ctrl hidden" data-for="TI">
+          <div class="ctrl-row"><span class="name">TI（反転時間）</span><span class="val"><span id="TI-val">2400</span> ms</span></div>
+          <input type="range" id="TI" min="20" max="3000" step="10" value="2400" aria-label="TI 反転時間 ミリ秒">
+        </div>
+        <div class="ctrl hidden" data-for="FA">
+          <div class="ctrl-row"><span class="name">FA（フリップ角）</span><span class="val"><span id="FA-val">20</span> °</span></div>
+          <input type="range" id="FA" min="1" max="90" step="1" value="20" aria-label="FA フリップ角 度">
+        </div>
+
+        <h3>プリセット</h3>
+        <div class="presets" id="presets">
+          <button class="preset" data-preset="T1">T1WI</button>
+          <button class="preset" data-preset="PD">PDWI</button>
+          <button class="preset" data-preset="T2">T2WI</button>
+          <button class="preset" data-preset="FLAIR">FLAIR</button>
+          <button class="preset" data-preset="STIR">STIR</button>
+          <button class="preset" data-preset="GRE">GRE(T2*)</button>
+        </div>
+
+        <h3>表示・撮像</h3>
+        <div class="ctrl" data-for="NOISE">
+          <div class="ctrl-row"><span class="name">ノイズ量</span><span class="val"><span id="NOISE-val">0</span> %</span></div>
+          <input type="range" id="NOISE" min="0" max="100" step="1" value="0" aria-label="ノイズ量 パーセント">
+        </div>
+        <div class="ctrl" data-for="GAIN">
+          <div class="ctrl-row"><span class="name">表示ゲイン（明るさ）</span><span class="val">×<span id="GAIN-val">1.4</span></span></div>
+          <input type="range" id="GAIN" min="0.4" max="3" step="0.1" value="1.4" aria-label="表示ゲイン 明るさ">
+        </div>
+        <label class="checkline"><input type="checkbox" id="lesion"> 白質病変を表示（FLAIRで高信号）</label>
+        <label class="checkline"><input type="checkbox" id="compare"> A/B比較（2枚を並べる）</label>
+        <div class="seg hidden" id="ab-seg">
+          <button data-panel="A" class="active">Aを編集</button>
+          <button data-panel="B">Bを編集</button>
+        </div>
+        <div class="checkline" id="copy-line" style="display:none;">
+          <button class="preset" id="copy-ab" style="width:100%;">A の条件を B にコピー</button>
+        </div>
+      </div>
+
+      <!-- ── 右：画像＋解析 ── -->
+      <div>
+        <div class="stage" id="stage">
+          <div class="imgcard" id="card-A">
+            <div class="caption"><span class="lbl">画像 A</span><span class="badge" id="badge-A">T1強調</span></div>
+            <canvas class="mri" id="canvas-A" width="240" height="240" role="img" aria-label="画像A シミュレーション"></canvas>
+            <div class="cond" id="cond-A">SE / TR 500 / TE 15 ms</div>
+          </div>
+          <div class="imgcard" id="card-B" style="display:none;">
+            <div class="caption"><span class="lbl">画像 B</span><span class="badge" id="badge-B">T2強調</span></div>
+            <canvas class="mri" id="canvas-B" width="240" height="240" role="img" aria-label="画像B シミュレーション"></canvas>
+            <div class="cond" id="cond-B">SE / TR 4000 / TE 100 ms</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:16px;">
+          <h2>組織別の信号強度 <span style="font-weight:400;color:#a0aec0;font-size:0.78rem;">（編集中パネル・ノイズ除く）</span></h2>
+          <div class="bars" id="bars"></div>
+          <div class="snr">
+            <span class="k">SNR（白質）</span>
+            <span class="v" id="snr-val">∞</span>
+            <span class="sub">= 白質信号 ÷ ノイズσ</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 解説 ── -->
+    <section class="explain">
+      <div class="panel">
+        <h2>信号方程式（このツールが毎ピクセルで計算しているもの）</h2>
+        <p>各ピクセルは組織ラベルを持ち、その T1・T2・T2*・プロトン密度(PD) から下式で信号強度を求めています。</p>
+        <div class="eq"><b>Spin Echo：</b> S = PD · (1 − e<sup>−TR/T1</sup>) · e<sup>−TE/T2</sup></div>
+        <div class="eq"><b>Inversion Recovery：</b> S = PD · |1 − 2·e<sup>−TI/T1</sup> + e<sup>−TR/T1</sup>| · e<sup>−TE/T2</sup></div>
+        <div class="eq"><b>Gradient Echo（spoiled）：</b> S = PD · sinα · (1 − E1) / (1 − cosα · E1) · e<sup>−TE/T2*</sup>　（E1 = e<sup>−TR/T1</sup>, α = FA）</div>
+        <p>TR は縦磁化の回復（T1コントラスト）を、TE は横磁化の減衰（T2/T2*コントラスト）を支配します。反転回復では <code>TI ≈ ln2 × T1</code> で特定組織の信号がゼロになり、これがFLAIR（CSF抑制）・STIR（脂肪抑制）の原理です。</p>
+      </div>
+
+      <div class="panel">
+        <h2>組織の緩和値（1.5T の教育用代表値）</h2>
+        <table class="tissue-table">
+          <thead><tr><th>組織</th><th>T1 (ms)</th><th>T2 (ms)</th><th>T2* (ms)</th><th>PD</th></tr></thead>
+          <tbody id="tissue-tbody"></tbody>
+        </table>
+        <div class="disclaimer">数値は1.5T付近の文献レンジを丸めた<b>教育用の近似値</b>です。装置・被検者・撮像条件により実際の値は変動します。定量診断や装置QAの根拠ではなく、コントラスト形成の理屈を学ぶためのモデルとしてご利用ください。ファントムは実解剖ではなく<b>模式図</b>です。</div>
+      </div>
+
+      <div class="panel">
+        <h2>よくある質問</h2>
+        <details><summary>なぜT1強調でCSFは黒く、T2強調で白い？</summary>
+          <p>T1強調（短TR・短TE）では、T1の長いCSFが撮像間隔中に縦磁化を十分回復できず低信号になります。T2強調（長TR・長TE）では、T2の長いCSFが横磁化を長く保つため高信号になります。TE・TRスライダーを動かし、組織別の信号バーと合わせて確認してみてください。</p>
+        </details>
+        <details><summary>FLAIR・STIRのTIはどう決まる？</summary>
+          <p>反転回復で信号がゼロになるTIは概ね <code>TI ≈ ln2 × T1 ≈ 0.693 × T1</code>。FLAIRはCSFのT1、STIRは脂肪のT1からこの式で算出したTIをプリセットしています。TIをそこから動かすと抑制が崩れる様子も観察できます。なお反転パルスは各TRの先頭に置かれるため <code>TI &lt; TR</code> が前提で、本ツールもTIの上限をTRに連動させています。</p>
+        </details>
+        <details><summary>ノイズ／SNRは何をしている？</summary>
+          <p>各ピクセルの信号にガウス雑音を加え、MRIの実振幅画像に合わせてRician分布（<code>√((S+n₁)²+n₂²)</code>）で表示しています。SNRは「白質の信号 ÷ ノイズσ」で概算表示。低信号領域ではノイズフロアが持ち上がる様子も再現されます。</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <script>
+  (function () {
+    "use strict";
+
+    // ============================================================
+    // 組織テーブル（1.5T 教育用の代表緩和値。文献レンジの丸め近似）
+    //   T1,T2,T2* は ms、PD は相対プロトン密度（CSF=1.0基準）
+    // ============================================================
+    var TISSUES = {
+      air:    { name: "空気/背景", T1: 1,    T2: 0.1, T2s: 0.1, PD: 0.00, show: false },
+      fat:    { name: "脂肪",     T1: 260,  T2: 80,  T2s: 40,  PD: 0.90, show: true },
+      bone:   { name: "皮質骨",   T1: 250,  T2: 1,   T2s: 1,   PD: 0.05, show: false },
+      csf:    { name: "CSF",      T1: 3500, T2: 1500,T2s: 400, PD: 1.00, show: true },
+      gm:     { name: "灰白質",   T1: 950,  T2: 100, T2s: 60,  PD: 0.80, show: true },
+      wm:     { name: "白質",     T1: 600,  T2: 80,  T2s: 50,  PD: 0.70, show: true },
+      lesion: { name: "白質病変", T1: 1200, T2: 150, T2s: 90,  PD: 0.75, show: true }
+    };
+    // ラベル索引（Uint8Array に格納する順）
+    var LABELS = ["air", "fat", "bone", "csf", "gm", "wm", "lesion"];
+    var LABEL_IDX = {}; LABELS.forEach(function (k, i) { LABEL_IDX[k] = i; });
+
+    // ============================================================
+    // 信号方程式（純関数）：組織物性 t と パラメータ p から信号を返す
+    // ============================================================
+    var SEQ = {
+      SE: function (t, p) {
+        return t.PD * (1 - Math.exp(-p.TR / t.T1)) * Math.exp(-p.TE / t.T2);
+      },
+      IR: function (t, p) {
+        var mz = 1 - 2 * Math.exp(-p.TI / t.T1) + Math.exp(-p.TR / t.T1);
+        return t.PD * Math.abs(mz) * Math.exp(-p.TE / t.T2);
+      },
+      GRE: function (t, p) {
+        var a = p.FA * Math.PI / 180;
+        var E1 = Math.exp(-p.TR / t.T1);
+        var denom = 1 - Math.cos(a) * E1;
+        if (denom <= 1e-6) denom = 1e-6;
+        return t.PD * Math.sin(a) * (1 - E1) / denom * Math.exp(-p.TE / t.T2s);
+      }
+    };
+
+    // 表示スケールの基準：完全緩和・減衰なしの最大信号（max PD = 1.0）
+    var S_REF = 1.0;
+
+    // ============================================================
+    // ファントム生成（模式脳・軸位）：ピクセルごとにラベルを解析的に決定
+    //   antialias を避けるため各ピクセルは厳密に1ラベル
+    // ============================================================
+    var W = 240, H = 240;
+    function buildPhantom(showLesion) {
+      var label = new Uint8Array(W * H);
+      var cx = W / 2, cy = H / 2;
+      var rxHead = 100, ryHead = 112;       // 頭部外形
+      var fatThk = 6, boneThk = 6, csfThk = 5; // 各リング厚
+      var rxBrain = rxHead - fatThk - boneThk - csfThk; // ≈83
+      var ryBrain = ryHead - fatThk - boneThk - csfThk; // ≈95
+      var cortexThk = 12;                    // 皮質(GM)厚
+
+      for (var y = 0; y < H; y++) {
+        for (var x = 0; x < W; x++) {
+          var dx = x - cx, dy = y - cy;
+          var theta = Math.atan2(dy, dx);
+          // 脳表の脳回・脳溝を作る波打ち（角度依存の半径変調）
+          var wobble = 1 + 0.05 * Math.sin(11 * theta) + 0.025 * Math.sin(23 * theta + 1.3);
+          var idx = LABEL_IDX.air;
+
+          // 頭部外形（頭皮脂肪 → 骨 → CSF → 脳）を外側から判定
+          var eHead = norm2(dx, dy, rxHead, ryHead);
+          if (eHead <= 1) {
+            var eFat  = norm2(dx, dy, rxHead - fatThk, ryHead - fatThk);
+            var eBone = norm2(dx, dy, rxHead - fatThk - boneThk, ryHead - fatThk - boneThk);
+            var eCsf  = norm2(dx, dy, rxHead - fatThk - boneThk - csfThk, ryHead - fatThk - boneThk - csfThk);
+            if (eFat > 1)      idx = LABEL_IDX.fat;
+            else if (eBone > 1) idx = LABEL_IDX.bone;
+            else if (eCsf > 1)  idx = LABEL_IDX.csf;
+            else {
+              // 脳実質：脳回に沿って GM/CSF/WM を決める
+              var rxB = rxBrain * wobble, ryB = ryBrain * wobble;
+              var eBrain = norm2(dx, dy, rxB, ryB);
+              if (eBrain > 1)      idx = LABEL_IDX.csf;                 // 脳溝(表面のCSF)
+              else if (eBrain > sqRatio(rxB, ryB, cortexThk)) idx = LABEL_IDX.gm; // 皮質リボン
+              else idx = LABEL_IDX.wm;                                 // 白質
+            }
+          }
+          label[y * W + x] = idx;
+        }
+      }
+
+      // 側脳室（CSF）：中心付近に左右の三日月＋前後角の模式
+      stampEllipse(label, cx - 15, cy - 4, 12, 26, -0.28, LABEL_IDX.csf);
+      stampEllipse(label, cx + 15, cy - 4, 12, 26,  0.28, LABEL_IDX.csf);
+      // 第三脳室の名残（正中の細いCSF）
+      stampEllipse(label, cx, cy + 2, 3, 16, 0, LABEL_IDX.csf);
+      // 深部灰白質（視床/基底核の模式）：脳室外側の GM
+      stampEllipse(label, cx - 30, cy - 2, 12, 16, -0.2, LABEL_IDX.gm);
+      stampEllipse(label, cx + 30, cy - 2, 12, 16,  0.2, LABEL_IDX.gm);
+
+      // 白質病変（任意）：右半卵円中心あたりの小病変
+      if (showLesion) {
+        stampEllipse(label, cx + 40, cy - 30, 9, 7, 0.3, LABEL_IDX.lesion);
+        stampEllipse(label, cx - 34, cy + 26, 6, 5, 0, LABEL_IDX.lesion);
+      }
+      return { w: W, h: H, label: label };
+    }
+
+    function norm2(dx, dy, rx, ry) { return (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry); }
+    // 皮質リボンの内側境界（正規化楕円座標での閾値）を厚みから概算（角度非依存）
+    function sqRatio(rx, ry, thk) {
+      var rin = 1 - thk / ((rx + ry) / 2);
+      return rin * rin;
+    }
+    // 楕円領域を回転付きで label に上書き（脳室・深部灰白質のスタンプ用）
+    function stampEllipse(label, ex, ey, rx, ry, rot, idx) {
+      var c = Math.cos(rot), s = Math.sin(rot);
+      var maxR = Math.max(rx, ry) + 1;
+      for (var y = Math.floor(ey - maxR); y <= ey + maxR; y++) {
+        if (y < 0 || y >= H) continue;
+        for (var x = Math.floor(ex - maxR); x <= ex + maxR; x++) {
+          if (x < 0 || x >= W) continue;
+          var dx = x - ex, dy = y - ey;
+          var u = dx * c + dy * s, v = -dx * s + dy * c;
+          // 頭蓋内（脳実質・CSF・深部灰白質）にのみスタンプし、骨や脂肪は侵さない
+          var cur = label[y * W + x];
+          if (cur === LABEL_IDX.air || cur === LABEL_IDX.bone || cur === LABEL_IDX.fat) continue;
+          if ((u * u) / (rx * rx) + (v * v) / (ry * ry) <= 1) label[y * W + x] = idx;
+        }
+      }
+    }
+
+    // ============================================================
+    // ノイズ場（標準正規）を一度だけ生成し、σでスケールして使う
+    // ============================================================
+    var noiseZ1 = new Float32Array(W * H), noiseZ2 = new Float32Array(W * H);
+    (function initNoise() {
+      for (var i = 0; i < W * H; i++) {
+        noiseZ1[i] = gauss(); noiseZ2[i] = gauss();
+      }
+    })();
+    function gauss() {
+      var u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+
+    // ============================================================
+    // 画像生成：ファントム＋シーケンス＋パラメータ → ImageData
+    // ============================================================
+    function computeImage(ctx, img, phantom, seqKey, params, gain, sigma) {
+      var data = img.data, lab = phantom.label, seqFn = SEQ[seqKey];
+      // ラベルごとの信号を先に計算（高速化）
+      var sig = new Float64Array(LABELS.length);
+      for (var l = 0; l < LABELS.length; l++) {
+        var t = TISSUES[LABELS[l]];
+        sig[l] = (t.PD <= 0) ? 0 : seqFn(t, params);
+      }
+      for (var i = 0; i < lab.length; i++) {
+        var S = sig[lab[i]] / S_REF;
+        var mag;
+        if (sigma > 0) {
+          var a = S + sigma * noiseZ1[i], b = sigma * noiseZ2[i];
+          mag = Math.sqrt(a * a + b * b);
+        } else {
+          mag = S;
+        }
+        var px = mag * gain;
+        px = px < 0 ? 0 : px > 1 ? 1 : px;   // 表示域[0,1]へクランプ（防御的）
+        var g = (px * 255) | 0;
+        var o = i * 4;
+        data[o] = g; data[o + 1] = g; data[o + 2] = g; data[o + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+
+    // ============================================================
+    // 重みづけの自動判定（近似）：バッジ表示用
+    // ============================================================
+    function classifyWeighting(seqKey, p) {
+      if (seqKey === "SE") {
+        var shortTR = p.TR < 750, longTR = p.TR >= 1500;
+        var shortTE = p.TE < 40, longTE = p.TE >= 60;
+        if (shortTR && shortTE) return { w: "T1強調", hint: "TR短·TE短" };
+        if (longTR && longTE)   return { w: "T2強調", hint: "TR長·TE長" };
+        if (longTR && shortTE)  return { w: "PD強調", hint: "TR長·TE短" };
+        return { w: "中間", hint: "T1/T2/PDの中間" };
+      }
+      if (seqKey === "IR") {
+        // FLAIR/STIR の判定：TI が CSF/脂肪の null 近傍か
+        var tiCsf = Math.LN2 * TISSUES.csf.T1, tiFat = Math.LN2 * TISSUES.fat.T1;
+        if (Math.abs(p.TI - tiCsf) < 400 && p.TE >= 60) return { w: "FLAIR", hint: "CSF抑制(T2寄り)" };
+        if (Math.abs(p.TI - tiFat) < 120) return { w: "STIR", hint: "脂肪抑制" };
+        if (p.TE >= 60) return { w: "T2強調(IR)", hint: "TE長" };
+        return { w: "T1強調(IR)", hint: "TE短" };
+      }
+      // GRE
+      if (p.FA >= 50 && p.TE < 10) return { w: "T1強調", hint: "高FA·TE短" };
+      if (p.TE >= 15) return { w: "T2*強調", hint: "TE長" };
+      return { w: "中間(GRE)", hint: "" };
+    }
+
+    // 組織別信号（バー用・ノイズ無し）
+    function tissueSignals(seqKey, p) {
+      var out = [];
+      var order = ["csf", "gm", "wm", "fat"];
+      if (state.lesion) order.push("lesion");   // 病変は両パネル共通のモデル
+      order.forEach(function (k) {
+        var t = TISSUES[k];
+        out.push({ name: t.name, S: SEQ[seqKey](t, p) / S_REF });
+      });
+      return out;
+    }
+
+    // ============================================================
+    // 状態
+    // ============================================================
+    var defaults = {
+      A: { seq: "SE", TE: 15, TR: 500, TI: 2400, FA: 20 },
+      B: { seq: "SE", TE: 100, TR: 4000, TI: 2400, FA: 20 }
+    };
+    var state = {
+      active: "A",
+      compare: false,
+      lesion: false,
+      noise: 0,
+      gain: 1.4,
+      A: Object.assign({}, defaults.A),
+      B: Object.assign({}, defaults.B)
+    };
+
+    var phantom = buildPhantom(false);
+    var ctxA = document.getElementById("canvas-A").getContext("2d");
+    var ctxB = document.getElementById("canvas-B").getContext("2d");
+    // ImageData は毎フレーム確保せず1枚ずつ使い回す（GC圧の低減）
+    var imgA = ctxA.createImageData(W, H);
+    var imgB = ctxB.createImageData(W, H);
+
+    var SEQ_HINTS = {
+      SE: "Spin Echo：TE・TRでT1/T2/PD強調が連続的に変化",
+      IR: "Inversion Recovery：TIで特定組織を抑制（FLAIR/STIR）",
+      GRE: "Gradient Echo：フリップ角とT2*が効くグラディエントエコー"
+    };
+    // シーケンスごとに表示するスライダー
+    var SEQ_CTRLS = { SE: ["TE", "TR"], IR: ["TE", "TR", "TI"], GRE: ["TE", "TR", "FA"] };
+
+    // ============================================================
+    // 描画（rAFでスロットル）
+    // ============================================================
+    var pending = false;
+    function scheduleRender() {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(function () { pending = false; render(); });
+    }
+
+    function paramsOf(panel) { var p = state[panel]; return { TE: p.TE, TR: p.TR, TI: p.TI, FA: p.FA }; }
+    function sigmaFromNoise(n) { return (n / 100) * 0.12; }
+
+    function render() {
+      var sigma = sigmaFromNoise(state.noise);
+      computeImage(ctxA, imgA, phantom, state.A.seq, paramsOf("A"), state.gain, sigma);
+      updateCaption("A");
+      if (state.compare) {
+        computeImage(ctxB, imgB, phantom, state.B.seq, paramsOf("B"), state.gain, sigma);
+        updateCaption("B");
+      }
+      updateBars();
+      updateSNR(sigma);
+    }
+
+    function updateCaption(panel) {
+      var p = state[panel];
+      var cw = classifyWeighting(p.seq, paramsOf(panel));
+      document.getElementById("badge-" + panel).textContent = cw.w;
+      var parts = [p.seq, "TR " + p.TR, "TE " + p.TE + " ms"];
+      if (p.seq === "IR") parts.splice(1, 0, "TI " + p.TI);
+      if (p.seq === "GRE") parts.push("FA " + p.FA + "°");
+      document.getElementById("cond-" + panel).textContent = parts.join(" / ");
+      document.getElementById("canvas-" + panel)
+        .setAttribute("aria-label", "画像" + panel + " " + cw.w + " " + parts.join(" / "));
+    }
+
+    // バー行は一度だけ生成し、以降は幅・数値のみ更新（transitionを効かせGC圧も低減）
+    var barsEl = document.getElementById("bars");
+    var barCache = null;
+    function updateBars() {
+      var panel = state.active, p = state[panel];
+      var rows = tissueSignals(p.seq, paramsOf(panel));
+      if (!barCache || barCache.length !== rows.length) {
+        barsEl.innerHTML = "";
+        barCache = rows.map(function () {
+          var row = document.createElement("div"); row.className = "bar-row";
+          var name = document.createElement("span"); name.className = "t";
+          var track = document.createElement("span"); track.className = "bar-track";
+          var fill = document.createElement("span"); fill.className = "bar-fill";
+          var val = document.createElement("span"); val.className = "v";
+          track.appendChild(fill);
+          row.appendChild(name); row.appendChild(track); row.appendChild(val);
+          barsEl.appendChild(row);
+          return { name: name, fill: fill, val: val };
+        });
+      }
+      rows.forEach(function (r, i) {
+        var c = barCache[i];
+        c.name.textContent = r.name;
+        c.fill.style.width = (Math.max(0, Math.min(1, r.S * state.gain)) * 100).toFixed(0) + "%";
+        c.val.textContent = r.S.toFixed(2);
+      });
+    }
+
+    function updateSNR(sigma) {
+      var panel = state.active, p = state[panel];
+      var wm = SEQ[p.seq](TISSUES.wm, paramsOf(panel)) / S_REF;
+      var el = document.getElementById("snr-val");
+      if (sigma <= 0) { el.textContent = "∞"; }
+      else { el.textContent = (wm / sigma).toFixed(1); }
+    }
+
+    // ============================================================
+    // UI 配線
+    // ============================================================
+    function activeParams() { return state[state.active]; }
+
+    // シーケンスタブ（active/hint/aria-selected は syncControlVisibility に一本化）
+    document.querySelectorAll(".tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        activeParams().seq = tab.getAttribute("data-seq");
+        syncControlVisibility();
+        syncSliders();
+        scheduleRender();
+      });
+      tab.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tab.click(); }
+      });
+    });
+
+    function syncControlVisibility() {
+      var seq = activeParams().seq;
+      var showSet = SEQ_CTRLS[seq];
+      ["TE", "TR", "TI", "FA"].forEach(function (id) {
+        var ctrl = document.querySelector('.ctrl[data-for="' + id + '"]');
+        if (showSet.indexOf(id) >= 0) ctrl.classList.remove("hidden");
+        else ctrl.classList.add("hidden");
+      });
+      // タブの見た目・ariaを現在のactiveのseqに合わせる
+      document.querySelectorAll(".tab").forEach(function (t) {
+        var on = t.getAttribute("data-seq") === seq;
+        t.classList.toggle("active", on);
+        t.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      document.getElementById("seq-hint").textContent = SEQ_HINTS[seq];
+    }
+
+    // スライダー→state
+    ["TE", "TR", "TI", "FA"].forEach(function (id) {
+      var el = document.getElementById(id);
+      el.addEventListener("input", function () {
+        activeParams()[id] = parseFloat(el.value);
+        document.getElementById(id + "-val").textContent = el.value;
+        if (id === "TR") enforceTILimit();   // TIがTRを超えないよう再クランプ
+        scheduleRender();
+      });
+    });
+    document.getElementById("NOISE").addEventListener("input", function () {
+      state.noise = parseFloat(this.value);
+      document.getElementById("NOISE-val").textContent = this.value;
+      scheduleRender();
+    });
+    document.getElementById("GAIN").addEventListener("input", function () {
+      state.gain = parseFloat(this.value);
+      document.getElementById("GAIN-val").textContent = parseFloat(this.value).toFixed(1);
+      scheduleRender();
+    });
+
+    // 値をスライダーの min/max に収める（プリセット等が範囲外でもUIと state を一致させる）
+    function clampToSlider(el, v) {
+      var min = parseFloat(el.min), max = parseFloat(el.max);
+      return Math.min(max, Math.max(min, v));
+    }
+    // IRのTIは物理的にTRを超えられない。スライダー上限をTR連動でクランプ
+    function enforceTILimit() {
+      var p = activeParams();
+      var tiEl = document.getElementById("TI");
+      tiEl.max = Math.min(3000, p.TR);
+      var v = clampToSlider(tiEl, p.TI);
+      p.TI = v; tiEl.value = v;
+      document.getElementById("TI-val").textContent = v;
+    }
+
+    // state→スライダー表示（プリセット/パネル切替時）
+    function syncSliders() {
+      var p = activeParams();
+      ["TE", "TR", "FA"].forEach(function (id) {
+        var el = document.getElementById(id);
+        var v = clampToSlider(el, p[id]);
+        p[id] = v; el.value = v;
+        document.getElementById(id + "-val").textContent = v;
+      });
+      enforceTILimit();   // TR確定後にTIをクランプ
+    }
+
+    // プリセット
+    var PRESETS = {
+      T1:    { seq: "SE",  TE: 15,  TR: 500 },
+      PD:    { seq: "SE",  TE: 15,  TR: 2500 },
+      T2:    { seq: "SE",  TE: 100, TR: 4000 },
+      FLAIR: { seq: "IR",  TE: 100, TR: 9000, TI: Math.round(Math.LN2 * TISSUES.csf.T1) },
+      STIR:  { seq: "IR",  TE: 40,  TR: 4000, TI: Math.round(Math.LN2 * TISSUES.fat.T1) },
+      GRE:   { seq: "GRE", TE: 15,  TR: 400,  FA: 20 }
+    };
+    document.querySelectorAll(".preset[data-preset]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var pre = PRESETS[btn.getAttribute("data-preset")];
+        var tgt = activeParams();
+        Object.keys(pre).forEach(function (k) { tgt[k] = pre[k]; });
+        syncControlVisibility();
+        syncSliders();
+        scheduleRender();
+      });
+    });
+
+    // 病変トグル → ファントム再生成
+    document.getElementById("lesion").addEventListener("change", function () {
+      state.lesion = this.checked;
+      phantom = buildPhantom(state.lesion);
+      scheduleRender();
+    });
+
+    // A/B比較トグル
+    document.getElementById("compare").addEventListener("change", function () {
+      state.compare = this.checked;
+      document.getElementById("stage").classList.toggle("compare", state.compare);
+      document.getElementById("card-B").style.display = state.compare ? "" : "none";
+      document.getElementById("ab-seg").classList.toggle("hidden", !state.compare);
+      document.getElementById("copy-line").style.display = state.compare ? "flex" : "none";
+      if (!state.compare) { state.active = "A"; setSegActive("A"); syncControlVisibility(); syncSliders(); }
+      scheduleRender();
+    });
+
+    // 編集対象 A/B
+    document.querySelectorAll("#ab-seg button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        state.active = b.getAttribute("data-panel");
+        setSegActive(state.active);
+        syncControlVisibility();
+        syncSliders();
+        updateBars();
+        var sigma = sigmaFromNoise(state.noise); updateSNR(sigma);
+      });
+    });
+    function setSegActive(panel) {
+      document.querySelectorAll("#ab-seg button").forEach(function (b) {
+        b.classList.toggle("active", b.getAttribute("data-panel") === panel);
+      });
+    }
+    document.getElementById("copy-ab").addEventListener("click", function () {
+      state.B = Object.assign({}, state.A);
+      if (state.active === "B") { syncControlVisibility(); syncSliders(); }
+      scheduleRender();
+    });
+
+    // 組織テーブルの描画
+    (function fillTissueTable() {
+      var tb = document.getElementById("tissue-tbody");
+      ["fat", "bone", "csf", "gm", "wm", "lesion"].forEach(function (k) {
+        var t = TISSUES[k];
+        var tr = document.createElement("tr");
+        var t2s = (k === "bone") ? "~1" : t.T2s;
+        var t2 = (k === "bone") ? "~1" : t.T2;
+        tr.innerHTML = "<td>" + t.name + "</td><td>" + t.T1 + "</td><td>" + t2 + "</td><td>" + t2s + "</td><td>" + t.PD.toFixed(2) + "</td>";
+        tb.appendChild(tr);
+      });
+    })();
+
+    // 初期化
+    syncControlVisibility();
+    syncSliders();
+    render();
+  })();
+  </script>
+
+  <script src="/assets/site.js" defer></script>
+</body>
+</html>
