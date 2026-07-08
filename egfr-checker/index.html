@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eGFR計算・造影検査 腎機能チェッカー｜CT(ヨード)・MRI(ガドリニウム)対応 | RT-Lab</title>
+  <meta name="description" content="血清クレアチニン・年齢・性別からeGFR（日本人向けGFR推算式）を即計算し、CKD重症度区分（G1〜G5）を判定。造影CT（ヨード造影剤・PC-AKI/メトホルミン休薬）とMRI（ガドリニウム造影剤・NSF）のガイドライン上のeGFR閾値の目安を参照できます。ブラウザ完結・無料・データ外部送信なし・保存なし。">
+  <meta property="og:title" content="eGFR計算・造影検査 腎機能チェッカー｜CT・MRI対応 | RT-Lab">
+  <meta property="og:description" content="血清Cr・年齢・性別からeGFRを計算しCKD区分を判定。造影CT(ヨード)・MRI(ガドリニウム)のガイドライン閾値の目安を参照。ブラウザ完結・保存なし。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rt-ai-lab.com/egfr-checker/">
+  <link rel="canonical" href="https://rt-ai-lab.com/egfr-checker/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "造影検査 腎機能チェッカー（eGFR計算）",
+    "url": "https://rt-ai-lab.com/egfr-checker/",
+    "description": "血清クレアチニン・年齢・性別からeGFR（日本人向けGFR推算式）を計算し、CKD重症度区分と、造影CT（ヨード造影剤）・MRI（ガドリニウム造影剤）のガイドライン上のeGFR閾値の目安を参照できる腎機能チェッカー。",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
+      { "@type": "ListItem", "position": 2, "name": "造影検査 腎機能チェッカー（eGFR計算）", "item": "https://rt-ai-lab.com/egfr-checker/" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "eGFRの計算式（日本人向け）は？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "日本腎臓学会の日本人向けGFR推算式では、eGFR[mL/min/1.73m²] = 194 × 血清クレアチニン[mg/dL]^(−1.094) × 年齢[歳]^(−0.287) で計算し、女性はこれに0.739を掛けます。酵素法で測定した血清クレアチニン値を用います。例：60歳男性・Cr 1.00mg/dLでは約60mL/min/1.73m²です。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "造影CT（ヨード造影剤）でeGFRはいくつから注意が必要ですか？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "「腎障害患者におけるヨード造影剤使用に関するガイドライン2018」では、造影剤の経静脈投与において、造影後急性腎障害（PC-AKI／CIN）発症について十分な説明と適切な予防策（輸液など）を講じる対象を eGFR 30mL/min/1.73m²未満としています。経動脈投与ではより高いeGFRでも注意が必要とされます。最終的な適応は医師が判断します。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "メトホルミン（ビグアナイド系糖尿病薬）は造影剤で休薬が必要ですか？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ヨード造影剤とビグアナイド系糖尿病薬（メトホルミン等）の併用では、腎機能低下時に乳酸アシドーシスのリスクがあるため一時休薬などの処置が推奨されています。休薬の要否・期間は腎機能や投与経路により異なり、各薬剤の添付文書と医師・薬剤師の指示に従ってください。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "MRI（ガドリニウム造影剤）でeGFRはいくつから注意が必要ですか？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "「腎障害患者におけるガドリニウム造影剤使用に関するガイドライン（第3版・2024年）」では、eGFR 30mL/min/1.73m²未満は腎性全身性線維症（NSF）を考慮し、可能な限りガドリニウム造影剤の使用を避け他の検査法での代替が望ましいとされます。代替困難な場合はリスクを考慮し、キレート安定性の高い環状型（マクロ環状）製剤を注意深く使用します。eGFR 30以上60未満では利益と危険性を慎重に検討します。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "このツールで使うeGFRは診断に使えますか？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "本ツールのeGFRは血清クレアチニンによる推算値であり、参考値です。成人（18歳以上）を対象とし、小児やシスタチンCによる推算には対応していません。CKDの診断・造影剤使用の可否は、蛋白尿・原疾患・全身状態を含めて医師が総合的に判断します。"
+        }
+      }
+    ]
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #1a56db;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.06em; }
+    .logo a { color: #fff; text-decoration: none; }
+    .tool-name-header {
+      font-size: 0.95rem;
+      opacity: 0.88;
+      padding-left: 16px;
+      border-left: 2px solid rgba(255,255,255,0.35);
+    }
+
+    /* ── Layout ── */
+    main { max-width: 900px; margin: 0 auto; padding: 24px 16px 40px; }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    h1.card-title, .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a56db;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    h1.card-title { font-size: 1.15rem; line-height: 1.5; }
+    .lead { font-size: 0.9rem; color: #4a5568; margin-top: -6px; }
+
+    /* ── Form controls ── */
+    .form-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 8px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 0.8rem; font-weight: 600; color: #4a5568; }
+    .form-group input, .form-group select {
+      padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 5px;
+      font-size: 0.9rem; width: 140px; color: #2d3748; background: #fff;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none; border-color: #1a56db; box-shadow: 0 0 0 2px rgba(26,86,219,0.15);
+    }
+    .form-hint { font-size: 0.72rem; color: #718096; margin-top: 2px; max-width: 240px; }
+    .section-label {
+      font-size: 0.78rem; font-weight: 700; color: #718096; letter-spacing: 0.04em;
+      margin: 4px 0 10px; text-transform: uppercase;
+    }
+    .optional-tag {
+      font-size: 0.66rem; font-weight: 700; color: #718096; background: #edf2f7;
+      border-radius: 999px; padding: 2px 8px; margin-left: 6px;
+    }
+
+    .radio-group { display: flex; gap: 10px; flex-wrap: wrap; }
+    .radio-pill {
+      font-family: inherit; line-height: 1.4;
+      padding: 8px 20px; border: 2px solid #e2e8f0; border-radius: 6px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; color: #2d3748; background: #fff;
+      user-select: none;
+    }
+    .radio-pill:focus-visible, .tab-btn:focus-visible {
+      outline: 2px solid #1a56db; outline-offset: 2px;
+    }
+    .radio-pill.active { background: #1a56db; color: #fff; border-color: #1a56db; }
+
+    /* ── Result: eGFR panel ── */
+    .egfr-panel {
+      display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+      background: linear-gradient(160deg, #1a202c, #232b3b);
+      border-radius: 14px; padding: 22px 24px; color: #e2e8f0;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 4px 14px rgba(0,0,0,0.25);
+    }
+    .egfr-main { display: flex; align-items: baseline; gap: 10px; }
+    .egfr-main .e-label { font-size: 0.7rem; font-weight: 700; color: #90cdf4; letter-spacing: 0.1em; }
+    .egfr-value {
+      font-size: 3rem; font-weight: 800; color: #fff; line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .egfr-unit { font-size: 0.78rem; color: #a0aec0; font-weight: 600; }
+    .egfr-abs { font-size: 0.78rem; color: #a0aec0; margin-top: 8px; line-height: 1.6; }
+    .egfr-abs strong { color: #e2e8f0; }
+
+    .stage-badge {
+      margin-left: auto; text-align: center; border-radius: 10px;
+      padding: 12px 18px; min-width: 130px;
+    }
+    .stage-badge .s-code { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
+    .stage-badge .s-name { font-size: 0.72rem; font-weight: 700; margin-top: 2px; }
+    .stage-g1  { background: #276749; color: #fff; }
+    .stage-g2  { background: #38a169; color: #fff; }
+    .stage-g3a { background: #d69e2e; color: #1a202c; }
+    .stage-g3b { background: #dd6b20; color: #fff; }
+    .stage-g4  { background: #c53030; color: #fff; }
+    .stage-g5  { background: #822727; color: #fff; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 8px; margin: 20px 0 16px; flex-wrap: wrap; }
+    .tab-btn {
+      font-family: inherit; line-height: 1.4;
+      padding: 10px 22px; border: 2px solid #e2e8f0; border-radius: 8px;
+      background: #fff; font-size: 0.9rem; font-weight: 700; cursor: pointer; color: #2d3748;
+    }
+    .tab-btn.active { background: #1a56db; color: #fff; border-color: #1a56db; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Risk band ── */
+    .risk-band {
+      border-radius: 10px; padding: 16px 18px; margin-bottom: 14px;
+      border-left: 6px solid #718096; background: #f7fafc;
+    }
+    .risk-band.risk-low   { border-left-color: #38a169; background: #f0fff4; }
+    .risk-band.risk-mid   { border-left-color: #d69e2e; background: #fffdf5; }
+    .risk-band.risk-high  { border-left-color: #c53030; background: #fff5f5; }
+    .risk-band .r-title { font-size: 1rem; font-weight: 800; margin-bottom: 6px; }
+    .risk-low  .r-title { color: #276749; }
+    .risk-mid  .r-title { color: #b7791f; }
+    .risk-high .r-title { color: #c53030; }
+    .risk-band .r-body { font-size: 0.86rem; color: #4a5568; line-height: 1.8; }
+    .risk-band .r-body strong { color: #2d3748; }
+
+    .note-box {
+      font-size: 0.83rem; color: #4a5568; line-height: 1.8;
+      background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+      padding: 12px 16px; margin-bottom: 14px;
+    }
+    .note-box .nb-head { font-weight: 700; color: #2d3748; display: block; margin-bottom: 4px; }
+
+    /* ── Gd dose mini calc ── */
+    .gd-dose {
+      display: flex; gap: 22px; flex-wrap: wrap; align-items: center;
+      background: #1a202c; border-radius: 10px; padding: 16px 18px; color: #e2e8f0;
+      margin-bottom: 14px;
+    }
+    .gd-dose .gd-item { text-align: center; }
+    .gd-dose .gd-label { font-size: 0.66rem; font-weight: 700; color: #a0aec0; letter-spacing: 0.06em; }
+    .gd-dose .gd-value { font-size: 1.8rem; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; line-height: 1.15; }
+    .gd-dose .gd-value small { font-size: 0.7rem; font-weight: 600; color: #a0aec0; margin-left: 2px; }
+    .gd-dose .gd-sep { color: #4a5568; font-size: 1.2rem; }
+
+    .disclaimer-strong {
+      font-size: 0.82rem; color: #742a2a; background: #fff5f5;
+      border: 1px solid #feb2b2; border-radius: 8px; padding: 12px 16px; margin-top: 4px;
+      line-height: 1.8;
+    }
+    .disclaimer-strong strong { color: #c53030; }
+
+    .placeholder-msg { font-size: 0.9rem; color: #a0aec0; text-align: center; padding: 30px 10px; }
+    .input-error { font-size: 0.82rem; font-weight: 700; color: #c53030; margin-top: 8px; }
+
+    /* ── Explain / references ── */
+    .formula {
+      display: inline-block; background: #eef2ff; padding: 8px 14px;
+      border-radius: 6px; margin: 6px 0; font-weight: 700; color: #2d3748;
+    }
+    .explain { line-height: 1.85; font-size: 0.9rem; }
+    .explain p { margin-bottom: 12px; }
+    .explain ul, .explain ol { margin: 0 0 12px 22px; }
+    .stage-table { width: 100%; border-collapse: collapse; margin: 10px 0 14px; font-size: 0.82rem; }
+    .stage-table th, .stage-table td { border: 1px solid #e2e8f0; padding: 7px 10px; text-align: left; }
+    .stage-table th { background: #f7fafc; font-weight: 700; color: #4a5568; }
+
+    .references { font-size: 0.75rem; color: #a0aec0; margin-top: 12px; line-height: 1.9; }
+    .references strong { color: #718096; }
+    .crosslink a { color: #1a56db; font-weight: 600; text-decoration: none; }
+    .crosslink a:hover { text-decoration: underline; }
+    .disclaimer-note {
+      font-size: 0.78rem; color: #718096; background: #fffaf0;
+      border: 1px solid #feebc8; border-radius: 6px; padding: 10px 14px; margin-top: 4px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      background: #2d3748; color: rgba(255,255,255,0.7);
+      text-align: center; padding: 24px 16px; font-size: 0.75rem; line-height: 1.8;
+    }
+    footer a { color: rgba(255,255,255,0.85); text-decoration: none; }
+    footer a:hover { color: #fff; }
+    .footer-disclaimer { max-width: 640px; margin: 10px auto 0; font-size: 0.7rem; opacity: 0.65; }
+
+    @media (max-width: 640px) {
+      .egfr-value { font-size: 2.3rem; }
+      .stage-badge { margin-left: 0; width: 100%; }
+      .egfr-panel { gap: 16px; padding: 16px; }
+      .gd-dose { gap: 14px; justify-content: space-between; }
+    }
+  </style>
+  <link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header>
+  <div class="logo"><a href="/">RT-Lab</a></div>
+  <div class="tool-name-header">造影検査 腎機能チェッカー</div>
+</header>
+
+<main>
+
+  <!-- ===== Hero / h1 ===== -->
+  <div class="card">
+    <h1 class="card-title">eGFR計算・造影検査 腎機能チェッカー｜CT（ヨード）・MRI（ガドリニウム）対応</h1>
+    <p class="lead">血清クレアチニン・年齢・性別から eGFR（日本人向けGFR推算式）を計算し、CKD重症度区分（G1〜G5）を判定します。造影CT（ヨード造影剤）と造影MRI（ガドリニウム造影剤）について、ガイドライン上の eGFR 閾値の<strong>目安</strong>を参照できます。すべてブラウザ内で計算し、入力データは外部に送信せず、保存もしません。</p>
+  </div>
+
+  <!-- ===== Input ===== -->
+  <div class="card">
+    <div class="card-title">🧮 患者情報を入力</div>
+
+    <div class="section-label">必須</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="age">年齢（歳）</label>
+        <input type="number" id="age" min="18" max="120" step="1" placeholder="例: 65" inputmode="numeric">
+        <span class="form-hint">18歳以上の成人が対象です。</span>
+      </div>
+      <div class="form-group">
+        <label id="sexLabel">性別</label>
+        <div class="radio-group" id="sexGroup" role="radiogroup" aria-labelledby="sexLabel">
+          <button type="button" class="radio-pill active" data-sex="male" role="radio" aria-checked="true">男性</button>
+          <button type="button" class="radio-pill" data-sex="female" role="radio" aria-checked="false">女性</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="cr">血清クレアチニン（mg/dL）</label>
+        <input type="number" id="cr" min="0.1" max="20" step="0.01" placeholder="例: 1.05" inputmode="decimal">
+        <span class="form-hint">酵素法の値を入力してください。</span>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:14px;">任意<span class="optional-tag">体表面積の非補正eGFRを併記</span></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="height">身長（cm）</label>
+        <input type="number" id="height" min="100" max="220" step="0.1" placeholder="例: 165" inputmode="decimal">
+      </div>
+      <div class="form-group">
+        <label for="weight">体重（kg）</label>
+        <input type="number" id="weight" min="20" max="200" step="0.1" placeholder="例: 60" inputmode="decimal">
+        <span class="form-hint">Gd造影剤の投与量計算にも使用します。</span>
+      </div>
+    </div>
+    <div id="inputError" class="input-error" style="display:none;" role="alert" aria-live="polite"></div>
+  </div>
+
+  <!-- ===== Result ===== -->
+  <div class="card" id="resultCard">
+    <div class="card-title">📊 判定結果</div>
+
+    <div id="placeholder" class="placeholder-msg">年齢・性別・血清クレアチニンを入力すると、eGFR とガイドライン閾値の目安を表示します。</div>
+
+    <div id="resultBody" style="display:none;">
+      <!-- eGFR panel -->
+      <div class="egfr-panel">
+        <div>
+          <div class="egfr-main">
+            <span class="e-label">eGFR</span>
+            <span class="egfr-value" id="egfrValue">–</span>
+            <span class="egfr-unit">mL/min/1.73m²</span>
+          </div>
+          <div class="egfr-abs" id="egfrAbs" style="display:none;"></div>
+        </div>
+        <div class="stage-badge" id="stageBadge">
+          <div class="s-code" id="stageCode">–</div>
+          <div class="s-name" id="stageName">–</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs" id="tabs" role="tablist">
+        <button type="button" class="tab-btn active" data-tab="ct" role="tab" aria-selected="true" aria-controls="panel-ct">造影CT（ヨード造影剤）</button>
+        <button type="button" class="tab-btn" data-tab="mri" role="tab" aria-selected="false" aria-controls="panel-mri">造影MRI（ガドリニウム造影剤）</button>
+      </div>
+
+      <!-- CT panel -->
+      <div class="tab-panel active" id="panel-ct" role="tabpanel">
+        <div class="risk-band" id="ctRisk">
+          <div class="r-title" id="ctRiskTitle">–</div>
+          <div class="r-body" id="ctRiskBody">–</div>
+        </div>
+        <div class="note-box">
+          <span class="nb-head">💊 メトホルミン（ビグアナイド系糖尿病薬）</span>
+          <span id="ctMetformin">–</span>
+        </div>
+        <div class="disclaimer-strong">
+          <strong>※ 造影剤使用の最終的な適応は医師が判断します。</strong> 本表示は「腎障害患者におけるヨード造影剤使用に関するガイドライン2018」の eGFR 閾値を参照した<strong>目安</strong>であり、実際の可否は投与経路（経静脈／経動脈）・全身状態・検査目的を含めて総合的に決定されます。
+        </div>
+      </div>
+
+      <!-- MRI panel -->
+      <div class="tab-panel" id="panel-mri" role="tabpanel">
+        <div class="risk-band" id="mriRisk">
+          <div class="r-title" id="mriRiskTitle">–</div>
+          <div class="r-body" id="mriRiskBody">–</div>
+        </div>
+
+        <div class="section-label" style="margin-top:4px;">ガドリニウム造影剤 投与量の目安（0.1 mmol/kg）</div>
+        <div id="gdHighRiskNote" class="disclaimer-strong" style="display:none; margin-top:0; margin-bottom:12px;">
+          <strong>※ 高リスク帯（eGFR 30 未満）です。</strong> 投与量の算出より前に、造影剤使用の可否・代替検査の検討が優先されます。
+        </div>
+        <div id="gdDoseWrap">
+          <div class="gd-dose" id="gdDose">
+            <div class="gd-item">
+              <div class="gd-label">投与モル量</div>
+              <div class="gd-value" id="gdMmol">–<small>mmol</small></div>
+            </div>
+            <div class="gd-sep">→</div>
+            <div class="gd-item">
+              <div class="gd-label">0.5 mmol/mL 製剤</div>
+              <div class="gd-value" id="gdVol05">–<small>mL</small></div>
+            </div>
+            <div class="gd-item">
+              <div class="gd-label">1.0 mmol/mL 製剤</div>
+              <div class="gd-value" id="gdVol10">–<small>mL</small></div>
+            </div>
+          </div>
+          <p class="form-hint" style="max-width:none;">標準用量 0.1 mmol/kg で算出。0.5 mmol/mL は多くの環状型・線状型製剤、1.0 mmol/mL は高濃度製剤（ガドブトロール等）に相当します。用量は製剤・適応により異なります。</p>
+        </div>
+        <div id="gdDoseNeedWeight" class="note-box" style="display:none;">体重（20〜200kg）を入力すると、ガドリニウム造影剤の投与量（mL）を表示します。</div>
+
+        <div class="note-box" style="margin-top:14px;">
+          <span class="nb-head">🧪 ガドリニウム造影剤の分類（NSFリスク）</span>
+          残留しやすくキレート安定性が低いほどNSFリスクが高いとされ、<strong>環状型（マクロ環状：ガドテリドール・ガドテル酸メグルミン・ガドブトロール等）</strong>は<strong>線状型</strong>より安定性が高くリスクが低いと考えられています。安定性の低い一部の線状型製剤は日本では販売中止となっています。腎機能低下時は環状型の選択が推奨されます。
+        </div>
+
+        <div class="disclaimer-strong">
+          <strong>※ 造影剤使用の最終的な適応・製剤選択は医師が判断します。</strong> 本表示は「腎障害患者におけるガドリニウム造影剤使用に関するガイドライン（第3版・2024年）」の eGFR 閾値を参照した<strong>目安</strong>です。急性腎障害（AKI）・透析患者では別途の配慮が必要です。
+        </div>
+      </div>
+
+      <p class="crosslink" style="margin-top:16px;">▶ 造影剤の投与量・注入速度の計算は <a href="/contrast-quick/">造影剤クイック計算ツール</a> をご利用ください。</p>
+    </div>
+  </div>
+
+  <!-- ===== Explain ===== -->
+  <div class="card">
+    <div class="card-title">解説</div>
+    <div class="explain">
+      <p><strong>eGFR（推算糸球体濾過量）の計算式（日本人向け）：</strong></p>
+      <p class="formula">eGFR[mL/min/1.73m²] = 194 × Cr<sup>−1.094</sup> × 年齢<sup>−0.287</sup>（女性は × 0.739）</p>
+      <p>血清クレアチニン（Cr）は酵素法の値を用います。この式は 18歳以上の成人を対象とした推算式で、体表面積 1.73m² に標準化した値です。個々の患者の実際の GFR（mL/min）に近づけたい場合は、体表面積（BSA）で非補正した値も参考にします（本ツールでは身長・体重の入力時に併記）。</p>
+
+      <p><strong>CKD 重症度分類（GFR区分）：</strong></p>
+      <table class="stage-table">
+        <thead><tr><th>区分</th><th>eGFR（mL/min/1.73m²）</th><th>腎機能</th></tr></thead>
+        <tbody>
+          <tr><td>G1</td><td>90 以上</td><td>正常または高値</td></tr>
+          <tr><td>G2</td><td>60〜89</td><td>正常または軽度低下</td></tr>
+          <tr><td>G3a</td><td>45〜59</td><td>軽度〜中等度低下</td></tr>
+          <tr><td>G3b</td><td>30〜44</td><td>中等度〜高度低下</td></tr>
+          <tr><td>G4</td><td>15〜29</td><td>高度低下</td></tr>
+          <tr><td>G5</td><td>15 未満</td><td>末期腎不全（ESKD）</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:0.82rem; color:#718096;">※ CKD の重症度は本来、原疾患（C）・GFR区分（G）・蛋白尿区分（A）を組み合わせた CGA分類で評価します。本ツールは GFR区分のみを表示します。</p>
+
+      <p style="margin-top:14px;"><strong>造影剤とeGFRの閾値（ガイドラインの目安）：</strong></p>
+      <ul>
+        <li><strong>造影CT（ヨード造影剤）：</strong>経静脈投与では eGFR 30 未満で造影後急性腎障害（PC-AKI／CIN）への説明・予防策（輸液など）の対象とされます。経動脈投与ではより高い eGFR でも注意が必要です。ビグアナイド系糖尿病薬（メトホルミン等）は乳酸アシドーシス予防のため一時休薬などの処置が推奨されます。</li>
+        <li><strong>造影MRI（ガドリニウム造影剤）：</strong>eGFR 30 未満では腎性全身性線維症（NSF）を考慮し、可能な限り使用を避け他の検査法での代替が望ましいとされます。代替困難な場合はキレート安定性の高い環状型製剤を注意深く使用します。eGFR 30以上60未満では利益と危険性を慎重に検討します。</li>
+      </ul>
+      <p style="font-size:0.85rem; opacity:0.85;">※ シスタチンCによる eGFR、小児のGFR推算式には対応していません。SGLT2阻害薬など他の休薬対象薬については施設の薬剤部・医師にご確認ください。</p>
+    </div>
+    <p class="crosslink" style="margin-top:8px;">▶ 造影剤量・注入プロトコルの計算は <a href="/contrast-quick/">造影剤クイック計算ツール</a> へ。</p>
+  </div>
+
+  <!-- ===== note 導線 ===== -->
+  <div class="card">
+    <div class="card-title">📝 RT-Lab について（note）</div>
+    <p style="font-size:0.88rem; color:#4a5568; margin-bottom:10px;">RT-Lab は現役の放射線技師が AI を活用して開発しています。開発の舞台裏や「放射線技師 × AI」の実践を note で発信中です。</p>
+    <a class="btn btn-secondary" href="https://note.com/ri_ai_lab" target="_blank" rel="noopener">noteで読む →</a>
+  </div>
+
+  <!-- ===== References ===== -->
+  <div class="card">
+    <div class="card-title">参考</div>
+    <div class="references">
+      <strong>[1]</strong> 日本腎臓学会. 日本人向けGFR推算式（血清クレアチニンによるeGFR）. CKD診療ガイド.<br>
+      <strong>[2]</strong> 日本腎臓学会・日本医学放射線学会・日本循環器学会. 腎障害患者におけるヨード造影剤使用に関するガイドライン2018.<br>
+      <strong>[3]</strong> 日本腎臓学会・日本医学放射線学会. 腎障害患者におけるガドリニウム造影剤使用に関するガイドライン（第3版・2024年5月）.
+    </div>
+    <div class="disclaimer-note">
+      本ツールは計算補助を目的とした参考値を提供するものであり、医療機器ではありません。eGFRは血清クレアチニンによる推算値です。造影剤使用の適応・製剤選択・休薬の判断は、患者の状態・腎機能・検査目的および施設のプロトコルに基づき、医師・診療放射線技師の判断で決定してください。
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== Footer ===== -->
+<footer>
+  <div><a href="/">RT-Lab</a> | 放射線技師のためのWebツール集</div>
+  <div class="footer-disclaimer">
+    本ツールは医療機器ではありません。計算結果はあくまで参考値であり、臨床判断の根拠としての使用はご自身の責任においてご判断ください。
+  </div>
+  <div style="margin-top:10px; font-size:0.8rem;">
+    <a href="/about/">サイトについて</a> |
+    <a href="/privacy/">プライバシーポリシー</a> |
+    <a href="/contact/">お問い合わせ</a>
+  </div>
+  <div style="margin-top:10px; opacity:0.5;">&copy; 2025 RT-Lab</div>
+</footer>
+
+<script>
+// ====================================================================
+// 造影検査 腎機能チェッカー（eGFR計算）
+// すべてブラウザ内で計算（外部送信なし・保存なし）
+// ====================================================================
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  let sex = "male"; // male | female
+
+  // ── 日本人向けGFR推算式 ──
+  // eGFR = 194 × Cr^(-1.094) × age^(-0.287) × (female ? 0.739 : 1)
+  function calcEgfr(cr, age, isFemale) {
+    let e = 194 * Math.pow(cr, -1.094) * Math.pow(age, -0.287);
+    if (isFemale) e *= 0.739;
+    return e;
+  }
+
+  // ── BSA（Mosteller） ──
+  function calcBsa(weightKg, heightCm) {
+    return Math.sqrt((weightKg * heightCm) / 3600);
+  }
+
+  // ── CKD GFR区分 ──
+  function stageOf(egfr) {
+    if (egfr >= 90)  return { code: "G1",  name: "正常または高値",        cls: "stage-g1"  };
+    if (egfr >= 60)  return { code: "G2",  name: "正常または軽度低下",    cls: "stage-g2"  };
+    if (egfr >= 45)  return { code: "G3a", name: "軽度〜中等度低下",      cls: "stage-g3a" };
+    if (egfr >= 30)  return { code: "G3b", name: "中等度〜高度低下",      cls: "stage-g3b" };
+    if (egfr >= 15)  return { code: "G4",  name: "高度低下",              cls: "stage-g4"  };
+    return             { code: "G5",  name: "末期腎不全（ESKD）",  cls: "stage-g5"  };
+  }
+
+  // ── CT（ヨード造影剤）リスク帯 ──
+  function ctBand(egfr) {
+    if (egfr >= 60) {
+      return {
+        cls: "risk-low", title: "リスク低めの目安帯（eGFR 60 以上）",
+        body: "経静脈投与の造影後急性腎障害（PC-AKI／CIN）リスクは一般に低いとされる帯です。脱水・多量投与・短期間の反復投与など、他のリスク因子には引き続き注意します。"
+      };
+    }
+    if (egfr >= 45) {
+      return {
+        cls: "risk-mid", title: "注意帯（eGFR 45〜59）",
+        body: "経静脈投与では説明・予防策の主対象（eGFR 30 未満）には至りませんが、リスク因子の評価と必要に応じた対策を検討します。<strong>経動脈投与ではより高い eGFR でも注意が必要</strong>とされます。"
+      };
+    }
+    if (egfr >= 30) {
+      return {
+        cls: "risk-mid", title: "注意帯（eGFR 30〜44）",
+        body: "eGFR 30 に近づく帯です。経動脈投与や大量投与ではPC-AKIリスクが上がるため、輸液などの予防策や造影の要否を慎重に検討します。"
+      };
+    }
+    return {
+      cls: "risk-high", title: "高リスク帯（eGFR 30 未満）",
+      body: "「ヨード造影剤使用に関するガイドライン2018」で、経静脈投与において <strong>PC-AKI（CIN）発症の説明と予防策（輸液など）を講じる対象</strong>とされる帯です。造影の要否・代替検査を含め、医師の判断が必要です。"
+    };
+  }
+
+  // ── CT メトホルミン ──
+  function ctMetformin(egfr) {
+    if (egfr >= 60) {
+      return "eGFR 60 以上でも、ヨード造影剤との併用時は乳酸アシドーシス予防の観点から各施設の運用・添付文書に従います（造影後の腎機能悪化に備える施設もあります）。";
+    }
+    if (egfr >= 30) {
+      return "腎機能低下がある帯です。造影剤投与に際してのビグアナイド系薬（メトホルミン等）の休薬要否・期間は、投与経路や腎機能により異なります。<strong>添付文書と医師・薬剤師の指示に従ってください。</strong>";
+    }
+    return "<strong>eGFR 30 未満</strong>ではビグアナイド系薬（メトホルミン等）は乳酸アシドーシスの高リスクとされ、造影剤使用時は休薬などの処置が必要とされます。<strong>添付文書と医師・薬剤師の指示に従ってください。</strong>";
+  }
+
+  // ── MRI（ガドリニウム造影剤）リスク帯 ──
+  function mriBand(egfr) {
+    if (egfr >= 60) {
+      return {
+        cls: "risk-low", title: "リスク低めの目安帯（eGFR 60 以上）",
+        body: "腎性全身性線維症（NSF）のリスクは一般に低いとされる帯です。急性腎障害（AKI）がある場合は eGFR にかかわらず別途の配慮が必要です。"
+      };
+    }
+    if (egfr >= 30) {
+      return {
+        cls: "risk-mid", title: "慎重検討帯（eGFR 30〜60未満）",
+        body: "NSF発症の危険性が必ずしも高くないとする意見もある帯です。<strong>利益と危険性を慎重に検討</strong>したうえで使用の可否を決定します。使用する場合はキレート安定性の高い環状型製剤が推奨されます。"
+      };
+    }
+    return {
+      cls: "risk-high", title: "高リスク帯（eGFR 30 未満）",
+      body: "「ガドリニウム造影剤使用に関するガイドライン（第3版・2024年）」で、<strong>可能な限りガドリニウム造影剤の使用を避け、他の検査法で代替することが望ましい</strong>とされる帯です。代替困難な場合はリスクを考慮し、環状型製剤を注意深く使用します。"
+    };
+  }
+
+  // ── 描画 ──
+  function render() {
+    const age = parseFloat($("age").value);
+    const cr  = parseFloat($("cr").value);
+    const height = parseFloat($("height").value);
+    const weight = parseFloat($("weight").value);
+    const errEl = $("inputError");
+
+    // 必須が揃っていない → プレースホルダ
+    if (!($("age").value && $("cr").value)) {
+      $("placeholder").style.display = "";
+      $("resultBody").style.display = "none";
+      errEl.style.display = "none";
+      return;
+    }
+
+    // バリデーション
+    if (isNaN(age) || age < 18 || age > 120) {
+      showError("年齢は 18〜120 歳の範囲で入力してください（成人が対象です）。");
+      return;
+    }
+    if (isNaN(cr) || cr < 0.1) {
+      showError("血清クレアチニンは 0.1 mg/dL 以上の値を入力してください。");
+      return;
+    }
+    if (cr > 20) {
+      showError("血清クレアチニンの値が大きすぎます。単位（mg/dL）をご確認ください。");
+      return;
+    }
+    errEl.style.display = "none";
+
+    // 表示値と区分判定を同じ丸め後の値で統一（表示「30.0」なのに区分が「30未満」になる不整合を防ぐ）
+    const egfr = Math.round(calcEgfr(cr, age, sex === "female") * 10) / 10;
+    const stage = stageOf(egfr);
+
+    $("placeholder").style.display = "none";
+    $("resultBody").style.display = "";
+
+    // eGFR 値
+    $("egfrValue").textContent = egfr.toFixed(1);
+    const badge = $("stageBadge");
+    badge.className = "stage-badge " + stage.cls;
+    $("stageCode").textContent = stage.code;
+    $("stageName").textContent = stage.name;
+
+    // BSA 非補正 eGFR（任意・範囲内のときのみ）
+    const heightOk = !isNaN(height) && height >= 100 && height <= 220;
+    const weightOk = !isNaN(weight) && weight >= 20 && weight <= 200;
+    if (heightOk && weightOk) {
+      const bsa = calcBsa(weight, height);
+      const egfrAbs = egfr * bsa / 1.73;
+      $("egfrAbs").style.display = "";
+      $("egfrAbs").innerHTML =
+        "体表面積 BSA <strong>" + bsa.toFixed(2) + " m²</strong>（Mosteller）→ 非補正 eGFR <strong>" +
+        egfrAbs.toFixed(1) + " mL/min</strong>";
+    } else {
+      $("egfrAbs").style.display = "none";
+    }
+
+    // CT
+    const ct = ctBand(egfr);
+    const ctEl = $("ctRisk");
+    ctEl.className = "risk-band " + ct.cls;
+    $("ctRiskTitle").textContent = ct.title;
+    $("ctRiskBody").innerHTML = ct.body;
+    $("ctMetformin").innerHTML = ctMetformin(egfr);
+
+    // MRI
+    const mri = mriBand(egfr);
+    const mriEl = $("mriRisk");
+    mriEl.className = "risk-band " + mri.cls;
+    $("mriRiskTitle").textContent = mri.title;
+    $("mriRiskBody").innerHTML = mri.body;
+    // 高リスク帯では投与量より使用可否の判断が先行する旨を明示
+    $("gdHighRiskNote").style.display = (egfr < 30) ? "" : "none";
+
+    // Gd 投与量（体重が範囲内のときのみ）
+    if (weightOk) {
+      const mmol = weight * 0.1;
+      $("gdDoseWrap").style.display = "";
+      $("gdDoseNeedWeight").style.display = "none";
+      $("gdMmol").innerHTML = mmol.toFixed(1) + "<small>mmol</small>";
+      $("gdVol05").innerHTML = (mmol / 0.5).toFixed(1) + "<small>mL</small>";
+      $("gdVol10").innerHTML = (mmol / 1.0).toFixed(1) + "<small>mL</small>";
+    } else {
+      $("gdDoseWrap").style.display = "none";
+      $("gdDoseNeedWeight").style.display = "";
+    }
+  }
+
+  function showError(msg) {
+    const errEl = $("inputError");
+    errEl.textContent = msg;
+    errEl.style.display = "";
+    $("placeholder").style.display = "";
+    $("resultBody").style.display = "none";
+  }
+
+  // ── イベント ──
+  ["age", "cr", "height", "weight"].forEach((id) => {
+    $(id).addEventListener("input", render);
+  });
+
+  $("sexGroup").addEventListener("click", (e) => {
+    const pill = e.target.closest(".radio-pill");
+    if (!pill) return;
+    sex = pill.dataset.sex;
+    document.querySelectorAll("#sexGroup .radio-pill").forEach((p) => {
+      const on = p === pill;
+      p.classList.toggle("active", on);
+      p.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    render();
+  });
+
+  $("tabs").addEventListener("click", (e) => {
+    const btn = e.target.closest(".tab-btn");
+    if (!btn) return;
+    const tab = btn.dataset.tab;
+    document.querySelectorAll(".tab-btn").forEach((b) => {
+      const on = b.dataset.tab === tab;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("active", p.id === "panel-" + tab));
+  });
+})();
+</script>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>
