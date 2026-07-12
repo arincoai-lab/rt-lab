@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>実効径と水等価径の違いとは｜SSDEの使い分けと線量管理の実務 | RT-Lab Blog</title>
+<meta name="description" content="SSDE計算に使う実効径（Deff・AAPM Report 204）と水等価径（Dw・Report 220）の違いを解説。胸部で乖離が大きい理由、頭部CT（Report 293）の扱い、医療法で義務化された線量記録・管理でのSSDEの位置づけまで、現役放射線技師がまとめました。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:title" content="実効径と水等価径の違いとは｜SSDEの使い分けと線量管理の実務">
+<meta property="og:description" content="SSDEの実効径（Deff）と水等価径（Dw）の違い、胸部で乖離する理由、線量記録・管理義務化でのSSDEの位置づけを解説。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://rt-ai-lab.com/blog/ssde-guide/">
+<link rel="canonical" href="https://rt-ai-lab.com/blog/ssde-guide/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "実効径と水等価径の違いとは｜SSDEの使い分けと線量管理の実務",
+  "description": "SSDE計算に使う実効径（Deff・AAPM Report 204）と水等価径（Dw・Report 220）の違い、胸部で乖離する理由、医療法で義務化された線量記録・管理でのSSDEの位置づけを解説。",
+  "datePublished": "2026-07-13",
+  "dateModified": "2026-07-13",
+  "author": {
+    "@type": "Person",
+    "name": "RT-Lab運営者",
+    "jobTitle": "診療放射線技師",
+    "url": "https://rt-ai-lab.com/about/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "RT-Lab",
+    "url": "https://rt-ai-lab.com/"
+  },
+  "mainEntityOfPage": "https://rt-ai-lab.com/blog/ssde-guide/"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
+    { "@type": "ListItem", "position": 2, "name": "ブログ", "item": "https://rt-ai-lab.com/blog/" },
+    { "@type": "ListItem", "position": 3, "name": "実効径と水等価径の違いとは", "item": "https://rt-ai-lab.com/blog/ssde-guide/" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "実効径と水等価径はどちらを使うべきですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "組織の減弱まで反映する水等価径（Dw）ベースのSSDEがより正確で、特に胸部では実効径（Deff）との乖離が大きくなります。線量管理システムや装置が自動算出する場合はDwが主流です。一方、AP径・LAT径から手計算できる簡便さはDeffの利点で、腹部・骨盤部では両者の差は比較的小さいと報告されています。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "胸部CTで実効径ベースのSSDEを使うとどうなりますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "肺は空気を多く含み減弱が小さいため、胸部では水等価径が実効径より小さくなります。換算係数は径が小さいほど大きくなるので、実効径ベースのSSDEは水等価径ベースより小さく算出され、線量を過小評価する可能性があります（AAPM Report 220）。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "SSDEをDRL（診断参考レベル）と直接比較してもよいですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Japan DRLs 2025のCTのDRL量はCTDIvolとDLPで定義されているため、DRLとの比較はCTDIvol・DLPで行うのが原則です。SSDEは標準体格から外れた患者や小児で個々の患者線量を評価し、プロトコル最適化を検討する場面で活用します。"
+      }
+    }
+  ]
+}
+</script>
+<link rel="stylesheet" href="/assets/blog.css">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+
+<header class="blog-header">
+  <div class="blog-header-inner">
+    <a class="blog-brand" href="/">RT-Lab</a>
+    <nav class="blog-subnav">
+      <a href="/#tools">ツール一覧</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/about/">サイトについて</a>
+      <a href="/contact/">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="blog-main">
+  <article class="blog-article">
+    <div class="blog-article-meta">
+      <span>公開: 2026-07-13</span>
+      <span>カテゴリ: CT・線量管理</span>
+    </div>
+    <h1>実効径と水等価径の違いとは｜SSDEの使い分けと線量管理の実務</h1>
+    <p class="blog-lead">
+      SSDE（Size-Specific Dose Estimate）を計算するとき、患者サイズの指標には<strong>実効径（D<sub>eff</sub>）</strong>と<strong>水等価径（D<sub>w</sub>）</strong>の2つがあります。どちらを使うかで、特に胸部ではSSDEの値が変わります。この記事では、AAPM Report 204 / 220 / 293 の位置づけを整理しながら、両者の違い・使い分けと、線量記録・管理が義務化された今の実務でSSDEをどう活かすかをまとめます。
+    </p>
+
+    <nav class="blog-toc">
+      <div class="blog-toc-title">目次</div>
+      <ol>
+        <li><a href="#recap">SSDEのおさらい（30秒版）</a></li>
+        <li><a href="#deff">実効径（Deff）とは — AAPM Report 204</a></li>
+        <li><a href="#dw">水等価径（Dw）とは — AAPM Report 220</a></li>
+        <li><a href="#compare">どちらを使うべきか — 部位別の使い分け</a></li>
+        <li><a href="#dose-management">線量管理の実務でのSSDEの位置づけ</a></li>
+        <li><a href="#summary">まとめ</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="recap">SSDEのおさらい（30秒版）</h2>
+    <p>
+      SSDEは、標準ファントム基準の線量指標であるCTDIvolを、患者の体格に合わせて補正した推定線量です。
+    </p>
+    <span class="blog-formula">SSDE = CTDIvol × 換算係数 f（患者サイズで決まる）</span>
+    <p>
+      ポイントは「換算係数 f を決める<strong>患者サイズをどう測るか</strong>」に2つの流儀があることです。基本の定義や計算手順そのものは、下のツールページに詳しくまとめているので、ここでは省略します。
+    </p>
+    <a class="blog-cta" href="/ct-dose-estimator/">
+      <span class="blog-cta-label">関連ツール</span>
+      <div class="blog-cta-title">CT Dose Estimator（SSDE計算ツール）</div>
+      <div class="blog-cta-desc">AP径・LAT径を入れると実効径→SSDEを自動計算。実効線量・Japan DRL 2025比較にも対応。ブラウザ完結・無料。</div>
+    </a>
+
+    <h2 id="deff">実効径（Deff）とは — AAPM Report 204</h2>
+    <p>
+      実効径（effective diameter）は、AAPM Report 204（2011年）で導入された<strong>幾何学的な</strong>患者サイズ指標です。患者の体軸断面と同じ面積をもつ円の直径として定義され、前後径（AP）と左右径（LAT）から次式で求めます。
+    </p>
+    <span class="blog-formula">D<sub>eff</sub> = √(AP × LAT)</span>
+    <p>利点と限界は明確です。</p>
+    <ul>
+      <li><strong>利点:</strong> スカウト像や画像上の計測（あるいはノギス）だけで求められ、手計算できる。Report 204には体幹部（32cm・16cmファントム基準）の換算係数表が整備されている。</li>
+      <li><strong>限界:</strong> 「大きさ」しか見ておらず、<strong>組織の減弱（X線の通りやすさ）を反映しない</strong>。同じ径でも、空気の多い胸部と軟部組織中心の腹部では実際の減弱が大きく異なる。</li>
+    </ul>
+
+    <h2 id="dw">水等価径（Dw）とは — AAPM Report 220</h2>
+    <p>
+      水等価径（water equivalent diameter）は、AAPM Report 220（2014年）で標準化された指標で、CT画像のCT値を使って<strong>減弱まで含めた患者サイズ</strong>を「同じ減弱を与える水の円柱の直径」として表します。関心領域（ROI）の平均CT値と断面積から次のように求めます。
+    </p>
+    <span class="blog-formula">D<sub>w</sub> = 2 × √( [ CT値<sub>平均</sub>/1000 + 1 ] × A<sub>ROI</sub> / π )</span>
+    <p>
+      肺のように空気を多く含む領域はCT値が低いため水等価面積が小さく評価され、D<sub>w</sub>は幾何学的なD<sub>eff</sub>より小さくなります。つまり<strong>「胸部は見た目のサイズより減弱が小さい」ことを正しく織り込める</strong>のがD<sub>w</sub>の本質です。近年のCT装置や線量管理システムがコンソール上・レポート上で自動算出するSSDEは、D<sub>w</sub>ベースが主流になっています。
+    </p>
+
+    <h2 id="compare">どちらを使うべきか — 部位別の使い分け</h2>
+    <p>
+      Report 220は、腹部・骨盤部のように軟部組織が中心の部位ではD<sub>eff</sub>とD<sub>w</sub>の差は比較的小さい一方、<strong>肺を含む胸部では乖離が大きくなる</strong>ことを示しています。胸部でD<sub>eff</sub>を使うと患者サイズを過大評価（＝換算係数を過小評価）するため、<strong>SSDEを過小評価</strong>しうる点に注意が必要です。
+    </p>
+    <div class="blog-table-wrap">
+      <table>
+        <thead>
+          <tr><th></th><th>実効径 D<sub>eff</sub></th><th>水等価径 D<sub>w</sub></th></tr>
+        </thead>
+        <tbody>
+          <tr><td>根拠</td><td>AAPM Report 204（2011）</td><td>AAPM Report 220（2014）</td></tr>
+          <tr><td>反映するもの</td><td>幾何学的な大きさのみ</td><td>大きさ＋組織の減弱</td></tr>
+          <tr><td>算出に必要なもの</td><td>AP径・LAT径（スカウトでも可）</td><td>CT画像のCT値（ROI解析）</td></tr>
+          <tr><td>手計算</td><td>可能（簡便）</td><td>実質不可（装置・ソフトが自動算出）</td></tr>
+          <tr><td>腹部・骨盤部</td><td>D<sub>w</sub>と比較的近い</td><td>基準</td></tr>
+          <tr><td>胸部</td><td>SSDEを過小評価しうる</td><td>推奨</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>実務的には、次の整理で十分機能します。</p>
+    <ul>
+      <li><strong>線量管理システム・装置表示のSSDE:</strong> D<sub>w</sub>ベースを確認して使う（胸部を含め部位を問わず妥当）。</li>
+      <li><strong>手計算・簡易チェック・システム未導入施設:</strong> D<sub>eff</sub>ベースで十分実用的。ただし胸部では過小評価の可能性を頭に入れておく。</li>
+      <li><strong>頭部CT:</strong> 体幹部とは別枠。AAPM Report 293（2019年）が16cmファントム基準の頭部用SSDEを定めており、体幹部の換算係数を流用しない。</li>
+    </ul>
+
+    <h2 id="dose-management">線量管理の実務でのSSDEの位置づけ</h2>
+    <p>
+      2019年3月公布・2020年4月施行の医療法施行規則改正により、CTをはじめとする高線量の放射線診療（CT・循環器用透視/血管造影・核医学検査など）では<strong>患者ごとの被ばく線量の記録と、DRL（診断参考レベル）等を用いた線量管理</strong>が義務になりました。ここでよくある疑問が「SSDEをDRLと比較してよいのか？」です。
+    </p>
+    <p>
+      答えは「原則そのままは比較しない」です。<strong>Japan DRLs 2025のCTのDRL量はCTDIvolとDLP</strong>で定義されているため、施設の標準的な線量がDRLを超えていないかの確認（＝集団としての最適化）はCTDIvol・DLPで行います。SSDEの出番はその先で、
+    </p>
+    <ul>
+      <li>標準体格から大きく外れた患者（痩せ型・大柄）で、<strong>個々の患者の線量を体格込みで評価</strong>する</li>
+      <li>体格差の大きい<strong>小児</strong>で、プロトコルの妥当性を体格ベースで確認する</li>
+      <li>プロトコル見直しの際、体格別のSSDE分布から<strong>最適化の余地</strong>を探す</li>
+    </ul>
+    <p>
+      という「個別評価・最適化のための指標」として使うのが実務的な整理です。DRLとの施設比較には、CSVを読み込んで自施設中央値をJapan DRLs 2025と自動比較できる<a href="/drl-comparison/">DRL比較ツール</a>も公開しています。
+    </p>
+
+    <h2 id="summary">まとめ</h2>
+    <ul>
+      <li>SSDEの患者サイズ指標には幾何学的な<strong>実効径（Report 204）</strong>とCT値ベースの<strong>水等価径（Report 220）</strong>がある</li>
+      <li>腹部・骨盤部では両者は近いが、<strong>胸部ではD<sub>eff</sub>ベースのSSDEは過小評価しうる</strong>。装置・システムの自動算出はD<sub>w</sub>が主流</li>
+      <li>頭部CTは<strong>Report 293</strong>の頭部用SSDEを使う</li>
+      <li>DRLとの比較はCTDIvol・DLPで行い、<strong>SSDEは個別患者の評価・最適化</strong>に活かす</li>
+    </ul>
+    <a class="blog-cta" href="/ct-dose-estimator/">
+      <span class="blog-cta-label">関連ツール</span>
+      <div class="blog-cta-title">CT Dose Estimator（SSDE計算ツール）</div>
+      <div class="blog-cta-desc">CTDIvol・DLPと患者径からSSDE・実効線量を推定し、Japan DRL 2025と比較。複数シリーズの合算にも対応。</div>
+    </a>
+
+    <div class="blog-author">
+      <div class="blog-author-icon">👨‍⚕️</div>
+      <div>
+        <div class="blog-author-name">この記事を書いた人</div>
+        <p>現役16年目の診療放射線技師。CT・MRIを中心に臨床業務のかたわら、放射線技師向けの無料Webツール集 <a href="/about/">RT-Lab</a> を個人で企画・開発・運営しています。</p>
+      </div>
+    </div>
+
+    <div class="blog-disclaimer">
+      本記事は放射線技師・医療従事者向けの教育目的の解説です。線量管理の運用は各施設の指針・医療放射線安全管理責任者の方針に従ってください。診療上の最終判断は医師が行うものであり、本記事はそれに代わるものではありません。
+    </div>
+
+    <div class="blog-refs">
+      <div class="blog-refs-title">出典・参考文献</div>
+      <ol>
+        <li>AAPM Report 204 (2011): Size-Specific Dose Estimates (SSDE) in Pediatric and Adult Body CT Examinations.</li>
+        <li>AAPM Report 220 (2014): Use of Water Equivalent Diameter for Calculating Patient Size and Size-Specific Dose Estimates (SSDE) in CT. <a href="https://www.aapm.org/pubs/reports/rpt_220.pdf" target="_blank" rel="noopener">aapm.org/pubs/reports/rpt_220.pdf</a></li>
+        <li>AAPM Report 293 (2019): Size-Specific Dose Estimate (SSDE) for Head CT. <a href="https://www.aapm.org/pubs/reports/RPT_293.pdf" target="_blank" rel="noopener">aapm.org/pubs/reports/RPT_293.pdf</a></li>
+        <li>厚生労働省: 診療用放射線の安全管理に係る医療法施行規則改正について（2019年公布・2020年4月施行）. <a href="https://www.mhlw.go.jp/content/11201000/000490667.pdf" target="_blank" rel="noopener">mhlw.go.jp</a></li>
+        <li>医療被ばく研究情報ネットワーク（J-RIME）: 日本の診断参考レベル（Japan DRLs 2025）.</li>
+      </ol>
+    </div>
+  </article>
+</main>
+
+<footer class="blog-footer">
+  <div class="blog-footer-links">
+    <a href="/">トップ</a>
+    <a href="/blog/">ブログ一覧</a>
+    <a href="/privacy/">プライバシーポリシー</a>
+    <a href="/contact/">お問い合わせ</a>
+  </div>
+  <div>&copy; 2025 RT-Lab</div>
+</footer>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>
