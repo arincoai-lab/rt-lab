@@ -15,7 +15,8 @@
 
 - **純粋な静的HTMLサイト**。ビルド不要で、各ツールは自己完結型の `index.html`。
 - リポジトリのルートがそのまま本番（`.github/workflows/deploy.yml` が公開対象を絞り込んでアップロード）。
-- 共有アセットは `assets/site.{css,js}`（応援フッター帯・Cookieレス解析の注入）。
+- 共有アセットは `assets/site.{css,js}`（応援フッター帯・Cookieレス解析の注入）。ブログは `assets/blog.css` を共有。
+- **ブログ** は `/blog/`（一覧）＋ `/blog/<英語ケバブケーススラッグ>/index.html`（1記事1ファイルの手書き静的HTML、SSG不使用・記事20本超で再検討）。記事は情報収集クエリ狙い・ツールページとtitle/h1を棲み分け、YMYL対応（一次情報の出典・著者ボックス・免責・公開/更新日）必須。記事追加時: 一覧・sitemap・トップ更新情報・関連ツールページ逆リンクを更新。
 - 外部CDN（Chart.js / PapaParse）は SRI（`integrity` + `crossorigin`）付きで読み込む。
 - ~~Next.js版~~ は未デプロイの死蔵コードだったため 2026-07-03 に撤去済み（履歴参照）。
 
@@ -124,3 +125,4 @@ rt-lab/
 | 2026-07-03 | サイト構成を静的HTMLに一本化。未デプロイのNext.js版（`app/`・`lib/`・`components/`・`next.config.ts`等）を撤去。Subtractionのサンプル資産を`public/samples/`→`samples/`へ退避し、静的ショーケース`subtraction-demo/`を新設（トップのツール一覧に研究公開カードとして掲載）。CDNスクリプト（Chart.js/PapaParse）にSRI（integrity+crossorigin+referrerpolicy）を付与。deployワークフローを公開対象ファイル限定に変更（CLAUDE.md/AGENTS.md/test-data/.claude等を非公開化）。CLAUDE.md/AGENTS.md/sitemapを実態に更新 |
 | 2026-07-05 | MRIシミュレータ（教育用）実装・公開（`mri-simulator/`）。脳の模式デジタルファントム（各ピクセルに組織ラベル→T1/T2/T2*/PDを割当）に信号方程式を適用し、TE・TR・TI・FA・ノイズを動かすと画像コントラストがリアルタイム変化。SE `PD(1−e^−TR/T1)e^−TE/T2`／IR（TIで反転回復、FLAIR・STIRプリセットはTI≈ln2·T1で算出）／GRE（spoiled、FA・T2*）対応。教育的仕掛けとして①組織別の信号バー②自動重みづけ判定バッジ（T1/T2/PD強調）③A/B並列比較（共有スケール）④Ricianノイズ＋SNR表示。1.5T代表緩和値は教育用近似と明記。ブラウザ完結・外部送信なし。物理サニティ（T1でCSF暗・T2でCSF明・FLAIRでCSF抑制・STIRで脂肪抑制）をプレビューで検証。トップ`.tool-card`先頭・sitemap追加 |
 | 2026-07-08 | 造影検査 腎機能チェッカー（eGFR計算・CT/MRI両対応）実装・公開（`egfr-checker/`）。血清Cr・年齢・性別から日本人向けGFR推算式 `194×Cr^−1.094×年齢^−0.287（女性×0.739）` でeGFRを計算し、CKD重症度区分（G1〜G5）をカラーバッジ表示。任意入力の身長・体重からBSA（Mosteller）非補正eGFR（mL/min）も併記。CT/MRIタブ切替で、①造影CT（ヨード）＝ヨード造影剤GL2018の経静脈eGFR<30を高リスク帯として表示＋メトホルミン休薬注意、②造影MRI（Gd）＝ガドリニウム造影剤GL第3版(2024)のeGFR<30回避・30〜60慎重検討を表示＋環状/線状型のNSFリスク解説＋体重×0.1mmol/kgからGd投与量（0.5/1.0mmol/mL製剤別mL）を計算。全判定を「目安」とし出典明記、結果直近に医師判断への免責を配置。患者データ性を踏まえlocalStorage保存なし・外部送信なし。FAQPage構造化データ・SEO対応。contrast-quickと相互リンク。トップ`.tool-card`先頭・更新情報・sitemap追加。数値・閾値はWebSearchで一次情報（日本腎臓学会・日本医学放射線学会GL）を確認して確定 |
+| 2026-07-13 | ブログ開設（`blog/`）＋第1回記事「実効径と水等価径の違いとは｜SSDEの使い分けと線量管理の実務」公開（`blog/ssde-guide/`）。狙いは検索流入→ツール誘導とE-E-A-T構築。テンプレート式手書き静的HTML（1記事1ファイル・SSG不使用）、共有スタイル`assets/blog.css`新設。記事はツールページの「SSDEとは」とのカニバリ回避のため一段深い検索意図（Deff/Dwの違い・AAPM 204/220/293・医療法の線量記録義務との関係）を担当。Article/BreadcrumbList/FAQPage構造化データ、可視FAQセクション、著者ボックス・免責・出典（AAPM PDF・厚労省資料は200確認）。ct-dose-estimatorと相互リンク、トップnav「ブログ」・更新情報・sitemap追加。code-reviewer（Fable）レビュー済（CRITICAL/HIGHなし）。以降の記事: 造影剤量の決め方→eGFRと造影検査→MRIコントラスト基礎を月2〜3本で追加予定 |
