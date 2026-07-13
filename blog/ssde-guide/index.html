@@ -76,6 +76,9 @@
   ]
 }
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/blog.css">
 <link rel="stylesheet" href="/assets/site.css">
 </head>
@@ -113,6 +116,7 @@
         <li><a href="#compare">どちらを使うべきか — 部位別の使い分け</a></li>
         <li><a href="#dose-management">線量管理の実務でのSSDEの位置づけ</a></li>
         <li><a href="#summary">まとめ</a></li>
+        <li><a href="#faq">よくある質問</a></li>
       </ol>
     </nav>
 
@@ -120,7 +124,7 @@
     <p>
       SSDEは、標準ファントム基準の線量指標であるCTDIvolを、患者の体格に合わせて補正した推定線量です。
     </p>
-    <span class="blog-formula">SSDE = CTDIvol × 換算係数 f（患者サイズで決まる）</span>
+    <p class="blog-formula">SSDE = CTDIvol × 換算係数 f（患者サイズで決まる）</p>
     <p>
       ポイントは「換算係数 f を決める<strong>患者サイズをどう測るか</strong>」に2つの流儀があることです。基本の定義や計算手順そのものは、下のツールページに詳しくまとめているので、ここでは省略します。
     </p>
@@ -134,7 +138,7 @@
     <p>
       実効径（effective diameter）は、AAPM Report 204（2011年）で導入された<strong>幾何学的な</strong>患者サイズ指標です。患者の体軸断面と同じ面積をもつ円の直径として定義され、前後径（AP）と左右径（LAT）から次式で求めます。
     </p>
-    <span class="blog-formula">D<sub>eff</sub> = √(AP × LAT)</span>
+    <p class="blog-formula">D<sub>eff</sub> = √(AP × LAT)</p>
     <p>利点と限界は明確です。</p>
     <ul>
       <li><strong>利点:</strong> スカウト像や画像上の計測（あるいはノギス）だけで求められ、手計算できる。Report 204には体幹部（32cm・16cmファントム基準）の換算係数表が整備されている。</li>
@@ -145,7 +149,7 @@
     <p>
       水等価径（water equivalent diameter）は、AAPM Report 220（2014年）で標準化された指標で、CT画像のCT値を使って<strong>減弱まで含めた患者サイズ</strong>を「同じ減弱を与える水の円柱の直径」として表します。関心領域（ROI）の平均CT値と断面積から次のように求めます。
     </p>
-    <span class="blog-formula">D<sub>w</sub> = 2 × √( [ CT値<sub>平均</sub>/1000 + 1 ] × A<sub>ROI</sub> / π )</span>
+    <p class="blog-formula">D<sub>w</sub> = 2 × √( [ CT値<sub>平均</sub>/1000 + 1 ] × A<sub>ROI</sub> / π )</p>
     <p>
       肺のように空気を多く含む領域はCT値が低いため水等価面積が小さく評価され、D<sub>w</sub>は幾何学的なD<sub>eff</sub>より小さくなります。つまり<strong>「胸部は見た目のサイズより減弱が小さい」ことを正しく織り込める</strong>のがD<sub>w</sub>の本質です。近年のCT装置や線量管理システムがコンソール上・レポート上で自動算出するSSDEは、D<sub>w</sub>ベースが主流になっています。
     </p>
@@ -205,8 +209,22 @@
       <div class="blog-cta-desc">CTDIvol・DLPと患者径からSSDE・実効線量を推定し、Japan DRL 2025と比較。複数シリーズの合算にも対応。</div>
     </a>
 
+    <h2 id="faq">よくある質問</h2>
+    <h3>Q. 実効径と水等価径はどちらを使うべきですか？</h3>
+    <p>
+      組織の減弱まで反映する水等価径（D<sub>w</sub>）ベースのSSDEがより正確で、特に胸部では実効径（D<sub>eff</sub>）との乖離が大きくなります。線量管理システムや装置が自動算出する場合はD<sub>w</sub>が主流です。一方、AP径・LAT径から手計算できる簡便さはD<sub>eff</sub>の利点で、腹部・骨盤部では両者の差は比較的小さいと報告されています。
+    </p>
+    <h3>Q. 胸部CTで実効径ベースのSSDEを使うとどうなりますか？</h3>
+    <p>
+      肺は空気を多く含み減弱が小さいため、胸部では水等価径が実効径より小さくなります。換算係数は径が小さいほど大きくなるので、実効径ベースのSSDEは水等価径ベースより小さく算出され、線量を過小評価する可能性があります（AAPM Report 220）。
+    </p>
+    <h3>Q. SSDEをDRL（診断参考レベル）と直接比較してもよいですか？</h3>
+    <p>
+      Japan DRLs 2025のCTのDRL量はCTDIvolとDLPで定義されているため、DRLとの比較はCTDIvol・DLPで行うのが原則です。SSDEは標準体格から外れた患者や小児で個々の患者線量を評価し、プロトコル最適化を検討する場面で活用します。
+    </p>
+
     <div class="blog-author">
-      <div class="blog-author-icon">👨‍⚕️</div>
+      <div class="blog-author-icon" aria-hidden="true">👨‍⚕️</div>
       <div>
         <div class="blog-author-name">この記事を書いた人</div>
         <p>現役16年目の診療放射線技師。CT・MRIを中心に臨床業務のかたわら、放射線技師向けの無料Webツール集 <a href="/about/">RT-Lab</a> を個人で企画・開発・運営しています。</p>
