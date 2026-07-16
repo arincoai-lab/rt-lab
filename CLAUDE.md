@@ -6,8 +6,9 @@
 **Notionページ:** https://www.notion.so/32b108a56b1a8115bcadf380aef7bf6e
 **本番URL:** https://rt-ai-lab.com/ （GitHub Pages / `main` へのpushで自動デプロイ）
 **リポジトリ:** https://github.com/arincoai-lab/rt-lab
-**ローカルパス:** `/Users/Ahiroki/rt-lab/`
+**ローカルパス:** `/Users/Ahiroki/Documents/Claude/Projects/rt-lab/`
 **ローカル確認:** `python3 -m http.server 8080` → http://localhost:8080
+**ブログ企画・公開台帳:** `../content-hub/rt-lab-blog.md`（リポジトリ外。デプロイ対象に含めないため。3ライン横断の状況は `../content-hub/DASHBOARD.md`）
 
 ---
 
@@ -127,3 +128,4 @@ rt-lab/
 | 2026-07-08 | 造影検査 腎機能チェッカー（eGFR計算・CT/MRI両対応）実装・公開（`egfr-checker/`）。血清Cr・年齢・性別から日本人向けGFR推算式 `194×Cr^−1.094×年齢^−0.287（女性×0.739）` でeGFRを計算し、CKD重症度区分（G1〜G5）をカラーバッジ表示。任意入力の身長・体重からBSA（Mosteller）非補正eGFR（mL/min）も併記。CT/MRIタブ切替で、①造影CT（ヨード）＝ヨード造影剤GL2018の経静脈eGFR<30を高リスク帯として表示＋メトホルミン休薬注意、②造影MRI（Gd）＝ガドリニウム造影剤GL第3版(2024)のeGFR<30回避・30〜60慎重検討を表示＋環状/線状型のNSFリスク解説＋体重×0.1mmol/kgからGd投与量（0.5/1.0mmol/mL製剤別mL）を計算。全判定を「目安」とし出典明記、結果直近に医師判断への免責を配置。患者データ性を踏まえlocalStorage保存なし・外部送信なし。FAQPage構造化データ・SEO対応。contrast-quickと相互リンク。トップ`.tool-card`先頭・更新情報・sitemap追加。数値・閾値はWebSearchで一次情報（日本腎臓学会・日本医学放射線学会GL）を確認して確定 |
 | 2026-07-13 | ブログ開設（`blog/`）＋第1回記事「実効径と水等価径の違いとは｜SSDEの使い分けと線量管理の実務」公開（`blog/ssde-guide/`）。狙いは検索流入→ツール誘導とE-E-A-T構築。テンプレート式手書き静的HTML（1記事1ファイル・SSG不使用）、共有スタイル`assets/blog.css`新設。記事はツールページの「SSDEとは」とのカニバリ回避のため一段深い検索意図（Deff/Dwの違い・AAPM 204/220/293・医療法の線量記録義務との関係）を担当。Article/BreadcrumbList/FAQPage構造化データ、可視FAQセクション、著者ボックス・免責・出典（AAPM PDF・厚労省資料は200確認）。ct-dose-estimatorと相互リンク、トップnav「ブログ」・更新情報・sitemap追加。code-reviewer（Fable）レビュー済（CRITICAL/HIGHなし）。以降の記事: 造影剤量の決め方→eGFRと造影検査→MRIコントラスト基礎を月2〜3本で追加予定 |
 | 2026-07-15 | ブログ第2回記事「CT造影剤量の決め方｜体重あたりヨード量（mgI/kg）の根拠と検査別の目安」公開（`blog/contrast-dose-guide/`）。狙いは「造影剤 量 決め方／mgI/kg 目安」等の情報収集クエリ→`contrast-quick`ツール誘導。`contrast-quick`ツールページ（計算式・注入プロトコル）とのカニバリ回避のため、記事は一段深い「決め方の根拠」を担当：①体重ベースの物理的理由（血液量∝体重・実質相は総ヨード量依存）②動脈相はIDR（mgI/kg/s）で決まる③検査別目標ヨード量の目安表④体格補正（BSA/除脂肪体重LBW）⑤低管電圧でのヨード減量。数値はWebSearch＋一次情報で確定：肝ダイナミックCT 520〜600mgI/kg・門脈相肝実質+50HU・521mgI/kg（画像診断GL2021消化器）、LBW最適（Awai Radiology 2016）、80kVpで多血性HCC最低300mgI/kg（Goshima AJR 2016）、薬物動態レビュー（Bae Radiology 2010）。Article/BreadcrumbList/FAQPage構造化データ・可視FAQ・著者ボックス・免責・出典。contrast-quickへ相互リンク（📖より詳しい解説）、一覧カード・トップ更新情報・sitemap追加。code-reviewer（Fable）レビュー済 |
+| 2026-07-17 | ブログ第3回記事「造影剤とeGFR30の根拠｜CINからPC-AKIへ、NSF発見史で読み解く腎機能リスク」公開（`blog/egfr-contrast-guide/`）。狙いは「造影剤腎症 エビデンス／PC-AKI CIN 違い／NSF ガドリニウム」等の情報収集クエリ→`egfr-checker`ツール誘導。`egfr-checker`ツールページ（eGFR計算式・CKD区分・CT/MRI閾値・NSF分類）とのカニバリ回避のため、記事は一段深い「なぜeGFR30が基準になったのか」を担当：①CIN（因果前提）→PC-AKI（因果を明言しない）→CA-AKI/CI-AKIというACRの用語変遷②交絡を統制したプロペンシティスコア研究のエビデンス③日本のGL2018のeGFR30閾値の位置づけと経動脈投与の注意④NSF発見史（1997初報告→2006頃線状型GBCA関連指摘→2007 FDAブラックボックス警告→環状型優先で2008以降減少）⑤実務への示唆（基準線は不変、変わったのは重心）。数値はWebSearch＋一次情報で確定：eGFR≧45でAKI/透析/死亡の有意増加なし・リスク因子は高血圧とeGFR≦30（Obed Eur Radiol 2022、21件PSMメタ解析）、経静脈でeGFR≧30はCI-AKIリスク増加なし（Davenport Radiology 2020 ACR-NKFコンセンサス）、NSF史（Lange Int J Environ Res Public Health 2021）。国際的な用語整理と日本のGL閾値を混同しないよう明確に書き分け。Article/BreadcrumbList/FAQPage構造化データ・可視FAQ・著者ボックス・免責・出典（全4リンク200確認）。egfr-checkerへ相互リンク（📖より詳しい解説）、一覧カード・トップ更新情報・sitemap追加。code-reviewer（Fable）は529 Overloadedで2回失敗→手動検証にフォールバック（JSON-LD構文・TOCアンカー整合・5ファイル間のslug/タイトル/日付一致・既存2記事とのYMYL要素対比をスクリプトで確認） |
