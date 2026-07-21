@@ -50,7 +50,7 @@
         "name": "造影CT（ヨード造影剤）でeGFRはいくつから注意が必要ですか？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "「腎障害患者におけるヨード造影剤使用に関するガイドライン2018」では、造影剤の経静脈投与において、造影後急性腎障害（PC-AKI／CIN）発症について十分な説明と適切な予防策（輸液など）を講じる対象を eGFR 30mL/min/1.73m²未満としています。経動脈投与ではより高いeGFRでも注意が必要とされます。最終的な適応は医師が判断します。"
+          "text": "「腎障害患者におけるヨード造影剤使用に関するガイドライン2018」では、造影CTなどの静脈からの非侵襲的造影について、eGFR 45mL/min/1.73m²未満の場合にCIN発症に関する適切な説明を行い、造影前後に補液などの十分な予防策を講ずることを推奨しています（推奨グレードB）。CAGなどの動脈からの侵襲的造影では、より高いeGFR 60mL/min/1.73m²未満が対象です（推奨グレードA）。最終的な適応は医師が判断します。"
         }
       },
       {
@@ -218,10 +218,12 @@
     .risk-band.risk-low   { border-left-color: #38a169; background: #f0fff4; }
     .risk-band.risk-mid   { border-left-color: #d69e2e; background: #fffdf5; }
     .risk-band.risk-high  { border-left-color: #c53030; background: #fff5f5; }
+    .risk-band.risk-max   { border-left-color: #822727; background: #fff0f0; }
     .risk-band .r-title { font-size: 1rem; font-weight: 800; margin-bottom: 6px; }
     .risk-low  .r-title { color: #276749; }
     .risk-mid  .r-title { color: #b7791f; }
     .risk-high .r-title { color: #c53030; }
+    .risk-max  .r-title { color: #822727; }
     .risk-band .r-body { font-size: 0.86rem; color: #4a5568; line-height: 1.8; }
     .risk-band .r-body strong { color: #2d3748; }
 
@@ -462,12 +464,13 @@
 
       <p style="margin-top:14px;"><strong>造影剤とeGFRの閾値（ガイドラインの目安）：</strong></p>
       <ul>
-        <li><strong>造影CT（ヨード造影剤）：</strong>経静脈投与では eGFR 30 未満で造影後急性腎障害（PC-AKI／CIN）への説明・予防策（輸液など）の対象とされます。経動脈投与ではより高い eGFR でも注意が必要です。ビグアナイド系糖尿病薬（メトホルミン等）は乳酸アシドーシス予防のため一時休薬などの処置が推奨されます。</li>
+        <li><strong>造影CT（ヨード造影剤）：</strong>造影CTなどの<strong>経静脈（非侵襲的）投与では eGFR 45 未満</strong>で、CIN発症の説明と補液などの予防策を講ずることが推奨されます（推奨グレードB）。CAGなどの<strong>経動脈（侵襲的）投与ではより高い eGFR 60 未満</strong>が対象です（推奨グレードA）。ビグアナイド系糖尿病薬（メトホルミン等）は乳酸アシドーシス予防のため一時休薬などの処置が推奨されます。</li>
         <li><strong>造影MRI（ガドリニウム造影剤）：</strong>eGFR 30 未満では腎性全身性線維症（NSF）を考慮し、可能な限り使用を避け他の検査法での代替が望ましいとされます。代替困難な場合はキレート安定性の高い環状型製剤を注意深く使用します。eGFR 30以上60未満では利益と危険性を慎重に検討します。</li>
       </ul>
       <p style="font-size:0.85rem; opacity:0.85;">※ シスタチンCによる eGFR、小児のGFR推算式には対応していません。SGLT2阻害薬など他の休薬対象薬については施設の薬剤部・医師にご確認ください。</p>
     </div>
     <p class="crosslink" style="margin-top:8px;">▶ 造影剤量・注入プロトコルの計算は <a href="/contrast-quick/">造影剤クイック計算ツール</a> へ。</p>
+    <p style="margin-top:12px; font-size:0.9rem;">📖 より詳しい解説：<a href="/blog/egfr-contrast-guide/">造影剤と腎機能の基準値はなぜ検査ごとに違うのか｜CT 45・CAG 60・Gd 30の根拠</a>（RT-Lab Blog）</p>
   </div>
 
   <!-- ===== note 導線 ===== -->
@@ -540,28 +543,30 @@
   }
 
   // ── CT（ヨード造影剤）リスク帯 ──
+  // ヨード造影剤GL2018: 経静脈（造影CTなど非侵襲的）eGFR<45で説明+予防策（推奨グレードB）
+  //                     経動脈（CAGなど侵襲的）    eGFR<60で説明+予防策（推奨グレードA）
   function ctBand(egfr) {
     if (egfr >= 60) {
       return {
         cls: "risk-low", title: "リスク低めの目安帯（eGFR 60 以上）",
-        body: "経静脈投与の造影後急性腎障害（PC-AKI／CIN）リスクは一般に低いとされる帯です。脱水・多量投与・短期間の反復投与など、他のリスク因子には引き続き注意します。"
+        body: "経静脈投与（造影CT）・経動脈投与（CAG）とも、GL2018で説明・予防策が推奨される帯には該当しません。脱水・多量投与・短期間の反復投与など、他のリスク因子には引き続き注意します。"
       };
     }
     if (egfr >= 45) {
       return {
-        cls: "risk-mid", title: "注意帯（eGFR 45〜59）",
-        body: "経静脈投与では説明・予防策の主対象（eGFR 30 未満）には至りませんが、リスク因子の評価と必要に応じた対策を検討します。<strong>経動脈投与ではより高い eGFR でも注意が必要</strong>とされます。"
+        cls: "risk-mid", title: "経動脈投与では対象帯（eGFR 45〜59）",
+        body: "経静脈投与（造影CT）はGL2018の推奨対象（eGFR 45 未満）には至りません。一方 <strong>CAGなどの経動脈投与では eGFR 60 未満が説明・予防策の対象（推奨グレードA）</strong>であり、この帯は該当します。"
       };
     }
     if (egfr >= 30) {
       return {
-        cls: "risk-mid", title: "注意帯（eGFR 30〜44）",
-        body: "eGFR 30 に近づく帯です。経動脈投与や大量投与ではPC-AKIリスクが上がるため、輸液などの予防策や造影の要否を慎重に検討します。"
+        cls: "risk-high", title: "経静脈・経動脈とも対象帯（eGFR 30〜44）",
+        body: "「ヨード造影剤使用に関するガイドライン2018」で、<strong>造影CTなどの経静脈投与でも CIN 発症の説明と補液などの予防策を講ずることが推奨される帯（eGFR 45 未満・推奨グレードB）</strong>です。経動脈投与（eGFR 60 未満・グレードA）も対象です。"
       };
     }
     return {
-      cls: "risk-high", title: "高リスク帯（eGFR 30 未満）",
-      body: "「ヨード造影剤使用に関するガイドライン2018」で、経静脈投与において <strong>PC-AKI（CIN）発症の説明と予防策（輸液など）を講じる対象</strong>とされる帯です。造影の要否・代替検査を含め、医師の判断が必要です。"
+      cls: "risk-max", title: "高リスク帯（eGFR 30 未満）",
+      body: "GL2018の説明・予防策の推奨対象（経静脈 eGFR 45 未満）に含まれ、かつ <strong>CIN 発症率が高い</strong>とされる帯です（同GL引用の報告では造影CTで12.1%）。造影の要否・代替検査を含め、医師の判断が必要です。ビグアナイド系薬の禁忌にも該当します。"
     };
   }
 
@@ -591,7 +596,7 @@
       };
     }
     return {
-      cls: "risk-high", title: "高リスク帯（eGFR 30 未満）",
+      cls: "risk-max", title: "高リスク帯（eGFR 30 未満）",
       body: "「ガドリニウム造影剤使用に関するガイドライン（第3版・2024年）」で、<strong>可能な限りガドリニウム造影剤の使用を避け、他の検査法で代替することが望ましい</strong>とされる帯です。代替困難な場合はリスクを考慮し、環状型製剤を注意深く使用します。"
     };
   }
