@@ -385,3 +385,62 @@ body {
   .blog-article h1 { font-size: 1.35rem; }
   .blog-hero h1 { font-size: 1.4rem; }
 }
+
+/* 関連記事 */
+.blog-related {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1.1rem 1.3rem 1.2rem;
+  margin-top: 2.2rem;
+}
+
+.blog-related-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.7rem;
+}
+
+.blog-related ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.blog-related li {
+  margin-bottom: 0;
+}
+
+.blog-related li + li {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+}
+
+.blog-related-tag {
+  display: inline-block;
+  background: #eef2ff;
+  color: var(--main);
+  border-radius: 999px;
+  padding: 0.05rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.blog-related a {
+  color: var(--main);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.blog-related a:hover {
+  text-decoration: underline;
+}
+
+.blog-related-desc {
+  margin: 0.3rem 0 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
