@@ -7,7 +7,8 @@
    1260
   ],
   "source_line": 270,
-  "source_text": "頭部単純ルーチン 67 1260"
+  "source_text": "頭部単純ルーチン 67 1260",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ct",
@@ -17,7 +18,8 @@
    430
   ],
   "source_line": 271,
-  "source_text": "胸部 1 相 11 430"
+  "source_text": "胸部 1 相 11 430",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ct",
@@ -27,7 +29,8 @@
    940
   ],
   "source_line": 272,
-  "source_text": "胸部～骨盤 1 相 13 940"
+  "source_text": "胸部～骨盤 1 相 13 940",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ct",
@@ -37,7 +40,8 @@
    720
   ],
   "source_line": 273,
-  "source_text": "上腹部～骨盤 1 相 14 720"
+  "source_text": "上腹部～骨盤 1 相 14 720",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ct",
@@ -47,7 +51,8 @@
    1630
   ],
   "source_line": 274,
-  "source_text": "肝臓ダイナミック 13 1630"
+  "source_text": "肝臓ダイナミック 13 1630",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ct",
@@ -57,7 +62,8 @@
    940
   ],
   "source_line": 275,
-  "source_text": "冠動脈 57 940"
+  "source_text": "冠動脈 57 940",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ct",
@@ -67,7 +73,8 @@
    770
   ],
   "source_line": 276,
-  "source_text": "プロスペクティブ撮影 49 770"
+  "source_text": "プロスペクティブ撮影 49 770",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ct",
@@ -77,7 +84,8 @@
    160
   ],
   "source_line": 277,
-  "source_text": "単純（カルシウムスコア撮影） 8 160"
+  "source_text": "単純（カルシウムスコア撮影） 8 160",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ct",
@@ -87,7 +95,8 @@
    2300
   ],
   "source_line": 278,
-  "source_text": "急性肺血栓塞栓症&深部静脈血栓症 12 2300"
+  "source_text": "急性肺血栓塞栓症&深部静脈血栓症 12 2300",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ct",
@@ -96,7 +105,8 @@
    5290
   ],
   "source_line": 279,
-  "source_text": "外傷全身 CT n/a 5290"
+  "source_text": "外傷全身 CT n/a 5290",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -105,7 +115,8 @@
    0.3
   ],
   "source_line": 407,
-  "source_text": "胸部正面（100kV 未満） 0.3"
+  "source_text": "胸部正面（100kV 未満） 0.3",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -114,7 +125,8 @@
    0.2
   ],
   "source_line": 408,
-  "source_text": "胸部正面（100kV 以上） 0.2"
+  "source_text": "胸部正面（100kV 以上） 0.2",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -123,7 +135,8 @@
    0.2
   ],
   "source_line": 409,
-  "source_text": "検診胸部正面（100kV 以上） 0.2"
+  "source_text": "検診胸部正面（100kV 以上） 0.2",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -132,7 +145,8 @@
    1.4
   ],
   "source_line": 410,
-  "source_text": "腹部正面（臥位） 1.4"
+  "source_text": "腹部正面（臥位） 1.4",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -141,7 +155,8 @@
    1.3
   ],
   "source_line": 417,
-  "source_text": "頭部正面 1.3"
+  "source_text": "頭部正面 1.3",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -150,7 +165,8 @@
    0.5
   ],
   "source_line": 418,
-  "source_text": "頚椎正面 0.5"
+  "source_text": "頚椎正面 0.5",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -159,7 +175,8 @@
    1.8
   ],
   "source_line": 419,
-  "source_text": "胸椎正面 1.8"
+  "source_text": "胸椎正面 1.8",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -168,7 +185,8 @@
    3.4
   ],
   "source_line": 420,
-  "source_text": "胸椎側面 3.4"
+  "source_text": "胸椎側面 3.4",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -177,7 +195,8 @@
    2.5
   ],
   "source_line": 421,
-  "source_text": "腰椎正面 2.5"
+  "source_text": "腰椎正面 2.5",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -186,7 +205,8 @@
    5.5
   ],
   "source_line": 422,
-  "source_text": "腰椎側面 5.5"
+  "source_text": "腰椎側面 5.5",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -195,7 +215,8 @@
    1.7
   ],
   "source_line": 423,
-  "source_text": "骨盤正面 1.7"
+  "source_text": "骨盤正面 1.7",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -204,7 +225,8 @@
    0.1
   ],
   "source_line": 411,
-  "source_text": "乳児股関節（0～1 歳） 0.1"
+  "source_text": "乳児股関節（0～1 歳） 0.1",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -213,7 +235,8 @@
    0.1
   ],
   "source_line": 412,
-  "source_text": "乳児胸部（0～1 歳） 0.1"
+  "source_text": "乳児胸部（0～1 歳） 0.1",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -222,7 +245,8 @@
    0.1
   ],
   "source_line": 413,
-  "source_text": "小児胸部（5 歳） 0.1"
+  "source_text": "小児胸部（5 歳） 0.1",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -231,7 +255,8 @@
    0.2
   ],
   "source_line": 414,
-  "source_text": "小児股関節（5 歳） 0.2"
+  "source_text": "小児股関節（5 歳） 0.2",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -240,7 +265,8 @@
    0.2
   ],
   "source_line": 415,
-  "source_text": "小児全脊柱（5 歳） 0.2"
+  "source_text": "小児全脊柱（5 歳） 0.2",
+  "tool": "drl-comparison"
  },
  {
   "modality": "general",
@@ -249,7 +275,8 @@
    0.3
   ],
   "source_line": 416,
-  "source_text": "小児全脊柱（10 歳） 0.3"
+  "source_text": "小児全脊柱（10 歳） 0.3",
+  "tool": "drl-comparison"
  },
  {
   "modality": "mammo",
@@ -258,7 +285,8 @@
    1.4
   ],
   "source_line": 431,
-  "source_text": "臨床データに基づく 2D マンモグラフィ 1.4"
+  "source_text": "臨床データに基づく 2D マンモグラフィ 1.4",
+  "tool": "drl-comparison"
  },
  {
   "modality": "mammo",
@@ -267,7 +295,8 @@
    1.6
   ],
   "source_line": 432,
-  "source_text": "臨床データに基づく DBT 1.6"
+  "source_text": "臨床データに基づく DBT 1.6",
+  "tool": "drl-comparison"
  },
  {
   "modality": "mammo",
@@ -276,7 +305,8 @@
    2.2
   ],
   "source_line": 433,
-  "source_text": "PMMA 40 mm 2.2"
+  "source_text": "PMMA 40 mm 2.2",
+  "tool": "drl-comparison"
  },
  {
   "modality": "dental",
@@ -285,7 +315,8 @@
    1.1
   ],
   "source_line": 445,
-  "source_text": "前歯部 1.1 0.8"
+  "source_text": "前歯部 1.1 0.8",
+  "tool": "drl-comparison"
  },
  {
   "modality": "dental",
@@ -294,7 +325,8 @@
    1.2
   ],
   "source_line": 446,
-  "source_text": "犬歯部 1.2 0.8"
+  "source_text": "犬歯部 1.2 0.8",
+  "tool": "drl-comparison"
  },
  {
   "modality": "dental",
@@ -303,7 +335,8 @@
    1.3
   ],
   "source_line": 448,
-  "source_text": "小臼歯部 1.3 1.0"
+  "source_text": "小臼歯部 1.3 1.0",
+  "tool": "drl-comparison"
  },
  {
   "modality": "dental",
@@ -312,7 +345,8 @@
    1.9
   ],
   "source_line": 449,
-  "source_text": "大臼歯部 1.9 1.2"
+  "source_text": "大臼歯部 1.9 1.2",
+  "tool": "drl-comparison"
  },
  {
   "modality": "dental",
@@ -321,7 +355,8 @@
    0.9
   ],
   "source_line": 450,
-  "source_text": "前歯部 0.9 0.6"
+  "source_text": "前歯部 0.9 0.6",
+  "tool": "drl-comparison"
  },
  {
   "modality": "dental",
@@ -330,7 +365,8 @@
    1
   ],
   "source_line": 451,
-  "source_text": "犬歯部 1.0 0.7"
+  "source_text": "犬歯部 1.0 0.7",
+  "tool": "drl-comparison"
  },
  {
   "modality": "dental",
@@ -339,7 +375,8 @@
    1.1
   ],
   "source_line": 453,
-  "source_text": "小臼歯部 1.1 0.8"
+  "source_text": "小臼歯部 1.1 0.8",
+  "tool": "drl-comparison"
  },
  {
   "modality": "dental",
@@ -348,7 +385,8 @@
    1.3
   ],
   "source_line": 454,
-  "source_text": "大臼歯部 1.3 1.0"
+  "source_text": "大臼歯部 1.3 1.0",
+  "tool": "drl-comparison"
  },
  {
   "modality": "dental",
@@ -357,7 +395,8 @@
    130
   ],
   "source_line": 465,
-  "source_text": "130 91"
+  "source_text": "130 91",
+  "tool": "drl-comparison"
  },
  {
   "modality": "dental",
@@ -366,7 +405,8 @@
    720
   ],
   "source_line": 478,
-  "source_text": "＜40 cm2 720 17"
+  "source_text": "＜40 cm2 720 17",
+  "tool": "drl-comparison"
  },
  {
   "modality": "dental",
@@ -375,7 +415,8 @@
    1500
   ],
   "source_line": 479,
-  "source_text": "40～100 cm2 1500 17"
+  "source_text": "40～100 cm2 1500 17",
+  "tool": "drl-comparison"
  },
  {
   "modality": "dental",
@@ -384,7 +425,8 @@
    2200
   ],
   "source_line": 480,
-  "source_text": "＞100 cm2 2200 17"
+  "source_text": "＞100 cm2 2200 17",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -394,7 +436,8 @@
    47
   ],
   "source_line": 522,
-  "source_text": "診断カテーテル検査 520 47"
+  "source_text": "診断カテーテル検査 520 47",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -404,7 +447,8 @@
    100
   ],
   "source_line": 523,
-  "source_text": "非 CTO PCI 1300 100"
+  "source_text": "非 CTO PCI 1300 100",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -414,7 +458,8 @@
    200
   ],
   "source_line": 524,
-  "source_text": "CTO PCI 2500 200"
+  "source_text": "CTO PCI 2500 200",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -424,7 +469,8 @@
    27
   ],
   "source_line": 525,
-  "source_text": "非 PVI RFCA 200 27"
+  "source_text": "非 PVI RFCA 200 27",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -434,7 +480,8 @@
    38
   ],
   "source_line": 526,
-  "source_text": "PVI RFCA 260 38"
+  "source_text": "PVI RFCA 260 38",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -444,7 +491,8 @@
    78
   ],
   "source_line": 527,
-  "source_text": "TAVI（経大腿アプローチ） 530 78"
+  "source_text": "TAVI（経大腿アプローチ） 530 78",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -454,7 +502,8 @@
    190
   ],
   "source_line": 508,
-  "source_text": "嚢状動脈瘤 2400 190"
+  "source_text": "嚢状動脈瘤 2400 190",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -464,7 +513,8 @@
    330
   ],
   "source_line": 509,
-  "source_text": "脳動静脈奇形 3700 330"
+  "source_text": "脳動静脈奇形 3700 330",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -474,7 +524,8 @@
    450
   ],
   "source_line": 510,
-  "source_text": "脳硬膜動静脈瘻 4300 450"
+  "source_text": "脳硬膜動静脈瘻 4300 450",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -484,7 +535,8 @@
    130
   ],
   "source_line": 511,
-  "source_text": "頸部頸動脈狭窄・閉塞 700 130"
+  "source_text": "頸部頸動脈狭窄・閉塞 700 130",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -494,7 +546,8 @@
    160
   ],
   "source_line": 512,
-  "source_text": "急性脳動脈狭窄・閉塞 1000 160"
+  "source_text": "急性脳動脈狭窄・閉塞 1000 160",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -504,7 +557,8 @@
    230
   ],
   "source_line": 513,
-  "source_text": "頭蓋内腫瘍 1900 230"
+  "source_text": "頭蓋内腫瘍 1900 230",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -514,7 +568,8 @@
    220
   ],
   "source_line": 573,
-  "source_text": "TACE 1200 220"
+  "source_text": "TACE 1200 220",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -524,7 +579,8 @@
    170
   ],
   "source_line": 574,
-  "source_text": "TEVAR 630 170"
+  "source_text": "TEVAR 630 170",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -534,7 +590,8 @@
    200
   ],
   "source_line": 575,
-  "source_text": "EVAR 910 200"
+  "source_text": "EVAR 910 200",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -544,7 +601,8 @@
    150
   ],
   "source_line": 576,
-  "source_text": "UAE 子宮筋腫 710 150"
+  "source_text": "UAE 子宮筋腫 710 150",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -554,7 +612,8 @@
    150
   ],
   "source_line": 577,
-  "source_text": "PAVM simple type 870 150"
+  "source_text": "PAVM simple type 870 150",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -564,7 +623,8 @@
    230
   ],
   "source_line": 578,
-  "source_text": "BRTO 左腎静脈経由 1100 230"
+  "source_text": "BRTO 左腎静脈経由 1100 230",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -574,7 +634,8 @@
    69
   ],
   "source_line": 594,
-  "source_text": "非 CTO 腸骨動脈 360 69"
+  "source_text": "非 CTO 腸骨動脈 360 69",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -584,7 +645,8 @@
    120
   ],
   "source_line": 595,
-  "source_text": "CTO 腸骨動脈 740 120"
+  "source_text": "CTO 腸骨動脈 740 120",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -594,7 +656,8 @@
    36
   ],
   "source_line": 596,
-  "source_text": "非 CTO 浅大腿動脈 160 36"
+  "source_text": "非 CTO 浅大腿動脈 160 36",
+  "tool": "drl-comparison"
  },
  {
   "modality": "ivr",
@@ -604,7 +667,8 @@
    54
   ],
   "source_line": 597,
-  "source_text": "CTO 浅大腿動脈 310 54"
+  "source_text": "CTO 浅大腿動脈 310 54",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -613,7 +677,8 @@
    930
   ],
   "source_line": 670,
-  "source_text": "骨：99mTc -MDP 930"
+  "source_text": "骨：99mTc -MDP 930",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -622,7 +687,8 @@
    930
   ],
   "source_line": 671,
-  "source_text": "骨：99mTc-HMDP 930"
+  "source_text": "骨：99mTc-HMDP 930",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -631,7 +697,8 @@
    800
   ],
   "source_line": 675,
-  "source_text": "脳血流：99mTc-ECD（安静あるいは負荷 1 回のみ） 800"
+  "source_text": "脳血流：99mTc-ECD（安静あるいは負荷 1 回のみ） 800",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -640,7 +707,8 @@
    1100
   ],
   "source_line": 676,
-  "source_text": "脳血流：99mTc-ECD（安静+負荷） 1100"
+  "source_text": "脳血流：99mTc-ECD（安静+負荷） 1100",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -649,7 +717,8 @@
    200
   ],
   "source_line": 677,
-  "source_text": "脳血流：123I-IMP（安静あるいは負荷 1 回のみ） 200"
+  "source_text": "脳血流：123I-IMP（安静あるいは負荷 1 回のみ） 200",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -658,7 +727,8 @@
    270
   ],
   "source_line": 678,
-  "source_text": "脳血流：123I-IMP（安静+負荷） 270"
+  "source_text": "脳血流：123I-IMP（安静+負荷） 270",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -667,7 +737,8 @@
    840
   ],
   "source_line": 704,
-  "source_text": "心筋血流：99mTc-tetrofosmin（安静あるいは負荷 1 回のみ） 840"
+  "source_text": "心筋血流：99mTc-tetrofosmin（安静あるいは負荷 1 回のみ） 840",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -676,7 +747,8 @@
    1200
   ],
   "source_line": 705,
-  "source_text": "心筋血流：99mTc-tetrofosmin（安静+負荷） 1200"
+  "source_text": "心筋血流：99mTc-tetrofosmin（安静+負荷） 1200",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -685,7 +757,8 @@
    840
   ],
   "source_line": 706,
-  "source_text": "心筋血流：99mTc-MIBI（安静あるいは負荷 1 回のみ） 840"
+  "source_text": "心筋血流：99mTc-MIBI（安静あるいは負荷 1 回のみ） 840",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -694,7 +767,8 @@
    1200
   ],
   "source_line": 707,
-  "source_text": "心筋血流：99mTc-MIBI（安静+負荷） 1200"
+  "source_text": "心筋血流：99mTc-MIBI（安静+負荷） 1200",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -703,7 +777,8 @@
    260
   ],
   "source_line": 689,
-  "source_text": "肺血流：99mTc-MAA 260"
+  "source_text": "肺血流：99mTc-MAA 260",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -712,7 +787,8 @@
    240
   ],
   "source_line": 683,
-  "source_text": "甲状腺：99mTcO4- 240"
+  "source_text": "甲状腺：99mTcO4- 240",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -721,7 +797,8 @@
    120
   ],
   "source_line": 725,
-  "source_text": "腫瘍・炎症：67Ga-citrate 120"
+  "source_text": "腫瘍・炎症：67Ga-citrate 120",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -730,7 +807,8 @@
    240
   ],
   "source_line": 774,
-  "source_text": "腫瘍ブドウ糖代謝：18F-FDG （院内製剤） 240"
+  "source_text": "腫瘍ブドウ糖代謝：18F-FDG （院内製剤） 240",
+  "tool": "drl-comparison"
  },
  {
   "modality": "nm",
@@ -739,7 +817,8 @@
    240
   ],
   "source_line": 775,
-  "source_text": "腫瘍ブドウ糖代謝：18F-FDG （デリバリー） 240"
+  "source_text": "腫瘍ブドウ糖代謝：18F-FDG （デリバリー） 240",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -749,7 +828,8 @@
    460
   ],
   "source_line": 295,
-  "source_text": "0-<1 歳 27 460"
+  "source_text": "0-<1 歳 27 460",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -759,7 +839,8 @@
    610
   ],
   "source_line": 296,
-  "source_text": "頭 部 1-<5 歳 34 610"
+  "source_text": "頭 部 1-<5 歳 34 610",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -769,7 +850,8 @@
    810
   ],
   "source_line": 297,
-  "source_text": "5-<10 歳 44 810"
+  "source_text": "5-<10 歳 44 810",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -779,7 +861,8 @@
    1000
   ],
   "source_line": 298,
-  "source_text": "10-<15 歳 55 1000"
+  "source_text": "10-<15 歳 55 1000",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -789,7 +872,8 @@
    50
   ],
   "source_line": 302,
-  "source_text": "0-<1 歳 2.0 50"
+  "source_text": "0-<1 歳 2.0 50",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -799,7 +883,8 @@
    80
   ],
   "source_line": 303,
-  "source_text": "胸 部 1-<5 歳 3.0 80"
+  "source_text": "胸 部 1-<5 歳 3.0 80",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -809,7 +894,8 @@
    120
   ],
   "source_line": 304,
-  "source_text": "5-<10 歳 4.0 120"
+  "source_text": "5-<10 歳 4.0 120",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -819,7 +905,8 @@
    230
   ],
   "source_line": 305,
-  "source_text": "10-<15 歳 6.0 230"
+  "source_text": "10-<15 歳 6.0 230",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -829,7 +916,8 @@
    70
   ],
   "source_line": 309,
-  "source_text": "0-<1 歳 2.5 70"
+  "source_text": "0-<1 歳 2.5 70",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -839,7 +927,8 @@
    120
   ],
   "source_line": 310,
-  "source_text": "腹 部 1-<5 歳 3.4 120"
+  "source_text": "腹 部 1-<5 歳 3.4 120",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -849,7 +938,8 @@
    180
   ],
   "source_line": 311,
-  "source_text": "5-<10 歳 4.5 180"
+  "source_text": "5-<10 歳 4.5 180",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -859,7 +949,8 @@
    340
   ],
   "source_line": 312,
-  "source_text": "10-<15 歳 7.0 340"
+  "source_text": "10-<15 歳 7.0 340",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -869,7 +960,8 @@
    80
   ],
   "source_line": 316,
-  "source_text": "0-<1 歳 2.0 80"
+  "source_text": "0-<1 歳 2.0 80",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -879,7 +971,8 @@
    145
   ],
   "source_line": 317,
-  "source_text": "頸部 ～ 骨盤 1-<5 歳 2.8 145"
+  "source_text": "頸部 ～ 骨盤 1-<5 歳 2.8 145",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -889,7 +982,8 @@
    220
   ],
   "source_line": 319,
-  "source_text": "5-<10 歳 4.0 220"
+  "source_text": "5-<10 歳 4.0 220",
+  "tool": "drl-comparison"
  },
  {
   "modality": "pediatric_ct",
@@ -899,6 +993,55 @@
    510
   ],
   "source_line": 321,
-  "source_text": "10-<15 歳 7.0 510"
+  "source_text": "10-<15 歳 7.0 510",
+  "tool": "drl-comparison"
+ },
+ {
+  "tool": "ct-dose-estimator",
+  "modality": "ct",
+  "category": "head",
+  "drl_label": "頭部単純ルーチン",
+  "values": [
+   67,
+   1260
+  ],
+  "source_line": 270,
+  "source_text": "頭部単純ルーチン 67 1260"
+ },
+ {
+  "tool": "ct-dose-estimator",
+  "modality": "ct",
+  "category": "chest",
+  "drl_label": "胸部1相",
+  "values": [
+   11,
+   430
+  ],
+  "source_line": 271,
+  "source_text": "胸部 1 相 11 430"
+ },
+ {
+  "tool": "ct-dose-estimator",
+  "modality": "ct",
+  "category": "abdomen",
+  "drl_label": "上腹部～骨盤1相",
+  "values": [
+   14,
+   720
+  ],
+  "source_line": 273,
+  "source_text": "上腹部～骨盤 1 相 14 720"
+ },
+ {
+  "tool": "ct-dose-estimator",
+  "modality": "ct",
+  "category": "chest-abdomen",
+  "drl_label": "胸部～骨盤1相",
+  "values": [
+   13,
+   940
+  ],
+  "source_line": 272,
+  "source_text": "胸部～骨盤 1 相 13 940"
  }
 ]

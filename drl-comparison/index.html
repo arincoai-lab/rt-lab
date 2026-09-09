@@ -397,11 +397,25 @@
     <div style="line-height:1.8;">
       <p style="margin-bottom:12px;"><strong>DRL（Diagnostic Reference Level／診断参考レベル）</strong>は、医療被ばくを最適化するための目安値です。標準的な体格の患者で、各施設の線量が他施設と比べて著しく高くなっていないかを確認するために用います。<strong>個々の患者に対する線量限度ではありません</strong>。</p>
       <p style="margin-bottom:12px;"><strong>DRLs2025とは：</strong>J-RIME（医療被ばく研究情報ネットワーク）が公表した日本の最新の診断参考レベル（2025年版）です。CT（CTDIvol・DLP）、一般撮影、マンモグラフィ、IVR、核医学、歯科、小児CTなど、モダリティ別・検査部位別に値が設定されています。</p>
-      <p style="margin-bottom:12px;"><strong>比較方法：</strong>施設側は、収集した線量データの<strong>中央値</strong>を代表値として、対応するDRL値と比較します。75パーセンタイルは<strong>DRL値そのものを設定するときに全国調査データから用いられた統計量</strong>であり、各施設が自施設データから求める代表値ではありません（DRLs2025では「原則として、調査結果の75パーセンタイル値の有効数字2桁をDRL値として設定した」とされています）。自施設の中央値がDRLを超えている場合は、画質を確保しつつ撮影条件（プロトコール）の見直しを検討します。</p>
+      <p style="margin-bottom:12px;"><strong>比較方法：</strong>施設側は、収集した線量データの<strong>中央値</strong>を代表値として、対応するDRL値と比較します。75パーセンタイルは<strong>DRL値そのものを設定するときに全国調査データから用いられた統計量</strong>であり、各施設が自施設データから求める代表値ではありません（DRLs2025では、DRL値は「線量調査などで得られた DRL 量の分布（75 パーセンタイルなど）を参考にして」定められる、とされています。CTの章では「原則として、2024 年の調査結果の 75 パーセンタイル値を有効数字 2 桁で丸めた値を DRL として設定する方針とした」と記載されています）。自施設の中央値がDRLを超えている場合は、画質を確保しつつ撮影条件（プロトコール）の見直しを検討します。</p>
       <p style="font-size:0.85rem; opacity:0.8;">※ 本ツールはCSVデータをすべてブラウザ内で処理し、外部送信しません。出典：J-RIME 日本の診断参考レベル（2025年版）。</p>
       <p style="margin-top:12px; font-size:0.9rem;">📖 より詳しい解説：<a href="/blog/ssde-guide/">実効径と水等価径の違いとは｜SSDEの使い分けと線量管理の実務</a>（RT-Lab Blog）</p>
     </div>
   </div>
+
+  <!-- SEO: 可視FAQ（FAQPage構造化データと本文を一致させる） -->
+  <div class="card">
+    <h2 class="card-title">よくある質問</h2>
+    <div style="line-height:1.8;">
+      <h3 style="font-size:1rem; margin:18px 0 6px;">DRL（診断参考レベル）とは何ですか？</h3>
+      <p style="margin:0;">DRL（Diagnostic Reference Level／診断参考レベル）は、医療被ばくを最適化するための目安値です。標準的な体格の患者で、各施設の線量がDRLを大きく超えていないかを確認するために用います。個々の患者の線量限度ではありません。</p>
+      <h3 style="font-size:1rem; margin:18px 0 6px;">DRLs2025とは？</h3>
+      <p style="margin:0;">DRLs2025は、J-RIME（医療被ばく研究情報ネットワーク）が公表した日本の最新の診断参考レベル（2025年版）です。CT（CTDIvol・DLP）、一般撮影、マンモグラフィ、IVR、核医学、歯科、小児CTなどモダリティ別に設定されています。</p>
+      <h3 style="font-size:1rem; margin:18px 0 6px;">施設の線量がDRLを超えたらどうする？</h3>
+      <p style="margin:0;">DRLは線量限度ではなく最適化の指標です。施設側は自施設の線量データの中央値を代表値として用い、それがDRL値を超える場合に、画質を確保しつつ撮影条件（プロトコール）の見直しを検討します。なお75パーセンタイルはDRL値を全国調査から設定する際に用いられた統計量であり、施設側が求める代表値ではありません。</p>
+    </div>
+  </div>
+
 </main>
 
 <footer>
@@ -438,7 +452,7 @@ const MODALITIES = {
       if (cm['体重'] && !isNaN(wt) && (wt < 50 || wt > 70)) return false;
       return true;
     },
-    filterDesc: '体重50〜70kg（標準体格。該当列がある場合）',
+    filterDesc: '体重50〜70kg・年齢20〜80歳（該当列がある場合）。※原典の標準体格の規定は体重50〜70kgで、年齢の範囲は本ツール独自の絞り込み',
     metrics: [
       { key: 'ctdivol', label: 'CTDIvol', unit: 'mGy', csvCol: 'CTDIvol' },
       { key: 'dlp', label: 'DLP', unit: 'mGy·cm', csvCol: 'DLP' },
@@ -458,14 +472,14 @@ const MODALITIES = {
     },
     keywordMap: {
       '頭部単純ルーチン': { keywords: [['頭部',3],['head',3],['brain',3],['ルーチン',1],['単純',1]], exclude: ['胸部','chest','腹部','骨盤','肝','外傷','冠動脈'] },
-      '胸部1相': { keywords: [['胸部',2],['chest',2],['lung',2],['肺',2]], exclude: ['骨盤','腹部','肝','塞栓','血栓'] },
-      '胸部～骨盤1相': { keywords: [['胸腹',5],['TAP',5],['CAP',5],['胸部～骨盤',5],['胸部.*骨盤',3]] },
+      '胸部1相': { keywords: [['胸部',2],['chest',2],['lung',2],['肺',2]], exclude: ['骨盤','腹部','肝','塞栓','血栓','pelvis','abdomen'] },
+      '胸部～骨盤1相': { keywords: [['胸腹',5],['TAP',5],['CAP',5],['胸部～骨盤',5],['胸部.*骨盤',3],['chest.*pelvis',4],['thorax.*pelvis',4]] },
       '上腹部～骨盤1相': { keywords: [['腹部.*骨盤',4],['上腹部',4],['abdomen',3],['腹部',2],['骨盤',2]] },
       '肝臓ダイナミック': { keywords: [['肝臓',4],['liver',4],['ダイナミック',3],['dynamic',3],['肝ダイナ',5]] },
       '冠動脈': { keywords: [['冠動脈',5],['coronary',5],['cardiac',3],['心臓',3],['CTA',2]], exclude: ['プロスペクティブ','カルシウム','calcium','スコア'] },
       '冠動脈（プロスペクティブ撮影）': { keywords: [['プロスペクティブ',6],['prospective',6],['ステップアンドシュート',5]] },
       '冠動脈（単純・カルシウムスコア撮影）': { keywords: [['カルシウムスコア',6],['calcium',5],['CACS',6],['石灰化スコア',6]] },
-      '急性肺血栓塞栓症&深部静脈血栓症': { keywords: [['肺塞栓',5],['肺血栓',5],['塞栓',3],['血栓',3],['DVT',5],['PE',3]] },
+      '急性肺血栓塞栓症&深部静脈血栓症': { keywords: [['肺塞栓',5],['肺血栓',5],['塞栓',3],['血栓',3],['DVT',5],['\\bPE\\b',3]] },
       '外傷全身CT': { keywords: [['外傷',5],['trauma',5],['外傷全身',8],['whole.?body',4]] },
     },
     templateRows: [
@@ -559,9 +573,9 @@ const MODALITIES = {
       'PMMA 40mm':                          { agd: 2.2 },
     },
     keywordMap: {
-      '臨床データに基づく2Dマンモグラフィ': { keywords: [['2D',4],['FFDM',5],['MLO',2],['CC',2],['臨床',2],['マンモ',2]], exclude: ['DBT','トモ','tomo','PMMA','ファントム'] },
+      '臨床データに基づく2Dマンモグラフィ': { keywords: [['2D',4],['FFDM',5],['MLO',2],['\\bCC\\b',2],['臨床',2],['マンモ',2]], exclude: ['DBT','トモ','tomo','PMMA','ファントム'] },
       '臨床データに基づくDBT': { keywords: [['DBT',6],['トモシンセシス',6],['tomosynthesis',6],['トモ',4]], exclude: ['PMMA','ファントム'] },
-      'PMMA 40mm': { keywords: [['PMMA',6],['ファントム',5],['phantom',5],['40mm',4],['4.0cm',3]] },
+      'PMMA 40mm': { keywords: [['PMMA',6],['ファントム',5],['phantom',5],['40mm',4],['4\\.0cm',3]] },
     },
     templateRows: [
       { '撮影方向':'2D MLO','AGD':1.3 },
@@ -663,16 +677,16 @@ const MODALITIES = {
     },
     keywordMap: {
       '診断カテーテル検査（心臓）': { keywords: [['CAG',5],['冠動脈造影',5],['診断カテーテル',5]], exclude: ['PCI','ステント','治療','CTO'] },
-      '非CTO PCI': { keywords: [['PCI',5],['経皮的冠動脈',5],['ステント',3]], exclude: ['CTO','慢性完全閉塞','CAG'] },
-      'CTO PCI': { keywords: [['CTO',6],['慢性完全閉塞',6]], exclude: ['腸骨','浅大腿','EVT'] },
-      '非PVI RFCA': { keywords: [['RFCA',5],['アブレーション',4],['ablation',4]], exclude: ['PVI','肺静脈'] },
-      'PVI RFCA': { keywords: [['PVI',6],['肺静脈隔離',6]] },
+      '非CTO PCI': { keywords: [['PCI',5],['経皮的冠動脈',5],['ステント',3]], exclude: ['CAG','診断カテーテル'] },
+      'CTO PCI': { keywords: [['CTO',6],['慢性完全閉塞',6]], exclude: ['腸骨','浅大腿','EVT','非CTO','非 CTO','non-CTO'] },
+      '非PVI RFCA': { keywords: [['RFCA',5],['アブレーション',4],['ablation',4]] },
+      'PVI RFCA': { keywords: [['PVI',6],['肺静脈隔離',6]], exclude: ['非PVI','非 PVI','non-PVI'] },
       'TAVI（経大腿アプローチ）': { keywords: [['TAVI',6],['TAVR',6],['大動脈弁',4]] },
       '脳血管内治療：嚢状動脈瘤': { keywords: [['脳動脈瘤',5],['嚢状',5],['コイル',4],['aneurysm',4]] },
       '脳血管内治療：脳動静脈奇形': { keywords: [['動静脈奇形',6],['AVM',6]], exclude: ['硬膜'] },
       '脳血管内治療：脳硬膜動静脈瘻': { keywords: [['硬膜動静脈瘻',6],['dAVF',6],['硬膜',4]] },
       '脳血管内治療：頸部頸動脈狭窄・閉塞': { keywords: [['頸動脈',5],['CAS',5],['carotid',4]], exclude: ['急性','脳動脈'] },
-      '脳血管内治療：急性脳動脈狭窄・閉塞': { keywords: [['急性',4],['血栓回収',6],['機械的血栓',6],['MT',3]] },
+      '脳血管内治療：急性脳動脈狭窄・閉塞': { keywords: [['急性',4],['血栓回収',6],['機械的血栓',6],['\\bMT\\b',3]] },
       '脳血管内治療：頭蓋内腫瘍': { keywords: [['頭蓋内腫瘍',6],['腫瘍塞栓',5]] },
       'TACE': { keywords: [['TACE',6],['肝動脈',4],['化学塞栓',6],['TAE',4]] },
       'TEVAR': { keywords: [['TEVAR',6],['胸部ステントグラフト',5]] },
@@ -680,10 +694,10 @@ const MODALITIES = {
       'UAE（子宮筋腫）': { keywords: [['UAE',6],['子宮動脈',5],['子宮筋腫',5]] },
       'PAVM simple type': { keywords: [['PAVM',6],['肺動静脈瘻',6]] },
       'BRTO（左腎静脈経由）': { keywords: [['BRTO',6],['バルーン閉塞下',5]] },
-      'EVT 非CTO 腸骨動脈': { keywords: [['腸骨',5],['iliac',5]], exclude: ['CTO','慢性完全閉塞'] },
-      'EVT CTO 腸骨動脈': { keywords: [['腸骨',5],['iliac',5],['CTO',4]] },
-      'EVT 非CTO 浅大腿動脈': { keywords: [['浅大腿',6],['SFA',6]], exclude: ['CTO','慢性完全閉塞'] },
-      'EVT CTO 浅大腿動脈': { keywords: [['浅大腿',6],['SFA',6],['CTO',4]] },
+      'EVT 非CTO 腸骨動脈': { keywords: [['腸骨',5],['iliac',5]] },
+      'EVT CTO 腸骨動脈': { keywords: [['腸骨',5],['iliac',5],['CTO',4]], exclude: ['非CTO','非 CTO','non-CTO'] },
+      'EVT 非CTO 浅大腿動脈': { keywords: [['浅大腿',6],['SFA',6]] },
+      'EVT CTO 浅大腿動脈': { keywords: [['浅大腿',6],['SFA',6],['CTO',4]], exclude: ['非CTO','非 CTO','non-CTO'] },
     },
     templateRows: [
       { '手技名':'非CTO PCI','Ka,r':1100,'PKA':85 },
@@ -786,22 +800,22 @@ const MODALITIES = {
       '頸部～骨盤（10-<15歳）':{ ctdivol: 7.0, dlp: 510  },
     },
     keywordMap: {
-      '頭部（0-<1歳）':   { keywords: [['頭部',3],['head',3],['brain',3],['0歳',3],['新生児',3],['乳児',3]], exclude: ['胸部','腹部','頸部'] },
-      '頭部（1-<5歳）':   { keywords: [['頭部',3],['head',3],['2歳',3],['3歳',3],['4歳',3],['幼児',2]], exclude: ['胸部','腹部','頸部'] },
-      '頭部（5-<10歳）':  { keywords: [['頭部',3],['head',3],['6歳',3],['7歳',3],['8歳',3],['学童',2]], exclude: ['胸部','腹部','頸部'] },
-      '頭部（10-<15歳）': { keywords: [['頭部',3],['head',3],['11歳',3],['12歳',3],['13歳',3],['14歳',3]], exclude: ['胸部','腹部','頸部'] },
-      '胸部（0-<1歳）':   { keywords: [['胸部',3],['chest',3],['0歳',3],['新生児',3],['乳児',3]], exclude: ['頭部','腹部','頸部'] },
-      '胸部（1-<5歳）':   { keywords: [['胸部',3],['chest',3],['2歳',3],['3歳',3],['幼児',2]], exclude: ['頭部','腹部','頸部'] },
-      '胸部（5-<10歳）':  { keywords: [['胸部',3],['chest',3],['6歳',3],['7歳',3],['学童',2]], exclude: ['頭部','腹部','頸部'] },
-      '胸部（10-<15歳）': { keywords: [['胸部',3],['chest',3],['11歳',3],['12歳',3],['13歳',3]], exclude: ['頭部','腹部','頸部'] },
-      '腹部（0-<1歳）':   { keywords: [['腹部',3],['abdomen',3],['0歳',3],['新生児',3],['乳児',3]], exclude: ['頭部','胸部','頸部'] },
-      '腹部（1-<5歳）':   { keywords: [['腹部',3],['abdomen',3],['2歳',3],['3歳',3],['幼児',2]], exclude: ['頭部','胸部','頸部'] },
-      '腹部（5-<10歳）':  { keywords: [['腹部',3],['abdomen',3],['6歳',3],['7歳',3],['学童',2]], exclude: ['頭部','胸部','頸部'] },
-      '腹部（10-<15歳）': { keywords: [['腹部',3],['abdomen',3],['11歳',3],['12歳',3],['13歳',3]], exclude: ['頭部','胸部','頸部'] },
-      '頸部～骨盤（0-<1歳）':   { keywords: [['頸部',4],['頸部～骨盤',6],['0歳',3],['新生児',3],['乳児',3]], exclude: ['頭部'] },
-      '頸部～骨盤（1-<5歳）':   { keywords: [['頸部',4],['頸部～骨盤',6],['2歳',3],['3歳',3],['幼児',2]], exclude: ['頭部'] },
-      '頸部～骨盤（5-<10歳）':  { keywords: [['頸部',4],['頸部～骨盤',6],['6歳',3],['7歳',3],['学童',2]], exclude: ['頭部'] },
-      '頸部～骨盤（10-<15歳）': { keywords: [['頸部',4],['頸部～骨盤',6],['11歳',3],['12歳',3],['13歳',3]], exclude: ['頭部'] },
+      '頭部（0-<1歳）': { keywords: [['頭部',3],['head',3],['brain',3],['新生児',3],['乳児',3],['(^|[^0-9])0歳',4]], exclude: ['胸部','腹部','頸部'] },
+      '頭部（1-<5歳）': { keywords: [['頭部',3],['head',3],['brain',3],['幼児',2],['(^|[^0-9])[1-4]歳',4]], exclude: ['胸部','腹部','頸部'] },
+      '頭部（5-<10歳）': { keywords: [['頭部',3],['head',3],['brain',3],['学童',2],['(^|[^0-9])[5-9]歳',4]], exclude: ['胸部','腹部','頸部'] },
+      '頭部（10-<15歳）': { keywords: [['頭部',3],['head',3],['brain',3],['(^|[^0-9])1[0-4]歳',4]], exclude: ['胸部','腹部','頸部'] },
+      '胸部（0-<1歳）': { keywords: [['胸部',3],['chest',3],['新生児',3],['乳児',3],['(^|[^0-9])0歳',4]], exclude: ['頭部','腹部','頸部'] },
+      '胸部（1-<5歳）': { keywords: [['胸部',3],['chest',3],['幼児',2],['(^|[^0-9])[1-4]歳',4]], exclude: ['頭部','腹部','頸部'] },
+      '胸部（5-<10歳）': { keywords: [['胸部',3],['chest',3],['学童',2],['(^|[^0-9])[5-9]歳',4]], exclude: ['頭部','腹部','頸部'] },
+      '胸部（10-<15歳）': { keywords: [['胸部',3],['chest',3],['(^|[^0-9])1[0-4]歳',4]], exclude: ['頭部','腹部','頸部'] },
+      '腹部（0-<1歳）': { keywords: [['腹部',3],['abdomen',3],['新生児',3],['乳児',3],['(^|[^0-9])0歳',4]], exclude: ['頭部','胸部','頸部'] },
+      '腹部（1-<5歳）': { keywords: [['腹部',3],['abdomen',3],['幼児',2],['(^|[^0-9])[1-4]歳',4]], exclude: ['頭部','胸部','頸部'] },
+      '腹部（5-<10歳）': { keywords: [['腹部',3],['abdomen',3],['学童',2],['(^|[^0-9])[5-9]歳',4]], exclude: ['頭部','胸部','頸部'] },
+      '腹部（10-<15歳）': { keywords: [['腹部',3],['abdomen',3],['(^|[^0-9])1[0-4]歳',4]], exclude: ['頭部','胸部','頸部'] },
+      '頸部～骨盤（0-<1歳）': { keywords: [['頸部',4],['頸部～骨盤',6],['新生児',3],['乳児',3],['(^|[^0-9])0歳',4]], exclude: ['頭部'] },
+      '頸部～骨盤（1-<5歳）': { keywords: [['頸部',4],['頸部～骨盤',6],['幼児',2],['(^|[^0-9])[1-4]歳',4]], exclude: ['頭部'] },
+      '頸部～骨盤（5-<10歳）': { keywords: [['頸部',4],['頸部～骨盤',6],['学童',2],['(^|[^0-9])[5-9]歳',4]], exclude: ['頭部'] },
+      '頸部～骨盤（10-<15歳）': { keywords: [['頸部',4],['頸部～骨盤',6],['(^|[^0-9])1[0-4]歳',4]], exclude: ['頭部'] },
     },
     templateRows: [
       { '検査プロトコール':'頭部 3歳','CTDIvol':30,'DLP':560,'年齢':3 },
@@ -1095,7 +1109,7 @@ document.getElementById('btn-apply-col-mapping').addEventListener('click', () =>
 function suggestDrlCategory(protocolName) {
   const lower = protocolName.toLowerCase();
   const kwMap = mod().keywordMap;
-  let bestCategory = EXCLUDE_LABEL, bestScore = 0;
+  let bestCategory = EXCLUDE_LABEL, bestScore = 0, tied = false;
 
   for (const [category, config] of Object.entries(kwMap)) {
     let score = 0;
@@ -1103,13 +1117,17 @@ function suggestDrlCategory(protocolName) {
       try { if (new RegExp(kw.toLowerCase()).test(lower)) score += weight; }
       catch { if (lower.includes(kw.toLowerCase())) score += weight; }
     }
-    if (config.exclude && score > 0) {
-      for (const ex of config.exclude) {
-        if (lower.includes(ex.toLowerCase())) { score = Math.max(0, score - 5); break; }
-      }
+    // exclude はハード除外。ソフトな減点だと「非CTO PCI」が CTO PCI（高いDRL）に
+    // 吸われるなど、より緩い判定になる向きの誤マッピングが起きる
+    if (config.exclude && config.exclude.some(ex => lower.includes(ex.toLowerCase()))) {
+      score = 0;
     }
-    if (score > bestScore) { bestScore = score; bestCategory = category; }
+    if (score > bestScore) { bestScore = score; bestCategory = category; tied = false; }
+    else if (score === bestScore && score > 0) { tied = true; }
   }
+  // 同点が複数あるときは自動推定せず（対象外）にして人に選ばせる。
+  // 例: 小児CTで年齢が読めない「胸部 15歳」が、先頭の 0-<1歳 に黙って落ちるのを防ぐ
+  if (tied) return { category: EXCLUDE_LABEL, auto: false };
   return { category: bestCategory, auto: bestScore > 0 };
 }
 
@@ -1392,6 +1410,10 @@ function renderCharts(stats) {
 
     const medVals = chartProtos.map(p => fmt1(stats[p][metric.key + '_median']));
     const drlVals = chartProtos.map(p => m.drl[p][metric.key]);
+    // 表示値の最大/最小が50倍を超えるなら対数軸（0や負値があるときは使わない）
+    const spanVals = [...medVals, ...drlVals].filter(v => typeof v === 'number' && v > 0);
+    const useLogScale = spanVals.length > 1 && Math.max(...spanVals) / Math.min(...spanVals) > 50;
+
     const bgColors = chartProtos.map((_, i) => medVals[i] > drlVals[i] ? COLOR_EXCEED : COLOR_NORMAL);
     const borders  = chartProtos.map((_, i) => medVals[i] > drlVals[i] ? BORDER_EXCEED : BORDER_NORMAL);
 
@@ -1411,7 +1433,11 @@ function renderCharts(stats) {
           title: { display: true, text: `${metric.label} 比較`, font: { size: 14, weight: '600' }, color: '#2d3748' },
         },
         scales: {
-          x: { beginAtZero: true, title: { display: true, text: `${metric.label} (${metric.unit})`, color: '#718096' }, grid: { color: 'rgba(0,0,0,0.05)' } },
+          // 歯科のように1つの指標に単位の違う値（口内法 Ka,i ≈1 mGy と CBCT PKA ≈2200 mGy·cm²）が
+          // 同居するモダリティでは、線形軸だと小さい方のバーが潰れて見えないため対数軸に切り替える
+          x: useLogScale
+            ? { type: 'logarithmic', title: { display: true, text: `${metric.label} (${metric.unit})　※対数軸`, color: '#718096' }, grid: { color: 'rgba(0,0,0,0.05)' } }
+            : { beginAtZero: true, title: { display: true, text: `${metric.label} (${metric.unit})`, color: '#718096' }, grid: { color: 'rgba(0,0,0,0.05)' } },
           y: { ticks: { font: { size: 11 }, color: '#2d3748' }, grid: { display: false } },
         },
       },
@@ -1451,7 +1477,9 @@ document.getElementById('btn-export').addEventListener('click', () => {
     rows.push(row);
   }
 
-  downloadBlob(rows.map(r => r.map(v => `"${v}"`).join(',')).join('\r\n'), `drl_result_${currentModality}_${today()}.csv`);
+  // 値に含まれる " は CSV 仕様どおり "" にエスケープする
+  const csvCell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  downloadBlob(rows.map(r => r.map(csvCell).join(',')).join('\r\n'), `drl_result_${currentModality}_${today()}.csv`);
 });
 
 // ================================================================
