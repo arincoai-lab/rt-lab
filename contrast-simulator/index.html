@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CT Contrast Simulator | RT-Lab</title>
-  <meta name="description" content="造影CTの薬物動態シミュレータ。患者体格・管電圧・造影剤・注入条件から各臓器のTime-Density Curveをリアルタイムにシミュレーション。A/Bプロトコル比較機能搭載。">
-  <meta property="og:title" content="CT Contrast Simulator | RT-Lab">
-  <meta property="og:description" content="造影CTの薬物動態シミュレータ。患者体格・注入条件から各臓器のTime-Density Curveをリアルタイムにシミュレーション。">
+  <title>造影CTシミュレータ｜時間濃度曲線(TDC)とスキャンタイミング | RT-Lab</title>
+  <meta name="description" content="造影CTの時間濃度曲線（TDC）をブラウザでシミュレーション。Baeの薬物動態モデルに基づき、体重・心拍出量・管電圧・注入プロトコルから大動脈・門脈・肝実質のピーク到達時刻とCT値を予測し、スキャンタイミングの検討やA/Bプロトコル比較ができます。">
+  <meta property="og:title" content="造影CTシミュレータ｜時間濃度曲線(TDC)とスキャンタイミング | RT-Lab">
+  <meta property="og:description" content="造影CTの時間濃度曲線（TDC）をブラウザでシミュレーション。Baeの薬物動態モデルに基づき、体重・心拍出量・管電圧・注入プロトコルから大動脈・門脈・肝実質のピーク到達時刻とCT値を予測し、スキャンタイミングの検討やA/Bプロトコル比較ができます。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://rt-ai-lab.com/contrast-simulator/">
   <meta property="og:image" content="https://rt-ai-lab.com/assets/og/og-default.png">
@@ -16,8 +16,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="RT-Lab">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="CT Contrast Simulator | RT-Lab">
-  <meta name="twitter:description" content="造影CTの薬物動態シミュレータ。患者体格・注入条件から各臓器のTime-Density Curveをリアルタイムにシミュレーション。">
+  <meta name="twitter:title" content="造影CTシミュレータ｜時間濃度曲線(TDC)とスキャンタイミング | RT-Lab">
+  <meta name="twitter:description" content="造影CTの時間濃度曲線（TDC）をブラウザでシミュレーション。Baeの薬物動態モデルに基づき、体重・心拍出量・管電圧・注入プロトコルから大動脈・門脈・肝実質のピーク到達時刻とCT値を予測し、スキャンタイミングの検討やA/Bプロトコル比較ができます。">
   <meta name="twitter:image" content="https://rt-ai-lab.com/assets/og/og-default.png">
   <meta name="twitter:image:alt" content="RT-Lab｜放射線技師のためのWebツール集">
   <link rel="canonical" href="https://rt-ai-lab.com/contrast-simulator/">
@@ -388,6 +388,11 @@
 
 <!-- ===== Main ===== -->
 <main>
+  <!-- SEO: 概要 + h1 -->
+  <div class="card">
+    <h1 class="card-title">造影CTシミュレータ｜時間濃度曲線(TDC)とスキャンタイミングの予測</h1>
+    <p style="margin-top:6px;">Baeの薬物動態コンパートメントモデルに基づき、患者体重・心拍出量・管電圧・注入プロトコル（造影剤量・注入速度・生食後押し）から、大動脈・門脈・肝実質などの時間濃度曲線（TDC）をリアルタイムに計算します。ピーク到達時刻とピークCT値が条件でどう動くかを見ながら、スキャンタイミングの検討やA/Bプロトコルの比較ができます。ブラウザ完結・外部送信なし。</p>
+  </div>
 
   <!-- How to use -->
   <div class="card">
