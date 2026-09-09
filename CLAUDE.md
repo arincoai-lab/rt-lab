@@ -17,7 +17,16 @@
 - **純粋な静的HTMLサイト**。ビルド不要で、各ツールは自己完結型の `index.html`。
 - リポジトリのルートがそのまま本番（`.github/workflows/deploy.yml` が公開対象を絞り込んでアップロード）。
 - 共有アセットは `assets/site.{css,js}`（応援フッター帯・Cookieレス解析の注入）。ブログは `assets/blog.css` を共有。
-- **ブログ** は `/blog/`（一覧）＋ `/blog/<英語ケバブケーススラッグ>/index.html`（1記事1ファイルの手書き静的HTML、SSG不使用・記事20本超で再検討）。記事は情報収集クエリ狙い・ツールページとtitle/h1を棲み分け、YMYL対応（一次情報の出典・著者ボックス・免責・公開/更新日）必須。記事追加時: 一覧・**トップ「最新記事」セクション（`.posts` は最新3本を維持）**・sitemap・トップ更新情報・関連ツールページ逆リンクを更新。
+- **ブログ** は `/blog/`（一覧）＋ `/blog/<英語ケバブケーススラッグ>/index.html`（1記事1ファイルの手書き静的HTML、SSG不使用・記事20本超で再検討）。記事は情報収集クエリ狙い・ツールページとtitle/h1を棲み分け、YMYL対応（一次情報の出典・著者ボックス・免責・公開/更新日）必須。
+- **記事追加時のチェックリスト**（1つでも漏れると本番が中途半端な状態になる。自動化の手順は `Scheduled/rt-lab-blog-writer/SKILL.md` STEP 2 が正）:
+  1. `blog/<slug>/index.html` を作成（既存記事に準拠。Article / BreadcrumbList / FAQPage の3種、Article には `image` と `author.sameAs`）
+  2. `python3 scripts/generate-og.py --only <slug>` で `assets/og/<slug>.png`（1200×630）を生成し、記事に `og:image` / `og:image:width|height` / `og:site_name` / `twitter:card|title|description|image` を設定
+  3. `blog/index.html`: `.blog-card` を先頭に追加＋ `CollectionPage.mainEntity` の ItemList にも追加（position を振り直す）
+  4. ルート `index.html`: 「最新記事」`.posts` の先頭に `.post-card` を追加し**最新3本に保つ**（タイトルは一覧と文字列一致）／「更新情報」`.news-list` にも1行追加
+  5. 既存記事の `.blog-related` に新記事を足して**相互リンク**にする
+  6. 誘導先ツールページに「📖 より詳しい解説」の逆リンクを追加
+  7. `sitemap.xml` に新記事の `<url>` を追加。**既存URLの `lastmod` は可視の内容が変わったときだけ動かす**（metaだけの変更で更新すると lastmod の信頼性が落ちる）
+- トップ（`index.html`）は `assets/blog.css` を読み込まない。blog.css は `*` リセット・`body`・`:root`（`--bg`/`--text`）をグローバルに定義しており、トップのインライン`<style>`より後に来ると配色が変わる。`.post-*` のスタイルはトップのインライン`<style>`側にある。
 - 外部CDN（Chart.js / PapaParse）は SRI（`integrity` + `crossorigin`）付きで読み込む。
 - ~~Next.js版~~ は未デプロイの死蔵コードだったため 2026-07-03 に撤去済み（履歴参照）。
 

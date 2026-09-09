@@ -6,13 +6,18 @@
 記事は blog/index.html の .blog-card から自動抽出するので、記事を追加したら
 再実行するだけで新しい画像が増える。出力先は assets/og/。
 
-依存: /Applications/Google Chrome.app（headless でHTMLをスクリーンショット）
+依存: Google Chrome（headless でHTMLをスクリーンショット）。パスは環境変数
+CHROME_BIN で上書きできる。既定は macOS の /Applications/Google Chrome.app。
+
+注意: フォントは 'Noto Sans JP' → Hiragino の順にフォールバックするため、
+別環境で再生成すると既存画像と見た目が変わりうる。再生成は同一環境で行うこと。
 """
 import argparse
 import html
 import io
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -20,7 +25,8 @@ import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "assets", "og")
-CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+CHROME = os.environ.get("CHROME_BIN",
+                        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 W, H = 1200, 630
 
 FONT_STACK = ("'Noto Sans JP','Hiragino Sans','Hiragino Kaku Gothic ProN',"
@@ -95,7 +101,8 @@ def title_size(text):
 def parse_articles():
     """blog/index.html の .blog-card から (slug, tag, title) を取り出す。"""
     path = os.path.join(ROOT, "blog", "index.html")
-    src = io.open(path, encoding="utf-8").read()
+    with io.open(path, encoding="utf-8") as fp:
+        src = fp.read()
     cards = re.findall(r'<article class="blog-card">(.*?)</article>', src, re.S)
     out = []
     for c in cards:
@@ -108,6 +115,24 @@ def parse_articles():
     if not out:
         sys.exit("blog/index.html から記事カードを1件も抽出できなかった")
     return out
+
+
+PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+
+
+def png_complete(path):
+    """書き込み途中のPNGを「完成」と誤判定しないよう IEND まで確認する。"""
+    try:
+        if os.path.getsize(path) < 100:
+            return False
+        with open(path, "rb") as fp:
+            if fp.read(8) != PNG_MAGIC:
+                return False
+            # PNG末尾12バイト = 長さ(4) + "IEND"(4) + CRC(4)
+            fp.seek(-8, os.SEEK_END)
+            return fp.read(8)[:4] == b"IEND"
+    except OSError:
+        return False
 
 
 def shoot(doc, dest):
@@ -125,23 +150,27 @@ def shoot(doc, dest):
            "--user-data-dir=%s" % profile, "file://%s" % tmp]
     # Chrome headless はスクショ書き出し後も終了しないことがあるので待って落とす
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    deadline = time.time() + 45
-    while time.time() < deadline:
-        if os.path.exists(dest) and os.path.getsize(dest) > 0:
-            time.sleep(0.6)
-            break
-        if proc.poll() is not None:
-            break
-        time.sleep(0.4)
-    if proc.poll() is None:
-        proc.terminate()
-        try:
-            proc.wait(timeout=8)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-    os.unlink(tmp)
-    if not (os.path.exists(dest) and os.path.getsize(dest) > 0):
-        sys.exit("生成失敗: %s" % dest)
+    try:
+        deadline = time.time() + 45
+        while time.time() < deadline:
+            if png_complete(dest):
+                break
+            if proc.poll() is not None:
+                break
+            time.sleep(0.4)
+    finally:
+        if proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=8)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait(timeout=8)
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        shutil.rmtree(profile, ignore_errors=True)
+    if not png_complete(dest):
+        sys.exit("生成失敗（PNGが完成していない）: %s" % dest)
 
 
 def main():

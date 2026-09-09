@@ -439,7 +439,8 @@ body {
   text-decoration: underline;
 }
 
-.blog-related-desc {
+/* .blog-article p (0,1,1) に負けないよう詳細度を上げる */
+.blog-article .blog-related-desc {
   margin: 0.3rem 0 0;
   font-size: 0.86rem;
   color: var(--muted);
