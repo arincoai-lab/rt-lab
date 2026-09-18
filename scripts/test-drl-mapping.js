@@ -115,6 +115,22 @@ for (const [mod, m] of Object.entries(MODALITIES)) {
   for (const cat of Object.keys(m.keywordMap)) check(cat in m.drl, mod + ': drl に ' + cat + ' がない');
 }
 
+// 5. 可視のDRL値一覧が MODALITIES と一致しているか（ドリフト検知）
+//    表を手書きすると医療数値のコピーが2つになる。生成物と再生成結果を突き合わせて
+//    片方だけ古くなる事故（2026-09-09のDRL値不一致と同型）を機械的に止める。
+const gen = require('./generate-drl-table.js');
+const gi = html.indexOf(gen.START), gj = html.indexOf(gen.END);
+check(gi >= 0 && gj >= 0, '可視DRL表のマーカー（DRL-TABLE:START/END）がページに無い');
+if (gi >= 0 && gj >= 0) {
+  const actual = html.slice(gi, gj + gen.END.length);
+  check(
+    actual === gen.render(MODALITIES),
+    '可視のDRL値一覧が MODALITIES と一致しない。node scripts/generate-drl-table.js を実行してコミットすること'
+  );
+  const rendered = (actual.match(/<th scope="row">/g) || []).length;
+  check(rendered === nValues, '可視表の行数 ' + rendered + ' が DRL値の数 ' + nValues + ' と一致しない');
+}
+
 console.log('\n  pass ' + pass + ' / fail ' + fail);
 if (fail) { bad.forEach(b => console.log('  FAIL ' + b)); process.exit(1); }
 console.log('  すべてのチェックを通過しました。');
