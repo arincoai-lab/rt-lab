@@ -9,6 +9,17 @@
   <meta property="og:description" content="脳CT/MRIの2シリーズを位置合わせし差分を可視化。ブラウザ完結・無料。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://rt-ai-lab.com/brain-diff/">
+  <meta property="og:image" content="https://rt-ai-lab.com/assets/og/og-default.png">
+  <meta property="og:image:alt" content="RT-Lab｜放射線技師のためのWebツール集">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="RT-Lab">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="脳画像差分ツール（CT/MRI） | RT-Lab">
+  <meta name="twitter:description" content="脳CT/MRIの2シリーズを位置合わせし差分を可視化。ブラウザ完結・無料。">
+  <meta name="twitter:image" content="https://rt-ai-lab.com/assets/og/og-default.png">
+  <meta name="twitter:image:alt" content="RT-Lab｜放射線技師のためのWebツール集">
   <link rel="canonical" href="https://rt-ai-lab.com/brain-diff/">
   <script type="application/ld+json">
   {
@@ -490,6 +501,11 @@
 </header>
 
 <main>
+  <!-- SEO: 概要 + h1 -->
+  <div class="card">
+    <h1 class="card-title">脳画像差分ツール（CT/MRI）｜経時変化をサブトラクションで可視化</h1>
+    <p style="margin-top:6px;">同一患者の2時点の脳CT/MRI DICOMシリーズを読み込み、剛体→affine→弱い非剛体の順に位置合わせしてから差分を計算し、変化部位をオーバーレイ表示します。位置ずれによる偽陽性を抑えつつ、経時的な変化を確認できます。処理はWeb Worker上でブラウザ内完結・外部送信なし。</p>
+  </div>
 
   <!-- ===== 使い方 ===== -->
   <div class="card">

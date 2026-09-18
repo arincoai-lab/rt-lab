@@ -38,6 +38,7 @@ jobs:
             --exclude '.claude' \
             --exclude '_site' \
             --exclude 'test-data' \
+            --exclude 'scripts' \
             --exclude 'CLAUDE.md' \
             --exclude 'AGENTS.md' \
             --exclude '.gitignore' \

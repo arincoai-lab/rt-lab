@@ -9,6 +9,17 @@
   <meta property="og:description" content="SSDEの求め方・計算式（SSDE = CTDIvol × 換算係数）をブラウザで自動計算。実効線量・DRL比較も対応。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://rt-ai-lab.com/ct-dose-estimator/">
+  <meta property="og:image" content="https://rt-ai-lab.com/assets/og/og-default.png">
+  <meta property="og:image:alt" content="RT-Lab｜放射線技師のためのWebツール集">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="RT-Lab">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SSDE計算ツール｜CT線量推定（実効線量・DRL比較）| RT-Lab">
+  <meta name="twitter:description" content="SSDEの求め方・計算式（SSDE = CTDIvol × 換算係数）をブラウザで自動計算。実効線量・DRL比較も対応。">
+  <meta name="twitter:image" content="https://rt-ai-lab.com/assets/og/og-default.png">
+  <meta name="twitter:image:alt" content="RT-Lab｜放射線技師のためのWebツール集">
   <link rel="canonical" href="https://rt-ai-lab.com/ct-dose-estimator/">
   <script type="application/ld+json">
   {
@@ -669,12 +680,16 @@ const K_FACTORS = {
   'ped-abdomen-10': 0.015
 };
 
-// ── Japan DRL 2025 reference values ──
+// ── Japan DRLs 2025 reference values ──
+// 出典: J-RIME「日本の診断参考レベル（2025年版）」§3.1.1 成人CTの診断参考レベル
+// https://j-rime.qst.go.jp/report/JapanDRLs2025_ja.pdf
+// ※ 変更時は必ず原典PDFの §3.1.1 と突き合わせること。
+//    2026-09-09 以前はここに DRLs2020/2015 の値が入ったまま「DRL 2025」と表示していた。
 const DRL_VALUES = {
-  head:            { ctdi: 77, dlp: 1350, label: '頭部ルーチン' },
-  chest:           { ctdi: 12, dlp: 510,  label: '胸部' },
-  abdomen:         { ctdi: 16, dlp: 880,  label: '腹部-骨盤' },
-  'chest-abdomen': { ctdi: 16, dlp: 1300, label: '胸腹部（造影）' }
+  head:            { ctdi: 67, dlp: 1260, label: '頭部単純ルーチン' },
+  chest:           { ctdi: 11, dlp: 430,  label: '胸部1相' },
+  abdomen:         { ctdi: 14, dlp: 720,  label: '上腹部～骨盤1相' },
+  'chest-abdomen': { ctdi: 13, dlp: 940,  label: '胸部～骨盤1相' }
 };
 
 // ── Region presets ──
