@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DRLs2025比較ツール｜施設線量と診断参考レベルの比較 | RT-Lab</title>
-  <meta name="description" content="施設の線量データをCSVで読み込み、Japan DRLs 2025（診断参考レベル）と自動比較。CT・一般撮影・マンモグラフィ・IVR・核医学・歯科・小児CTに対応。インストール不要・無料。">
-  <meta property="og:title" content="DRLs2025比較ツール｜施設線量と診断参考レベルの比較 | RT-Lab">
-  <meta property="og:description" content="施設の線量データをCSVで読み込み、Japan DRLs 2025と自動比較。CT・一般撮影・マンモ・IVR・核医学等に対応。">
+  <title>Japan DRLs 2025 診断参考レベル一覧｜全値とCSV比較ツール | RT-Lab</title>
+  <meta name="description" content="Japan DRLs 2025（J-RIME）の診断参考レベルをモダリティ別に全値掲載。CT・小児CT・一般撮影・マンモグラフィ・歯科・IVR・核医学。原典報告書と全件照合済み。施設の線量データをCSVで読み込めば自施設中央値との比較もできます。">
+  <meta property="og:title" content="Japan DRLs 2025 診断参考レベル一覧｜全値とCSV比較ツール | RT-Lab">
+  <meta property="og:description" content="Japan DRLs 2025（J-RIME）の診断参考レベルをモダリティ別に全値掲載。CT・小児CT・一般撮影・マンモ・歯科・IVR・核医学。原典と全件照合済み。CSVで自施設中央値との比較も。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://rt-ai-lab.com/drl-comparison/">
   <meta property="og:image" content="https://rt-ai-lab.com/assets/og/og-default.png">
@@ -16,8 +16,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="RT-Lab">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="DRLs2025比較ツール｜施設線量と診断参考レベルの比較 | RT-Lab">
-  <meta name="twitter:description" content="施設の線量データをCSVで読み込み、Japan DRLs 2025と自動比較。CT・一般撮影・マンモ・IVR・核医学等に対応。">
+  <meta name="twitter:title" content="Japan DRLs 2025 診断参考レベル一覧｜全値とCSV比較ツール | RT-Lab">
+  <meta name="twitter:description" content="Japan DRLs 2025（J-RIME）の診断参考レベルをモダリティ別に全値掲載。CT・小児CT・一般撮影・マンモ・歯科・IVR・核医学。原典と全件照合済み。CSVで自施設中央値との比較も。">
   <meta name="twitter:image" content="https://rt-ai-lab.com/assets/og/og-default.png">
   <meta name="twitter:image:alt" content="RT-Lab｜放射線技師のためのWebツール集">
   <link rel="canonical" href="https://rt-ai-lab.com/drl-comparison/">
@@ -27,7 +27,7 @@
     "@type": "WebApplication",
     "name": "DRLs2025比較ツール（DRL比較ツール）",
     "url": "https://rt-ai-lab.com/drl-comparison/",
-    "description": "施設の線量データをCSVで読み込み、Japan DRLs 2025（診断参考レベル）と比較するツール。CT・一般撮影・マンモグラフィ・IVR・核医学・歯科・小児CTに対応。",
+    "description": "Japan DRLs 2025（J-RIME）の診断参考レベルをモダリティ別に全値掲載し、施設の線量データをCSVで読み込んで自施設中央値と比較できるツール。CT・小児CT・一般撮影・マンモグラフィ・歯科・IVR・核医学に対応。",
     "applicationCategory": "HealthApplication",
     "operatingSystem": "Any",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
@@ -204,6 +204,33 @@
     .record-count strong { color: #2d3748; }
 
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* DRL値一覧 */
+    .drl-jump { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 4px; }
+    .drl-jump a {
+      display: inline-flex; align-items: baseline; gap: 6px;
+      padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 999px;
+      font-size: 0.8rem; color: #2d3748; text-decoration: none; background: #fff;
+    }
+    .drl-jump a:hover { border-color: #1a56db; color: #1a56db; }
+    .drl-jump-n { font-size: 0.72rem; color: #718096; }
+    .drl-total { font-size: 0.82rem; color: #4a5568; margin: 12px 0 4px; }
+    .drl-mod { margin-top: 26px; scroll-margin-top: 16px; }
+    .drl-mod-title {
+      font-size: 0.95rem; font-weight: 700; color: #2d3748;
+      display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px;
+    }
+    .drl-mod-n { font-size: 0.75rem; font-weight: 500; color: #718096; }
+    table.result-table caption {
+      caption-side: top; text-align: left; font-size: 0.75rem;
+      color: #718096; padding-bottom: 6px;
+    }
+    table.result-table tbody th {
+      padding: 9px 11px; border-bottom: 1px solid #edf2f7;
+      text-align: left; font-weight: 500; background: none; color: #2d3748;
+      white-space: normal;
+    }
+    .drl-values-actions { margin-top: 18px; }
     table.result-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
     table.result-table th {
       background: #f7fafc; padding: 9px 11px; text-align: center; font-weight: 700;
@@ -268,12 +295,207 @@
 <main>
   <!-- SEO: 概要 + h1 -->
   <div class="card">
-    <h1 class="card-title">DRLs2025比較ツール｜施設線量と診断参考レベルの比較</h1>
-    <p style="margin-top:6px;">施設のCT・一般撮影・マンモグラフィ・IVR・核医学・歯科・小児CTの線量データをCSVで読み込み、Japan DRLs 2025（診断参考レベル）と自動比較します。すべてブラウザ内で処理し、データを外部に送信しません。</p>
+    <h1 class="card-title">Japan DRLs 2025 診断参考レベル一覧｜自施設線量との比較</h1>
+    <p style="margin-top:6px;">J-RIME「日本の診断参考レベル（2025年版）」の診断参考レベルを、CT・小児CT・一般撮影・マンモグラフィ・歯科・IVR・核医学のモダリティ別に掲載しています。施設の線量データをCSVで読み込めば、自施設の中央値との比較もそのまま行えます。すべてブラウザ内で処理し、データを外部に送信しません。</p>
+  </div>
+
+  <!-- DRLs2025 値一覧（本文コンテンツ。生成は scripts/generate-drl-table.js） -->
+  <div class="card" id="drl-values">
+    <h2 class="card-title">Japan DRLs 2025 の診断参考レベル</h2>
+    <p style="margin-top:6px;">出典：医療被ばく研究情報ネットワーク（J-RIME）「日本の診断参考レベル（2025年版）」<br>
+      <a href="https://j-rime.qst.go.jp/report/JapanDRLs2025_ja.pdf" target="_blank" rel="noopener">j-rime.qst.go.jp/report/JapanDRLs2025_ja.pdf</a>（PDF・報告書本体）</p>
+<!-- DRL-TABLE:START 自動生成。手で編集しない（scripts/generate-drl-table.js） -->
+    <nav class="drl-jump" aria-label="モダリティから探す">
+      <a href="#drl-values-ct">CT（成人）<span class="drl-jump-n">10</span></a>
+      <a href="#drl-values-general">一般撮影<span class="drl-jump-n">17</span></a>
+      <a href="#drl-values-mammo">マンモグラフィ<span class="drl-jump-n">3</span></a>
+      <a href="#drl-values-dental">歯科<span class="drl-jump-n">12</span></a>
+      <a href="#drl-values-ivr">IVR<span class="drl-jump-n">22</span></a>
+      <a href="#drl-values-nm">核医学<span class="drl-jump-n">15</span></a>
+      <a href="#drl-values-pediatric-ct">小児CT<span class="drl-jump-n">16</span></a>
+    </nav>
+    <p class="drl-total">全 95 値。数値はすべてJ-RIME報告書の該当節と照合しています。</p>
+    <section class="drl-mod" id="drl-values-ct">
+      <h3 class="drl-mod-title">CT（成人）<span class="drl-mod-n">10値</span></h3>
+      <div class="table-wrap">
+        <table class="result-table">
+          <caption>CT（成人）の診断参考レベル（Japan DRLs 2025）</caption>
+          <thead><tr><th scope="col">DRLカテゴリ</th><th scope="col">CTDIvol [mGy]</th><th scope="col">DLP [mGy·cm]</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">頭部単純ルーチン</th><td>67</td><td>1260</td></tr>
+            <tr><th scope="row">胸部1相</th><td>11</td><td>430</td></tr>
+            <tr><th scope="row">胸部～骨盤1相</th><td>13</td><td>940</td></tr>
+            <tr><th scope="row">上腹部～骨盤1相</th><td>14</td><td>720</td></tr>
+            <tr><th scope="row">肝臓ダイナミック</th><td>13</td><td>1630</td></tr>
+            <tr><th scope="row">冠動脈</th><td>57</td><td>940</td></tr>
+            <tr><th scope="row">冠動脈（プロスペクティブ撮影）</th><td>49</td><td>770</td></tr>
+            <tr><th scope="row">冠動脈（単純・カルシウムスコア撮影）</th><td>8</td><td>160</td></tr>
+            <tr><th scope="row">急性肺血栓塞栓症&amp;深部静脈血栓症</th><td>12</td><td>2300</td></tr>
+            <tr><th scope="row">外傷全身CT</th><td>—</td><td>5290</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="drl-mod" id="drl-values-general">
+      <h3 class="drl-mod-title">一般撮影<span class="drl-mod-n">17値</span></h3>
+      <div class="table-wrap">
+        <table class="result-table">
+          <caption>一般撮影の診断参考レベル（Japan DRLs 2025）</caption>
+          <thead><tr><th scope="col">DRLカテゴリ</th><th scope="col">入射表面空気カーマ Ka,e [mGy]</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">胸部正面（100kV未満）</th><td>0.3</td></tr>
+            <tr><th scope="row">胸部正面（100kV以上）</th><td>0.2</td></tr>
+            <tr><th scope="row">検診胸部正面（100kV以上）</th><td>0.2</td></tr>
+            <tr><th scope="row">腹部正面（臥位）</th><td>1.4</td></tr>
+            <tr><th scope="row">頭部正面</th><td>1.3</td></tr>
+            <tr><th scope="row">頚椎正面</th><td>0.5</td></tr>
+            <tr><th scope="row">胸椎正面</th><td>1.8</td></tr>
+            <tr><th scope="row">胸椎側面</th><td>3.4</td></tr>
+            <tr><th scope="row">腰椎正面</th><td>2.5</td></tr>
+            <tr><th scope="row">腰椎側面</th><td>5.5</td></tr>
+            <tr><th scope="row">骨盤正面</th><td>1.7</td></tr>
+            <tr><th scope="row">乳児股関節（0〜1歳）</th><td>0.1</td></tr>
+            <tr><th scope="row">乳児胸部（0〜1歳）</th><td>0.1</td></tr>
+            <tr><th scope="row">小児胸部（5歳）</th><td>0.1</td></tr>
+            <tr><th scope="row">小児股関節（5歳）</th><td>0.2</td></tr>
+            <tr><th scope="row">小児全脊柱（5歳）</th><td>0.2</td></tr>
+            <tr><th scope="row">小児全脊柱（10歳）</th><td>0.3</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="drl-mod" id="drl-values-mammo">
+      <h3 class="drl-mod-title">マンモグラフィ<span class="drl-mod-n">3値</span></h3>
+      <div class="table-wrap">
+        <table class="result-table">
+          <caption>マンモグラフィの診断参考レベル（Japan DRLs 2025）</caption>
+          <thead><tr><th scope="col">DRLカテゴリ</th><th scope="col">平均乳腺線量 DG [mGy]</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">臨床データに基づく2Dマンモグラフィ</th><td>1.4</td></tr>
+            <tr><th scope="row">臨床データに基づくDBT</th><td>1.6</td></tr>
+            <tr><th scope="row">PMMA 40mm</th><td>2.2</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="drl-mod" id="drl-values-dental">
+      <h3 class="drl-mod-title">歯科<span class="drl-mod-n">12値</span></h3>
+      <div class="table-wrap">
+        <table class="result-table">
+          <caption>歯科の診断参考レベル（Japan DRLs 2025）</caption>
+          <thead><tr><th scope="col">DRLカテゴリ</th><th scope="col">線量指標値</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">口内法 上顎前歯部（成人・Ka,i: mGy）</th><td>1.1</td></tr>
+            <tr><th scope="row">口内法 上顎犬歯部（成人・Ka,i: mGy）</th><td>1.2</td></tr>
+            <tr><th scope="row">口内法 上顎小臼歯部（成人・Ka,i: mGy）</th><td>1.3</td></tr>
+            <tr><th scope="row">口内法 上顎大臼歯部（成人・Ka,i: mGy）</th><td>1.9</td></tr>
+            <tr><th scope="row">口内法 下顎前歯部（成人・Ka,i: mGy）</th><td>0.9</td></tr>
+            <tr><th scope="row">口内法 下顎犬歯部（成人・Ka,i: mGy）</th><td>1</td></tr>
+            <tr><th scope="row">口内法 下顎小臼歯部（成人・Ka,i: mGy）</th><td>1.1</td></tr>
+            <tr><th scope="row">口内法 下顎大臼歯部（成人・Ka,i: mGy）</th><td>1.3</td></tr>
+            <tr><th scope="row">パノラマ撮影（PKA: mGy·cm²）</th><td>130</td></tr>
+            <tr><th scope="row">歯科用CBCT FOV&lt;40cm²（PKA: mGy·cm²）</th><td>720</td></tr>
+            <tr><th scope="row">歯科用CBCT FOV 40〜100cm²（PKA: mGy·cm²）</th><td>1500</td></tr>
+            <tr><th scope="row">歯科用CBCT FOV&gt;100cm²（PKA: mGy·cm²）</th><td>2200</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="drl-mod" id="drl-values-ivr">
+      <h3 class="drl-mod-title">IVR<span class="drl-mod-n">22値</span></h3>
+      <div class="table-wrap">
+        <table class="result-table">
+          <caption>IVRの診断参考レベル（Japan DRLs 2025）</caption>
+          <thead><tr><th scope="col">DRLカテゴリ</th><th scope="col">Ka,r [mGy]</th><th scope="col">PKA [Gy·cm²]</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">診断カテーテル検査（心臓）</th><td>520</td><td>47</td></tr>
+            <tr><th scope="row">非CTO PCI</th><td>1300</td><td>100</td></tr>
+            <tr><th scope="row">CTO PCI</th><td>2500</td><td>200</td></tr>
+            <tr><th scope="row">非PVI RFCA</th><td>200</td><td>27</td></tr>
+            <tr><th scope="row">PVI RFCA</th><td>260</td><td>38</td></tr>
+            <tr><th scope="row">TAVI（経大腿アプローチ）</th><td>530</td><td>78</td></tr>
+            <tr><th scope="row">脳血管内治療：嚢状動脈瘤</th><td>2400</td><td>190</td></tr>
+            <tr><th scope="row">脳血管内治療：脳動静脈奇形</th><td>3700</td><td>330</td></tr>
+            <tr><th scope="row">脳血管内治療：脳硬膜動静脈瘻</th><td>4300</td><td>450</td></tr>
+            <tr><th scope="row">脳血管内治療：頸部頸動脈狭窄・閉塞</th><td>700</td><td>130</td></tr>
+            <tr><th scope="row">脳血管内治療：急性脳動脈狭窄・閉塞</th><td>1000</td><td>160</td></tr>
+            <tr><th scope="row">脳血管内治療：頭蓋内腫瘍</th><td>1900</td><td>230</td></tr>
+            <tr><th scope="row">TACE</th><td>1200</td><td>220</td></tr>
+            <tr><th scope="row">TEVAR</th><td>630</td><td>170</td></tr>
+            <tr><th scope="row">EVAR</th><td>910</td><td>200</td></tr>
+            <tr><th scope="row">UAE（子宮筋腫）</th><td>710</td><td>150</td></tr>
+            <tr><th scope="row">PAVM simple type</th><td>870</td><td>150</td></tr>
+            <tr><th scope="row">BRTO（左腎静脈経由）</th><td>1100</td><td>230</td></tr>
+            <tr><th scope="row">EVT 非CTO 腸骨動脈</th><td>360</td><td>69</td></tr>
+            <tr><th scope="row">EVT CTO 腸骨動脈</th><td>740</td><td>120</td></tr>
+            <tr><th scope="row">EVT 非CTO 浅大腿動脈</th><td>160</td><td>36</td></tr>
+            <tr><th scope="row">EVT CTO 浅大腿動脈</th><td>310</td><td>54</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="drl-mod" id="drl-values-nm">
+      <h3 class="drl-mod-title">核医学<span class="drl-mod-n">15値</span></h3>
+      <div class="table-wrap">
+        <table class="result-table">
+          <caption>核医学の診断参考レベル（Japan DRLs 2025）</caption>
+          <thead><tr><th scope="col">DRLカテゴリ</th><th scope="col">投与量 [MBq]</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">骨：99mTc-MDP</th><td>930</td></tr>
+            <tr><th scope="row">骨：99mTc-HMDP</th><td>930</td></tr>
+            <tr><th scope="row">脳血流：99mTc-ECD（安静あるいは負荷1回のみ）</th><td>800</td></tr>
+            <tr><th scope="row">脳血流：99mTc-ECD（安静+負荷）</th><td>1100</td></tr>
+            <tr><th scope="row">脳血流：123I-IMP（安静あるいは負荷1回のみ）</th><td>200</td></tr>
+            <tr><th scope="row">脳血流：123I-IMP（安静+負荷）</th><td>270</td></tr>
+            <tr><th scope="row">心筋血流：99mTc-tetrofosmin（安静あるいは負荷1回のみ）</th><td>840</td></tr>
+            <tr><th scope="row">心筋血流：99mTc-tetrofosmin（安静+負荷）</th><td>1200</td></tr>
+            <tr><th scope="row">心筋血流：99mTc-MIBI（安静あるいは負荷1回のみ）</th><td>840</td></tr>
+            <tr><th scope="row">心筋血流：99mTc-MIBI（安静+負荷）</th><td>1200</td></tr>
+            <tr><th scope="row">肺血流：99mTc-MAA</th><td>260</td></tr>
+            <tr><th scope="row">甲状腺：99mTcO4-</th><td>240</td></tr>
+            <tr><th scope="row">腫瘍・炎症：67Ga-citrate</th><td>120</td></tr>
+            <tr><th scope="row">腫瘍ブドウ糖代謝：18F-FDG（院内製剤）</th><td>240</td></tr>
+            <tr><th scope="row">腫瘍ブドウ糖代謝：18F-FDG（デリバリー）</th><td>240</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="drl-mod" id="drl-values-pediatric-ct">
+      <h3 class="drl-mod-title">小児CT<span class="drl-mod-n">16値</span></h3>
+      <div class="table-wrap">
+        <table class="result-table">
+          <caption>小児CTの診断参考レベル（Japan DRLs 2025）</caption>
+          <thead><tr><th scope="col">DRLカテゴリ</th><th scope="col">CTDIvol [mGy]</th><th scope="col">DLP [mGy·cm]</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">頭部（0-&lt;1歳）</th><td>27</td><td>460</td></tr>
+            <tr><th scope="row">頭部（1-&lt;5歳）</th><td>34</td><td>610</td></tr>
+            <tr><th scope="row">頭部（5-&lt;10歳）</th><td>44</td><td>810</td></tr>
+            <tr><th scope="row">頭部（10-&lt;15歳）</th><td>55</td><td>1000</td></tr>
+            <tr><th scope="row">胸部（0-&lt;1歳）</th><td>2</td><td>50</td></tr>
+            <tr><th scope="row">胸部（1-&lt;5歳）</th><td>3</td><td>80</td></tr>
+            <tr><th scope="row">胸部（5-&lt;10歳）</th><td>4</td><td>120</td></tr>
+            <tr><th scope="row">胸部（10-&lt;15歳）</th><td>6</td><td>230</td></tr>
+            <tr><th scope="row">腹部（0-&lt;1歳）</th><td>2.5</td><td>70</td></tr>
+            <tr><th scope="row">腹部（1-&lt;5歳）</th><td>3.4</td><td>120</td></tr>
+            <tr><th scope="row">腹部（5-&lt;10歳）</th><td>4.5</td><td>180</td></tr>
+            <tr><th scope="row">腹部（10-&lt;15歳）</th><td>7</td><td>340</td></tr>
+            <tr><th scope="row">頸部～骨盤（0-&lt;1歳）</th><td>2</td><td>80</td></tr>
+            <tr><th scope="row">頸部～骨盤（1-&lt;5歳）</th><td>2.8</td><td>145</td></tr>
+            <tr><th scope="row">頸部～骨盤（5-&lt;10歳）</th><td>4</td><td>220</td></tr>
+            <tr><th scope="row">頸部～骨盤（10-&lt;15歳）</th><td>7</td><td>510</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- DRL-TABLE:END -->
+    <p class="drl-total" style="margin-top:22px;">DRLは線量限度ではなく最適化の指標です。施設側は自施設の線量データの<strong>中央値</strong>を代表値として、対応するDRL値と比較します。臨床的な必要性があれば超えてもかまいません。</p>
+    <div class="drl-values-actions">
+      <a class="btn btn-primary" href="#tool">自施設のデータと比較する →</a>
+    </div>
   </div>
 
   <!-- Step instructions -->
-  <div class="card">
+  <div class="card" id="tool">
     <div class="card-title">使い方</div>
     <div class="steps">
       <div class="step">
