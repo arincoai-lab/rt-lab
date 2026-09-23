@@ -1,0 +1,1252 @@
+{
+  "_note": "drl-comparison のプロトコール名マッピングを検証するための合成コーパス。実在する施設の検査プロトコル名・線量データ・患者情報は一切含まない。命名の揺れ（日本語/英語、メーカー既定名風、略語、年齢・管電圧の表記違い、DRLs2025 に区分が無い検査）を意図的に混ぜてある。expect は参考ラベルで、null は「区分の有無の解釈が割れていて未確定」の意味（オラクルの正答率の分母から外れる。レポートに未確定一覧として出る）。人が確定させたものだけ scripts/test-drl-mapping.js の回帰ケースへ移すこと。",
+  "_created": "2026-09-23",
+  "cases": [
+    {
+      "modality": "ct",
+      "name": "頭部単純",
+      "expect": "頭部単純ルーチン"
+    },
+    {
+      "modality": "ct",
+      "name": "頭部ルーチン",
+      "expect": "頭部単純ルーチン"
+    },
+    {
+      "modality": "ct",
+      "name": "Head Routine",
+      "expect": "頭部単純ルーチン"
+    },
+    {
+      "modality": "ct",
+      "name": "Routine Head 5mm",
+      "expect": "頭部単純ルーチン"
+    },
+    {
+      "modality": "ct",
+      "name": "HeadSeq",
+      "expect": "頭部単純ルーチン"
+    },
+    {
+      "modality": "ct",
+      "name": "Brain Plain",
+      "expect": "頭部単純ルーチン"
+    },
+    {
+      "modality": "ct",
+      "name": "頭部CT（単純）",
+      "expect": "頭部単純ルーチン"
+    },
+    {
+      "modality": "ct",
+      "name": "脳梗塞精査 単純",
+      "expect": null
+    },
+    {
+      "modality": "ct",
+      "name": "胸部単純CT",
+      "expect": "胸部1相"
+    },
+    {
+      "modality": "ct",
+      "name": "Chest Routine",
+      "expect": "胸部1相"
+    },
+    {
+      "modality": "ct",
+      "name": "Thorax non-contrast",
+      "expect": "胸部1相"
+    },
+    {
+      "modality": "ct",
+      "name": "肺野条件 1相",
+      "expect": "胸部1相"
+    },
+    {
+      "modality": "ct",
+      "name": "胸部造影 1相",
+      "expect": "胸部1相"
+    },
+    {
+      "modality": "ct",
+      "name": "低線量肺がん検診CT",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ct",
+      "name": "TAP",
+      "expect": "胸部～骨盤1相"
+    },
+    {
+      "modality": "ct",
+      "name": "CAP造影",
+      "expect": "胸部～骨盤1相"
+    },
+    {
+      "modality": "ct",
+      "name": "Chest to Pelvis",
+      "expect": "胸部～骨盤1相"
+    },
+    {
+      "modality": "ct",
+      "name": "胸腹部骨盤 造影1相",
+      "expect": "胸部～骨盤1相"
+    },
+    {
+      "modality": "ct",
+      "name": "Thorax-Abdomen-Pelvis",
+      "expect": "胸部～骨盤1相"
+    },
+    {
+      "modality": "ct",
+      "name": "上腹部～骨盤",
+      "expect": "上腹部～骨盤1相"
+    },
+    {
+      "modality": "ct",
+      "name": "腹部骨盤 造影",
+      "expect": "上腹部～骨盤1相"
+    },
+    {
+      "modality": "ct",
+      "name": "Abdomen Pelvis 1phase",
+      "expect": "上腹部～骨盤1相"
+    },
+    {
+      "modality": "ct",
+      "name": "腹部単純CT",
+      "expect": null
+    },
+    {
+      "modality": "ct",
+      "name": "尿路結石 単純",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ct",
+      "name": "肝ダイナミック",
+      "expect": "肝臓ダイナミック"
+    },
+    {
+      "modality": "ct",
+      "name": "Liver Dynamic 4phase",
+      "expect": "肝臓ダイナミック"
+    },
+    {
+      "modality": "ct",
+      "name": "肝臓ダイナミックCT",
+      "expect": "肝臓ダイナミック"
+    },
+    {
+      "modality": "ct",
+      "name": "HCC 精査 dynamic",
+      "expect": "肝臓ダイナミック"
+    },
+    {
+      "modality": "ct",
+      "name": "冠動脈CTA",
+      "expect": "冠動脈"
+    },
+    {
+      "modality": "ct",
+      "name": "CCTA retrospective",
+      "expect": "冠動脈"
+    },
+    {
+      "modality": "ct",
+      "name": "心臓CT ヘリカル",
+      "expect": null
+    },
+    {
+      "modality": "ct",
+      "name": "冠動脈CT プロスペクティブ",
+      "expect": "冠動脈（プロスペクティブ撮影）"
+    },
+    {
+      "modality": "ct",
+      "name": "Coronary prospective",
+      "expect": "冠動脈（プロスペクティブ撮影）"
+    },
+    {
+      "modality": "ct",
+      "name": "ステップアンドシュート 冠動脈",
+      "expect": "冠動脈（プロスペクティブ撮影）"
+    },
+    {
+      "modality": "ct",
+      "name": "カルシウムスコア",
+      "expect": "冠動脈（単純・カルシウムスコア撮影）"
+    },
+    {
+      "modality": "ct",
+      "name": "CACS",
+      "expect": "冠動脈（単純・カルシウムスコア撮影）"
+    },
+    {
+      "modality": "ct",
+      "name": "Calcium Scoring",
+      "expect": "冠動脈（単純・カルシウムスコア撮影）"
+    },
+    {
+      "modality": "ct",
+      "name": "肺塞栓精査CT",
+      "expect": "急性肺血栓塞栓症&深部静脈血栓症"
+    },
+    {
+      "modality": "ct",
+      "name": "PE protocol",
+      "expect": "急性肺血栓塞栓症&深部静脈血栓症"
+    },
+    {
+      "modality": "ct",
+      "name": "深部静脈血栓 下肢造影",
+      "expect": "急性肺血栓塞栓症&深部静脈血栓症"
+    },
+    {
+      "modality": "ct",
+      "name": "外傷全身CT",
+      "expect": "外傷全身CT"
+    },
+    {
+      "modality": "ct",
+      "name": "Trauma Pan-scan",
+      "expect": "外傷全身CT"
+    },
+    {
+      "modality": "ct",
+      "name": "whole body trauma",
+      "expect": "外傷全身CT"
+    },
+    {
+      "modality": "ct",
+      "name": "Pelvis",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ct",
+      "name": "PERFUSION",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ct",
+      "name": "副鼻腔CT",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ct",
+      "name": "側頭骨 高分解能",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ct",
+      "name": "頸部造影CT",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ct",
+      "name": "CT colonography",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ct",
+      "name": "頭部CTA 脳動脈瘤",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ct",
+      "name": "骨盤 骨条件",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "general",
+      "name": "胸部正面",
+      "expect": null
+    },
+    {
+      "modality": "general",
+      "name": "胸部正面 120kV",
+      "expect": "胸部正面（100kV以上）"
+    },
+    {
+      "modality": "general",
+      "name": "胸部立位正面 125kV",
+      "expect": "胸部正面（100kV以上）"
+    },
+    {
+      "modality": "general",
+      "name": "胸部 P→A 100kV",
+      "expect": "胸部正面（100kV以上）"
+    },
+    {
+      "modality": "general",
+      "name": "CHEST PA 120kV",
+      "expect": "胸部正面（100kV以上）"
+    },
+    {
+      "modality": "general",
+      "name": "胸部正面 80kV",
+      "expect": "胸部正面（100kV未満）"
+    },
+    {
+      "modality": "general",
+      "name": "胸部正面 90kV 立位",
+      "expect": "胸部正面（100kV未満）"
+    },
+    {
+      "modality": "general",
+      "name": "胸部 100kV未満",
+      "expect": "胸部正面（100kV未満）"
+    },
+    {
+      "modality": "general",
+      "name": "ポータブル胸部 AP",
+      "expect": null
+    },
+    {
+      "modality": "general",
+      "name": "検診胸部 120kV",
+      "expect": "検診胸部正面（100kV以上）"
+    },
+    {
+      "modality": "general",
+      "name": "健診 胸部正面",
+      "expect": "検診胸部正面（100kV以上）"
+    },
+    {
+      "modality": "general",
+      "name": "集団検診 胸部",
+      "expect": "検診胸部正面（100kV以上）"
+    },
+    {
+      "modality": "general",
+      "name": "腹部臥位",
+      "expect": "腹部正面（臥位）"
+    },
+    {
+      "modality": "general",
+      "name": "KUB",
+      "expect": "腹部正面（臥位）"
+    },
+    {
+      "modality": "general",
+      "name": "Abdomen AP supine",
+      "expect": "腹部正面（臥位）"
+    },
+    {
+      "modality": "general",
+      "name": "腹部単純 立位",
+      "expect": null
+    },
+    {
+      "modality": "general",
+      "name": "頭部正面",
+      "expect": "頭部正面"
+    },
+    {
+      "modality": "general",
+      "name": "Skull AP",
+      "expect": "頭部正面"
+    },
+    {
+      "modality": "general",
+      "name": "頭部4方向",
+      "expect": null
+    },
+    {
+      "modality": "general",
+      "name": "頚椎正面",
+      "expect": "頚椎正面"
+    },
+    {
+      "modality": "general",
+      "name": "頸椎AP",
+      "expect": "頚椎正面"
+    },
+    {
+      "modality": "general",
+      "name": "C-spine AP",
+      "expect": "頚椎正面"
+    },
+    {
+      "modality": "general",
+      "name": "頚椎側面",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "general",
+      "name": "胸椎正面",
+      "expect": "胸椎正面"
+    },
+    {
+      "modality": "general",
+      "name": "T-spine AP",
+      "expect": "胸椎正面"
+    },
+    {
+      "modality": "general",
+      "name": "胸椎側面",
+      "expect": "胸椎側面"
+    },
+    {
+      "modality": "general",
+      "name": "T-spine LAT",
+      "expect": "胸椎側面"
+    },
+    {
+      "modality": "general",
+      "name": "腰椎正面",
+      "expect": "腰椎正面"
+    },
+    {
+      "modality": "general",
+      "name": "L-spine AP",
+      "expect": "腰椎正面"
+    },
+    {
+      "modality": "general",
+      "name": "腰椎側面",
+      "expect": "腰椎側面"
+    },
+    {
+      "modality": "general",
+      "name": "L-spine lateral",
+      "expect": "腰椎側面"
+    },
+    {
+      "modality": "general",
+      "name": "腰椎2方向",
+      "expect": null
+    },
+    {
+      "modality": "general",
+      "name": "骨盤正面",
+      "expect": "骨盤正面"
+    },
+    {
+      "modality": "general",
+      "name": "Pelvis AP",
+      "expect": "骨盤正面"
+    },
+    {
+      "modality": "general",
+      "name": "股関節正面",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "general",
+      "name": "乳児股関節",
+      "expect": "乳児股関節（0〜1歳）"
+    },
+    {
+      "modality": "general",
+      "name": "乳児股関節 6か月",
+      "expect": "乳児股関節（0〜1歳）"
+    },
+    {
+      "modality": "general",
+      "name": "股関節 生後3か月",
+      "expect": "乳児股関節（0〜1歳）"
+    },
+    {
+      "modality": "general",
+      "name": "乳児胸部",
+      "expect": "乳児胸部（0〜1歳）"
+    },
+    {
+      "modality": "general",
+      "name": "新生児 胸部",
+      "expect": "乳児胸部（0〜1歳）"
+    },
+    {
+      "modality": "general",
+      "name": "小児胸部 5歳",
+      "expect": "小児胸部（5歳）"
+    },
+    {
+      "modality": "general",
+      "name": "小児 胸部正面 4歳",
+      "expect": "小児胸部（5歳）"
+    },
+    {
+      "modality": "general",
+      "name": "小児股関節 5歳",
+      "expect": "小児股関節（5歳）"
+    },
+    {
+      "modality": "general",
+      "name": "小児胸部 12歳",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "general",
+      "name": "側弯症 全脊柱 5歳",
+      "expect": "小児全脊柱（5歳）"
+    },
+    {
+      "modality": "general",
+      "name": "全脊柱 10歳",
+      "expect": "小児全脊柱（10歳）"
+    },
+    {
+      "modality": "general",
+      "name": "scoliosis 10y",
+      "expect": "小児全脊柱（10歳）"
+    },
+    {
+      "modality": "general",
+      "name": "手関節2方向",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "general",
+      "name": "膝関節正面",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "general",
+      "name": "足部3方向",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "general",
+      "name": "肩関節AP",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "小児頭部 3歳",
+      "expect": "頭部（1-<5歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "頭部 0歳",
+      "expect": "頭部（0-<1歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "頭部 生後6か月",
+      "expect": "頭部（0-<1歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "新生児 頭部",
+      "expect": "頭部（0-<1歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "Head 8y",
+      "expect": "頭部（5-<10歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "頭部 9歳",
+      "expect": "頭部（5-<10歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "頭部 10歳",
+      "expect": "頭部（10-<15歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "頭部 13歳",
+      "expect": "頭部（10-<15歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "小児胸部 2歳",
+      "expect": "胸部（1-<5歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "Chest 7yo",
+      "expect": "胸部（5-<10歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "胸部 14歳",
+      "expect": "胸部（10-<15歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "乳児 胸部",
+      "expect": "胸部（0-<1歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "胸部 5歳0か月",
+      "expect": "胸部（5-<10歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "腹部 生後3か月",
+      "expect": "腹部（0-<1歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "腹部造影 6歳",
+      "expect": "腹部（5-<10歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "Abdomen 11y",
+      "expect": "腹部（10-<15歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "腹部 4歳11か月",
+      "expect": "腹部（1-<5歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "1歳 腹部",
+      "expect": "腹部（1-<5歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "頸部～骨盤 4歳",
+      "expect": "頸部～骨盤（1-<5歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "Neck to pelvis 9y",
+      "expect": "頸部～骨盤（5-<10歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "0歳 頸部～骨盤",
+      "expect": "頸部～骨盤（0-<1歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "頸部から骨盤 12歳",
+      "expect": "頸部～骨盤（10-<15歳）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "胸部 15歳",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "腹部 16歳",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "頭部 小児",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "小児頭部ルーチン",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "小児 副鼻腔 6歳",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "小児 心臓CT 3歳",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "小児外傷 全身 12歳",
+      "expect": null
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "小児 頭部外傷 2歳",
+      "expect": "頭部（1-<5歳）"
+    },
+    {
+      "modality": "mammo",
+      "name": "MMG 2D MLO",
+      "expect": "臨床データに基づく2Dマンモグラフィ"
+    },
+    {
+      "modality": "mammo",
+      "name": "FFDM CC",
+      "expect": "臨床データに基づく2Dマンモグラフィ"
+    },
+    {
+      "modality": "mammo",
+      "name": "マンモグラフィ 4方向",
+      "expect": "臨床データに基づく2Dマンモグラフィ"
+    },
+    {
+      "modality": "mammo",
+      "name": "乳房2D撮影",
+      "expect": "臨床データに基づく2Dマンモグラフィ"
+    },
+    {
+      "modality": "mammo",
+      "name": "DBT",
+      "expect": "臨床データに基づくDBT"
+    },
+    {
+      "modality": "mammo",
+      "name": "トモシンセシス MLO",
+      "expect": "臨床データに基づくDBT"
+    },
+    {
+      "modality": "mammo",
+      "name": "Tomosynthesis CC",
+      "expect": "臨床データに基づくDBT"
+    },
+    {
+      "modality": "mammo",
+      "name": "PMMA 40mm",
+      "expect": "PMMA 40mm"
+    },
+    {
+      "modality": "mammo",
+      "name": "ファントム 4.0cm 線量測定",
+      "expect": "PMMA 40mm"
+    },
+    {
+      "modality": "mammo",
+      "name": "スポット拡大撮影",
+      "expect": null
+    },
+    {
+      "modality": "mammo",
+      "name": "ステレオガイド下生検",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "dental",
+      "name": "口内法 上顎前歯",
+      "expect": "口内法 上顎前歯部（成人・Ka,i: mGy）"
+    },
+    {
+      "modality": "dental",
+      "name": "デンタル 上顎犬歯",
+      "expect": "口内法 上顎犬歯部（成人・Ka,i: mGy）"
+    },
+    {
+      "modality": "dental",
+      "name": "口内法 上顎小臼歯",
+      "expect": "口内法 上顎小臼歯部（成人・Ka,i: mGy）"
+    },
+    {
+      "modality": "dental",
+      "name": "口内法 上顎大臼歯",
+      "expect": "口内法 上顎大臼歯部（成人・Ka,i: mGy）"
+    },
+    {
+      "modality": "dental",
+      "name": "口内法 下顎前歯",
+      "expect": "口内法 下顎前歯部（成人・Ka,i: mGy）"
+    },
+    {
+      "modality": "dental",
+      "name": "デンタル 下顎犬歯",
+      "expect": "口内法 下顎犬歯部（成人・Ka,i: mGy）"
+    },
+    {
+      "modality": "dental",
+      "name": "口内法 下顎小臼歯",
+      "expect": "口内法 下顎小臼歯部（成人・Ka,i: mGy）"
+    },
+    {
+      "modality": "dental",
+      "name": "デンタル 下顎大臼歯",
+      "expect": "口内法 下顎大臼歯部（成人・Ka,i: mGy）"
+    },
+    {
+      "modality": "dental",
+      "name": "パノラマ",
+      "expect": "パノラマ撮影（PKA: mGy·cm²）"
+    },
+    {
+      "modality": "dental",
+      "name": "OPG",
+      "expect": "パノラマ撮影（PKA: mGy·cm²）"
+    },
+    {
+      "modality": "dental",
+      "name": "パノラマ撮影 成人",
+      "expect": "パノラマ撮影（PKA: mGy·cm²）"
+    },
+    {
+      "modality": "dental",
+      "name": "歯科用CBCT 小照射野",
+      "expect": "歯科用CBCT FOV<40cm²（PKA: mGy·cm²）"
+    },
+    {
+      "modality": "dental",
+      "name": "CBCT FOV 30cm2",
+      "expect": "歯科用CBCT FOV<40cm²（PKA: mGy·cm²）"
+    },
+    {
+      "modality": "dental",
+      "name": "CBCT FOV 60cm2",
+      "expect": "歯科用CBCT FOV 40〜100cm²（PKA: mGy·cm²）"
+    },
+    {
+      "modality": "dental",
+      "name": "歯科用CBCT 大照射野",
+      "expect": "歯科用CBCT FOV>100cm²（PKA: mGy·cm²）"
+    },
+    {
+      "modality": "dental",
+      "name": "CBCT FOV 150cm2",
+      "expect": "歯科用CBCT FOV>100cm²（PKA: mGy·cm²）"
+    },
+    {
+      "modality": "dental",
+      "name": "セファロ 側面",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "dental",
+      "name": "咬翼法",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ivr",
+      "name": "CAG 診断カテーテル",
+      "expect": "診断カテーテル検査（心臓）"
+    },
+    {
+      "modality": "ivr",
+      "name": "心臓カテーテル検査（診断）",
+      "expect": "診断カテーテル検査（心臓）"
+    },
+    {
+      "modality": "ivr",
+      "name": "冠動脈造影検査",
+      "expect": "診断カテーテル検査（心臓）"
+    },
+    {
+      "modality": "ivr",
+      "name": "PCI",
+      "expect": null
+    },
+    {
+      "modality": "ivr",
+      "name": "PCI（非CTO）",
+      "expect": "非CTO PCI"
+    },
+    {
+      "modality": "ivr",
+      "name": "非CTO PCI",
+      "expect": "非CTO PCI"
+    },
+    {
+      "modality": "ivr",
+      "name": "CTO PCI",
+      "expect": "CTO PCI"
+    },
+    {
+      "modality": "ivr",
+      "name": "慢性完全閉塞 PCI",
+      "expect": "CTO PCI"
+    },
+    {
+      "modality": "ivr",
+      "name": "RFCA PVI",
+      "expect": "PVI RFCA"
+    },
+    {
+      "modality": "ivr",
+      "name": "肺静脈隔離術",
+      "expect": "PVI RFCA"
+    },
+    {
+      "modality": "ivr",
+      "name": "カテーテルアブレーション（非PVI）",
+      "expect": "非PVI RFCA"
+    },
+    {
+      "modality": "ivr",
+      "name": "非PVI RFCA",
+      "expect": "非PVI RFCA"
+    },
+    {
+      "modality": "ivr",
+      "name": "TAVI 経大腿",
+      "expect": "TAVI（経大腿アプローチ）"
+    },
+    {
+      "modality": "ivr",
+      "name": "TAVR TF approach",
+      "expect": "TAVI（経大腿アプローチ）"
+    },
+    {
+      "modality": "ivr",
+      "name": "脳動脈瘤 コイル塞栓",
+      "expect": "脳血管内治療：嚢状動脈瘤"
+    },
+    {
+      "modality": "ivr",
+      "name": "未破裂動脈瘤 コイリング",
+      "expect": "脳血管内治療：嚢状動脈瘤"
+    },
+    {
+      "modality": "ivr",
+      "name": "AVM 塞栓術",
+      "expect": "脳血管内治療：脳動静脈奇形"
+    },
+    {
+      "modality": "ivr",
+      "name": "硬膜動静脈瘻 塞栓",
+      "expect": "脳血管内治療：脳硬膜動静脈瘻"
+    },
+    {
+      "modality": "ivr",
+      "name": "頸動脈ステント CAS",
+      "expect": "脳血管内治療：頸部頸動脈狭窄・閉塞"
+    },
+    {
+      "modality": "ivr",
+      "name": "急性期 血栓回収",
+      "expect": "脳血管内治療：急性脳動脈狭窄・閉塞"
+    },
+    {
+      "modality": "ivr",
+      "name": "髄膜腫 栄養血管塞栓",
+      "expect": "脳血管内治療：頭蓋内腫瘍"
+    },
+    {
+      "modality": "ivr",
+      "name": "TACE",
+      "expect": "TACE"
+    },
+    {
+      "modality": "ivr",
+      "name": "肝動脈化学塞栓術",
+      "expect": "TACE"
+    },
+    {
+      "modality": "ivr",
+      "name": "TEVAR",
+      "expect": "TEVAR"
+    },
+    {
+      "modality": "ivr",
+      "name": "胸部ステントグラフト内挿術",
+      "expect": "TEVAR"
+    },
+    {
+      "modality": "ivr",
+      "name": "EVAR",
+      "expect": "EVAR"
+    },
+    {
+      "modality": "ivr",
+      "name": "腹部大動脈瘤 ステントグラフト",
+      "expect": "EVAR"
+    },
+    {
+      "modality": "ivr",
+      "name": "子宮筋腫塞栓 UAE",
+      "expect": "UAE（子宮筋腫）"
+    },
+    {
+      "modality": "ivr",
+      "name": "肺動静脈奇形 塞栓 simple",
+      "expect": "PAVM simple type"
+    },
+    {
+      "modality": "ivr",
+      "name": "BRTO",
+      "expect": "BRTO（左腎静脈経由）"
+    },
+    {
+      "modality": "ivr",
+      "name": "バルーン閉塞下逆行性経静脈的塞栓術",
+      "expect": "BRTO（左腎静脈経由）"
+    },
+    {
+      "modality": "ivr",
+      "name": "EVT 腸骨動脈 非CTO",
+      "expect": "EVT 非CTO 腸骨動脈"
+    },
+    {
+      "modality": "ivr",
+      "name": "EVT iliac CTO",
+      "expect": "EVT CTO 腸骨動脈"
+    },
+    {
+      "modality": "ivr",
+      "name": "EVT SFA 非CTO",
+      "expect": "EVT 非CTO 浅大腿動脈"
+    },
+    {
+      "modality": "ivr",
+      "name": "浅大腿動脈 CTO EVT",
+      "expect": "EVT CTO 浅大腿動脈"
+    },
+    {
+      "modality": "ivr",
+      "name": "CVポート造設",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ivr",
+      "name": "PTCD 胆道ドレナージ",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ivr",
+      "name": "気管支動脈塞栓術 BAE",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ivr",
+      "name": "腎動脈塞栓術",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ivr",
+      "name": "ペースメーカ植込み",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "nm",
+      "name": "骨シンチ 99mTc-MDP",
+      "expect": "骨：99mTc-MDP"
+    },
+    {
+      "modality": "nm",
+      "name": "Bone scan MDP",
+      "expect": "骨：99mTc-MDP"
+    },
+    {
+      "modality": "nm",
+      "name": "骨シンチ HMDP",
+      "expect": "骨：99mTc-HMDP"
+    },
+    {
+      "modality": "nm",
+      "name": "脳血流 ECD 安静",
+      "expect": "脳血流：99mTc-ECD（安静あるいは負荷1回のみ）"
+    },
+    {
+      "modality": "nm",
+      "name": "脳血流 ECD 安静+負荷",
+      "expect": "脳血流：99mTc-ECD（安静+負荷）"
+    },
+    {
+      "modality": "nm",
+      "name": "ECD ダイアモックス負荷（安静+負荷）",
+      "expect": "脳血流：99mTc-ECD（安静+負荷）"
+    },
+    {
+      "modality": "nm",
+      "name": "IMP SPECT 安静",
+      "expect": "脳血流：123I-IMP（安静あるいは負荷1回のみ）"
+    },
+    {
+      "modality": "nm",
+      "name": "123I-IMP 安静+負荷",
+      "expect": "脳血流：123I-IMP（安静+負荷）"
+    },
+    {
+      "modality": "nm",
+      "name": "心筋血流 テトロホスミン 安静のみ",
+      "expect": "心筋血流：99mTc-tetrofosmin（安静あるいは負荷1回のみ）"
+    },
+    {
+      "modality": "nm",
+      "name": "心筋 tetrofosmin 安静+負荷",
+      "expect": "心筋血流：99mTc-tetrofosmin（安静+負荷）"
+    },
+    {
+      "modality": "nm",
+      "name": "心筋血流 MIBI 負荷1回のみ",
+      "expect": "心筋血流：99mTc-MIBI（安静あるいは負荷1回のみ）"
+    },
+    {
+      "modality": "nm",
+      "name": "MIBI rest and stress",
+      "expect": "心筋血流：99mTc-MIBI（安静+負荷）"
+    },
+    {
+      "modality": "nm",
+      "name": "肺血流シンチ MAA",
+      "expect": "肺血流：99mTc-MAA"
+    },
+    {
+      "modality": "nm",
+      "name": "甲状腺シンチ パーテクネテート",
+      "expect": "甲状腺：99mTcO4-"
+    },
+    {
+      "modality": "nm",
+      "name": "ガリウムシンチ 67Ga",
+      "expect": "腫瘍・炎症：67Ga-citrate"
+    },
+    {
+      "modality": "nm",
+      "name": "FDG-PET 院内製剤",
+      "expect": "腫瘍ブドウ糖代謝：18F-FDG（院内製剤）"
+    },
+    {
+      "modality": "nm",
+      "name": "FDG-PET/CT デリバリー",
+      "expect": "腫瘍ブドウ糖代謝：18F-FDG（デリバリー）"
+    },
+    {
+      "modality": "nm",
+      "name": "副甲状腺シンチ 99mTc-MIBI",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "nm",
+      "name": "RIベノグラフィ 99mTc-MAA",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "nm",
+      "name": "MIBGシンチ 123I",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "nm",
+      "name": "DATスキャン イオフルパン",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "nm",
+      "name": "腎シンチ DMSA",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "nm",
+      "name": "センチネルリンパ節 フチン酸",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ct",
+      "name": "腹部CTA",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ct",
+      "name": "大動脈CTA",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ct",
+      "name": "腎動脈CTA",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "general",
+      "name": "胸部正面 150kV",
+      "expect": "胸部正面（100kV以上）"
+    },
+    {
+      "modality": "general",
+      "name": "CHEST PA 150kV",
+      "expect": "胸部正面（100kV以上）"
+    },
+    {
+      "modality": "general",
+      "name": "膝関節正面 80kV",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "general",
+      "name": "手関節正面 80kV",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "general",
+      "name": "頭部正面 80kV",
+      "expect": "頭部正面"
+    },
+    {
+      "modality": "general",
+      "name": "頚椎側面 120kV",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "general",
+      "name": "腰椎正面 120kV",
+      "expect": "腰椎正面"
+    },
+    {
+      "modality": "general",
+      "name": "骨盤正面 120kV",
+      "expect": "骨盤正面"
+    },
+    {
+      "modality": "general",
+      "name": "腰椎正面 100kV以上",
+      "expect": "腰椎正面"
+    },
+    {
+      "modality": "ivr",
+      "name": "腹部大動脈造影",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ivr",
+      "name": "胸部大動脈造影",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ivr",
+      "name": "腹部大動脈 IVUS",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ivr",
+      "name": "胸腹部大動脈瘤 ステントグラフト",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "ivr",
+      "name": "PAVM complex type 塞栓",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "nm",
+      "name": "123I-BMIPP 心筋シンチ",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "nm",
+      "name": "123I-イオマゼニル SPECT",
+      "expect": "（対象外）"
+    },
+    {
+      "modality": "nm",
+      "name": "IMP SPECT sedation",
+      "expect": "脳血流：123I-IMP（安静あるいは負荷1回のみ）"
+    },
+    {
+      "modality": "nm",
+      "name": "MIBI 安静＋負荷",
+      "expect": "心筋血流：99mTc-MIBI（安静+負荷）"
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "腹部 5-10歳",
+      "expect": null
+    },
+    {
+      "modality": "pediatric_ct",
+      "name": "小児胸部 1歳",
+      "expect": null
+    },
+    {
+      "modality": "general",
+      "name": "乳児胸部 1歳",
+      "expect": null
+    },
+    {
+      "modality": "ct",
+      "name": "CHEST 64 MODE",
+      "expect": null
+    }
+  ],
+  "_updated": "2026-09-23（独立レビュー指摘のケースを追加）"
+}
