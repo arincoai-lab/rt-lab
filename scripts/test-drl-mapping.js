@@ -81,6 +81,37 @@ const CASES = [
   ['ct', 'Pelvis', EXCLUDE_LABEL], ['ct', 'PERFUSION', EXCLUDE_LABEL],
   ['ct', 'Chest to Pelvis', '胸部～骨盤1相'],
   ['ct', '急性肺血栓塞栓症', '急性肺血栓塞栓症&深部静脈血栓症'],
+
+  // 2026-09-23: scripts/jev-drl-oracle.js（判定モデルによる第二意見）で見つかった誤マッピング。
+  // 上4件は「より緩い判定（＝高いDRL）」に倒れる向きで、2026-09-09 に直したものと同じ種類。
+  ['ct', '尿路結石 単純', EXCLUDE_LABEL],          // '単純' 単独で頭部（67/1260）に落ちていた
+  ['ct', '頭部CTA 脳動脈瘤', EXCLUDE_LABEL],       // 単純の区分しか無いのに頭部単純に落ちていた
+  ['ct', '頭部単純', '頭部単純ルーチン'],
+  ['general', '膝関節正面', EXCLUDE_LABEL],        // '正面' 単独で胸部（0.3）に落ちていた
+  ['general', '股関節正面', EXCLUDE_LABEL],
+  ['general', '頚椎側面', EXCLUDE_LABEL],          // 頚椎に側面の区分は無い。正面（0.5）に吸われていた
+  ['general', '頚椎正面', '頚椎正面'],
+  ['general', '胸部正面 120kV', '胸部正面（100kV以上）'],  // 数値表記のkVを読めず 100kV未満（0.3）にしていた
+  ['general', 'CHEST PA 120kV', '胸部正面（100kV以上）'],
+  ['general', '胸部立位正面 125kV', '胸部正面（100kV以上）'],
+  ['general', '胸部正面 80kV', '胸部正面（100kV未満）'],
+  ['general', '検診胸部 120kV', '検診胸部正面（100kV以上）'],
+  ['general', '健診 胸部正面', '検診胸部正面（100kV以上）'],
+  ['ivr', '腹部大動脈瘤 ステントグラフト', 'EVAR'],        // 'ステント' で非CTO PCI（1300）に吸われていた
+  ['ivr', '肺動静脈奇形 塞栓 simple', 'PAVM simple type'], // 脳動静脈奇形（3700）に吸われていた
+  ['ivr', 'TEVAR', 'TEVAR'],                              // 'EVAR' が部分一致し同点で（対象外）だった
+  ['ivr', 'EVAR', 'EVAR'],
+  ['ivr', '心臓カテーテル検査（診断）', '診断カテーテル検査（心臓）'],
+  ['ivr', '未破裂動脈瘤 コイリング', '脳血管内治療：嚢状動脈瘤'],
+  ['ivr', '髄膜腫 栄養血管塞栓', '脳血管内治療：頭蓋内腫瘍'],
+  ['nm', 'MIBGシンチ 123I', EXCLUDE_LABEL],        // 収載外の薬剤が '123I' で IMP（200 MBq）に吸われていた
+  ['nm', 'DATスキャン イオフルパン', EXCLUDE_LABEL],
+  ['nm', 'IMP SPECT 安静', '脳血流：123I-IMP（安静あるいは負荷1回のみ）'],
+  ['nm', '123I-IMP 安静+負荷', '脳血流：123I-IMP（安静+負荷）'],
+  ['general', '胸部 100kV未満', '胸部正面（100kV未満）'],  // kVの数値正規表現が「100kV未満」表記に当たらないこと
+  ['general', '胸部 100kV以上', '胸部正面（100kV以上）'],
+  ['nm', 'MIBI rest and stress', '心筋血流：99mTc-MIBI（安静+負荷）'],  // 英語表記の負荷ありを安静のみにしない
+  ['nm', 'tetrofosmin rest and stress', '心筋血流：99mTc-tetrofosmin（安静+負荷）'],
 ];
 for (const [mod, input, expected] of CASES) {
   const got = suggest(mod, input);
