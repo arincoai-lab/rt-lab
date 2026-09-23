@@ -112,6 +112,37 @@ const CASES = [
   ['general', '胸部 100kV以上', '胸部正面（100kV以上）'],
   ['nm', 'MIBI rest and stress', '心筋血流：99mTc-MIBI（安静+負荷）'],  // 英語表記の負荷ありを安静のみにしない
   ['nm', 'tetrofosmin rest and stress', '心筋血流：99mTc-tetrofosmin（安静+負荷）'],
+
+  // 2026-09-23 独立レビュー（code-reviewer）指摘の修正。上の一次修正が作った穴と、塞ぎ残しの穴。
+  ['general', '胸部正面 150kV', '胸部正面（100kV以上）'],   // 1[0-4][0-9] で150kVを取りこぼしていた
+  ['general', 'CHEST PA 150kV', '胸部正面（100kV以上）'],
+  ['general', '膝関節正面 80kV', EXCLUDE_LABEL],           // kVの数値が部位を問わず胸部に食いついていた
+  ['general', '手関節正面 80kV', EXCLUDE_LABEL],
+  ['general', '頭部正面 80kV', '頭部正面'],
+  ['general', '頚椎側面 120kV', EXCLUDE_LABEL],
+  ['general', '腰椎正面 120kV', '腰椎正面'],                // kVを含む非胸部が（対象外）に後退していた
+  ['general', '骨盤正面 120kV', '骨盤正面'],
+  ['general', '腰椎正面 100kV以上', '腰椎正面'],
+  ['ivr', '腹部大動脈造影', EXCLUDE_LABEL],                 // 部位名だけでEVAR（910）に落ちていた
+  ['ivr', '胸部大動脈造影', EXCLUDE_LABEL],
+  ['ivr', '腹部大動脈 IVUS', EXCLUDE_LABEL],
+  ['ivr', '胸腹部大動脈瘤 ステントグラフト', EXCLUDE_LABEL], // EVARともTEVARとも言えない
+  ['ivr', 'PAVM complex type 塞栓', EXCLUDE_LABEL],        // 収載は simple type のみ
+  ['nm', 'IMP SPECT sedation', '脳血流：123I-IMP（安静あるいは負荷1回のみ）'], // exclude 'DAT' が sedation に誤爆していた
+  ['nm', '123I-BMIPP 心筋シンチ', EXCLUDE_LABEL],           // '123I' 単独で IMP（200MBq）に吸われていた
+  ['nm', '123I-イオマゼニル SPECT', EXCLUDE_LABEL],
+  ['nm', '123I 甲状腺摂取率検査', EXCLUDE_LABEL],
+  ['nm', 'MIBI 安静＋負荷', '心筋血流：99mTc-MIBI（安静+負荷）'], // 全角＋の表記
+  ['ct', '低線量肺がん検診CT', EXCLUDE_LABEL],              // 収載区分が無い。胸部1相(11/430)と比べると必ずDRL以下
+  ['ct', '腹部CTA', EXCLUDE_LABEL],                         // 'CTA' 単独で冠動脈(57/940)や腹部1相に落ちていた
+  ['ct', '大動脈CTA', EXCLUDE_LABEL],
+  ['ct', '腎動脈CTA', EXCLUDE_LABEL],
+  ['ct', 'CCTA retrospective', '冠動脈'],
+  ['ct', '冠動脈CTA', '冠動脈'],
+  ['ct', '胸腹部骨盤 造影1相', '胸部～骨盤1相'],  // 胸部を含む範囲が上腹部～骨盤(DLP 720)に落ちていた
+  ['ct', '骨盤 骨条件', EXCLUDE_LABEL],           // '骨盤' 単独で上腹部～骨盤1相に落ちていた
+  ['ct', '腹部骨盤 造影', '上腹部～骨盤1相'],
+  ['ct', 'Abdomen Pelvis 1phase', '上腹部～骨盤1相'],
 ];
 for (const [mod, input, expected] of CASES) {
   const got = suggest(mod, input);

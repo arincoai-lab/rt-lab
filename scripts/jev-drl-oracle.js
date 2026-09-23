@@ -21,6 +21,7 @@
  *   - このスクリプトは drl-comparison/index.html を書き換えない。読むだけ
  *
  * 出力先は既定で OS の一時ディレクトリ（--out で変更可）。本番には公開されない（deploy.yml が scripts を除外）。
+ * 実行要件: Node.js 18 以上（グローバル fetch と AbortSignal.timeout を使う）。--dry-run だけは古い Node でも動く。
  */
 'use strict';
 
@@ -73,28 +74,41 @@ function loadTool() {
 // ここで取り出し、矛盾する選択肢を落としてから渡す。
 function parseFacts(name) {
   const facts = {};
-  const s = name.replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
+  const s = name
+    .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/[ｋＫ]/g, 'k').replace(/[ｖＶ]/g, 'v');
 
-  let m = s.match(/(\d+)\s*歳\s*(\d+)\s*(?:か月|ヶ月|ケ月|カ月)/);
-  if (m) facts.age_years = Number(m[1]) + Number(m[2]) / 12;
-  if (facts.age_years === undefined) {
-    m = s.match(/(\d+(?:\.\d+)?)\s*(?:歳|才)/) || s.match(/(\d+(?:\.\d+)?)\s*(?:y\.?o\.?|yo|yrs?|years?|y)\b/i);
-    if (m) facts.age_years = Number(m[1]);
-  }
-  if (facts.age_years === undefined) {
-    m = s.match(/(?:生後\s*)?(\d+)\s*(?:か月|ヶ月|ケ月|カ月|mo|months?)/i);
-    if (m) facts.age_years = Number(m[1]) / 12;
-  }
-  if (facts.age_years === undefined && /新生児|neonat/i.test(s)) facts.age_years = 0;
-  if (facts.age_years === undefined && /乳児|infant/i.test(s)) facts.age_years = 0.5;
+  // 「5-10歳」「10歳未満」は患者の年齢ではなく区分の表記なので読まない。
+  // 読んでしまうと上限側（10歳）を患者年齢と誤解し、正解の帯を選択肢から落とす。
+  const isBandLabel = /\d+\s*[-‐–—〜～~]\s*<?\s*\d+\s*(?:歳|才)/.test(s)
+    || /\d+\s*(?:歳|才)\s*(?:未満|以上|以下)/.test(s);
 
-  m = s.match(/(\d{2,3})\s*kv/i);
-  if (m) facts.kv = Number(m[1]);
+  if (!isBandLabel) {
+    let m = s.match(/(\d+)\s*(?:歳|才)\s*(\d+)\s*(?:か月|ヶ月|ケ月|カ月)/);
+    if (m) facts.age_years = Number(m[1]) + Number(m[2]) / 12;
+    if (facts.age_years === undefined) {
+      m = s.match(/(\d+(?:\.\d+)?)\s*(?:歳|才)/) || s.match(/(\d+(?:\.\d+)?)\s*(?:y\.?o\.?|yo|yrs?|years?|y)(?![a-z])/i);
+      if (m) facts.age_years = Number(m[1]);
+    }
+    if (facts.age_years === undefined) {
+      // 'mo' は MODE・MOTION 等の語頭に当たるため、直後が英字なら月齢と見なさない
+      m = s.match(/(?:生後\s*)?(\d+)\s*(?:か月|ヶ月|ケ月|カ月|months?|mo(?![a-z]))/i);
+      if (m) facts.age_years = Number(m[1]) / 12;
+    }
+    if (facts.age_years === undefined && /新生児|neonat/i.test(s)) facts.age_years = 0;
+    if (facts.age_years === undefined && /乳児|infant/i.test(s)) facts.age_years = 0.5;
+  }
+
+  // 管電圧は文字列表記を数値マッチより先に見る（「100kV未満」を kv=100 と読まないため）
+  if (/100\s*kv\s*未満/i.test(s)) facts.kv = 99;
   else if (/100\s*kv\s*以上/i.test(s)) facts.kv = 100;
-  else if (/100\s*kv\s*未満/i.test(s)) facts.kv = 99;
+  else {
+    const m = s.match(/(?:^|[^0-9])(\d{2,3})\s*kv/i);
+    if (m) facts.kv = Number(m[1]);
+  }
 
-  m = s.match(/(\d+(?:\.\d+)?)\s*cm(?:2|²|\^2)/i);
-  if (m) facts.fov_cm2 = Number(m[1]);
+  const f = s.match(/(\d+(?:\.\d+)?)\s*cm(?:2|²|\^2)/i);
+  if (f) facts.fov_cm2 = Number(f[1]);
 
   return facts;
 }
@@ -119,7 +133,8 @@ function filterCategories(modality, categories, facts) {
         const isChild10 = /（10歳）/.test(cat);
         const isPed = isInfant || isChild5 || isChild10;
         let ok;
-        if (facts.age_years < 1) ok = isInfant;
+        // general の区分は「（0〜1歳）」という包含表記（pediatric_ct の「0-<1歳」とは違う）
+        if (facts.age_years <= 1) ok = isInfant;
         else if (facts.age_years < 10) ok = isChild5;
         else if (facts.age_years < 15) ok = isChild10;
         else ok = !isPed;
@@ -230,11 +245,16 @@ function drlDirection(m, keywordCat, jevCat) {
     if (a && !b) return 'jev-excluded';     // キーワードは区分を提案、Jev は（対象外）
     return 'both-excluded';
   }
+  // 指標が複数あるとき（CTDIvol と DLP、Ka,r と PKA）は片方だけ緩いことがある。
+  // 最初の指標で打ち切ると、その食い違いが警告表から漏れる。
+  let anyHigher = false, anyLower = false;
   for (const k of Object.keys(a)) {
     if (a[k] === null || b[k] === null || b[k] === undefined) continue;
-    if (b[k] > a[k]) return 'jev-looser';   // Jev の方が高いDRL＝施設に甘い判定になる
-    if (b[k] < a[k]) return 'jev-stricter';
+    if (b[k] > a[k]) anyHigher = true;
+    if (b[k] < a[k]) anyLower = true;
   }
+  if (anyHigher) return 'jev-looser';       // 1指標でも高ければ施設に甘い判定になりうる
+  if (anyLower) return 'jev-stricter';
   return 'equal-values';
 }
 
@@ -295,6 +315,15 @@ async function main() {
   let usedIn = 0, usedOut = 0, failed = 0;
   const t0 = Date.now();
   const rows = await pool(prepared, CONCURRENCY, async (p, i) => {
+    // 数値の確定だけで候補が（対象外）しか残らない行は、聞くまでもないので呼ばない
+    if (p.nOptions <= 1) {
+      return {
+        modality: p.modality, name: p.name, expect: p.expect ?? null,
+        keyword: p.keyword, keywordAuto: p.keywordAuto,
+        jev: EXCLUDE_LABEL, confidence: null, p_jev: null,
+        facts: p.facts, droppedByNumbers: p.dropped.length, model: '(skipped: 数値で候補が0件)'
+      };
+    }
     try {
       const res = await callJev(p.body, apiKey);
       const a = res.answers.category;
@@ -325,6 +354,8 @@ async function main() {
   const kwRight = labeled.filter((r) => r.keyword === r.expect);
   const jevRight = labeled.filter((r) => r.jev === r.expect);
   const looser = disagree.filter((r) => r.direction === 'jev-looser');
+  const invented = disagree.filter((r) => r.direction === 'jev-excluded');  // ツールが勝手に区分を当てている疑い
+  const undecided = ok.filter((r) => !r.expect);
 
   const bins = [[0, 0.7], [0.7, 0.85], [0.85, 0.95], [0.95, 1.01]];
   const binRows = bins.map(([lo, hi]) => {
@@ -340,8 +371,9 @@ async function main() {
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
   const stamp = new Date().toISOString().slice(0, 10);
-  const jsonPath = path.join(OUT_DIR, `oracle-${stamp}.json`);
-  const mdPath = path.join(OUT_DIR, `oracle-${stamp}.md`);
+  const runId = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  const jsonPath = path.join(OUT_DIR, `oracle-${runId}.json`);
+  const mdPath = path.join(OUT_DIR, `oracle-${runId}.md`);
   fs.writeFileSync(jsonPath, JSON.stringify({
     run: { date: stamp, model: MODEL, modelReturned: ok[0]?.model ?? null, n: rows.length, failed, usage: { input_tokens: usedIn, output_tokens: usedOut } },
     summary: { agree: agree.length, disagree: disagree.length, labeled: labeled.length, keyword_accuracy: labeled.length ? kwRight.length / labeled.length : null, jev_accuracy: labeled.length ? jevRight.length / labeled.length : null },
@@ -354,16 +386,28 @@ async function main() {
   md.push(`- モデル: \`${ok[0]?.model ?? MODEL}\` / 件数 ${rows.length}（失敗 ${failed}）/ 入力 ${usedIn.toLocaleString()} tok / 概算 $${(usedIn / 1e6 * PRICE_PER_MTOK_INPUT).toFixed(4)}`);
   md.push(`- キーワード判定と Jev の一致: **${agree.length}/${ok.length}（${fmt(agree.length / ok.length)}）**`);
   md.push(`- 参考ラベル付き ${labeled.length} 件での正答率: キーワード **${fmt(labeled.length ? kwRight.length / labeled.length : null)}** / Jev **${fmt(labeled.length ? jevRight.length / labeled.length : null)}**`);
-  md.push(`  - ラベルは fixtures の \`expect\`（合成・**人の確認が要る参考値**）。これ自体を正解として扱わないこと`, '');
+  md.push(`  - ラベルは fixtures の \`expect\`（合成・**人の確認が要る参考値**）。これ自体を正解として扱わないこと`);
+  md.push(`  - **未確定（\`expect: null\`）の ${undecided.length} 件はこの分母に入っていない**。区分の有無の解釈が割れる難しい名前がここに集まるので、正答率はその分だけ甘く出る`, '');
+  if (undecided.length) {
+    md.push('### 未確定のまま（人が決めたら fixtures の expect を埋める）', '',
+      '| モダリティ | プロトコル名 | キーワード判定 | Jev | conf |', '|---|---|---|---|---|');
+    for (const r of undecided) md.push(`| ${r.modality} | ${r.name} | ${r.keyword} | ${r.jev} | ${r.confidence?.toFixed(3) ?? '—'} |`);
+    md.push('');
+  }
   md.push('## 確信度の区間', '', '| 区間 | n | キーワードとの一致 | ラベル付き n | Jev 正答率 |', '|---|---|---|---|---|');
   for (const b of binRows) md.push(`| ${b.bin} | ${b.n} | ${fmt(b.agree_with_keyword)} | ${b.n_labeled} | ${fmt(b.jev_accuracy)} |`);
   md.push('', `## ⚠️ Jev が「より緩い区分」を出した食い違い（${looser.length} 件）`, '',
     '過去の誤マッピングは全部この向きだった。どちらが正しいかを人が判断し、キーワード側が誤りなら回帰ケースに足す。', '',
     '| モダリティ | プロトコル名 | キーワード判定 | Jev | conf | 参考ラベル |', '|---|---|---|---|---|---|');
   for (const r of looser) md.push(`| ${r.modality} | ${r.name} | ${r.keyword} | ${r.jev} | ${r.confidence?.toFixed(3) ?? '—'} | ${r.expect ?? '—'} |`);
-  md.push('', `## その他の食い違い（${disagree.length - looser.length} 件）`, '',
+  md.push('', `## ⚠️ キーワード判定が区分を当て、Jev は「区分なし」と言った食い違い（${invented.length} 件）`, '',
+    'DRLs2025 に対応区分が無い検査にツールが勝手に区分を当てていないか。過去の事故（2026-09-09 の誤マッピング、',
+    "今回の '単純'／'正面' のワイルドカード）はすべてこの形だった。", '',
+    '| モダリティ | プロトコル名 | キーワード判定 | conf(Jevの区分なし確度) | 参考ラベル |', '|---|---|---|---|---|');
+  for (const r of invented) md.push(`| ${r.modality} | ${r.name} | ${r.keyword} | ${r.confidence?.toFixed(3) ?? '—'} | ${r.expect ?? '未確定'} |`);
+  md.push('', `## その他の食い違い（${disagree.length - looser.length - invented.length} 件）`, '',
     '| モダリティ | プロトコル名 | キーワード判定 | Jev | conf | 向き | 参考ラベル |', '|---|---|---|---|---|---|---|');
-  for (const r of disagree.filter((x) => x.direction !== 'jev-looser')) {
+  for (const r of disagree.filter((x) => x.direction !== 'jev-looser' && x.direction !== 'jev-excluded')) {
     md.push(`| ${r.modality} | ${r.name} | ${r.keyword} | ${r.jev} | ${r.confidence?.toFixed(3) ?? '—'} | ${r.direction} | ${r.expect ?? '—'} |`);
   }
   const bothWrong = labeled.filter((r) => r.keyword !== r.expect && r.jev !== r.expect);
@@ -383,4 +427,8 @@ async function main() {
   if (failed) process.exitCode = 1;
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+if (require.main === module) {
+  main().catch((e) => { console.error(e); process.exit(1); });
+}
+
+module.exports = { loadTool, parseFacts, filterCategories, drlDirection, buildRequest };
