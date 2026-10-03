@@ -52,6 +52,6 @@
   gap: 12px 20px;
 }
 .rt-related-list li { display: flex; flex-direction: column; gap: 2px; }
-.rt-related-list a { color: #1a5f9e; font-weight: 600; text-decoration: none; }
+.rt-related-list a { color: #1a5f9e; font-size: 0.9rem; font-weight: 600; text-decoration: none; }
 .rt-related-list a:hover { text-decoration: underline; }
 .rt-related-desc { font-size: 0.82rem; color: #5b6b7d; }

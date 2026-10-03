@@ -109,9 +109,10 @@ node scripts/generate-related.js          # 生成して書き戻す（冪等）
 node scripts/generate-related.js --check  # 差分があれば exit 1
 ```
 
-- 1ページの関連は3本以内。クラスタ（画質評価／差分／MRI／造影剤／線量／心臓）で結ぶ
+- 1ページの関連は2〜3本。クラスタ（画質評価／差分／MRI／造影剤／線量／心臓）で結ぶ。無理に穴埋めしない
 - 一言説明は各ページの meta description に書かれた機能だけを言う
-- **ツールを足したら** `TOOLS` と `RELATED` に追記して再生成する（既存ページからの被リンクも忘れずに足す）
+- **ツールを足したら** `TOOLS` と `RELATED` に追記して再生成する（既存ページからの被リンクも忘れずに足す）。
+  忘れると `test-onpage.js` が「sitemap にあるが未登録」で落ちる
 - マーカー（`RELATED:START/END`）の間は手で編集しない。`.rt-related` のスタイルは `assets/site.css`
 
 ## test-onpage.js
@@ -126,12 +127,17 @@ node scripts/test-onpage.js
 
 - sitemap の全URLが実ファイルに解決し、全 `index.html` が sitemap に載っている
 - 全ページに title / description / canonical（自分のURL）/ og:image / h1（1つ）がある
+- sitemap にあるツールがすべて `TOOLS` / `RELATED` に登録されている（登録漏れの検出）
 - 孤立ページが無く、ツールページの被リンク（静的HTMLの `<a>`。`site.js` が注入する応援帯は数えない）が3本以上
   （研究公開の `subtraction-demo` のみ2本）
-- 関連ツールブロックが `generate-related.js` の出力と一致している
+- 関連ツールブロックが `generate-related.js` の出力と一致し、ページに1つだけ・`<main>` の中にある
 
-2026-10-03の監査で、8ツールの被リンクがトップ1本だけだった（CTRが最も高い `mtf-calculator` も）。
-文章で注意しても再発するので、テストで止める。
+2026-10-03の監査で、8ツールの被リンクがトップ1本だけだった（Search Console で好調だった `mtf-calculator` も）。
+文章で注意しても再発するので、テストで検知する。
+
+**このテストは CI では実行されない**（`deploy.yml` に載っていない）。コミット前に手で実行すること。
+検査対象のツール一覧は `TOOLS` ではなく sitemap から独立に導いている（`TOOLS` から作ると登録漏れを検出できない）。
+一時コピー上の変異テストで、未登録ツールの追加・ブロックの重複・`</main>` の外への移動・`RELATED` からの削除・リンク1本の欠落がすべて落ちることを確認済み。
 
 ## drl2025-provenance.json
 
