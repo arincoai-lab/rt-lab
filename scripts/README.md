@@ -131,6 +131,7 @@ node scripts/test-onpage.js
 - 孤立ページが無く、ツールページの被リンク（静的HTMLの `<a>`。`site.js` が注入する応援帯は数えない）が3本以上
   （研究公開の `subtraction-demo` のみ2本）
 - 関連ツールブロックが `generate-related.js` の出力と一致し、ページに1つだけ・`<main>` の中にある
+- FAQPage の質問と回答が可視テキストにある（空白は無視して比較）。生成ページは `generate-faq.js` の出力と一致し、1個・正しい位置にある
 
 2026-10-03の監査で、8ツールの被リンクがトップ1本だけだった（Search Console で好調だった `mtf-calculator` も）。
 文章で注意しても再発するので、テストで検知する。
@@ -138,6 +139,21 @@ node scripts/test-onpage.js
 **このテストは CI では実行されない**（`deploy.yml` に載っていない）。コミット前に手で実行すること。
 検査対象のツール一覧は `TOOLS` ではなく sitemap から独立に導いている（`TOOLS` から作ると登録漏れを検出できない）。
 一時コピー上の変異テストで、未登録ツールの追加・ブロックの重複・`</main>` の外への移動・`RELATED` からの削除・リンク1本の欠落がすべて落ちることを確認済み。
+
+## generate-faq.js
+
+ページの FAQPage 構造化データ（JSON-LD）から、可視の「よくある質問」ブロック（`.rt-faq`）を生成して差し込む。
+JSON-LD を唯一の正とし、可視側は機械的に導く（文面は変えない）。
+
+```bash
+node scripts/generate-faq.js          # 生成して書き戻す（冪等）
+node scripts/generate-faq.js --check  # 差分があれば exit 1
+```
+
+- 対象: トップ（フッター直前）と6ツールページ（関連ツールの直前）。`PAGES` に列挙
+- 対象外: `drl-comparison`・`mri-simulator`・ブログ記事は手書きの可視FAQ。`test-onpage.js` が「JSON-LD の質問と回答が可視テキストにある」ことだけ検査する
+- **新規ツールページ**は FAQPage の JSON-LD を書いて `PAGES` に足し、再生成する
+- FAQPage の構造化データは、同じ質問と回答がページ上に見えていることが前提。JSON-LD だけを先に直さない
 
 ## drl2025-provenance.json
 

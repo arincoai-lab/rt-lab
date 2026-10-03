@@ -543,6 +543,22 @@
     </div>
   </div>
 
+  <!-- FAQ:START 自動生成。手で編集しない。元は同ページの FAQPage 構造化データ（scripts/generate-faq.js） -->
+  <section class="rt-faq" aria-labelledby="rt-faq-title">
+    <h2 class="rt-faq-title" id="rt-faq-title">よくある質問</h2>
+    <h3 class="rt-faq-q">造影剤量（ヨード量）の計算式は？</h3>
+    <p class="rt-faq-a">体重比例法では、必要ヨード量[mgI] = 体重[kg] × 目標ヨード量[mgI/kg]。造影剤量[mL] = 必要ヨード量[mgI] ÷ ヨード濃度[mgI/mL] で求めます。例：体重60kg・目標500mgI/kg・350mgI/mLなら、必要ヨード量30,000mgI、造影剤量は約85.7mLです。</p>
+    <h3 class="rt-faq-q">mgI/kg と mgI/kg/s の違いは？</h3>
+    <p class="rt-faq-a">mgI/kg は体重あたりの「総ヨード投与量」で、注入時間で割ると注入速度が決まります（例：500mgI/kgを30秒で注入）。mgI/kg/s は体重あたりの「1秒あたりのヨード注入量」で、体重あたりヨード注入速度を一定にしたいプロトコル（冠動脈CTAなど）で使われます（例：16.7mgI/kg/s × 30秒 = 500mgI/kg）。</p>
+    <h3 class="rt-faq-q">造影剤の注入速度の計算式は？</h3>
+    <p class="rt-faq-a">注入速度[mL/s] = 造影剤量[mL] ÷ 注入時間[s]。mgI/kg/s モードでは、注入速度[mL/s] = 体重[kg] × 目標ヨード注入速度[mgI/kg/s] ÷ ヨード濃度[mgI/mL] で直接求まります。</p>
+    <h3 class="rt-faq-q">体重比例法と体表面積法（BSA）の違いは？</h3>
+    <p class="rt-faq-a">体重比例法は必要ヨード量を「体重×目標ヨード量[mgI/kg]」で求めます。体表面積法は体表面積BSA[m²]を用い「BSA×目標ヨード量[mgI/m²]」で求めます。BSAは身長も反映し循環血液量との相関がよいとされ、体格による造影効果のばらつきを抑えやすい一方、体重法は簡便です。BSAはMostellerの式 BSA=√(体重[kg]×身長[cm]÷3600) で計算します。</p>
+    <h3 class="rt-faq-q">二段階注入・分割注入・クロス注入とは？</h3>
+    <p class="rt-faq-a">二段階注入は造影剤を前半は速く・後半は遅く注入してTDCのプラトーを作る方法で、相ごとにヨード量と注入時間を設定します。分割注入（split bolus）は造影剤を2回に分けて時間を空けて注入し、複数の造影相を1回のスキャンで得る方法（CT urographyなど）。クロス注入（同時注入）は造影剤と生食を混合して注入する相を設け、右心系のアーチファクト低減などに用います（心臓CTなど）。</p>
+  </section>
+  <!-- FAQ:END -->
+
   <!-- RELATED:START 自動生成。手で編集しない（scripts/generate-related.js） -->
   <nav class="rt-related" aria-labelledby="rt-related-title">
     <h2 class="rt-related-title" id="rt-related-title">関連ツール</h2>

@@ -11,6 +11,8 @@
  *  4. 孤立ページが無く、ツールページの被リンク（静的HTML上のaタグ）が閾値以上あること
  *  5. 「関連ツール」ブロックが scripts/generate-related.js の出力と一致し、
  *     ページに1つだけ、<main> の中にあること
+ *  6. FAQPage 構造化データの質問と回答がページ上に見えていること。生成ページは
+ *     scripts/generate-faq.js の出力と一致し、1つだけ、正しい位置にあること
  *
  * 2026-10-03の監査で、8ツールの静的リンクの被リンクがトップ1本だけだった。
  * 「ドキュメントに書いても再発する」種類の問題なので、文章ではなくテストで検知する
@@ -22,6 +24,7 @@
 const fs = require('fs');
 const path = require('path');
 const related = require('./generate-related.js');
+const faqGen = require('./generate-faq.js');
 
 const ROOT = path.dirname(__dirname);
 const ORIGIN = 'https://rt-ai-lab.com';
@@ -145,6 +148,60 @@ for (const slug of Object.keys(related.RELATED)) {
     check(n === related.RELATED[slug].length, slug + ': ブロック内のリンク数 ' + n + ' が RELATED の ' + related.RELATED[slug].length + ' 本と違う');
   } else {
     check(false, slug + ': 関連ツールブロックが無い');
+  }
+}
+
+// 6. FAQ: FAQPage 構造化データの質問・回答が、ページ上に見えていること
+//    （構造化データは可視コンテンツと一致していることが前提）。空白は無視して比べる。
+function decodeEntities(s) {
+  return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+}
+const squash = s => String(s).replace(/\s+/g, '');
+const visibleSquashed = html => squash(decodeEntities(stripNonContent(html).replace(/<[^>]+>/g, ' ')));
+const slugOf = url => url.replace(/^\/|\/$/g, '');
+
+for (const p of pages) {
+  if (!/"@type"\s*:\s*"FAQPage"/.test(p.html)) continue;
+  const slug = slugOf(p.url);
+  const faq = faqGen.extractFaq(p.html);
+  check(faq.length > 0, p.url + ': FAQPage の構造化データを読み取れない');
+  check(faqGen.PAGES.includes(slug) || faqGen.isHandWritten(slug),
+    p.url + ': FAQPage があるのに scripts/generate-faq.js の PAGES / HAND_WRITTEN に無い（ブログ記事は blog/ 配下なら自動で手書き扱い）');
+  const vis = visibleSquashed(p.html);
+  for (const { q, a } of faq) {
+    check(vis.includes(squash(q)), p.url + ': FAQ の質問が可視テキストに無い: ' + q.slice(0, 30));
+    check(vis.includes(squash(a)), p.url + ': FAQ の回答が可視テキストに無い（質問: ' + q.slice(0, 20) + '…）');
+  }
+}
+for (const slug of faqGen.PAGES) {
+  const url = slug ? '/' + slug + '/' : '/';
+  const p = byUrl.get(url);
+  if (!p) { check(false, url + ': generate-faq.js の PAGES にあるがページが無い'); continue; }
+  let expected = null;
+  try { expected = faqGen.apply(p.html, slug); } catch (e) { check(false, url + ': ' + e.message); continue; }
+  check(expected === p.html, url + ': 可視FAQが FAQPage 構造化データと一致しない。node scripts/generate-faq.js を実行してコミットすること');
+  const n = related.countOf(p.html, faqGen.START);
+  check(n === 1, url + ': 可視FAQブロックが ' + n + ' 個ある（1個であるべき）');
+  const si = p.html.indexOf(faqGen.START), ei = p.html.indexOf(faqGen.END);
+  if (si >= 0 && ei > si) {
+    if (slug === '') {
+      const footer = p.html.indexOf('<!-- ===== Footer ===== -->');
+      check(footer > ei, url + ': 可視FAQがフッターより後ろにある');
+    } else {
+      const masked = related.maskNonMarkup(p.html);
+      const mainOpen = masked.search(/<main\b/), mainClose = masked.lastIndexOf('</main>');
+      check(mainOpen >= 0 && si > mainOpen && ei < mainClose, url + ': 可視FAQが <main> の中にない');
+      const rs = p.html.indexOf(related.START);
+      if (rs >= 0) check(ei < rs, url + ': 可視FAQが関連ツールブロックより後ろにある');
+    }
+  } else {
+    check(false, url + ': 可視FAQブロックが無い');
+  }
+}
+for (const p of pages) {
+  if (p.html.includes(faqGen.START)) {
+    check(faqGen.PAGES.includes(slugOf(p.url)), p.url + ': 可視FAQのマーカーがあるのに generate-faq.js の PAGES に無い（古いブロックが残っている）');
   }
 }
 

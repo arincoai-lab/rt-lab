@@ -471,6 +471,22 @@
     </div>
   </div>
 
+  <!-- FAQ:START 自動生成。手で編集しない。元は同ページの FAQPage 構造化データ（scripts/generate-faq.js） -->
+  <section class="rt-faq" aria-labelledby="rt-faq-title">
+    <h2 class="rt-faq-title" id="rt-faq-title">よくある質問</h2>
+    <h3 class="rt-faq-q">一般撮影の撮影条件（kVp・mAs）はどう決めますか？</h3>
+    <p class="rt-faq-a">管電圧(kVp)はコントラストと透過力を、mAs（管電流×時間）は到達線量＝画像の濃度・粒状性を主に左右します。一般に厚みのある部位や高コントラストを避けたい部位ほど高kVp・低mAs、四肢など薄い部位は低kVp・低mAsが用いられます。ただし最適値は装置・検出器（FPD/CR）・グリッド・付加フィルタ・施設プロトコルに依存するため、本ツールの値は代表値であり、各施設の標準条件に合わせて調整してください。</p>
+    <h3 class="rt-faq-q">kVpの15%ルールとは何ですか？</h3>
+    <p class="rt-faq-a">画像濃度を保ったまま管電圧を変える際の経験則です。kVpを約15%上げると到達線量はおよそ2倍になるため、濃度を保つにはmAsを半分にします。逆にkVpを約15%下げる場合はmAsを2倍にします。本ツールでは現在のkVp・mAsと目標kVpから必要mAsを mAs_new = mAs_old × 2^(−(kVp差)/(0.15×現kVp)) で計算します。</p>
+    <h3 class="rt-faq-q">グリッド変換係数（Bucky factor）とは？</h3>
+    <p class="rt-faq-a">グリッドは散乱線を除去して画質を高めますが、一次線も一部吸収するため線量を増やす必要があります。グリッドなしを基準とした増加倍率がグリッド変換係数（Bucky factor）で、代表値は5:1≈2.5倍、6:1≈3.0倍、8:1≈3.5倍、10:1≈4.5倍、12:1≈5.5倍、16:1≈6.0倍です。グリッドを変更する際は mAs_new = mAs_old ×（変更後の係数 ÷ 変更前の係数）で補正します。</p>
+    <h3 class="rt-faq-q">表示される数値は自施設用に変更・保存できますか？</h3>
+    <p class="rt-faq-a">できます。各セルをクリックして直接編集し、「自施設値を保存」を押すとお使いのブラウザ内（localStorage）に保存され、次回以降も保持されます。行の追加・削除、JSON形式での書き出し・読み込み（バックアップや端末間共有）にも対応します。データは外部送信されず、ブラウザ内のみに保存されます。</p>
+    <h3 class="rt-faq-q">この撮影条件をそのまま臨床で使ってよいですか？</h3>
+    <p class="rt-faq-a">いいえ。掲載値は教科書的な代表値・初期テンプレートであり、装置・検出器・体格・撮影目的により最適条件は異なります。本ツールは医療機器ではなく教育・確認補助を目的としています。実際の撮影条件は各施設の標準プロトコルと診療放射線技師・医師の判断に基づいて決定してください。</p>
+  </section>
+  <!-- FAQ:END -->
+
   <!-- RELATED:START 自動生成。手で編集しない（scripts/generate-related.js） -->
   <nav class="rt-related" aria-labelledby="rt-related-title">
     <h2 class="rt-related-title" id="rt-related-title">関連ツール</h2>
