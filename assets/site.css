@@ -2,6 +2,7 @@
    RT-Lab 共有スタイル
    - site.js が全ページ末尾に注入する「応援フッター帯」（.rt-support-row）
    - scripts/generate-related.js が各ツールページに差し込む「関連ツール」（.rt-related）
+   - scripts/generate-faq.js が FAQPage 構造化データから生成する可視FAQ（.rt-faq）
    既存ページの footer / .card / .btn セレクタは上書きしない（クラスは .rt- で名前空間化）。
    ==================================================================== */
 .rt-support-row {
@@ -55,3 +56,20 @@
 .rt-related-list a { color: #1a5f9e; font-size: 0.9rem; font-weight: 600; text-decoration: none; }
 .rt-related-list a:hover { text-decoration: underline; }
 .rt-related-desc { font-size: 0.82rem; color: #5b6b7d; }
+
+/* ---- 可視FAQ（scripts/generate-faq.js が FAQPage 構造化データから生成する） ----
+   .rt-related と同じ白地・角丸・薄い影。トップは .section 内に置くので幅だけ絞る。 */
+.rt-faq {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  padding: 20px 24px;
+  margin: 0 0 20px;
+  color: #2d3748;
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.8;
+}
+.rt-faq-title { font-size: 1.1rem; font-weight: 700; margin: 0 0 4px; color: #2d3748; }
+.rt-faq-q { font-size: 1rem; font-weight: 700; margin: 16px 0 4px; color: #2d3748; }
+.rt-faq-a { margin: 0; font-size: 0.92rem; color: #2d3748; }
+.rt-faq-top { max-width: 760px; margin: 0 auto; }

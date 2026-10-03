@@ -581,6 +581,18 @@
     </div>
   </div>
 
+  <!-- FAQ:START 自動生成。手で編集しない。元は同ページの FAQPage 構造化データ（scripts/generate-faq.js） -->
+  <section class="rt-faq" aria-labelledby="rt-faq-title">
+    <h2 class="rt-faq-title" id="rt-faq-title">よくある質問</h2>
+    <h3 class="rt-faq-q">NPSとは何ですか？</h3>
+    <p class="rt-faq-a">NPS（Noise Power Spectrum／ノイズパワースペクトル）は、画像ノイズを空間周波数ごとに分解して表した指標です。ノイズの大きさだけでなく周波数特性（質感）まで評価でき、全周波数で積分するとノイズ分散に対応します。</p>
+    <h3 class="rt-faq-q">2D-NPSの求め方は？</h3>
+    <p class="rt-faq-a">均一画像から複数のROIを切り出し、背景トレンドを除去してから2次元フーリエ変換し、パワー（振幅の2乗）を複数ROIで平均して求めます。動径方向に平均すると1D-NPSが得られます。</p>
+    <h3 class="rt-faq-q">NPSとノイズの標準偏差の関係は？</h3>
+    <p class="rt-faq-a">NPSを全空間周波数にわたって積分するとノイズの分散（標準偏差の2乗）に一致します。NPSはノイズSDを周波数成分に分解したものといえます。</p>
+  </section>
+  <!-- FAQ:END -->
+
   <!-- RELATED:START 自動生成。手で編集しない（scripts/generate-related.js） -->
   <nav class="rt-related" aria-labelledby="rt-related-title">
     <h2 class="rt-related-title" id="rt-related-title">関連ツール</h2>

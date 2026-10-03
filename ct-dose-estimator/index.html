@@ -629,6 +629,18 @@
   </div>
 </div>
 
+  <!-- FAQ:START 自動生成。手で編集しない。元は同ページの FAQPage 構造化データ（scripts/generate-faq.js） -->
+  <section class="rt-faq" aria-labelledby="rt-faq-title">
+    <h2 class="rt-faq-title" id="rt-faq-title">よくある質問</h2>
+    <h3 class="rt-faq-q">SSDEとは何ですか？</h3>
+    <p class="rt-faq-a">SSDE（Size-Specific Dose Estimate／被検者サイズ別線量推定値）は、CTの線量指標CTDIvolを患者の体格に合わせて補正した推定線量です。CTDIvolは標準ファントム基準のため体格差を反映しませんが、SSDEは換算係数で補正し実被ばくに近い値を推定します（AAPM Report 204）。</p>
+    <h3 class="rt-faq-q">SSDEの求め方・計算式は？</h3>
+    <p class="rt-faq-a">SSDE = CTDIvol × 換算係数f で求めます。換算係数fは患者の実効径Deffから決まり、実効径はDeff = √(AP径 × LAT径)で計算します。体幹部は32cm、頭部は16cmファントム基準の換算表を用います。</p>
+    <h3 class="rt-faq-q">CTDIvolとSSDEの違いは？</h3>
+    <p class="rt-faq-a">CTDIvolは標準ファントム基準で患者の体格を反映しない装置出力の指標、SSDEは体格補正後の患者線量推定値です。線量管理では両者を区別して扱います。</p>
+  </section>
+  <!-- FAQ:END -->
+
   <!-- RELATED:START 自動生成。手で編集しない（scripts/generate-related.js） -->
   <nav class="rt-related" aria-labelledby="rt-related-title">
     <h2 class="rt-related-title" id="rt-related-title">関連ツール</h2>

@@ -22,6 +22,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.dirname(__dirname);
+const START_PREFIX = '<!-- RELATED:START';  // 古い文言のマーカーが残っていても検知するための接頭辞
 const START = '<!-- RELATED:START 自動生成。手で編集しない（scripts/generate-related.js） -->';
 const END = '<!-- RELATED:END -->';
 const MIN_RELATED = 2;
@@ -147,7 +148,7 @@ function validate() {
   return errors;
 }
 
-module.exports = { TOOLS, RELATED, START, END, MIN_RELATED, MAX_RELATED, render, apply, validate, maskNonMarkup, countOf };
+module.exports = { TOOLS, RELATED, START, START_PREFIX, END, MIN_RELATED, MAX_RELATED, render, apply, validate, maskNonMarkup, countOf };
 
 if (require.main === module) {
   const check = process.argv.includes('--check');
