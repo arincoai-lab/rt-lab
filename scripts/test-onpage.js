@@ -11,8 +11,8 @@
  *  4. 孤立ページが無く、ツールページの被リンク（静的HTML上のaタグ）が閾値以上あること
  *  5. 「関連ツール」ブロックが scripts/generate-related.js の出力と一致し、
  *     ページに1つだけ、<main> の中にあること
- *  6. FAQPage 構造化データの質問と回答がページ上に見えていること。生成ページは
- *     scripts/generate-faq.js の出力と一致し、1つだけ、正しい位置にあること
+ *  6. FAQPage 構造化データの質問と回答がページ上に見えていること（回答は可視の1段落と完全一致、
+ *     質問→回答の対応も見る）。生成ページは scripts/generate-faq.js の出力と一致し、1つだけ、正しい位置にあること
  *
  * 2026-10-03の監査で、8ツールの静的リンクの被リンクがトップ1本だけだった。
  * 「ドキュメントに書いても再発する」種類の問題なので、文章ではなくテストで検知する
@@ -97,7 +97,7 @@ for (const s of Object.keys(related.TOOLS)) {
 }
 for (const p of pages) {
   const slug = p.url.replace(/^\/|\/$/g, '');
-  if (p.html.includes(related.START)) {
+  if (p.html.includes(related.START_PREFIX)) {
     check(slug in related.RELATED, p.url + ': 関連ツールのマーカーがあるのに RELATED に無い（古いブロックが残っている）');
   }
 }
@@ -152,27 +152,89 @@ for (const slug of Object.keys(related.RELATED)) {
 }
 
 // 6. FAQ: FAQPage 構造化データの質問・回答が、ページ上に見えていること
-//    （構造化データは可視コンテンツと一致していることが前提）。空白は無視して比べる。
+//    （構造化データは可視コンテンツと一致していることが前提）。
+//    - 回答: 可視テキストの「1つの段落（ブロック要素）」と、空白を除いて完全一致すること。
+//            回答の一部だけ・長い別の段落の一部・<title>・非表示要素・<template> の中では通さない
+//            （JSON-LD の末尾を削っただけの回答や、別の質問の回答を載せた場合を検知するため）
+//    - 質問: いずれかの段落に含まれること（「Q1.」のようなラベル付きの見出しを許す）
+//    - 対応: 回答は、その質問より後ろ・次に現れる「別の質問」より前にあること
+//    限界: 表示の可否は hidden 属性とインラインの display:none までしか追わない
+//          （クラスや CSS による非表示、空白だけの差は検査しない）。
 function decodeEntities(s) {
   return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
     .replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
 }
 const squash = s => String(s).replace(/\s+/g, '');
-const visibleSquashed = html => squash(decodeEntities(stripNonContent(html).replace(/<[^>]+>/g, ' ')));
 const slugOf = url => url.replace(/^\/|\/$/g, '');
+const VOID_TAGS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+
+/** hidden 属性、またはインラインの display:none を持つ要素を、対応する閉じタグまでまとめて除く */
+function removeHiddenElements(html) {
+  const openRe = /<([a-z][a-z0-9-]*)\b([^>]*)>/gi;
+  let out = '', last = 0, m;
+  while ((m = openRe.exec(html)) !== null) {
+    const tag = m[1].toLowerCase(), attrs = m[2];
+    const names = attrs.replace(/"[^"]*"|'[^']*'/g, '""').split(/\s+/).map(a => a.split('=')[0].toLowerCase());
+    const hidden = names.includes('hidden') || /style\s*=\s*(["'])[^"']*display\s*:\s*none/i.test(attrs);
+    if (!hidden || VOID_TAGS.has(tag) || /\/\s*$/.test(attrs)) continue;
+    const re = new RegExp('<(/?)' + tag + '\\b[^>]*>', 'gi');
+    re.lastIndex = openRe.lastIndex;
+    let depth = 1, n, end = html.length;
+    while ((n = re.exec(html)) !== null) {
+      depth += n[1] ? -1 : 1;
+      if (depth === 0) { end = re.lastIndex; break; }
+    }
+    out += html.slice(last, m.index);
+    last = end;
+    openRe.lastIndex = end;
+  }
+  return out + html.slice(last);
+}
+
+/** <body> の可視テキストを、ブロック要素の境目で区切った「段落」の配列にする（空白は除去） */
+function visibleParagraphs(html) {
+  let b = html.slice(Math.max(0, html.search(/<body\b/i)));
+  b = b.replace(/<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>|<template\b[\s\S]*?<\/template>|<noscript\b[\s\S]*?<\/noscript>|<!--[\s\S]*?-->/gi, ' ');
+  b = removeHiddenElements(b);
+  b = b.replace(/<\/(?:p|li|div|h[1-6]|summary|details|section|nav|td|th|tr|ul|ol|dl|dd|dt|blockquote|figure|figcaption|article|aside|header|footer|main)>|<br\s*\/?>/gi, '\u0001');
+  return decodeEntities(b.replace(/<[^>]+>/g, ' ')).split('\u0001').map(squash).filter(Boolean);
+}
+
+function checkFaqVisible(url, slug, html) {
+  let pagesWithFaq, faq;
+  try {
+    pagesWithFaq = faqGen.faqPages(html, url);
+    faq = faqGen.extractFaq(html, url);
+  } catch (e) { check(false, url + ': ' + e.message); return; }
+  check(pagesWithFaq.length === 1, url + ': FAQPage の構造化データが ' + pagesWithFaq.length + ' 個ある（1個であるべき）');
+  check(faq.length > 0, url + ': FAQPage の構造化データに質問が無い');
+  check(faqGen.PAGES.includes(slug) || faqGen.isHandWritten(slug),
+    url + ': FAQPage があるのに scripts/generate-faq.js の PAGES / HAND_WRITTEN に無い（ブログ記事は blog/ 配下なら自動で手書き扱い）');
+  const segs = visibleParagraphs(html);
+  const qs = faq.map(x => squash(x.q));
+  const anchors = i => { const r = []; segs.forEach((sg, k) => { if (sg.includes(qs[i])) r.push(k); }); return r; };
+  faq.forEach(({ q, a }, i) => {
+    const aq = anchors(i);
+    check(aq.length > 0, url + ': FAQ の質問が可視テキストに無い: ' + q.slice(0, 30));
+    if (!aq.length) return;
+    const aa = squash(a);
+    const ok = aq.some(k => {
+      let end = segs.length;
+      for (let j = 0; j < faq.length; j++) {
+        if (j === i) continue;
+        const nk = anchors(j).find(x => x > k);
+        if (nk !== undefined && nk < end) end = nk;
+      }
+      return segs.slice(k, end).includes(aa);
+    });
+    check(ok, url + ': FAQ の回答が「その質問の後・次の別の質問の前」の段落と完全一致しない' +
+      '（途中で切れた回答・別の質問の回答・非表示の疑い）: ' + q.slice(0, 20) + '…');
+  });
+}
 
 for (const p of pages) {
-  if (!/"@type"\s*:\s*"FAQPage"/.test(p.html)) continue;
-  const slug = slugOf(p.url);
-  const faq = faqGen.extractFaq(p.html);
-  check(faq.length > 0, p.url + ': FAQPage の構造化データを読み取れない');
-  check(faqGen.PAGES.includes(slug) || faqGen.isHandWritten(slug),
-    p.url + ': FAQPage があるのに scripts/generate-faq.js の PAGES / HAND_WRITTEN に無い（ブログ記事は blog/ 配下なら自動で手書き扱い）');
-  const vis = visibleSquashed(p.html);
-  for (const { q, a } of faq) {
-    check(vis.includes(squash(q)), p.url + ': FAQ の質問が可視テキストに無い: ' + q.slice(0, 30));
-    check(vis.includes(squash(a)), p.url + ': FAQ の回答が可視テキストに無い（質問: ' + q.slice(0, 20) + '…）');
-  }
+  if (!/FAQPage/.test(p.html)) continue;
+  checkFaqVisible(p.url, slugOf(p.url), p.html);
 }
 for (const slug of faqGen.PAGES) {
   const url = slug ? '/' + slug + '/' : '/';
@@ -200,7 +262,7 @@ for (const slug of faqGen.PAGES) {
   }
 }
 for (const p of pages) {
-  if (p.html.includes(faqGen.START)) {
+  if (p.html.includes(faqGen.START_PREFIX)) {
     check(faqGen.PAGES.includes(slugOf(p.url)), p.url + ': 可視FAQのマーカーがあるのに generate-faq.js の PAGES に無い（古いブロックが残っている）');
   }
 }

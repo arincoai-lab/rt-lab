@@ -26,6 +26,7 @@ const path = require('path');
 const { maskNonMarkup, countOf } = require('./generate-related.js');
 
 const ROOT = path.dirname(__dirname);
+const START_PREFIX = '<!-- FAQ:START';  // 古い文言のマーカーが残っていても検知するための接頭辞
 const START = '<!-- FAQ:START 自動生成。手で編集しない。元は同ページの FAQPage 構造化データ（scripts/generate-faq.js） -->';
 const END = '<!-- FAQ:END -->';
 const RELATED_START = '<!-- RELATED:START';
@@ -49,18 +50,32 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
-/** html の FAQPage JSON-LD から [{q, a}] を取り出す。無ければ [] */
-function extractFaq(html) {
+// <script type="application/ld+json"> の書き方の揺れ（属性の順序・単引用符・大文字）を許す
+const LD_RE = /<script\b[^>]*\btype\s*=\s*["']?application\/ld\+json["']?[^>]*>([\s\S]*?)<\/script>/gi;
+// 回答や質問に HTML タグ状の文字列があると、esc() で文字としてそのまま表示されてしまう
+const TAG_LIKE = /<\/?[a-z][^>]*>/i;
+
+/** html の JSON-LD エンティティを全部返す。JSON として読めないものがあれば例外（黙って飛ばさない） */
+function jsonLdEntities(html, label) {
   const out = [];
-  for (const m of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+  for (const m of html.matchAll(LD_RE)) {
     let d;
-    try { d = JSON.parse(m[1]); } catch { continue; }
-    const items = Array.isArray(d) ? d : (d['@graph'] || [d]);
-    for (const it of items) {
-      if (it && it['@type'] === 'FAQPage') {
-        for (const q of it.mainEntity || []) out.push({ q: q.name, a: q.acceptedAnswer && q.acceptedAnswer.text });
-      }
-    }
+    try { d = JSON.parse(m[1]); } catch (e) { throw new Error((label || 'page') + ': JSON-LD を JSON として読めない（' + e.message + '）'); }
+    for (const it of (Array.isArray(d) ? d : (d && d['@graph']) || [d])) if (it && typeof it === 'object') out.push(it);
+  }
+  return out;
+}
+
+/** @type が文字列でも配列でも FAQPage を拾う */
+function faqPages(html, label) {
+  return jsonLdEntities(html, label).filter(it => [].concat(it['@type'] || []).includes('FAQPage'));
+}
+
+/** html の FAQPage JSON-LD から [{q, a}] を取り出す。無ければ [] */
+function extractFaq(html, label) {
+  const out = [];
+  for (const it of faqPages(html, label)) {
+    for (const q of [].concat(it.mainEntity || [])) out.push({ q: q.name, a: q.acceptedAnswer && q.acceptedAnswer.text });
   }
   return out;
 }
@@ -115,9 +130,14 @@ function insertionPoint(html, slug) {
 function apply(html, slug) {
   const label = slug || '(トップ)';
   if (html.includes('\r')) throw new Error(label + ': CRLF 改行は未対応');
-  const faq = extractFaq(html);
+  const faq = extractFaq(html, label);
   if (faq.length === 0) throw new Error(label + ': FAQPage 構造化データが見つからない');
-  for (const { q, a } of faq) if (!q || !a) throw new Error(label + ': FAQ に空の質問または回答がある');
+  for (const { q, a } of faq) {
+    if (!q || !a) throw new Error(label + ': FAQ に空の質問または回答がある');
+    if (TAG_LIKE.test(q) || TAG_LIKE.test(a)) {
+      throw new Error(label + ': FAQ に HTML タグ状の文字列がある（エスケープされて文字として見えてしまうため未対応）: ' + q.slice(0, 20));
+    }
+  }
   const block = render(slug, faq);
   const nStart = countOf(html, START), nEnd = countOf(html, END);
   if (nStart > 1 || nEnd > 1) throw new Error(label + ': マーカーが複数ある（START ' + nStart + ' / END ' + nEnd + '）');
@@ -132,7 +152,7 @@ function apply(html, slug) {
   return html.slice(0, at) + block + '\n\n' + html.slice(at);
 }
 
-module.exports = { PAGES, HAND_WRITTEN, isHandWritten, START, END, extractFaq, render, apply, pageFile };
+module.exports = { PAGES, HAND_WRITTEN, isHandWritten, START, START_PREFIX, END, jsonLdEntities, faqPages, extractFaq, render, apply, pageFile };
 
 if (require.main === module) {
   const check = process.argv.includes('--check');
