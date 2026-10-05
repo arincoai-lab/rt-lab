@@ -356,6 +356,12 @@
     }
 
     /* ── Chart container ── */
+    /* minmax(0,1fr): canvas の既定幅（300px）でグリッドが押し広げられないようにする */
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
     .chart-container {
       position: relative;
       height: 300px;
@@ -403,6 +409,7 @@
       .summary-card { min-width: auto; }
       .series-table { font-size: 0.78rem; }
       .series-table td input { font-size: 0.78rem; }
+      .chart-grid { grid-template-columns: minmax(0, 1fr); }
       .chart-container { height: 250px; }
     }
   </style>
@@ -572,11 +579,11 @@
 
   <!-- Charts (separate scales) -->
   <div class="card-title" style="margin-top:20px;">DRL比較チャート</div>
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-    <div class="chart-container" style="height:300px;">
+  <div class="chart-grid">
+    <div class="chart-container">
       <canvas id="drlChartCtdi"></canvas>
     </div>
-    <div class="chart-container" style="height:300px;">
+    <div class="chart-container">
       <canvas id="drlChartDlp"></canvas>
     </div>
   </div>
