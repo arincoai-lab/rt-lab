@@ -28,7 +28,7 @@
   7. `sitemap.xml` に新記事の `<url>` を追加。**既存URLの `lastmod` は可視の内容が変わったときだけ動かす**（metaだけの変更で更新すると lastmod の信頼性が落ちる）
 - トップ（`index.html`）は `assets/blog.css` を読み込まない。blog.css は `*` リセット・`body`・`:root`（`--bg`/`--text`）をグローバルに定義しており、トップのインライン`<style>`より後に来ると配色が変わる。`.post-*` のスタイルはトップのインライン`<style>`側にある。
 - 外部CDN（Chart.js / PapaParse）は SRI（`integrity` + `crossorigin`）付きで読み込む。
-- **ツールページの「関連ツール」ブロック**（`.rt-related`）は `scripts/generate-related.js` が `</main>` 直前に生成する。手で編集しない。ツールを足したら `TOOLS` / `RELATED` に追記して再生成する（関連は1ページ2〜3本・被リンク3本以上。研究公開の subtraction-demo のみ2本）。孤立・被リンク不足・ツールの登録漏れ・生成物のドリフトは `node scripts/test-onpage.js` が検知する。**CIでは実行されないので、ページを足す・リンクを変えたらコミット前に手で実行する。**
+- **ツールページの「関連ツール」ブロック**（`.rt-related`）は `scripts/generate-related.js` が `</main>` 直前に生成する。手で編集しない。ツールを足したら `TOOLS` / `RELATED` に追記して再生成する（関連は1ページ2〜3本・被リンク3本以上。研究公開の subtraction-demo のみ2本）。孤立・被リンク不足・ツールの登録漏れ・生成物のドリフトは `node scripts/test-onpage.js` が検知する。PR と main への push で `.github/workflows/test.yml`（Tests）が `test-onpage` / `test-drl-mapping` / 各生成スクリプトの `--check` を実行する。**失敗してもデプロイは止まらない（検知のみ）ので、ページを足す・リンクを変えたらコミット前にも手で実行し、PR の Tests が緑なのを確かめてからマージする。**
 - **可視FAQ**: FAQPage の JSON-LD を唯一の正とし、`scripts/generate-faq.js` がトップと6ツールページに可視ブロック（`.rt-faq`）を生成する（文面は JSON-LD のまま。JSON-LD を直したら再生成）。`drl-comparison`・`mri-simulator`・ブログ記事は手書きの可視FAQを持ち、`test-onpage.js` が「JSON-LD の質問と回答が可視テキストにある」ことを検査する。構造化データだけ先行させない
 - ~~Next.js版~~ は未デプロイの死蔵コードだったため 2026-07-03 に撤去済み（履歴参照）。
 
