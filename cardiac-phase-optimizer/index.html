@@ -51,8 +51,9 @@
     }
     .tool-desc h1 { font-size: 1.2rem; font-weight: 700; color: #1a202c; margin-bottom: 6px; }
     .tool-desc p { color: #4a5568; font-size: 0.9rem; line-height: 1.7; }
-    .main-grid { display: grid; grid-template-columns: 340px 1fr; gap: 18px; align-items: start; }
-    @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+    /* minmax(0,1fr): 比較表などの最小幅で列が押し広げられないようにする（表は .phase-table-wrap 内で横スクロール） */
+    .main-grid { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 18px; align-items: start; }
+    @media (max-width: 900px) { .main-grid { grid-template-columns: minmax(0, 1fr); } }
 
     /* ── Card ── */
     .card {
