@@ -591,6 +591,7 @@
             <tr><td colspan="4" style="text-align:center; color:#a0aec0; padding:20px;">シミュレーション実行後に結果が表示されます</td></tr>
           </tbody>
         </table>
+        <p id="resultNote" hidden style="margin-top:8px; font-size:0.78rem; color:#c05621;"></p>
       </div>
 
       <!-- Injection profile chart -->
@@ -607,7 +608,10 @@
   <div class="card">
     <div class="card-title">モデルについて</div>
     <div style="font-size:0.82rem; color:#4a5568; line-height:1.9;">
-      <p>本シミュレータはBaeらの薬物動態コンパートメントモデルを簡略化して実装しています。心血管系を複数の混合槽（右心系・肺循環・左心系）としてモデル化し、各臓器への造影剤分布を畳み込み積分で計算します。</p>
+      <p>本シミュレータはBaeらの薬物動態コンパートメントモデルを簡略化して実装しています。造影剤は腕の静脈→右心系→肺循環→左心系→大動脈と流れ、各臓器（肝臓・腎臓・脾臓・膵臓・腸管・それ以外の全身）に分かれます。腸管・脾臓・膵臓を通った血液は門脈に集まって肝臓へ入ります。各臓器は「血管の中」と「血管の外の細胞外液」の2つの区画からなります。造影剤は細胞の中には入らないため、臓器のCT値は臓器全体の体積あたりで計算します。造影剤は時間とともに全身の細胞外液へ広がり、腎臓から尿へ排泄されます。</p>
+      <p style="margin-top:8px"><strong>生食後押し:</strong> 肘の注入部位から右心房までの腕の静脈を、容量約15 mL・腕の血流2 mL/秒として計算しています。注入が止まると、そこに残った造影剤は腕の血流でゆっくりとしか心臓へ流れません。生食で後押しすると、この残りが注入と同じ速さで押し出されるため、大動脈のピークが少し高く、鋭くなります。この計算では、腕の静脈を押し切る量（3〜5 mL/秒の注入でおよそ10 mL）より生食を増やしても、結果は変わりません。これは容量を15 mLと置いたことによる計算上の値です。実際に必要な量は延長チューブ・穿刺部位・腕の位置で変わるため、生食の量を決める根拠にはしないでください。延長チューブの中の造影剤は計算に含めていません。</p>
+      <p style="margin-top:8px"><strong>主な前提（成人の目安）:</strong> 血液量 70 mL/kg、ヘマトクリット 40%、肝臓の細胞外液の割合 約24%。全身の細胞外液は75 mL/kgへ時定数450秒で広がるとしています。糸球体濾過量（GFR）は体格によらず100 mL/分とし、濾過された造影剤は平均90秒で腎臓から出ていきます（腎実質の値には尿細管の中の造影剤を含みます）。計算範囲は注入開始から300秒までです。</p>
+      <p style="margin-top:8px"><strong>確かめている範囲:</strong> 大動脈・門脈・肝実質の値は、文献の値（肝実質のピーク、平衡相の肝と大動脈の比など）の範囲に入ることを確かめています。腎実質・脾臓・膵臓の曲線は、血流量などから置いた目安で、実測値との照合はしていません。</p>
       <p style="margin-top:8px"><strong>管電圧別CT値変換:</strong> ヨード造影剤のCT値上昇はX線エネルギーに依存します。低管電圧ではヨードのK吸収端（33.2 keV）に近づくため造影効果が増強されます。本シミュレータでは管電圧ごとの変換係数を適用しています。</p>
       <p style="margin-top:8px">シミュレーション結果は理論的な推定値であり、実際の臨床値とは差異が生じます。個々の患者の循環動態、腎機能、体組成などにより実測値は変動します。</p>
       <p style="margin-top:12px; font-size:0.75rem; color:#a0aec0;">
@@ -653,7 +657,16 @@
 // ── Constants ──
 const DT = 0.1;          // Time step (seconds)
 const T_MAX = 300;        // Maximum simulation time (seconds)
-const N_STEPS = Math.ceil(T_MAX / DT);
+const N_STEPS = Math.round(T_MAX / DT) + 1;   // samples at 0, DT, …, T_MAX
+
+// Physiological assumptions (educational approximations; listed on the page under 「モデルについて」)
+const HCT = 0.40;                  // hematocrit: contrast distributes in plasma and EES, not in cells
+const ARM_VEIN_VOLUME = 15;        // mL: veins from the antecubital site to the right atrium (dead space a saline chaser clears)
+const ARM_VEIN_FLOW = 2.0;         // mL/s: the arm's own venous drainage (moves residual contrast when no chaser follows)
+const REST_EES_ML_PER_KG = 75;     // mL/kg: extracellular fluid outside the modeled organs reached within minutes
+const REST_EES_FILL_TIME = 450;    // s: time constant for that fluid to fill
+const GFR_ML_S = 100 / 60;         // glomerular filtration rate 100 mL/min (renal elimination)
+const TUBULE_TRANSIT_TIME = 90;    // s: mean time filtered contrast stays in the renal tubules before reaching the pelvis
 
 // Contrast agent concentrations (mgI/mL)
 const CONTRAST_AGENTS = {
@@ -750,7 +763,7 @@ function applyPatientPreset(preset, e) {
 function adjustCO() {
   const select = document.getElementById('coAdjust');
   const coInput = document.getElementById('cardiacOutput');
-  const weight = parseFloat(document.getElementById('bodyWeight').value) || 60;
+  const weight = getPatientInputs().weight;
   const baseCO = weight * 0.07;
 
   switch(select.value) {
@@ -816,14 +829,25 @@ function updatePhaseType(i, value) {
   updateSummary();
 }
 
+// Keep typed values inside the input's min/max (a zero or negative rate would make phases overlap)
+function clampInput(value, min, max, fallback) {
+  const v = parseFloat(value);
+  if (!Number.isFinite(v)) return fallback;
+  return Math.min(max, Math.max(min, v));
+}
+
+function getScanTime() {
+  return clampInput(document.getElementById('scanTime').value, 0, T_MAX, 30);
+}
+
 function updatePhaseRate(i, value) {
-  phases[i].rate = parseFloat(value) || 1;
+  phases[i].rate = clampInput(value, 0.5, 10, 1);
   renderProtocolTable();
   updateSummary();
 }
 
 function updatePhaseVolume(i, value) {
-  phases[i].volume = parseFloat(value) || 1;
+  phases[i].volume = clampInput(value, 1, 500, 1);
   renderProtocolTable();
   updateSummary();
 }
@@ -835,7 +859,7 @@ function updateContrastInfo() {
 function updateSummary() {
   const agentKey = document.getElementById('contrastAgent').value;
   const concentration = CONTRAST_AGENTS[agentKey].concentration;
-  const weight = parseFloat(document.getElementById('bodyWeight').value) || 60;
+  const weight = getPatientInputs().weight;
 
   let totalContrastVol = 0;
   let totalTime = 0;
@@ -921,8 +945,7 @@ function saveAsProtocolA() {
   if (!simulationResults) return;
 
   const agentKey = document.getElementById('contrastAgent').value;
-  const weight = parseFloat(document.getElementById('bodyWeight').value) || 60;
-  const co = parseFloat(document.getElementById('cardiacOutput').value) || 5.0;
+  const { weight, co } = getPatientInputs();
 
   protocolA = {
     results: JSON.parse(JSON.stringify(simulationResults)),
@@ -965,210 +988,179 @@ function clearProtocolA() {
 }
 
 // ── Pharmacokinetic Model ──
+// Compartments (all well-mixed, explicit Euler at DT):
+//   injector → arm vein (plug flow) → right heart → lung → left heart → aorta
+//   aorta → hepatic artery / gut / spleen / pancreas / kidney / rest of body
+//   gut + spleen + pancreas → portal vein → liver;  liver + kidney + rest of body → veins → right heart
+// Each organ = blood (vascular) space + extravascular extracellular space (EES). Contrast stays in plasma
+// and the EES, never enters cells, so tissue CT values are mass / whole-tissue volume.
+// The kidney also filters plasma (GFR) into its tubules, from where contrast leaves in urine.
 function runSimulationCore(weight, CO, concentration, phasesInput, kvp) {
   const HU_PER_MGI_ML = KVP_HU_FACTORS[kvp] || 25.0;
+  const PF = 1 - HCT;                    // plasma fraction of blood
+  const BV = weight * 70;                // total blood volume (mL)
+  const Q = CO * 1000 / 60;              // cardiac output (mL/s)
 
-  const totalBloodVolume = weight * 70;
-  const V_rh = totalBloodVolume * 0.04;
-  const V_lung = totalBloodVolume * 0.12;
-  const V_lh = totalBloodVolume * 0.04;
-  const V_art = totalBloodVolume * 0.15;
-  const V_ven = totalBloodVolume * 0.60;
-
-  const F_liver_art = 0.065;
-  const F_portal = 0.19;
-  const F_kidney = 0.22;
-  const F_spleen = 0.03;
-  const F_pancreas = 0.015;
-
-  const V_liver = weight * 25;
-  const V_kidney_t = weight * 5;
-  const V_spleen_t = weight * 3;
-  const V_pancreas_t = weight * 1.5;
-
-  const fv_liver = 0.25;
-  const fv_kidney = 0.20;
-  const fv_spleen = 0.25;
-  const fv_pancreas = 0.15;
-
-  const PS_liver = 0.015;
-  const PS_kidney = 0.025;
-  const PS_spleen = 0.012;
-  const PS_pancreas = 0.010;
-
-  const CO_mLs = CO * 1000 / 60;
-
-  // Build injection input function
+  // ── Injection: injector → arm vein → right heart ──
+  // Average injector flow (mL/s) and iodine delivery (mgI/s) over each time step.
+  const flowRate = new Float64Array(N_STEPS);
   const injectionRate = new Float64Array(N_STEPS);
-  let t_offset = 0;
+  let t0 = 0;
   phasesInput.forEach(phase => {
-    const duration = phase.volume / phase.rate;
-    const iodineRate = phase.type === 'contrast' ? phase.rate * concentration : 0;
-    const startIdx = Math.floor(t_offset / DT);
-    const endIdx = Math.floor((t_offset + duration) / DT);
-    for (let i = startIdx; i < endIdx && i < N_STEPS; i++) {
-      injectionRate[i] = iodineRate;
+    if (!(phase.rate > 0) || !(phase.volume > 0)) return;
+    const t1 = t0 + phase.volume / phase.rate;
+    const iodine = phase.type === 'contrast' ? phase.rate * concentration : 0;
+    for (let i = Math.floor(t0 / DT); i < N_STEPS && i * DT < t1; i++) {
+      const w = (Math.min((i + 1) * DT, t1) - Math.max(i * DT, t0)) / DT;
+      if (w <= 0) continue;
+      flowRate[i] += phase.rate * w;
+      injectionRate[i] += iodine * w;
     }
-    t_offset += duration;
+    t0 = t1;
   });
 
-  // Compartment simulation
-  const C_art = new Float64Array(N_STEPS);
-  const C_ven = new Float64Array(N_STEPS);
-  const C_portal_vasc = new Float64Array(N_STEPS);
-  const C_liver_vasc = new Float64Array(N_STEPS);
-  const C_kidney_vasc = new Float64Array(N_STEPS);
-  const C_spleen_vasc = new Float64Array(N_STEPS);
-  const C_pancreas_vasc = new Float64Array(N_STEPS);
-
-  let M_rh = 0, M_lung = 0, M_lh = 0, M_art = 0, M_ven = 0;
-  let M_liver_v = 0, M_portal_v = 0, M_kidney_v = 0, M_spleen_v = 0, M_pancreas_v = 0;
-  let M_liver_e = 0, M_kidney_e = 0, M_spleen_e = 0, M_pancreas_e = 0;
-
-  const splanchnicDelay = 8.0;
-  const splanchnicBuffer = new Float64Array(N_STEPS);
-  const V_portal = totalBloodVolume * 0.02;
-
-  for (let i = 1; i < N_STEPS; i++) {
-    const flowOut_rh = CO_mLs * (M_rh / V_rh);
-    const flowOut_lung = CO_mLs * (M_lung / V_lung);
-    const flowOut_lh = CO_mLs * (M_lh / V_lh);
-    const flowOut_art = CO_mLs * (M_art / V_art);
-    const flowOut_ven = CO_mLs * (M_ven / V_ven);
-
-    const c_art = M_art / V_art;
-
-    const F_liver_art_flow = F_liver_art * CO_mLs;
-    const F_portal_flow = F_portal * CO_mLs;
-
-    const splanchnicInput = F_portal * CO_mLs * c_art;
-    splanchnicBuffer[i] = splanchnicInput;
-
-    let portalInput = 0;
-    const delaySteps = Math.floor(splanchnicDelay / DT);
-    const dispersionSteps = Math.floor(splanchnicDelay * 0.4 / DT);
-    if (i > delaySteps) {
-      const kernelSize = Math.min(dispersionSteps * 3, i);
-      let kernelSum = 0;
-      for (let k = 0; k < kernelSize && (i - delaySteps - k) >= 0; k++) {
-        const w = Math.exp(-k * DT / (splanchnicDelay * 0.4));
-        portalInput += splanchnicBuffer[i - delaySteps - k] * w;
-        kernelSum += w;
-      }
-      if (kernelSum > 0) portalInput /= kernelSum;
-    }
-
-    const F_kidney_flow = F_kidney * CO_mLs;
-    const F_spleen_flow = F_spleen * CO_mLs;
-    const F_pancreas_flow = F_pancreas * CO_mLs;
-    const F_other = (1 - F_liver_art - F_portal - F_kidney - F_spleen - F_pancreas) * CO_mLs;
-
-    const V_liver_v = V_liver * fv_liver;
-    const V_kidney_v = V_kidney_t * fv_kidney;
-    const V_spleen_v = V_spleen_t * fv_spleen;
-    const V_pancreas_v = V_pancreas_t * fv_pancreas;
-    const V_liver_e = V_liver * (1 - fv_liver) * 0.3;
-    const V_kidney_e = V_kidney_t * (1 - fv_kidney) * 0.3;
-    const V_spleen_e = V_spleen_t * (1 - fv_spleen) * 0.3;
-    const V_pancreas_e = V_pancreas_t * (1 - fv_pancreas) * 0.3;
-
-    const c_liver_v = M_liver_v / V_liver_v;
-    const c_liver_e = M_liver_e / V_liver_e;
-    const liver_art_in = F_liver_art_flow * c_art;
-    const portal_in = portalInput;
-    const liver_out = (F_liver_art_flow + F_portal_flow) * c_liver_v;
-    const liver_leak = PS_liver * (c_liver_v - c_liver_e) * V_liver_v;
-
-    const c_portal = M_portal_v / V_portal;
-    const portal_out = F_portal_flow * c_portal;
-
-    const c_kidney_v = M_kidney_v / V_kidney_v;
-    const c_kidney_e = M_kidney_e / V_kidney_e;
-    const kidney_in = F_kidney_flow * c_art;
-    const kidney_out = F_kidney_flow * c_kidney_v;
-    const kidney_leak = PS_kidney * (c_kidney_v - c_kidney_e) * V_kidney_v;
-
-    const c_spleen_v = M_spleen_v / V_spleen_v;
-    const c_spleen_e = M_spleen_e / V_spleen_e;
-    const spleen_in = F_spleen_flow * c_art;
-    const spleen_out = F_spleen_flow * c_spleen_v;
-    const spleen_leak = PS_spleen * (c_spleen_v - c_spleen_e) * V_spleen_v;
-
-    const c_pancreas_v = M_pancreas_v / V_pancreas_v;
-    const c_pancreas_e = M_pancreas_e / V_pancreas_e;
-    const pancreas_in = F_pancreas_flow * c_art;
-    const pancreas_out = F_pancreas_flow * c_pancreas_v;
-    const pancreas_leak = PS_pancreas * (c_pancreas_v - c_pancreas_e) * V_pancreas_v;
-
-    const other_return = F_other * c_art;
-    const venousReturn = liver_out + kidney_out + spleen_out + pancreas_out + other_return;
-
-    M_rh += (injectionRate[i] + flowOut_ven - flowOut_rh) * DT;
-    M_lung += (flowOut_rh - flowOut_lung) * DT;
-    M_lh += (flowOut_lung - flowOut_lh) * DT;
-    M_art += (flowOut_lh - flowOut_art) * DT;
-    M_ven += (venousReturn - flowOut_ven) * DT;
-
-    M_portal_v += (portalInput - portal_out) * DT;
-    M_liver_v += (liver_art_in + portal_out - liver_out - liver_leak) * DT;
-    M_liver_e += liver_leak * DT;
-    M_kidney_v += (kidney_in - kidney_out - kidney_leak) * DT;
-    M_kidney_e += kidney_leak * DT;
-    M_spleen_v += (spleen_in - spleen_out - spleen_leak) * DT;
-    M_spleen_e += spleen_leak * DT;
-    M_pancreas_v += (pancreas_in - pancreas_out - pancreas_leak) * DT;
-    M_pancreas_e += pancreas_leak * DT;
-
-    M_rh = Math.max(0, M_rh);
-    M_lung = Math.max(0, M_lung);
-    M_lh = Math.max(0, M_lh);
-    M_art = Math.max(0, M_art);
-    M_ven = Math.max(0, M_ven);
-    M_liver_v = Math.max(0, M_liver_v);
-    M_liver_e = Math.max(0, M_liver_e);
-    M_portal_v = Math.max(0, M_portal_v);
-    M_kidney_v = Math.max(0, M_kidney_v);
-    M_kidney_e = Math.max(0, M_kidney_e);
-    M_spleen_v = Math.max(0, M_spleen_v);
-    M_spleen_e = Math.max(0, M_spleen_e);
-    M_pancreas_v = Math.max(0, M_pancreas_v);
-    M_pancreas_e = Math.max(0, M_pancreas_e);
-
-    C_art[i] = M_art / V_art;
-    C_ven[i] = M_ven / V_ven;
-    C_portal_vasc[i] = M_portal_v / V_portal;
-    C_liver_vasc[i] = (M_liver_v + M_liver_e) / (V_liver_v + V_liver_e);
-    C_kidney_vasc[i] = (M_kidney_v + M_kidney_e) / (V_kidney_v + V_kidney_e);
-    C_spleen_vasc[i] = (M_spleen_v + M_spleen_e) / (V_spleen_v + V_spleen_e);
-    C_pancreas_vasc[i] = (M_pancreas_v + M_pancreas_e) / (V_pancreas_v + V_pancreas_e);
+  // Plug flow through the arm vein: what reaches the right heart is the fluid that entered
+  // ARM_VEIN_VOLUME mL earlier. The vein is driven by injector flow plus the arm's own venous flow,
+  // so a saline chaser pushes the residual contrast in at the injection rate, while without one it
+  // only drains at ARM_VEIN_FLOW.
+  const cumVol = new Float64Array(N_STEPS);   // fluid volume that has entered the arm vein (mL)
+  const cumIn = new Float64Array(N_STEPS);    // iodine that has entered the arm vein (mg)
+  for (let i = 0; i < N_STEPS - 1; i++) {
+    cumVol[i + 1] = cumVol[i] + (flowRate[i] + ARM_VEIN_FLOW) * DT;
+    cumIn[i + 1] = cumIn[i] + injectionRate[i] * DT;
+  }
+  const cumOut = new Float64Array(N_STEPS);   // iodine that has left the arm vein (mg)
+  for (let i = 0, j = 0; i < N_STEPS; i++) {
+    const v = cumVol[i] - ARM_VEIN_VOLUME;
+    if (v <= 0) continue;
+    while (cumVol[j + 1] < v) j++;
+    const f = (v - cumVol[j]) / (cumVol[j + 1] - cumVol[j]);
+    cumOut[i] = cumIn[j] + f * (cumIn[j + 1] - cumIn[j]);
   }
 
-  // Convert to HU and downsample
+  // ── Compartments ──
+  // Central circulation (mixing chambers)
+  const V_rh = BV * 0.04, V_lung = BV * 0.12, V_lh = BV * 0.04, V_art = BV * 0.15;
+  const V_portal = BV * 0.02;
+
+  // Organs: tissue volume (mL/kg), blood fraction, EES fraction, share of cardiac output,
+  // EES filling time (s). Liver ECV = 0.15×0.6 + 0.15 ≈ 0.24 (CT-ECV of normal liver ≈ 26%).
+  const organ = (mlPerKg, fv, fe, flowFrac, tauEes) => {
+    const V = weight * mlPerKg;
+    return { V, Vv: V * fv, Ve: V * fe, F: Q * flowFrac, PS: V * fe / tauEes, Mv: 0, Me: 0 };
+  };
+  const liver    = organ(25,  0.15, 0.15, 0.065, 10);   // F = hepatic artery only; portal flow added below
+  const gut      = organ(20,  0.10, 0.20, 0.19,  20);   // drains into the portal vein
+  const spleen   = organ(3,   0.20, 0.12, 0.045, 8);    // drains into the portal vein (≈5% of CO)
+  const pancreas = organ(1.5, 0.12, 0.18, 0.03,  5);    // drains into the portal vein (≈1.7 mL/min per mL)
+  const kidney   = organ(5,   0.20, 0.10, 0.22,  10);
+  // Rest of the body (muscle, skin, bone, brain…): the bulk of the extracellular fluid that
+  // contrast spreads into over minutes, which brings blood levels down after the first pass.
+  const rest = { Vv: BV * 0.06, Ve: weight * REST_EES_ML_PER_KG, F: 0, PS: 0, Mv: 0, Me: 0 };
+  rest.F = Q - (liver.F + gut.F + spleen.F + pancreas.F + kidney.F);
+  rest.PS = rest.Ve / REST_EES_FILL_TIME;
+  const F_pv = gut.F + spleen.F + pancreas.F;            // portal vein flow
+  const V_ven = BV - (V_rh + V_lung + V_lh + V_art + V_portal + rest.Vv
+                      + liver.Vv + gut.Vv + spleen.Vv + pancreas.Vv + kidney.Vv);
+  const organs = [liver, gut, spleen, pancreas, kidney, rest];
+
+  let M_rh = 0, M_lung = 0, M_lh = 0, M_art = 0, M_ven = 0, M_portal = 0;
+  let M_tubule = 0, M_urine = 0;
+
+  const C_art = new Float64Array(N_STEPS);
+  const C_ven = new Float64Array(N_STEPS);
+  const C_portal = new Float64Array(N_STEPS);
+  const C_liver = new Float64Array(N_STEPS);
+  const C_kidney = new Float64Array(N_STEPS);
+  const C_spleen = new Float64Array(N_STEPS);
+  const C_pancreas = new Float64Array(N_STEPS);
+
+  for (let i = 0; i < N_STEPS - 1; i++) {
+    const c_rh = M_rh / V_rh, c_lung = M_lung / V_lung, c_lh = M_lh / V_lh;
+    const c_art = M_art / V_art, c_ven = M_ven / V_ven, c_portal = M_portal / V_portal;
+    const fromArm = (cumOut[i + 1] - cumOut[i]) / DT;
+
+    // Blood ⇄ EES exchange (driven by the plasma concentration) and blood outflow of each organ
+    organs.forEach(o => {
+      o.cv = o.Mv / o.Vv;
+      o.J = o.PS * (o.cv / PF - o.Me / o.Ve);
+    });
+    const liverIn = liver.F * c_art + F_pv * c_portal;
+    const liverOut = (liver.F + F_pv) * liver.cv;
+    const filtration = GFR_ML_S * kidney.cv / PF;
+    const excretion = M_tubule / TUBULE_TRANSIT_TIME;
+
+    M_rh   += (fromArm + Q * c_ven - Q * c_rh) * DT;
+    M_lung += Q * (c_rh - c_lung) * DT;
+    M_lh   += Q * (c_lung - c_lh) * DT;
+    M_art  += Q * (c_lh - c_art) * DT;
+    M_ven  += (liverOut + kidney.F * kidney.cv + rest.F * rest.cv - Q * c_ven) * DT;
+    M_portal += (gut.F * gut.cv + spleen.F * spleen.cv + pancreas.F * pancreas.cv - F_pv * c_portal) * DT;
+
+    liver.Mv    += (liverIn - liverOut - liver.J) * DT;
+    gut.Mv      += gut.F * (c_art - gut.cv) * DT - gut.J * DT;
+    spleen.Mv   += spleen.F * (c_art - spleen.cv) * DT - spleen.J * DT;
+    pancreas.Mv += pancreas.F * (c_art - pancreas.cv) * DT - pancreas.J * DT;
+    kidney.Mv   += (kidney.F * (c_art - kidney.cv) - kidney.J - filtration) * DT;
+    rest.Mv     += rest.F * (c_art - rest.cv) * DT - rest.J * DT;
+    organs.forEach(o => { o.Me += o.J * DT; });
+    M_tubule += (filtration - excretion) * DT;
+    M_urine += excretion * DT;
+
+    C_art[i + 1] = M_art / V_art;
+    C_ven[i + 1] = M_ven / V_ven;
+    C_portal[i + 1] = M_portal / V_portal;
+    C_liver[i + 1] = (liver.Mv + liver.Me) / liver.V;
+    C_kidney[i + 1] = (kidney.Mv + kidney.Me + M_tubule) / kidney.V;
+    C_spleen[i + 1] = (spleen.Mv + spleen.Me) / spleen.V;
+    C_pancreas[i + 1] = (pancreas.Mv + pancreas.Me) / pancreas.V;
+  }
+
+  // Convert to HU and downsample to 1 s (0 … T_MAX inclusive)
   const timePoints = [];
   const results = {};
   Object.keys(ORGANS).forEach(key => { results[key] = []; });
 
   const displayStep = Math.round(1.0 / DT);
-
   for (let i = 0; i < N_STEPS; i += displayStep) {
-    const t = i * DT;
-    if (t > T_MAX) break;
-    timePoints.push(t);
+    timePoints.push(Math.round(i * DT));
     results.aorta.push(C_art[i] * HU_PER_MGI_ML);
     results.ivc.push(C_ven[i] * HU_PER_MGI_ML);
-    results.portalVein.push(C_portal_vasc[i] * HU_PER_MGI_ML);
-    results.liverParenchyma.push(C_liver_vasc[i] * HU_PER_MGI_ML);
-    results.kidney.push(C_kidney_vasc[i] * HU_PER_MGI_ML);
-    results.spleen.push(C_spleen_vasc[i] * HU_PER_MGI_ML);
-    results.pancreas.push(C_pancreas_vasc[i] * HU_PER_MGI_ML);
+    results.portalVein.push(C_portal[i] * HU_PER_MGI_ML);
+    results.liverParenchyma.push(C_liver[i] * HU_PER_MGI_ML);
+    results.kidney.push(C_kidney[i] * HU_PER_MGI_ML);
+    results.spleen.push(C_spleen[i] * HU_PER_MGI_ML);
+    results.pancreas.push(C_pancreas[i] * HU_PER_MGI_ML);
   }
 
-  return { timePoints, results, injectionRate };
+  // Iodine bookkeeping (mg): injected = in body + excreted + still in the arm vein
+  const last = N_STEPS - 1;
+  const inBody = M_rh + M_lung + M_lh + M_art + M_ven + M_portal + M_tubule
+    + organs.reduce((s, o) => s + o.Mv + o.Me, 0);
+  const iodine = {
+    injected: cumIn[last],
+    inBody,
+    excreted: M_urine,
+    inArmVein: cumIn[last] - cumOut[last],
+  };
+
+  return { timePoints, results, injectionRate, iodine };
+}
+
+function getPatientInputs() {
+  return {
+    weight: clampInput(document.getElementById('bodyWeight').value, 20, 200, 60),
+    co: clampInput(document.getElementById('cardiacOutput').value, 1.0, 15.0, 5.0),
+  };
 }
 
 function runSimulation() {
-  const weight = parseFloat(document.getElementById('bodyWeight').value) || 60;
-  const CO = parseFloat(document.getElementById('cardiacOutput').value) || 5.0;
+  const { weight, co: CO } = getPatientInputs();
+  // Show the values actually used when a typed value was outside the input's range
+  [['bodyWeight', weight], ['cardiacOutput', CO]].forEach(([id, v]) => {
+    const el = document.getElementById(id);
+    if (Number.isFinite(parseFloat(el.value)) && parseFloat(el.value) !== v) el.value = v;
+  });
   const agentKey = document.getElementById('contrastAgent').value;
   const concentration = CONTRAST_AGENTS[agentKey].concentration;
 
@@ -1316,7 +1308,7 @@ function updateTDCChart() {
   });
 
   // Add scan timing vertical line
-  const scanTime = parseFloat(document.getElementById('scanTime').value) || 30;
+  const scanTime = getScanTime();
   if (scanTime <= maxTime) {
     const verticalData = labels.map(t => {
       if (Math.abs(t - scanTime) < 0.5) {
@@ -1427,10 +1419,20 @@ function toggleOrgan(checkbox) {
 }
 
 // ── Result table ──
+// Peak of a curve. A peak on the last sample means the curve was still rising when the
+// computed range ended, so the true peak is later than T_MAX and higher than shown.
+function findPeak(data, timePoints) {
+  let idx = 0;
+  for (let i = 1; i < data.length; i++) if (data[i] > data[idx]) idx = i;
+  return { value: data[idx], time: timePoints[idx], atEnd: idx === data.length - 1 && data.length > 1 };
+}
+const peakTimeCell = p => p.atEnd ? `${T_MAX}以降*` : p.time.toFixed(0);
+const peakValueCell = p => (p.atEnd ? '≥' : '') + p.value.toFixed(1);
+
 function updateResultTable() {
   if (!simulationResults) return;
   const { timePoints, results } = simulationResults;
-  const scanTime = parseFloat(document.getElementById('scanTime').value) || 30;
+  const scanTime = getScanTime();
   const isCompare = !!protocolA;
 
   // Update table header
@@ -1467,16 +1469,15 @@ function updateResultTable() {
 
   const tbody = document.getElementById('resultBody');
   tbody.innerHTML = '';
+  let anyAtEnd = false;
 
   Object.keys(ORGANS).forEach(key => {
     if (!ORGANS[key].visible) return;
 
     // Current (B)
     const data = results[key];
-    let peakValue = 0, peakTime = 0;
-    for (let i = 0; i < data.length; i++) {
-      if (data[i] > peakValue) { peakValue = data[i]; peakTime = timePoints[i]; }
-    }
+    const pk = findPeak(data, timePoints);
+    anyAtEnd = anyAtEnd || pk.atEnd;
     let scanValue = 0;
     const scanIdx = timePoints.findIndex(t => t >= scanTime);
     if (scanIdx >= 0 && scanIdx < data.length) scanValue = data[scanIdx];
@@ -1485,10 +1486,8 @@ function updateResultTable() {
       // Protocol A values
       const aData = protocolA.results.results[key];
       const aTP = protocolA.results.timePoints;
-      let aPeak = 0, aPeakTime = 0;
-      for (let i = 0; i < aData.length; i++) {
-        if (aData[i] > aPeak) { aPeak = aData[i]; aPeakTime = aTP[i]; }
-      }
+      const aPk = findPeak(aData, aTP);
+      anyAtEnd = anyAtEnd || aPk.atEnd;
       let aScanValue = 0;
       const aScanIdx = aTP.findIndex(t => t >= scanTime);
       if (aScanIdx >= 0 && aScanIdx < aData.length) aScanValue = aData[aScanIdx];
@@ -1500,11 +1499,11 @@ function updateResultTable() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><span class="organ-dot" style="background:${ORGANS[key].color}; vertical-align:middle; margin-right:6px;"></span>${ORGANS[key].label}</td>
-        <td>${aPeakTime.toFixed(0)}</td>
-        <td>${aPeak.toFixed(1)}</td>
+        <td>${peakTimeCell(aPk)}</td>
+        <td>${peakValueCell(aPk)}</td>
         <td>${aScanValue.toFixed(1)}</td>
-        <td>${peakTime.toFixed(0)}</td>
-        <td>${peakValue.toFixed(1)}</td>
+        <td>${peakTimeCell(pk)}</td>
+        <td>${peakValueCell(pk)}</td>
         <td>${scanValue.toFixed(1)}</td>
         <td class="${diffClass}">${diffSign}${diff.toFixed(1)}</td>
       `;
@@ -1513,13 +1512,19 @@ function updateResultTable() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><span class="organ-dot" style="background:${ORGANS[key].color}; vertical-align:middle; margin-right:6px;"></span>${ORGANS[key].label}</td>
-        <td>${peakTime.toFixed(0)}</td>
-        <td>${peakValue.toFixed(1)}</td>
+        <td>${peakTimeCell(pk)}</td>
+        <td>${peakValueCell(pk)}</td>
         <td>${scanValue.toFixed(1)}</td>
       `;
       tbody.appendChild(tr);
     }
   });
+
+  const note = document.getElementById('resultNote');
+  note.hidden = !anyAtEnd;
+  note.textContent = anyAtEnd
+    ? `* 計算範囲（0〜${T_MAX}秒）の終わりでもまだ上昇中です。実際のピークはもっと後で、値もこれより高くなります。`
+    : '';
 }
 
 function updateScanMarker() {
@@ -1528,7 +1533,9 @@ function updateScanMarker() {
     return;
   }
 
-  const scanTime = parseFloat(document.getElementById('scanTime').value) || 30;
+  const scanTime = getScanTime();
+  const scanInput = document.getElementById('scanTime');
+  if (Number.isFinite(parseFloat(scanInput.value)) && parseFloat(scanInput.value) !== scanTime) scanInput.value = scanTime;
   const { timePoints, results } = simulationResults;
 
   let text = `${scanTime}秒時点: `;

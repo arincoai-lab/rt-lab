@@ -32,6 +32,10 @@ jobs:
       - name: DRL mapping checks
         run: node scripts/test-drl-mapping.js
 
+      # 造影CTシミュレータの薬物動態モデル（生食後押し・ピークの位置・物質収支・文献範囲）
+      - name: Contrast simulator model checks
+        run: node scripts/test-contrast-simulator.js
+
       - name: Generated blocks are up to date
         run: |
           node scripts/generate-related.js --check
