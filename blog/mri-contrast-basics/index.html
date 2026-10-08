@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T1強調・T2強調・FLAIRの違いとは｜水が黒く・白く写る理由をTR・TE・TIから理解する | RT-Lab Blog</title>
+<meta name="description" content="MRIのT1強調・T2強調・プロトン密度強調・FLAIRの違いを、TR・TE・TIと信号の式から説明します。T1強調で水（脳脊髄液）が黒く、T2強調で白く写る理由、FLAIRで水だけが消えるしくみ（TI≈ln2×T1）、緩和時間の数値を丸暗記しなくてよい理由まで、一次情報をもとに現役放射線技師が解説します。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:title" content="T1強調・T2強調・FLAIRの違いとは｜水が黒く・白く写る理由をTR・TE・TIから理解する">
+<meta property="og:description" content="T1強調・T2強調・PD強調・FLAIRの違いをTR・TE・TIと信号の式から解説。水が黒く・白く写る理由とFLAIRで水だけが消えるしくみ。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://rt-ai-lab.com/blog/mri-contrast-basics/">
+<meta property="og:image" content="https://rt-ai-lab.com/assets/og/mri-contrast-basics.png">
+<meta property="og:image:alt" content="T1強調・T2強調・FLAIRの違いとは｜水が黒く・白く写る理由をTR・TE・TIから理解する｜RT-Lab Blog">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="RT-Lab">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="T1強調・T2強調・FLAIRの違いとは｜水が黒く・白く写る理由をTR・TE・TIから理解する">
+<meta name="twitter:description" content="T1強調・T2強調・PD強調・FLAIRの違いをTR・TE・TIと信号の式から解説。水が黒く・白く写る理由とFLAIRで水だけが消えるしくみ。">
+<meta name="twitter:image" content="https://rt-ai-lab.com/assets/og/mri-contrast-basics.png">
+<meta name="twitter:image:alt" content="T1強調・T2強調・FLAIRの違いとは｜水が黒く・白く写る理由をTR・TE・TIから理解する｜RT-Lab Blog">
+<link rel="canonical" href="https://rt-ai-lab.com/blog/mri-contrast-basics/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "T1強調・T2強調・FLAIRの違いとは｜水が黒く・白く写る理由をTR・TE・TIから理解する",
+  "description": "MRIのT1強調・T2強調・プロトン密度強調・FLAIRの違いを、TR・TE・TIとスピンエコー・反転回復の信号の式から解説。T1強調で水が黒く、T2強調で白く写る理由、FLAIRで脳脊髄液だけが消えるしくみ（TI≈ln2×T1）、緩和時間の数値を丸暗記しなくてよい理由を整理。",
+  "datePublished": "2026-10-08",
+  "dateModified": "2026-10-08",
+  "author": {
+    "@type": "Person",
+    "name": "RT-Lab運営者",
+    "jobTitle": "診療放射線技師",
+    "url": "https://rt-ai-lab.com/about/",
+    "sameAs": ["https://note.com/ri_ai_lab"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "RT-Lab",
+    "url": "https://rt-ai-lab.com/"
+  },
+  "mainEntityOfPage": "https://rt-ai-lab.com/blog/mri-contrast-basics/",
+  "image": "https://rt-ai-lab.com/assets/og/mri-contrast-basics.png"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
+    { "@type": "ListItem", "position": 2, "name": "ブログ", "item": "https://rt-ai-lab.com/blog/" },
+    { "@type": "ListItem", "position": 3, "name": "T1強調・T2強調・FLAIRの違い", "item": "https://rt-ai-lab.com/blog/mri-contrast-basics/" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "T1強調とT2強調は何が違うのですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "どちらの緩和時間の差を画像の明暗に反映させるかの違いです。スピンエコーでは、TR（繰り返し時間）がT1の差の効き方を、TE（エコー時間）がT2の差の効き方を決めます。短TR・短TEにするとT1の差が前に出るT1強調、長TR・長TEにするとT2の差が前に出るT2強調、長TR・短TEにするとどちらの差も小さくなりプロトン密度強調になります。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "なぜT1強調では水（脳脊髄液）が黒く、T2強調では白く写るのですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "水はT1もT2も長いからです。T1強調の短いTRでは、T1の長い水は次の励起までに縦磁化が回復しきれず、信号が小さくなります。T2強調の長いTEでは、ほかの組織の信号が減衰していくなかで、T2の長い水は信号を保つため明るく残ります。同じ「T1・T2が長い」という性質が、TRとTEの選び方しだいで黒にも白にもなります。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "FLAIRのTI（反転時間）はどう決まるのですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "反転回復法では、TRが十分長い（TR≫T1）とき縦磁化は 1−2e^(−TI/T1) に比例し、これがゼロになるのは TI = T1 × ln2（約0.69 × T1）のときです。FLAIRは脳脊髄液のT1に合わせてTIを選び、脳脊髄液の信号を消したうえで長いTEのT2強調像を得ます。FLAIRと従来のT2強調を40例で比較した1992年の臨床研究（De Coene ら）では、TI 1800〜3000 ms、TE 130〜240 msの条件が使われていました。実際のFLAIRではTRが脳脊髄液のT1に比べて十分長いとは限らないため、この式は目安であり、TIは装置や施設のプロトコルに従って設定します。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "T1値・T2値は何msと覚えればよいですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "数値の丸暗記より、組織どうしの大小関係を押さえるほうが実務では役に立ちます。T1値は測定法などによって変わり、たとえば3Tの脳白質のT1は文献によって0.6〜1.1秒の幅があると報告されています。覚えておきたいのは、脂肪のT1は体内でもっとも短い部類で、自由水（脳脊髄液など）はT1もT2も長い、という関係です。"
+      }
+    }
+  ]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/blog.css">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+
+<header class="blog-header">
+  <div class="blog-header-inner">
+    <a class="blog-brand" href="/">RT-Lab</a>
+    <nav class="blog-subnav">
+      <a href="/#tools">ツール一覧</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/about/">サイトについて</a>
+      <a href="/contact/">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="blog-main">
+  <article class="blog-article">
+    <div class="blog-article-meta">
+      <span>公開: 2026-10-08</span>
+      <span>カテゴリ: MRI</span>
+    </div>
+    <h1>T1強調・T2強調・FLAIRの違いとは｜水が黒く・白く写る理由をTR・TE・TIから理解する</h1>
+    <p class="blog-lead">
+      MRIを学び始めると、「T1強調では水が黒く、T2強調では白い」「FLAIRは水を消したT2強調」と覚えることになります。ただ、丸暗記のままだと、TRやTEを少し変えた画像や、施設ごとに違う撮像条件を前にしたときに応用が利きません。この記事では、<strong>信号の式ひとつ</strong>から、T1強調・T2強調・プロトン密度強調・FLAIRがどう作り分けられているのかを順に説明します。式の中身は、下のシミュレータでパラメータを動かしながら確かめられます。
+    </p>
+
+    <nav class="blog-toc">
+      <div class="blog-toc-title">目次</div>
+      <ol>
+        <li><a href="#basics">基本の整理（30秒版）</a></li>
+        <li><a href="#relaxation">T1とT2：2つの緩和を区別する</a></li>
+        <li><a href="#equation">信号の式で見る「TRがT1、TEがT2」</a></li>
+        <li><a href="#t1w">T1強調：短TR・短TEで水が黒くなる理由</a></li>
+        <li><a href="#t2w">T2強調とプロトン密度強調</a></li>
+        <li><a href="#flair">FLAIR：反転パルスで水だけを消す</a></li>
+        <li><a href="#values">緩和時間の数値は丸暗記しなくてよい</a></li>
+        <li><a href="#summary">まとめ</a></li>
+        <li><a href="#faq">よくある質問</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="basics">基本の整理（30秒版）</h2>
+    <p>
+      スピンエコー系の画像のコントラストは、どのパラメータを短く・長くするかでほぼ決まります。
+    </p>
+    <div class="blog-table-wrap">
+      <table>
+        <thead>
+          <tr><th>画像</th><th>TR</th><th>TE</th><th>水の見え方</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>T1強調</td><td>短い</td><td>短い</td><td>黒い（低信号）</td></tr>
+          <tr><td>T2強調</td><td>長い</td><td>長い</td><td>白い（高信号）</td></tr>
+          <tr><td>プロトン密度強調</td><td>長い</td><td>短い</td><td>組織間の差が小さい</td></tr>
+          <tr><td>FLAIR</td><td>長い＋反転（TI）</td><td>長い</td><td>黒い（信号を抑制）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      覚える規則は「<strong>TRがT1の差を、TEがT2の差を画像に出す</strong>」の1つだけです。表の残りは、この規則と「水はT1もT2も長い」という性質から導けます。
+    </p>
+
+    <a class="blog-cta" href="/mri-simulator/">
+      <span class="blog-cta-label">関連ツール</span>
+      <div class="blog-cta-title">MRIシミュレータ（TE・TR・TIで画像が変わる）</div>
+      <div class="blog-cta-desc">脳の模式ファントムにスピンエコー・反転回復（FLAIR/STIR）・グラディエントエコーの信号の式を当て、TE・TR・TIを動かすと画像のコントラストがその場で変わる教育用ツール。ブラウザ完結・無料。</div>
+    </a>
+
+    <h2 id="relaxation">T1とT2：2つの緩和を区別する</h2>
+    <p>
+      励起されたプロトンの磁化は、2つの別々の過程で元に戻ります。
+    </p>
+    <ul>
+      <li><strong>T1緩和（縦緩和）</strong>：倒された磁化が静磁場の向き（縦方向）へ<strong>回復</strong>していく速さ。T1が短い組織ほど早く回復します。</li>
+      <li><strong>T2緩和（横緩和）</strong>：横方向の磁化（＝受信される信号）が<strong>減衰</strong>していく速さ。T2が長い組織ほど信号が長く残ります。</li>
+    </ul>
+    <p>
+      どの組織のT1・T2が長いかには、分子の動きやすさが関わっています。脂肪の分子は縦緩和のエネルギー交換が起こりやすい大きさで、<strong>脂肪のT1は体内の組織でもっとも短い部類</strong>です。一方、自由水は分子どうしの相互作用が少なく<strong>T2が長く</strong>、筋肉のように高分子を多く含む組織ではT2が短くなります（Ridgway 2010）。脳脊髄液のような水は、<strong>T1もT2も非常に長い</strong>組織の代表です（Ma ら 2022）。
+    </p>
+
+    <h2 id="equation">信号の式で見る「TRがT1、TEがT2」</h2>
+    <p>
+      スピンエコーで得られる信号は、次の3つの因子の掛け算で表されます（Ma ら 2022 の式を簡略化）。
+    </p>
+    <p class="blog-formula">S ∝ PD × (1 − e<sup>−TR/T1</sup>) × e<sup>−TE/T2</sup></p>
+    <ul>
+      <li><strong>PD</strong>（プロトン密度）：そもそも信号源となるプロトンがどれだけあるか</li>
+      <li><strong>(1 − e<sup>−TR/T1</sup>)</strong>：次の励起までの時間TRのあいだに、縦磁化がどこまで回復したか。<strong>TRとT1だけ</strong>で決まる</li>
+      <li><strong>e<sup>−TE/T2</sup></strong>：励起からエコーを読むまでの時間TEのあいだに、信号がどこまで減衰したか。<strong>TEとT2だけ</strong>で決まる</li>
+    </ul>
+    <p>
+      TRはT1の因子にしか、TEはT2の因子にしか現れません。「TRがT1重み付けを、TEがT2重み付けを支配する」（Ridgway 2010）というのは、この式の形そのものです。
+    </p>
+
+    <h2 id="t1w">T1強調：短TR・短TEで水が黒くなる理由</h2>
+    <p>
+      T1強調スピンエコーは<strong>短TR・短TE</strong>で撮ります。
+    </p>
+    <ul>
+      <li><strong>短TR</strong>：縦磁化が回復しきる前に次の励起が来るので、T1の短い組織（脂肪など）は大きく、T1の長い組織（水など）は小さい信号になります。T1の差がそのまま明暗になります。</li>
+      <li><strong>短TE</strong>：T2による減衰がほとんど起きないうちに読むので、T2の差は画像にほとんど出ません。</li>
+    </ul>
+    <p>
+      その結果、T1強調像は<strong>脂肪が明るく、静止した液体が暗い</strong>画像になります（Ridgway 2010）。
+    </p>
+    <p>
+      数字で確かめてみます。下の表は、MRIシミュレータに入っている<strong>教育用の緩和値</strong>（T1・T2・プロトン密度PDの順に、白質 600 ms・80 ms・0.70、灰白質 950 ms・100 ms・0.80、脳脊髄液 3500 ms・1500 ms・1.00、脂肪 260 ms・80 ms・0.90。PDは脳脊髄液を1とした相対値）を上の式に入れて計算した相対信号です。条件はツールのプリセット（T1強調 TR 500 ms・TE 15 ms、T2強調 TR 4000 ms・TE 100 ms）です。
+    </p>
+    <div class="blog-table-wrap">
+      <table>
+        <thead>
+          <tr><th>組織</th><th>T1強調（TR 500 / TE 15）</th><th>T2強調（TR 4000 / TE 100）</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>脂肪</td><td>0.64</td><td>0.26</td></tr>
+          <tr><td>白質</td><td>0.33</td><td>0.20</td></tr>
+          <tr><td>灰白質</td><td>0.28</td><td>0.29</td></tr>
+          <tr><td>脳脊髄液</td><td>0.13</td><td>0.64</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="blog-note">
+      ※ 計算に使った緩和値は、コントラストのでき方を学ぶためにツールに設定した近似値です。実測値は磁場強度・装置・被検者・測定法で変わります（後述）。また実際の臨床画像は高速スピンエコーなどで撮られることが多く、この単純な式とは細部が異なります。
+    </p>
+    <p>
+      T1強調では脳脊髄液がいちばん暗く（0.13）、白質が灰白質より明るくなります。T2強調では脳脊髄液がいちばん明るく（0.64）なり、灰白質が白質より明るくなります。水のT1・T2が長いという性質は同じでも、TRとTEの選び方しだいで黒にも白にもなるわけです。
+    </p>
+
+    <h2 id="t2w">T2強調とプロトン密度強調</h2>
+    <p>
+      <strong>T2強調</strong>は<strong>長TR・長TE</strong>です。長いTRでほとんどの組織の縦磁化が回復しきるので、T1の差は小さくなります。そのうえで長いTEまで待つと、T2の短い組織（筋肉など）の信号は減衰し、T2の長い水は信号を保ちます。T2強調像が<strong>液体を明るく描く</strong>のはこのためで、液体貯留の描出や浮腫の評価に使われます（Ridgway 2010）。
+    </p>
+    <p>
+      <strong>プロトン密度強調</strong>は<strong>長TR・短TE</strong>です。長いTRでT1の差を、短いTEでT2の差を、それぞれ小さくします。残るのはおもにプロトン密度の差なので、全体に信号が高く、組織間の明暗差は小さめの画像になります（Ridgway 2010）。
+    </p>
+
+    <h2 id="flair">FLAIR：反転パルスで水だけを消す</h2>
+    <p>
+      T2強調像では病変も脳脊髄液も明るく写るため、脳室や脳溝に接した病変は脳脊髄液と区別しにくくなります。脳脊髄液はT1・T2が非常に長いため、脳脊髄液と正常組織が1つのボクセルに混ざる部分容積効果によって、正常組織のT1・T2が延びたように、つまり病変のように見えることがあります。そのため強いT2強調では、脳脊髄液の信号を選んで下げる工夫が役に立ちます（Ma ら 2022）。そのための代表的な方法が<strong>FLAIR（fluid-attenuated inversion recovery）</strong>です。
+    </p>
+    <p>
+      FLAIRは<strong>反転回復法</strong>の一種です。まず180°パルスで縦磁化を反転させ（−1の向きにする）、TI（反転時間）だけ待ってから通常の撮像を行います。TRが十分長い（TR≫T1）とき、TIの時点での縦磁化は次の因子に比例します（Ma ら 2022）。
+    </p>
+    <p class="blog-formula">1 − 2e<sup>−TI/T1</sup></p>
+    <p>
+      反転直後は −1 から始まり、T1の速さで +1 へ戻っていく途中でゼロを横切ります。ゼロになる条件を解くと、
+    </p>
+    <p class="blog-formula">1 − 2e<sup>−TI/T1</sup> = 0　⇔　TI = T1 × ln2 ≈ 0.69 × T1</p>
+    <p>
+      となります。ある組織のT1に合わせてTIを選べば、その組織の信号だけを消せるということです。FLAIRは<strong>脳脊髄液のT1に合わせたTI</strong>で脳脊髄液を消し、そのうえで長いTEのT2強調像を得ます。脳実質に対しては強いT2強調、脳脊髄液に対しては強いT1強調として働く、という見方もできます（Ma ら 2022）。
+    </p>
+    <p>
+      脳のFLAIRと従来のT2強調スピンエコーを40例の患者で比較した1992年の原著論文（De Coene ら, AJNR）では、TI 1800〜3000 ms、TE 130〜240 msのFLAIRが使われています。両方で認識された48の病変（または病変群）のうち、FLAIRで見つかった病変数が多かったのが22、病変の目立ちやすさがFLAIRで優っていたのが42でした。著者らは、長いTEと脳脊髄液によるアーチファクトの少なさによって、FLAIRが幅広い疾患に高い感度を持つと結論しています。
+    </p>
+    <p>
+      MRIシミュレータのFLAIRプリセットは、ツールの脳脊髄液T1（3500 ms）から TI = ln2 × 3500 ≈ 2426 ms を算出しています（De Coene らの研究で使われた 1800〜3000 ms の範囲に入ります）。ただし、<strong>TI = T1 × ln2 は TR≫T1 を前提にした近似</strong>です。脳脊髄液のT1は非常に長く、実際のFLAIRではTRがそれに比べて十分長いとは限らないため、式どおりのTIで完全にゼロになるとは限りません。臨床のTIは、装置や施設のプロトコルの設定に従ってください。
+    </p>
+    <p>
+      同じ原理を、T1のもっとも短い組織である脂肪に使うのが<strong>STIR</strong>です。STIRは<strong>短いTI</strong>の反転回復法で（Ma ら 2022）、脂肪の短いT1に合わせたTIで脂肪の信号を抑えます。ツールのSTIRプリセットは、脂肪のT1（260 ms）から TI ≈ 180 ms としています。
+    </p>
+
+    <h2 id="values">緩和時間の数値は丸暗記しなくてよい</h2>
+    <p>
+      教科書やWebには組織ごとのT1・T2の表が載っていますが、数値そのものを覚える必要はあまりありません。T1の値は測定法などによって大きく変わるからです。たとえば<strong>3Tの脳白質のT1は、文献によって0.6〜1.1秒の幅</strong>があると報告されています。この文献間のばらつきは、最大62%が磁化移動（magnetization transfer）の影響で説明できると分析されています（Assländer ら, 2025）。
+    </p>
+    <p>
+      実務で役に立つのは、次のような<strong>大小関係</strong>です。
+    </p>
+    <ul>
+      <li>脂肪：T1がもっとも短い部類 → T1強調で明るい、短いTIで抑制できる（STIR）</li>
+      <li>自由水（脳脊髄液など）：T1もT2も長い → T1強調で暗い、T2強調で明るい、長いTIで抑制できる（FLAIR）</li>
+      <li>高分子を多く含む組織（筋肉など）：T2が短い → T2強調で暗い</li>
+    </ul>
+    <p>
+      この関係と「TRがT1、TEがT2」の規則があれば、見慣れない撮像条件の画像でも、どの組織が明るく写るはずかを自分で予想できます。
+    </p>
+
+    <h2 id="summary">まとめ</h2>
+    <ul>
+      <li>スピンエコーの信号は <strong>PD × (1 − e<sup>−TR/T1</sup>) × e<sup>−TE/T2</sup></strong>。<strong>TRがT1の差を、TEがT2の差を</strong>画像に出す</li>
+      <li><strong>T1強調＝短TR・短TE</strong>（脂肪が明るく水が暗い）、<strong>T2強調＝長TR・長TE</strong>（水が明るい）、<strong>プロトン密度強調＝長TR・短TE</strong></li>
+      <li>反転回復では TR≫T1 のとき <strong>TI = T1 × ln2（約0.69 × T1）</strong>でその組織の信号がゼロになる。脳脊髄液に合わせれば<strong>FLAIR</strong>、脂肪に合わせれば<strong>STIR</strong></li>
+      <li>FLAIRとT2強調を比較した1992年の臨床研究（De Coene ら）は TI 1800〜3000 ms・TE 130〜240 ms で、48病変（群）中42でFLAIRのほうが病変が目立ちやすかった</li>
+      <li>T1値は測定法などで大きく変わる（3T白質の文献値で0.6〜1.1秒）。数値より<strong>組織どうしの大小関係</strong>を押さえる</li>
+    </ul>
+
+    <a class="blog-cta" href="/mri-simulator/">
+      <span class="blog-cta-label">関連ツール</span>
+      <div class="blog-cta-title">MRIシミュレータ（TE・TR・TIで画像が変わる）</div>
+      <div class="blog-cta-desc">T1強調・T2強調・PD強調・FLAIR・STIRのプリセットから、TR・TE・TIを動かしてコントラストの変化を確認できます。組織別の信号バーとA/B並列比較つき。</div>
+    </a>
+
+    <h2 id="faq">よくある質問</h2>
+    <h3>Q. T1強調とT2強調は何が違うのですか？</h3>
+    <p>
+      どちらの緩和時間の差を画像の明暗に反映させるかの違いです。スピンエコーでは、TR（繰り返し時間）がT1の差の効き方を、TE（エコー時間）がT2の差の効き方を決めます。短TR・短TEにするとT1の差が前に出るT1強調、長TR・長TEにするとT2の差が前に出るT2強調、長TR・短TEにするとどちらの差も小さくなりプロトン密度強調になります。
+    </p>
+    <h3>Q. なぜT1強調では水（脳脊髄液）が黒く、T2強調では白く写るのですか？</h3>
+    <p>
+      水はT1もT2も長いからです。T1強調の短いTRでは、T1の長い水は次の励起までに縦磁化が回復しきれず、信号が小さくなります。T2強調の長いTEでは、ほかの組織の信号が減衰していくなかで、T2の長い水は信号を保つため明るく残ります。同じ「T1・T2が長い」という性質が、TRとTEの選び方しだいで黒にも白にもなります。
+    </p>
+    <h3>Q. FLAIRのTI（反転時間）はどう決まるのですか？</h3>
+    <p>
+      反転回復法では、TRが十分長い（TR≫T1）とき縦磁化は 1−2e^(−TI/T1) に比例し、これがゼロになるのは TI = T1 × ln2（約0.69 × T1）のときです。FLAIRは脳脊髄液のT1に合わせてTIを選び、脳脊髄液の信号を消したうえで長いTEのT2強調像を得ます。FLAIRと従来のT2強調を40例で比較した1992年の臨床研究（De Coene ら）では、TI 1800〜3000 ms、TE 130〜240 msの条件が使われていました。実際のFLAIRではTRが脳脊髄液のT1に比べて十分長いとは限らないため、この式は目安であり、TIは装置や施設のプロトコルに従って設定します。
+    </p>
+    <h3>Q. T1値・T2値は何msと覚えればよいですか？</h3>
+    <p>
+      数値の丸暗記より、組織どうしの大小関係を押さえるほうが実務では役に立ちます。T1値は測定法などによって変わり、たとえば3Tの脳白質のT1は文献によって0.6〜1.1秒の幅があると報告されています。覚えておきたいのは、脂肪のT1は体内でもっとも短い部類で、自由水（脳脊髄液など）はT1もT2も長い、という関係です。
+    </p>
+
+    <aside class="blog-related" aria-label="関連記事">
+      <div class="blog-related-title">関連記事</div>
+      <ul>
+        <li>
+          <span class="blog-related-tag">造影検査</span><a href="/blog/egfr-contrast-guide/">造影剤と腎機能の基準値はなぜ検査ごとに違うのか｜CT 45・CAG 60・Gd 30の根拠</a>
+          <p class="blog-related-desc">造影MRIで使うガドリニウム造影剤の腎機能の目安（eGFR 30）とNSFの経緯を一次情報で整理。</p>
+        </li>
+        <li>
+          <span class="blog-related-tag">CT・線量管理</span><a href="/blog/ssde-guide/">実効径と水等価径の違いとは｜SSDEの使い分けと線量管理の実務</a>
+          <p class="blog-related-desc">SSDEに使う実効径（Deff）と水等価径（Dw）の違い、胸部で乖離する理由と線量記録義務化での位置づけ。</p>
+        </li>
+      </ul>
+    </aside>
+
+    <div class="blog-author">
+      <div class="blog-author-icon" aria-hidden="true">👨‍⚕️</div>
+      <div>
+        <div class="blog-author-name">この記事を書いた人</div>
+        <p>現役16年目の診療放射線技師。CT・MRIを中心に臨床業務のかたわら、放射線技師向けの無料Webツール集 <a href="/about/">RT-Lab</a> を個人で企画・開発・運営しています。医療AI・画像診断まわりの記事は <a href="https://note.com/ri_ai_lab" target="_blank" rel="noopener">note</a> でも書いています。</p>
+      </div>
+    </div>
+
+    <div class="blog-disclaimer">
+      本記事は放射線技師・医療従事者向けの教育目的の解説です。記事中の信号の計算例と緩和値は、コントラストのでき方を説明するための近似であり、実際の画像は装置・シーケンスの実装・磁場強度・被検者により異なります。撮像条件（TR・TE・TIなど）は各装置の仕様と施設のプロトコルに従い、検査の適応や画像の解釈は医師・診療放射線技師の判断で行ってください。本記事の内容は個々の検査・診療上の判断に代わるものではありません。
+    </div>
+
+    <div class="blog-refs">
+      <div class="blog-refs-title">出典・参考文献</div>
+      <ol>
+        <li>Ridgway JP. Cardiovascular magnetic resonance physics for clinicians: part I. J Cardiovasc Magn Reson. 2010;12:71. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3016368/" target="_blank" rel="noopener">PMC</a></li>
+        <li>Ma YJ, Moazamian D, Cornfeld DM, Condron P, Holdsworth SJ, Bydder M, Du J, Bydder GM. Improving the understanding and performance of clinical MRI using tissue property filters and the central contrast theorem, MASDIR pulse sequences and synergistic contrast MRI. Quant Imaging Med Surg. 2022;12(9):4658-4690. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9403590/" target="_blank" rel="noopener">PMC</a></li>
+        <li>De Coene B, Hajnal JV, et al. MR of the brain using fluid-attenuated inversion recovery (FLAIR) pulse sequences. AJNR Am J Neuroradiol. 1992;13(6):1555-1564. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8332405/" target="_blank" rel="noopener">PMC</a></li>
+        <li>Assländer J, Flassbeck S. Magnetization transfer explains most of the T1 variability in the MRI literature. Magn Reson Med. 2025;94(1):293-301. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12021565/" target="_blank" rel="noopener">PMC</a></li>
+      </ol>
+    </div>
+  </article>
+</main>
+
+<footer class="blog-footer">
+  <div class="blog-footer-links">
+    <a href="/">トップ</a>
+    <a href="/blog/">ブログ一覧</a>
+    <a href="/privacy/">プライバシーポリシー</a>
+    <a href="/contact/">お問い合わせ</a>
+  </div>
+  <div>&copy; 2025 RT-Lab</div>
+</footer>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>
