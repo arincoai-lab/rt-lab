@@ -13,7 +13,8 @@
  * 数値は一点に合わせ込まず、文献の範囲で検査する（モデルは教育用の近似）。
  *  - 肝ピーク: Bae 1998（125 mL ioversol-320）でシミュレーション 63.6〜63.8 HU、実測 59.8〜60.8 HU
  *  - 平衡相の肝/大動脈比: 肝 ECV 約26%・Hct 0.4 → 0.26/0.6 ≈ 0.43
- *  - 生食後押し: 短いボーラス（5 mL/s×10 s）で大動脈ピーク約14%増（Bayer/Medrad のモデル）
+ *  - 生食後押し: 短いボーラス（5 mL/s×10 s）で大動脈ピーク約14%増（US Patent 9,959,389 のモデル）
+ *  - 平衡相（180 s）の大動脈: 肝の値と上の比から約0.19 HU/(mgI/kg)。全身の細胞外液が無いと約0.27になる
  */
 const fs = require('fs');
 const path = require('path');
@@ -28,8 +29,8 @@ if (!src) { console.error('runSimulationCore が見つからない'); process.ex
 const noop = () => {};
 const ctx = { document: { addEventListener: noop, getElementById: () => null }, window: { addEventListener: noop } };
 vm.createContext(ctx);
-vm.runInContext(src + '\n;this.__api = { runSimulationCore, T_MAX, ORGANS };', ctx);
-const { runSimulationCore, T_MAX, ORGANS } = ctx.__api;
+vm.runInContext(src + '\n;this.__api = { runSimulationCore, T_MAX, ORGANS, findPeak, clampInput };', ctx);
+const { runSimulationCore, T_MAX, ORGANS, findPeak, clampInput } = ctx.__api;
 
 // ページ側のプリセットをそのまま使う（プリセットを足したらテスト対象にも入る）
 function extractPresets(firstKey) {
@@ -117,6 +118,23 @@ for (const c of cases) {
   check(pp.hu < pa.hu * 0.85, `${c.name}: 門脈ピーク ${fmt(pp.hu)} HU が大動脈 ${fmt(pa.hu)} HU に近すぎる`);
   check(pa.t < pp.t && pp.t <= pl.t, `${c.name}: ピーク時刻の順序（大動脈 ${pa.t} / 門脈 ${pp.t} / 肝 ${pl.t} s）`);
 
+  // 4b. 全身の細胞外液への移行: 180 s の大動脈 0.12〜0.24 HU/(mgI/kg)（移行が無いと約0.27）
+  const dosePerKg = expected / c.weight;
+  const a180 = at(r, 'aorta', 180) / dosePerKg;
+  check(a180 > 0.12 && a180 < 0.24, `${c.name}: 180 s の大動脈 ${a180.toFixed(3)} HU/(mgI/kg)（期待 0.12〜0.24）`);
+
+  // 4c. 肝実質のピークは造影剤の注入終了の 20〜90 秒後（全身の細胞外液が無いと 98〜152 秒後まで遅れる）
+  let tEnd = 0, tContrastEnd = 0;
+  for (const ph of c.phases) { tEnd += ph.volume / ph.rate; if (ph.type === 'contrast') tContrastEnd = tEnd; }
+  const liverLag = peak(r, 'liverParenchyma').t - tContrastEnd;
+  check(liverLag >= 20 && liverLag <= 90, `${c.name}: 肝実質ピークが注入終了の ${fmt(liverLag)} 秒後（期待 20〜90）`);
+
+  // 4d. 脾臓・膵臓も組織全体あたりのCT値（造影剤の入れる空間で割ると平衡相で血液と同じ値に近づく）
+  for (const key of ['spleen', 'pancreas']) {
+    const q = at(r, key, 180) / at(r, 'aorta', 180);
+    check(q > 0.25 && q < 0.6, `${c.name}: 180 s の${ORGANS[key].label}/大動脈比 ${fmt(q)}（期待 0.25〜0.6）`);
+  }
+
   // 6. 値が有限で負にならない
   const allOk = Object.keys(ORGANS).every(k => r.results[k].every(v => Number.isFinite(v) && v >= 0));
   check(allOk, `${c.name}: NaN・無限大・負の値がある`);
@@ -158,6 +176,27 @@ for (const [w, co] of [[20, 15], [200, 1], [20, 1], [200, 15]]) {
     check(err < 0.005, `体重 ${w} kg・CO ${co} L/min で物質収支の誤差 ${fmt(err * 100)}%`);
   }
 }
+
+// ── 11. 結果表のピーク判定（計算範囲の端なら atEnd） ──
+{
+  const tp = [0, 1, 2, 3];
+  check(findPeak([0, 1, 2, 3], tp).atEnd === true, '上がり続ける曲線のピークが「範囲の端」と判定されない');
+  check(findPeak([0, 3, 2, 1], tp).atEnd === false, '途中にピークがある曲線が「範囲の端」と判定される');
+  check(findPeak([0, 3, 2, 1], tp).time === 1, 'ピーク時刻がずれる');
+  check(findPeak([0, 0, 0, 0], tp).atEnd === false, '造影されない曲線が「範囲の端」と判定される');
+}
+
+// ── 12. 入力値を min/max に収める（負の速度・体重・心拍出量をモデルに渡さない） ──
+{
+  check(clampInput('-3', 0.5, 10, 1) === 0.5, '負の注入速度が下限に収まらない');
+  check(clampInput('400', 0, T_MAX, 30) === T_MAX, 'スキャン時刻が上限に収まらない');
+  check(clampInput('0', 0, T_MAX, 30) === 0, 'スキャン時刻 0 が 0 にならない');
+  check(clampInput('', 20, 200, 60) === 60, '空欄が既定値にならない');
+  check(clampInput('-10', 20, 200, 60) === 20, '負の体重が下限に収まらない');
+}
+const uiSrc = src;
+check(/function runSimulation\(\) \{\s*const \{ weight, co: CO \} = getPatientInputs\(\);/.test(uiSrc),
+  'runSimulation が体重・心拍出量を getPatientInputs（min/max に収める）経由で読んでいない');
 
 console.log(`contrast-simulator: ${pass} pass, ${fail} fail`);
 if (fail) { for (const b of bad) console.log('  FAIL ' + b); process.exit(1); }

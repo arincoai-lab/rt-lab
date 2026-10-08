@@ -609,8 +609,9 @@
     <div class="card-title">モデルについて</div>
     <div style="font-size:0.82rem; color:#4a5568; line-height:1.9;">
       <p>本シミュレータはBaeらの薬物動態コンパートメントモデルを簡略化して実装しています。造影剤は腕の静脈→右心系→肺循環→左心系→大動脈と流れ、各臓器（肝臓・腎臓・脾臓・膵臓・腸管・それ以外の全身）に分かれます。腸管・脾臓・膵臓を通った血液は門脈に集まって肝臓へ入ります。各臓器は「血管の中」と「血管の外の細胞外液」の2つの区画からなります。造影剤は細胞の中には入らないため、臓器のCT値は臓器全体の体積あたりで計算します。造影剤は時間とともに全身の細胞外液へ広がり、腎臓から尿へ排泄されます。</p>
-      <p style="margin-top:8px"><strong>生食後押し:</strong> 肘の注入部位から右心房までの腕の静脈を、容量約15 mL・腕の血流2 mL/秒として計算しています。注入が止まると、そこに残った造影剤は腕の血流でゆっくりとしか心臓へ流れません。生食で後押しすると、この残りが注入と同じ速さで押し出されるため、大動脈のピークが少し高く、鋭くなります。この計算では、腕の静脈を押し切る量（3〜5 mL/秒の注入でおよそ10 mL）より生食を増やしても、結果は変わりません。延長チューブの中の造影剤は計算に含めていません。</p>
-      <p style="margin-top:8px"><strong>主な前提（成人の目安）:</strong> 血液量 70 mL/kg、ヘマトクリット 40%、糸球体濾過量（GFR）100 mL/分、肝臓の細胞外液の割合 約24%。計算範囲は注入開始から300秒までです。</p>
+      <p style="margin-top:8px"><strong>生食後押し:</strong> 肘の注入部位から右心房までの腕の静脈を、容量約15 mL・腕の血流2 mL/秒として計算しています。注入が止まると、そこに残った造影剤は腕の血流でゆっくりとしか心臓へ流れません。生食で後押しすると、この残りが注入と同じ速さで押し出されるため、大動脈のピークが少し高く、鋭くなります。この計算では、腕の静脈を押し切る量（3〜5 mL/秒の注入でおよそ10 mL）より生食を増やしても、結果は変わりません。これは容量を15 mLと置いたことによる計算上の値です。実際に必要な量は延長チューブ・穿刺部位・腕の位置で変わるため、生食の量を決める根拠にはしないでください。延長チューブの中の造影剤は計算に含めていません。</p>
+      <p style="margin-top:8px"><strong>主な前提（成人の目安）:</strong> 血液量 70 mL/kg、ヘマトクリット 40%、肝臓の細胞外液の割合 約24%。全身の細胞外液は75 mL/kgへ時定数450秒で広がるとしています。糸球体濾過量（GFR）は体格によらず100 mL/分とし、濾過された造影剤は平均90秒で腎臓から出ていきます（腎実質の値には尿細管の中の造影剤を含みます）。計算範囲は注入開始から300秒までです。</p>
+      <p style="margin-top:8px"><strong>確かめている範囲:</strong> 大動脈・門脈・肝実質の値は、文献の値（肝実質のピーク、平衡相の肝と大動脈の比など）の範囲に入ることを確かめています。腎実質・脾臓・膵臓の曲線は、血流量などから置いた目安で、実測値との照合はしていません。</p>
       <p style="margin-top:8px"><strong>管電圧別CT値変換:</strong> ヨード造影剤のCT値上昇はX線エネルギーに依存します。低管電圧ではヨードのK吸収端（33.2 keV）に近づくため造影効果が増強されます。本シミュレータでは管電圧ごとの変換係数を適用しています。</p>
       <p style="margin-top:8px">シミュレーション結果は理論的な推定値であり、実際の臨床値とは差異が生じます。個々の患者の循環動態、腎機能、体組成などにより実測値は変動します。</p>
       <p style="margin-top:12px; font-size:0.75rem; color:#a0aec0;">
@@ -762,7 +763,7 @@ function applyPatientPreset(preset, e) {
 function adjustCO() {
   const select = document.getElementById('coAdjust');
   const coInput = document.getElementById('cardiacOutput');
-  const weight = parseFloat(document.getElementById('bodyWeight').value) || 60;
+  const weight = getPatientInputs().weight;
   const baseCO = weight * 0.07;
 
   switch(select.value) {
@@ -858,7 +859,7 @@ function updateContrastInfo() {
 function updateSummary() {
   const agentKey = document.getElementById('contrastAgent').value;
   const concentration = CONTRAST_AGENTS[agentKey].concentration;
-  const weight = parseFloat(document.getElementById('bodyWeight').value) || 60;
+  const weight = getPatientInputs().weight;
 
   let totalContrastVol = 0;
   let totalTime = 0;
@@ -944,8 +945,7 @@ function saveAsProtocolA() {
   if (!simulationResults) return;
 
   const agentKey = document.getElementById('contrastAgent').value;
-  const weight = parseFloat(document.getElementById('bodyWeight').value) || 60;
-  const co = parseFloat(document.getElementById('cardiacOutput').value) || 5.0;
+  const { weight, co } = getPatientInputs();
 
   protocolA = {
     results: JSON.parse(JSON.stringify(simulationResults)),
@@ -1051,8 +1051,8 @@ function runSimulationCore(weight, CO, concentration, phasesInput, kvp) {
   };
   const liver    = organ(25,  0.15, 0.15, 0.065, 10);   // F = hepatic artery only; portal flow added below
   const gut      = organ(20,  0.10, 0.20, 0.19,  20);   // drains into the portal vein
-  const spleen   = organ(3,   0.30, 0.10, 0.03,  15);   // drains into the portal vein
-  const pancreas = organ(1.5, 0.12, 0.18, 0.015, 8);    // drains into the portal vein
+  const spleen   = organ(3,   0.20, 0.12, 0.045, 8);    // drains into the portal vein (≈5% of CO)
+  const pancreas = organ(1.5, 0.12, 0.18, 0.03,  5);    // drains into the portal vein (≈1.7 mL/min per mL)
   const kidney   = organ(5,   0.20, 0.10, 0.22,  10);
   // Rest of the body (muscle, skin, bone, brain…): the bulk of the extracellular fluid that
   // contrast spreads into over minutes, which brings blood levels down after the first pass.
@@ -1147,9 +1147,20 @@ function runSimulationCore(weight, CO, concentration, phasesInput, kvp) {
   return { timePoints, results, injectionRate, iodine };
 }
 
+function getPatientInputs() {
+  return {
+    weight: clampInput(document.getElementById('bodyWeight').value, 20, 200, 60),
+    co: clampInput(document.getElementById('cardiacOutput').value, 1.0, 15.0, 5.0),
+  };
+}
+
 function runSimulation() {
-  const weight = parseFloat(document.getElementById('bodyWeight').value) || 60;
-  const CO = parseFloat(document.getElementById('cardiacOutput').value) || 5.0;
+  const { weight, co: CO } = getPatientInputs();
+  // Show the values actually used when a typed value was outside the input's range
+  [['bodyWeight', weight], ['cardiacOutput', CO]].forEach(([id, v]) => {
+    const el = document.getElementById(id);
+    if (Number.isFinite(parseFloat(el.value)) && parseFloat(el.value) !== v) el.value = v;
+  });
   const agentKey = document.getElementById('contrastAgent').value;
   const concentration = CONTRAST_AGENTS[agentKey].concentration;
 
@@ -1523,6 +1534,8 @@ function updateScanMarker() {
   }
 
   const scanTime = getScanTime();
+  const scanInput = document.getElementById('scanTime');
+  if (Number.isFinite(parseFloat(scanInput.value)) && parseFloat(scanInput.value) !== scanTime) scanInput.value = scanTime;
   const { timePoints, results } = simulationResults;
 
   let text = `${scanTime}秒時点: `;
