@@ -41,6 +41,7 @@ jobs:
             --exclude 'scripts' \
             --exclude 'CLAUDE.md' \
             --exclude 'AGENTS.md' \
+            --exclude '*.md' \
             --exclude '.gitignore' \
             --exclude 'brain-diff/generate_test_data.py' \
             --exclude '.DS_Store'

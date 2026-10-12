@@ -36,8 +36,13 @@ jobs:
       - name: Contrast simulator model checks
         run: node scripts/test-contrast-simulator.js
 
+      # おきばメモ（okiba/）: 検索・バックアップの検証/統合・外部送信なし（CSP）・PWA・SW の VERSION
+      - name: Okiba app checks
+        run: node scripts/test-okiba.js
+
       - name: Generated blocks are up to date
         run: |
           node scripts/generate-related.js --check
           node scripts/generate-faq.js --check
           node scripts/generate-drl-table.js --check
+          node scripts/okiba-sw-version.js --check
