@@ -32,7 +32,8 @@ const SKIP_DIRS = new Set(['node_modules', 'scripts', 'samples', 'test-data', 'a
 
 // ツールではないページ。これ以外の sitemap URL（/blog/ 配下を除く）は「ツール」とみなす。
 // ツール一覧を TOOLS から作ると登録漏れを検出できなくなる（循環する）ため、sitemap から独立に導く。
-const NON_TOOL = new Set(['/', '/about/', '/contact/', '/privacy/', '/support/', '/blog/']);
+// /rousui/ は一般向けの人生シミュレーション（別リポジトリで生成する1ファイル）。業務ツールの関連リンク網には入れない
+const NON_TOOL = new Set(['/', '/about/', '/contact/', '/privacy/', '/support/', '/blog/', '/rousui/']);
 const MIN_INBOUND = 3;
 // 研究公開デモは関連づけられる相手が限られるため、緩めの閾値にしている
 const MIN_INBOUND_OVERRIDE = { 'subtraction-demo': 2 };
