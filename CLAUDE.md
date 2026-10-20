@@ -58,12 +58,13 @@
 | 一般撮影条件参照ツール | ✅ 公開中 | `exposure-reference/index.html` |
 | MRIシミュレータ（教育用） | ✅ 公開中 | `mri-simulator/index.html` |
 | 造影検査 腎機能チェッカー（eGFR/CT・MRI） | ✅ 公開中 | `egfr-checker/index.html` |
-| 1.2億分の1.2億 〜無事に老衰できるか〜（人生シミュレーション） | ✅ 公開中 | `rousui/index.html`（生成物。原本は `~/rt-lab/disease-life-sim`、`SITE_URL=https://rt-ai-lab.com/rousui/ OUTHTML=../release/index.html node prototype/build.mjs` で作り `release/` の2ファイルをコピー） |
 | Task-based IQ評価ツール | 🔬 研究公開 | `task-based-iq/index.html` |
 | Subtractionツール（脳CT/MRI差分）デモ | 🔬 研究公開 | `subtraction-demo/index.html`（サンプルは `samples/`） |
 | MRI QA/QC自動計測ツール | 📋 計画中 | 未作成 |
 | 各モダリティ 計測・QAQCツール | 📋 計画中 | 未作成 |
 | CT臓器線量推定ツール | 📋 計画中 | 未作成 |
+
+**おまけ（余興・業務ツールとは別枠）**: 1.2億分の1.2億 〜無事に老衰できるか〜（人生シミュレーション）— `rousui/index.html`（生成物。原本は `~/rt-lab/disease-life-sim`、`SITE_URL=https://rt-ai-lab.com/rousui/ OUTHTML=../release/index.html node prototype/build.mjs` で作り `release/` の2ファイルをコピー）。トップでは「ツール一覧」ではなく `#games`「おまけ：遊べるシミュレーション」に置く
 
 ---
 
