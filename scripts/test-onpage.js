@@ -29,6 +29,9 @@ const faqGen = require('./generate-faq.js');
 const ROOT = path.dirname(__dirname);
 const ORIGIN = 'https://rt-ai-lab.com';
 const SKIP_DIRS = new Set(['node_modules', 'scripts', 'samples', 'test-data', 'assets']);
+// サイトのページではない独立アプリ（noindex・sitemap 非掲載・サイトの解析なし）。
+// 中身の検査は scripts/test-okiba.js。ここでは「除外しても公開ページが紛れ込まない」ことだけ見る（末尾）。
+const APP_DIRS = new Set(['okiba']);
 
 // ツールではないページ。これ以外の sitemap URL（/blog/ 配下を除く）は「ツール」とみなす。
 // ツール一覧を TOOLS から作ると登録漏れを検出できなくなる（循環する）ため、sitemap から独立に導く。
@@ -46,6 +49,7 @@ function check(ok, label) { if (ok) pass++; else { fail++; bad.push(label); } }
 function walk(dir, out) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     if (e.name.startsWith('.') || SKIP_DIRS.has(e.name)) continue;
+    if (dir === ROOT && APP_DIRS.has(e.name)) continue;
     const p = path.join(dir, e.name);
     if (e.isDirectory()) walk(p, out);
     else if (e.name === 'index.html') out.push(p);
@@ -266,6 +270,15 @@ for (const p of pages) {
   if (p.html.includes(faqGen.START_PREFIX)) {
     check(faqGen.PAGES.includes(slugOf(p.url)), p.url + ': 可視FAQのマーカーがあるのに generate-faq.js の PAGES に無い（古いブロックが残っている）');
   }
+}
+
+// 7. 除外した独立アプリ（APP_DIRS）が、公開ページとして扱われる状態になっていないこと
+for (const d of APP_DIRS) {
+  const f = path.join(ROOT, d, 'index.html');
+  if (!fs.existsSync(f)) { check(false, d + '/: APP_DIRS にあるが index.html が無い（消したなら APP_DIRS からも外す）'); continue; }
+  const h = fs.readFileSync(f, 'utf8');
+  check(/<meta name="robots" content="noindex/.test(h), d + '/: APP_DIRS で検査から外しているのに noindex ではない（公開ページにするなら APP_DIRS から外す）');
+  check(!sitemapUrls.includes('/' + d + '/'), d + '/: APP_DIRS で検査から外しているのに sitemap に載っている');
 }
 
 console.log('\n  pass ' + pass + ' / fail ' + fail);
