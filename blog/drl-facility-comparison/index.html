@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自施設の線量代表値の出し方｜DRLと比べるのは中央値、超えたときの見直し手順 | RT-Lab Blog</title>
+<meta name="description" content="DRL（診断参考レベル）と比べる自施設の代表値は、何例をどう集めて何を計算すればよいのか。Japan DRLs 2025の全国調査と同じ条件（CTは標準体格50〜70kg・連続30例の中央値）で集める方法、75パーセンタイルと中央値の違い、DRLを超えたときの見直し手順と調査の頻度を、報告書の原文をもとに現役放射線技師が整理します。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:title" content="自施設の線量代表値の出し方｜DRLと比べるのは中央値、超えたときの見直し手順">
+<meta property="og:description" content="DRLと比べる自施設の代表値の集め方（CTは標準体格・連続30例の中央値）、75パーセンタイルとの違い、超えたときの見直し手順をJapan DRLs 2025の原文で整理。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://rt-ai-lab.com/blog/drl-facility-comparison/">
+<meta property="og:image" content="https://rt-ai-lab.com/assets/og/drl-facility-comparison.png">
+<meta property="og:image:alt" content="自施設の線量代表値の出し方｜DRLと比べるのは中央値、超えたときの見直し手順｜RT-Lab Blog">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="RT-Lab">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="自施設の線量代表値の出し方｜DRLと比べるのは中央値、超えたときの見直し手順">
+<meta name="twitter:description" content="DRLと比べる自施設の代表値の集め方（CTは標準体格・連続30例の中央値）、75パーセンタイルとの違い、超えたときの見直し手順をJapan DRLs 2025の原文で整理。">
+<meta name="twitter:image" content="https://rt-ai-lab.com/assets/og/drl-facility-comparison.png">
+<meta name="twitter:image:alt" content="自施設の線量代表値の出し方｜DRLと比べるのは中央値、超えたときの見直し手順｜RT-Lab Blog">
+<link rel="canonical" href="https://rt-ai-lab.com/blog/drl-facility-comparison/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "自施設の線量代表値の出し方｜DRLと比べるのは中央値、超えたときの見直し手順",
+  "description": "DRL（診断参考レベル）と比べる自施設の代表値の集め方を、Japan DRLs 2025の全国調査の条件（CTは標準体格50〜70kg・20〜80歳・連続30例の中央値）から整理。75パーセンタイルと中央値の違い、国の中央値の使い方、DRLを超えたときの見直し手順と調査頻度を解説。",
+  "datePublished": "2026-10-23",
+  "dateModified": "2026-10-23",
+  "author": {
+    "@type": "Person",
+    "name": "RT-Lab運営者",
+    "jobTitle": "診療放射線技師",
+    "url": "https://rt-ai-lab.com/about/",
+    "sameAs": ["https://note.com/ri_ai_lab"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "RT-Lab",
+    "url": "https://rt-ai-lab.com/"
+  },
+  "mainEntityOfPage": "https://rt-ai-lab.com/blog/drl-facility-comparison/",
+  "image": "https://rt-ai-lab.com/assets/og/drl-facility-comparison.png"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
+    { "@type": "ListItem", "position": 2, "name": "ブログ", "item": "https://rt-ai-lab.com/blog/" },
+    { "@type": "ListItem", "position": 3, "name": "自施設の線量代表値の出し方", "item": "https://rt-ai-lab.com/blog/drl-facility-comparison/" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "DRLと比べる自施設の値は、平均値・中央値・75パーセンタイルのどれですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "中央値です。Japan DRLs 2025の報告書は、施設で用いている典型的な線量を調査し、その中央値がDRL値を超えている場合に見直しを行う、としています。75パーセンタイルは、全国の施設から集めた中央値の分布からDRL値そのものを決めるときに参考にされる統計量（成人CTでは原則としてこの値を丸めたものがDRL値）で、施設が自分のデータから求める値ではありません。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "成人CTでは、何例をどんな条件で集めればよいですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Japan DRLs 2025の成人CTの全国調査は、各検査プロトコールについて、標準体格（体重50〜70kg）の20〜80歳の患者に行った連続30例を施設内で集計した中央値を集めています。線量はCT装置が表示するCTDIvolとDLPです。自施設の値も同じ条件で集めると、DRL値と同じ物差しで比べられます。報告書はICRP Publication 135の記載として、CT検査の調査では30例以上が望ましいとも紹介しています。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "自施設の中央値がDRLを超えていたら、撮影条件をすぐ下げるべきですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "すぐに下げるのではなく、まず原因を調べます。報告書は、臨床的に正当な理由がない限り見直しを行うとしたうえで、機器の性能やプロトコールを調べて高線量の原因を突き止め、画質に影響しない対策を優先し、対策後にあらためて線量を調査してDRL値と再比較する流れを示しています。DRLは線量限度ではなく、臨床的な必要性があれば超えてもよいとされています。目的は線量を下げることではなく最適化であり、診断に必要十分な画質が保たれていることの確認が欠かせません。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "線量の調査はどのくらいの頻度で行えばよいですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Japan DRLs 2025の報告書は、ICRP Publication 135がCTとIVRについては年1回、その他の検査については装置等の変更がない限り3年に1回の線量調査を推奨していると紹介しています。新しい装置のプロトコールは、患者の検査に使う前に評価し、導入1年以内かつ検査方法が確立した時点で再評価する、とされています。"
+      }
+    }
+  ]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/blog.css">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+
+<header class="blog-header">
+  <div class="blog-header-inner">
+    <a class="blog-brand" href="/">RT-Lab</a>
+    <nav class="blog-subnav">
+      <a href="/#tools">ツール一覧</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/about/">サイトについて</a>
+      <a href="/contact/">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="blog-main">
+  <article class="blog-article">
+    <div class="blog-article-meta">
+      <span>公開: 2026-10-23</span>
+      <span>カテゴリ: CT・線量管理</span>
+    </div>
+    <h1>自施設の線量代表値の出し方｜DRLと比べるのは中央値、超えたときの見直し手順</h1>
+    <p class="blog-lead">
+      DRL（診断参考レベル）の値そのものは、報告書やツールを見ればすぐにわかります。現場で迷うのはその手前で、「自施設の値として何を出せばよいのか」です。何例集めるのか、平均値なのか中央値なのか、体格の大きい患者は入れてよいのか。そして比べた結果DRLを超えていたら、何から手をつけるのか。この記事では、J-RIMEの「日本の診断参考レベル（2025年版）」（以下、Japan DRLs 2025）の報告書の記載をもとに、自施設の代表値の出し方と、超えたときの見直しの進め方を整理します。
+    </p>
+
+    <nav class="blog-toc">
+      <div class="blog-toc-title">目次</div>
+      <ol>
+        <li><a href="#basics">基本の整理（30秒版）</a></li>
+        <li><a href="#what-is-drl">DRLは線量限度ではない</a></li>
+        <li><a href="#median-vs-p75">中央値と75パーセンタイルは役割が違う</a></li>
+        <li><a href="#how-to-collect">代表値の集め方：全国調査と同じ条件にそろえる</a></li>
+        <li><a href="#national-median">国の中央値も物差しになる</a></li>
+        <li><a href="#exceeded">DRLを超えたときの見直し手順</a></li>
+        <li><a href="#frequency">調査の頻度</a></li>
+        <li><a href="#summary">まとめ</a></li>
+        <li><a href="#faq">よくある質問</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="basics">基本の整理（30秒版）</h2>
+    <ul>
+      <li>DRLと比べる自施設の値は<strong>中央値</strong>。75パーセンタイルは、全国の分布からDRL値を決めるときに参考にされる統計量（モダリティによっては別の値を使う場合もある）</li>
+      <li>成人CTの全国調査は<strong>標準体格（体重50〜70kg）の20〜80歳・連続30例の中央値</strong>を集めている。自施設も同じ条件で集めると比べやすい</li>
+      <li>中央値がDRL値を超えたら、臨床的に正当な理由がない限り<strong>見直し</strong>。原因を調べ、画質に影響しない対策を優先し、対策後に再調査して再比較する</li>
+      <li>DRLは<strong>線量限度ではない</strong>。個々の患者の線量の良し悪しを判定するものでもない</li>
+    </ul>
+
+    <a class="blog-cta" href="/drl-comparison/">
+      <span class="blog-cta-label">関連ツール</span>
+      <div class="blog-cta-title">DRL比較ツール（Japan DRLs 2025）</div>
+      <div class="blog-cta-desc">施設の線量データをCSVで読み込むと、プロトコールごとの中央値を計算してJapan DRLs 2025の値と並べて表示します。DRL値の一覧も掲載。ブラウザ完結・外部送信なし。</div>
+    </a>
+
+    <h2 id="what-is-drl">DRLは線量限度ではない</h2>
+    <p>
+      Japan DRLs 2025の報告書は、DRLを「他施設より高い線量を用いている施設がそれを自覚し、最適化のプロセスを推進するためのツール」と説明しています。ICRPの定義も引かれていて、DRLは診断とIVRの患者の医療被ばくにおいて、防護の最適化を助けるツールとして用いられるものです。
+    </p>
+    <p>
+      報告書がもっとも強調すべき点として挙げているのは、DRLが<strong>線量限度ではない</strong>こと、そして<strong>診療行為の是非を分ける境界ではない</strong>ことです。線量限度は超えてはならない線量ですが、DRLは<strong>臨床的な必要性があれば超過してもよい</strong>とされています。
+    </p>
+    <p>
+      もう1つ押さえておきたいのが、DRLは<strong>患者群または検査群に対して使うもの</strong>だという点です。体重や体格によっては標準的な患者より高い線量が必要になるため、ある1人の患者のCTDIvolがDRL値を上回ったからといって、その検査が過剰だったことにはなりません。比べる対象は、あくまで施設としての「典型的な線量」です。
+    </p>
+
+    <h2 id="median-vs-p75">中央値と75パーセンタイルは役割が違う</h2>
+    <p>
+      DRLの説明には「75パーセンタイル」と「中央値」の両方が出てきます。ここを取り違えると、自施設の値の出し方を間違えます。
+    </p>
+    <div class="blog-table-wrap">
+      <table>
+        <thead>
+          <tr><th>統計量</th><th>誰が・何から求めるか</th><th>使いみち</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>中央値</td><td>各施設が、自施設の患者データから求める</td><td>施設の「典型的な線量」。これをDRL値と比べる</td></tr>
+          <tr><td>75パーセンタイル</td><td>全国調査で集まった各施設の中央値の分布から求める</td><td>DRL値を決める根拠（成人CTは原則として有効数字2桁に丸めた値がDRL値）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      つまり2段階になっています。まず各施設が連続した症例の中央値を出し、それを全国から集めて並べ、上位25%の境目（75パーセンタイル）をDRL値にする。報告書は「DRL値は線量調査結果の75パーセンタイルなどを参考に設定され、高い線量を使用している検査や装置や施設を特定する指標となる」と書いています。成人CTでは、<strong>原則として</strong>、2024年の調査結果の75パーセンタイル値を<strong>有効数字2桁で丸めた値</strong>をDRL値とする方針がとられています（頭部単純ルーチンのDLP 1260のように、3桁のままの値もあります）。
+    </p>
+    <p>
+      自施設のデータから75パーセンタイルを計算してDRL値と比べるのは、物差しが違うので正しくありません。比べるのは中央値です。報告書も「施設で用いている典型的な線量を調査し、その中央値がDRL値を超えている場合」に見直しを行う、という書き方をしています。
+    </p>
+    <p class="blog-note">
+      ※ 中央値は、値を小さい順に並べたときに真ん中に来る値です。30例なら15番目と16番目の平均になります。平均値と違って、体格の大きい患者や撮り直しなど一部の極端な値に引っぱられにくいのが利点です。
+    </p>
+
+    <h2 id="how-to-collect">代表値の集め方：全国調査と同じ条件にそろえる</h2>
+    <p>
+      自施設の中央値をDRL値と比べるなら、DRL値の元になった全国調査と<strong>同じ条件</strong>で集めるのが筋です。条件が違えば、比べた結果の差が「線量の差」なのか「集め方の差」なのか区別できません。Japan DRLs 2025の各章には、何をどう集めたかが書かれています。
+    </p>
+    <h3>成人CT</h3>
+    <ul>
+      <li><strong>対象</strong>：各検査プロトコールについて、<strong>標準体格の20〜80歳の患者</strong>に行った<strong>連続30例</strong>（2023年の任意の期間）</li>
+      <li><strong>標準体格</strong>：すべてのプロトコールで<strong>体重50〜70kg</strong></li>
+      <li><strong>線量</strong>：CT装置が出力する<strong>CTDIvol［mGy］とDLP［mGy・cm］</strong>の推測値（装置の表示値）</li>
+      <li><strong>集計</strong>：施設内で中央値を求める（全国では有効回答953件が集まった）</li>
+    </ul>
+    <p>
+      「連続30例」というのは、選んだ30例ではなく、ある時点から順番に該当する患者を30例ということです。症例を選んで拾うと、中央値が施設の実態からずれるおそれがあります。報告書（小児心臓CTの章）はICRP Publication 135の記載として、CT検査の調査では<strong>30例以上が望ましい</strong>とも紹介しています。
+    </p>
+    <p>
+      プロトコールの区切り方にも注意が要ります。報告書の成人CTの表には注があり、たとえば<strong>肝臓ダイナミックは胸部や骨盤を含まず、CTDIは全相の平均、DLPは検査全体</strong>、<strong>冠動脈のCTDIとDLPはCTA本スキャン</strong>の値とされています。自施設で肝臓ダイナミックに骨盤まで含めて撮っているなら、その症例のDLPをそのまま並べても同じものを比べたことになりません。
+    </p>
+    <h3>一般撮影・マンモグラフィ</h3>
+    <p>
+      CT以外は集め方が異なります。一般撮影の成人は<strong>体重50〜60kgの一般的な体格の患者20名の中央値</strong>、マンモグラフィ（臨床データに基づく2D）は<strong>圧迫乳房厚30〜60mmの右MLO</strong>（右乳房術後や異常所見がある場合は左MLO）の<strong>1施設50名の中央値</strong>です。モダリティごとに体格の幅も例数も違うので、比べる前に該当する章の調査条件を確認してください。
+    </p>
+    <p>
+      線量の値は、報告書も「最も活用しやすいのは装置表示値」としています。装置表示値が使いにくい検査や線量計がない場合の当面の対応として、NDD法や線量を計算できる既存のソフトウェアの利用も挙げられています。
+    </p>
+
+    <h2 id="national-median">国の中央値も物差しになる</h2>
+    <p>
+      Japan DRLs 2025の報告書には、DRL値（75パーセンタイル）に加えて、全国調査の<strong>中央値</strong>も載っています。成人CTの主なプロトコールを並べると次のとおりです。
+    </p>
+    <div class="blog-table-wrap">
+      <table>
+        <thead>
+          <tr><th>プロトコール</th><th>CTDIvol 中央値</th><th>CTDIvol DRL値</th><th>DLP 中央値</th><th>DLP DRL値</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>頭部単純ルーチン</td><td>59</td><td>67</td><td>1100</td><td>1260</td></tr>
+          <tr><td>胸部1相</td><td>9</td><td>11</td><td>350</td><td>430</td></tr>
+          <tr><td>胸部〜骨盤1相</td><td>11</td><td>13</td><td>780</td><td>940</td></tr>
+          <tr><td>上腹部〜骨盤1相</td><td>11</td><td>14</td><td>590</td><td>720</td></tr>
+          <tr><td>肝臓ダイナミック</td><td>11</td><td>13</td><td>1280</td><td>1630</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="blog-note">
+      ※ 単位はCTDIvolがmGy、DLPがmGy・cm。標準体格（体重50〜70kg）の成人。出典：Japan DRLs 2025 成人CTの「DRLs 2025調査の線量分布指標」の表と、3.1.1の表。全プロトコールのDRL値は<a href="/drl-comparison/#drl-values">DRL比較ツールの一覧</a>にあります。
+    </p>
+    <p>
+      報告書は国の中央値の使い方にも触れています。<strong>自施設の中央値が国の中央値より高い</strong>場合、国の中央値は最適化をさらに進めるための指標になりえます。DRL値を下回っていても、まだ詰められる余地があるかもしれない、という見方です。反対に<strong>自施設の中央値が国の中央値より低い</strong>場合は、画質や診断能が十分かどうかを、線量よりも優先して検討できるとしています。筆者なりに言い換えると、国の中央値より低い施設では、線量をさらに下げることより、必要な画質が得られているかを確かめることが先になる、と読めます。
+    </p>
+
+    <h2 id="exceeded">DRLを超えたときの見直し手順</h2>
+    <p>
+      自施設の中央値がDRL値を超えていた場合について、報告書は「臨床的に正当な理由がない限り、線量が最適化されているかどうかを判定するための見直しを行う必要がある」としています。進め方は、一般的には次のような流れだと書かれています。
+    </p>
+    <ol>
+      <li><strong>原因を調べる</strong>：用いている機器の性能やプロトコール（手技）などを調査し、高線量の原因を突き止める</li>
+      <li><strong>対策を講じる</strong>：より適正な線量に向けた対策をとる。このとき<strong>画質に影響しない対策を優先</strong>する</li>
+      <li><strong>再調査・再比較</strong>：対策後に施設の典型的な線量をあらためて調査し、DRL値と再度比較する</li>
+    </ol>
+    <p>
+      報告書の書き方では、見直しが必要なのは「臨床的に正当な理由がない」場合です。対象とする病変や患者層の事情で、標準より高い線量が必要なプロトコールもありえます。その場合は、理由を説明できる形で残しておくのが実務的だと考えます。
+    </p>
+    <p>
+      対策を考えるときに忘れてはいけないのが、報告書の次の一文です。「DRLの目的は、最適化であって、線量低減ではない」。必要な診断情報が得られなければ、その検査の被ばくはかえって無駄になります。撮影条件を変えたら、線量の変化だけでなく、画質や診断能が担保されていることを確認します。求めるのは最高の画質ではなく、それぞれの診断に<strong>必要十分な画質</strong>です。
+    </p>
+    <p>
+      自施設のCSVから中央値を出してDRL値と並べる作業は、<a href="/drl-comparison/">DRL比較ツール</a>でできます。CT（成人）は、CSVに年齢・体重の列があれば体重50〜70kg・20〜80歳の範囲で絞り込んでから集計します。
+    </p>
+
+    <h2 id="frequency">調査の頻度</h2>
+    <p>
+      一度比べて終わりではありません。報告書はICRP Publication 135の推奨として、<strong>CTとIVRは年1回</strong>、<strong>その他の検査は装置等の変更がない限り3年に1回</strong>の線量調査を紹介しています。また<strong>新しい装置</strong>のプロトコールは、患者の検査に使う前に評価し、<strong>導入1年以内かつ検査方法が確立した時点</strong>で再評価するとしています。
+    </p>
+    <p>
+      2020年4月1日に施行された診療用放射線に関する医療法施行規則の改正以降、対象となる検査では、線量の記録と管理が各施設の日常業務になりました。記録した線量をCTなら年に1度（その他の検査は3年に1度）こうして集計し直すことが、記録を最適化に生かす具体的な使い道になります。線量記録とSSDEの関係は<a href="/blog/ssde-guide/">SSDEの記事</a>で扱っています。
+    </p>
+
+    <h2 id="summary">まとめ</h2>
+    <ul>
+      <li>DRLと比べる自施設の値は<strong>中央値</strong>。75パーセンタイルは全国の分布からDRL値を決めるときに参考にされる統計量（成人CTでは原則としてこれを丸めた値がDRL値）</li>
+      <li>成人CTの全国調査は<strong>標準体格（体重50〜70kg）の20〜80歳・連続30例</strong>の中央値（CTDIvol・DLPは装置表示値）。自施設も同じ条件で集め、プロトコールの範囲（肝臓ダイナミックは胸部・骨盤を含まない等）もそろえる</li>
+      <li>一般撮影（成人は体重50〜60kg・20名）やマンモグラフィ（50名）は条件が違う。比べる前に該当章を確認する</li>
+      <li>国の中央値より高ければさらに最適化の余地、低ければ画質・診断能の確認を優先</li>
+      <li>DRL値を超えたら、原因調査 → 画質に影響しない対策を優先 → 再調査・再比較。目的は線量低減ではなく<strong>最適化</strong></li>
+      <li>調査の頻度はICRP Publication 135の推奨として、CT・IVRは年1回、その他は装置等の変更がない限り3年に1回。新しい装置のプロトコールは使用前に評価し、導入1年以内かつ検査方法が確立した時点で再評価</li>
+    </ul>
+
+    <a class="blog-cta" href="/drl-comparison/">
+      <span class="blog-cta-label">関連ツール</span>
+      <div class="blog-cta-title">DRL比較ツール（Japan DRLs 2025）</div>
+      <div class="blog-cta-desc">CSVを読み込むとプロトコールごとの施設中央値を計算し、Japan DRLs 2025の値とグラフで比較。CT・小児CT・一般撮影・マンモグラフィ・歯科・IVR・核医学に対応。</div>
+    </a>
+
+    <h2 id="faq">よくある質問</h2>
+    <h3>Q. DRLと比べる自施設の値は、平均値・中央値・75パーセンタイルのどれですか？</h3>
+    <p>
+      中央値です。Japan DRLs 2025の報告書は、施設で用いている典型的な線量を調査し、その中央値がDRL値を超えている場合に見直しを行う、としています。75パーセンタイルは、全国の施設から集めた中央値の分布からDRL値そのものを決めるときに参考にされる統計量（成人CTでは原則としてこの値を丸めたものがDRL値）で、施設が自分のデータから求める値ではありません。
+    </p>
+    <h3>Q. 成人CTでは、何例をどんな条件で集めればよいですか？</h3>
+    <p>
+      Japan DRLs 2025の成人CTの全国調査は、各検査プロトコールについて、標準体格（体重50〜70kg）の20〜80歳の患者に行った連続30例を施設内で集計した中央値を集めています。線量はCT装置が表示するCTDIvolとDLPです。自施設の値も同じ条件で集めると、DRL値と同じ物差しで比べられます。報告書はICRP Publication 135の記載として、CT検査の調査では30例以上が望ましいとも紹介しています。
+    </p>
+    <h3>Q. 自施設の中央値がDRLを超えていたら、撮影条件をすぐ下げるべきですか？</h3>
+    <p>
+      すぐに下げるのではなく、まず原因を調べます。報告書は、臨床的に正当な理由がない限り見直しを行うとしたうえで、機器の性能やプロトコールを調べて高線量の原因を突き止め、画質に影響しない対策を優先し、対策後にあらためて線量を調査してDRL値と再比較する流れを示しています。DRLは線量限度ではなく、臨床的な必要性があれば超えてもよいとされています。目的は線量を下げることではなく最適化であり、診断に必要十分な画質が保たれていることの確認が欠かせません。
+    </p>
+    <h3>Q. 線量の調査はどのくらいの頻度で行えばよいですか？</h3>
+    <p>
+      Japan DRLs 2025の報告書は、ICRP Publication 135がCTとIVRについては年1回、その他の検査については装置等の変更がない限り3年に1回の線量調査を推奨していると紹介しています。新しい装置のプロトコールは、患者の検査に使う前に評価し、導入1年以内かつ検査方法が確立した時点で再評価する、とされています。
+    </p>
+
+    <aside class="blog-related" aria-label="関連記事">
+      <div class="blog-related-title">関連記事</div>
+      <ul>
+        <li>
+          <span class="blog-related-tag">CT・線量管理</span><a href="/blog/ssde-guide/">実効径と水等価径の違いとは｜SSDEの使い分けと線量管理の実務</a>
+          <p class="blog-related-desc">DRLとの比較はCTDIvol・DLPで、SSDEは個々の患者の評価に。実効径（Deff）と水等価径（Dw）の違いと線量記録義務化での位置づけ。</p>
+        </li>
+        <li>
+          <span class="blog-related-tag">がん検診</span><a href="/blog/cancer-screening-overdiagnosis/">がん検診の効果は5年生存率では測れない｜死亡率減少・過剰診断・低線量CTの被ばくを一次情報で整理</a>
+          <p class="blog-related-desc">検診の効果を死亡率減少で測る理由と過剰診断、低線量CT検診の推奨と被ばく量を一次情報で整理。</p>
+        </li>
+      </ul>
+    </aside>
+
+    <div class="blog-author">
+      <div class="blog-author-icon" aria-hidden="true">👨‍⚕️</div>
+      <div>
+        <div class="blog-author-name">この記事を書いた人</div>
+        <p>現役16年目の診療放射線技師。CT・MRIを中心に臨床業務のかたわら、放射線技師向けの無料Webツール集 <a href="/about/">RT-Lab</a> を個人で企画・開発・運営しています。医療AI・画像診断まわりの記事は <a href="https://note.com/ri_ai_lab" target="_blank" rel="noopener">note</a> でも書いています。</p>
+      </div>
+    </div>
+
+    <div class="blog-disclaimer">
+      本記事は放射線技師・医療従事者向けの教育目的の解説です。DRL値・調査条件はJapan DRLs 2025（2025.11.28一部修正版）の報告書に基づいており、改定があれば最新の報告書を優先してください。DRLは線量限度ではなく、個々の患者の線量の適否を判定するものではありません。撮影条件の変更は、画質・診断能への影響を確認したうえで、医師・診療放射線技師・医学物理士など施設の体制のなかで判断してください。本記事の内容は個々の検査・診療上の判断に代わるものではありません。
+    </div>
+
+    <div class="blog-refs">
+      <div class="blog-refs-title">出典・参考文献</div>
+      <ol>
+        <li>医療被ばく研究情報ネットワーク（J-RIME）. 日本の診断参考レベル（2025年版）— Japan DRLs 2025 —. 2025-07（2025.11.28 一部修正）. 本文 2.1「診断参考レベル（DRL）の意義」、2.2「診断参考レベルの医療現場での活用」、3.1.1「成人CTの診断参考レベル」、参考資料（成人CT・一般撮影・マンモグラフィ・小児心臓CTの各章）. <a href="https://j-rime.qst.go.jp/report/JapanDRLs2025_ja.pdf" target="_blank" rel="noopener">j-rime.qst.go.jp/report/JapanDRLs2025_ja.pdf</a></li>
+        <li>International Commission on Radiological Protection. Diagnostic Reference Levels in Medical Imaging. ICRP Publication 135. Ann ICRP. 2017;46(1).（Japan DRLs 2025 報告書の引用による）</li>
+      </ol>
+    </div>
+  </article>
+</main>
+
+<footer class="blog-footer">
+  <div class="blog-footer-links">
+    <a href="/">トップ</a>
+    <a href="/blog/">ブログ一覧</a>
+    <a href="/privacy/">プライバシーポリシー</a>
+    <a href="/contact/">お問い合わせ</a>
+  </div>
+  <div>&copy; 2025 RT-Lab</div>
+</footer>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>
