@@ -80,7 +80,7 @@ DEFAULT_TPL = """<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">
   <div class="brand"><span class="brand-name">RT-Lab</span></div>
   <div class="lead">放射線技師の業務を、<br>ブラウザひとつで。</div>
   <div class="sub">CT線量評価・画質指標・造影剤計算などの無料Webツール集</div>
-  <div class="foot"><span class="pill">インストール不要・広告なし</span>
+  <div class="foot"><span class="pill">インストール不要・ツールは広告なし</span>
     <span>rt-ai-lab.com</span></div>
 </body></html>"""
 

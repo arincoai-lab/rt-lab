@@ -445,3 +445,49 @@ body {
   font-size: 0.86rem;
   color: var(--muted);
 }
+
+/* ---- PR表示（ステマ規制・関係性明示） ----
+   冒頭の表示は本文（1rem）以上の文字サイズで、背景とはっきり違う色にする。
+   アフィリエイトリンクは .blog-pr-box の中にだけ置く。 */
+.blog-pr-disclosure {
+  background: #fff4d6;
+  border: 2px solid #c98a00;
+  border-radius: 8px;
+  padding: 0.85rem 1.1rem;
+  margin: 0 0 1.4rem;
+  font-size: 1rem;
+  color: #4a3500;
+}
+
+.blog-article .blog-pr-disclosure p { margin: 0; }
+
+.blog-pr-tag {
+  display: inline-block;
+  background: #8a5a00;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0 0.5rem;
+  border-radius: 4px;
+  margin-right: 0.4rem;
+  letter-spacing: 0.04em;
+}
+
+.blog-pr-box {
+  background: #fffaf0;
+  border: 2px solid #c98a00;
+  border-radius: 10px;
+  padding: 1.1rem 1.3rem;
+  margin: 1.6rem 0;
+}
+
+.blog-pr-box-title {
+  font-weight: 700;
+  font-size: 1.02rem;
+  margin-bottom: 0.5rem;
+}
+
+.blog-pr-box a {
+  color: var(--main);
+  font-weight: 600;
+}
