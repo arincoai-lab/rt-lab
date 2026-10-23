@@ -31,7 +31,7 @@
     var row = document.createElement("div");
     row.className = "rt-support-row";
     row.innerHTML =
-      '<p class="rt-foot-note">RT-Lab は個人の放射線技師が運営する無料・広告なしのツール集です。' +
+      '<p class="rt-foot-note">RT-Lab は個人の放射線技師が運営するツール集です。ツールは無料・広告なし。一部の解説記事に PR リンクを含みます。' +
       "運営継続のため、書籍紹介・投げ銭でのご支援を受け付けています。 " +
       '<a class="rt-foot-cta" href="/support/">応援方法はこちら →</a></p>' +
       '<nav class="rt-foot-nav">' +
