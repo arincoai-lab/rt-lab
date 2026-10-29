@@ -13,7 +13,7 @@
     // Cloudflare Web Analytics のトークン（Cookieなし・IP非保存）。空文字 = 解析オフ
     cfAnalyticsToken: "f020587134574ebab5e0ca5f8068a12b",
     // ツール要望フォーム（Google フォーム）の回答用URL。空文字 = 要望の1行を出さない
-    toolRequestFormUrl: "__TOOL_REQUEST_FORM_URL__"
+    toolRequestFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSe8YNkJZz-g1M8rzKPFgclE0DpwxTRcYGk2LL2lfu3BVtXNdg/viewform"
   };
 
   // ---- Cookieレス アクセス解析 ----
