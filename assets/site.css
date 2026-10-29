@@ -73,3 +73,21 @@
 .rt-faq-q { font-size: 1rem; font-weight: 700; margin: 16px 0 4px; color: #2d3748; }
 .rt-faq-a { margin: 0; font-size: 0.92rem; color: #2d3748; }
 .rt-faq-top { max-width: 760px; margin: 0 auto; }
+
+/* ---- ツール要望の1行（site.js が .rt-related の直後に差し込む） ----
+   .rt-related と同じ白地・角丸に揃え、目立ちすぎないよう文字は小さめ。 */
+.rt-request {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  padding: 14px 24px;
+  margin: 0 0 20px;
+  color: #2d3748;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.rt-request p { margin: 0; }
+.rt-request a { color: #1a5f9e; font-weight: 600; text-decoration: none; }
+.rt-request a:hover { text-decoration: underline; }
+.rt-request .rt-request-note { margin-top: 4px; font-size: 0.8rem; color: #5b6b7d; }
