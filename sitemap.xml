@@ -49,6 +49,12 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://rt-ai-lab.com/blog/drl-facility-comparison/</loc>
+    <lastmod>2026-11-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://rt-ai-lab.com/blog/mri-contrast-basics/</loc>
     <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
