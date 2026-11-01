@@ -268,6 +268,23 @@ for (const p of pages) {
   }
 }
 
+// 7. 公開前の仮置き・広告リンク（main に入れば検査結果に関係なく公開されるため、ここで止める）
+for (const p of pages) {
+  check(!/【★/.test(p.html), p.url + ': 公開前の仮置き（【★…】）が残っている');
+  for (const m of p.html.matchAll(/<a\b[^>]*\brel="[^"]*\bsponsored\b[^"]*"[^>]*>/gi)) {
+    const href = (m[0].match(/\bhref="([^"]*)"/) || [])[1] || '';
+    check(/^https:\/\//.test(href), p.url + ': sponsored リンクの href が未設定（' + (href || '空') + '）');
+  }
+  // 広告リンクはPR枠の中だけ、PR枠のあるページは冒頭にPR表示を持つ
+  const sponsored = (p.html.match(/\brel="[^"]*\bsponsored\b/gi) || []).length;
+  if (sponsored) {
+    check(/class="blog-pr-disclosure"/.test(p.html), p.url + ': 広告リンクがあるのに冒頭のPR表示（.blog-pr-disclosure）が無い');
+    const boxes = [...p.html.matchAll(/<div class="blog-pr-box">([\s\S]*?)\n    <\/div>/g)].map(b => b[1]).join('');
+    const inBox = (boxes.match(/\brel="[^"]*\bsponsored\b/gi) || []).length;
+    check(inBox === sponsored, p.url + ': 広告リンクがPR枠（.blog-pr-box）の外にある');
+  }
+}
+
 console.log('\n  pass ' + pass + ' / fail ' + fail);
 if (fail) { bad.forEach(b => console.log('  FAIL ' + b)); process.exit(1); }
 console.log('  すべてのチェックを通過しました。');
