@@ -39,7 +39,7 @@ const TOOLS = {
   'mri-simulator': { name: 'MRIシミュレータ', desc: 'TE・TR・TIを動かして画像コントラストの変化を学べる教育用シミュレータ' },
   'cardiac-phase-optimizer': { name: '心臓CT 最適位相決定ツール', desc: '心拍数・装置から最適な再構成位相を算出' },
   'contrast-quick': { name: '造影剤クイック計算', desc: '体重法・体表面積法で造影剤量・注入速度を計算' },
-  'contrast-simulator': { name: '造影CTシミュレータ', desc: '時間濃度曲線（TDC）でスキャンタイミングを検討' },
+  'contrast-simulator': { name: '造影CTシミュレータ', desc: '時間濃度曲線（TDC）の動きを計算モデルで学ぶ' },
   'egfr-checker': { name: '腎機能チェッカー（eGFR）', desc: 'eGFRを計算し、造影CT・MRIのガイドライン上の目安を確認' },
   'ct-dose-estimator': { name: 'SSDE計算ツール', desc: 'SSDE・実効線量・Japan DRLs 2025との比較' },
   'drl-comparison': { name: 'DRLs2025 一覧・比較ツール', desc: 'Japan DRLs 2025の全値と自施設データの比較' },
