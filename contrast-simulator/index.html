@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>造影CTシミュレータ｜時間濃度曲線(TDC)とスキャンタイミング | RT-Lab</title>
-  <meta name="description" content="造影CTの時間濃度曲線（TDC）をブラウザでシミュレーション。Baeの薬物動態モデルに基づき、体重・心拍出量・管電圧・注入プロトコルから大動脈・門脈・肝実質のピーク到達時刻とCT値を予測し、スキャンタイミングの検討やA/Bプロトコル比較ができます。">
+  <meta name="description" content="造影CTの時間濃度曲線（TDC）をブラウザでシミュレーション。Baeの薬物動態モデルに基づき、体重・心拍出量・管電圧・注入プロトコルから大動脈・門脈・肝実質のピーク到達時刻とCT値の動きを計算モデルで学べます。診療の判断には使えません。">
   <meta property="og:title" content="造影CTシミュレータ｜時間濃度曲線(TDC)とスキャンタイミング | RT-Lab">
-  <meta property="og:description" content="造影CTの時間濃度曲線（TDC）をブラウザでシミュレーション。Baeの薬物動態モデルに基づき、体重・心拍出量・管電圧・注入プロトコルから大動脈・門脈・肝実質のピーク到達時刻とCT値を予測し、スキャンタイミングの検討やA/Bプロトコル比較ができます。">
+  <meta property="og:description" content="造影CTの時間濃度曲線（TDC）をブラウザでシミュレーション。Baeの薬物動態モデルに基づき、体重・心拍出量・管電圧・注入プロトコルから大動脈・門脈・肝実質のピーク到達時刻とCT値の動きを計算モデルで学べます。診療の判断には使えません。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://rt-ai-lab.com/contrast-simulator/">
   <meta property="og:image" content="https://rt-ai-lab.com/assets/og/og-default.png">
@@ -17,7 +17,7 @@
   <meta property="og:site_name" content="RT-Lab">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="造影CTシミュレータ｜時間濃度曲線(TDC)とスキャンタイミング | RT-Lab">
-  <meta name="twitter:description" content="造影CTの時間濃度曲線（TDC）をブラウザでシミュレーション。Baeの薬物動態モデルに基づき、体重・心拍出量・管電圧・注入プロトコルから大動脈・門脈・肝実質のピーク到達時刻とCT値を予測し、スキャンタイミングの検討やA/Bプロトコル比較ができます。">
+  <meta name="twitter:description" content="造影CTの時間濃度曲線（TDC）をブラウザでシミュレーション。Baeの薬物動態モデルに基づき、体重・心拍出量・管電圧・注入プロトコルから大動脈・門脈・肝実質のピーク到達時刻とCT値の動きを計算モデルで学べます。診療の判断には使えません。">
   <meta name="twitter:image" content="https://rt-ai-lab.com/assets/og/og-default.png">
   <meta name="twitter:image:alt" content="RT-Lab｜放射線技師のためのWebツール集">
   <link rel="canonical" href="https://rt-ai-lab.com/contrast-simulator/">
@@ -27,8 +27,8 @@
     "@type": "WebApplication",
     "name": "CT Contrast Simulator（造影CT薬物動態シミュレータ）",
     "url": "https://rt-ai-lab.com/contrast-simulator/",
-    "description": "造影CTの薬物動態シミュレータ。Baeモデルに基づくTDCシミュレーション。",
-    "applicationCategory": "HealthApplication",
+    "description": "造影CTの薬物動態を学ぶ計算モデル。Baeモデルに基づくTDCシミュレーション。診療の判断には使えません。",
+    "applicationCategory": "EducationalApplication",
     "operatingSystem": "Any",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
   }
@@ -390,8 +390,26 @@
 <main>
   <!-- SEO: 概要 + h1 -->
   <div class="card">
-    <h1 class="card-title">造影CTシミュレータ｜時間濃度曲線(TDC)とスキャンタイミングの予測</h1>
-    <p style="margin-top:6px;">Baeの薬物動態コンパートメントモデルに基づき、患者体重・心拍出量・管電圧・注入プロトコル（造影剤量・注入速度・生食後押し）から、大動脈・門脈・肝実質などの時間濃度曲線（TDC）をリアルタイムに計算します。ピーク到達時刻とピークCT値が条件でどう動くかを見ながら、スキャンタイミングの検討やA/Bプロトコルの比較ができます。ブラウザ完結・外部送信なし。</p>
+    <h1 class="card-title">造影CTシミュレータ｜時間濃度曲線(TDC)とスキャンタイミングを学ぶ計算モデル</h1>
+    <p style="margin-top:6px;">Baeの薬物動態コンパートメントモデルに基づき、体重・心拍出量・管電圧・注入プロトコル（造影剤量・注入速度・生食後押し）から、大動脈・門脈・肝実質などの時間濃度曲線（TDC）をリアルタイムに計算します。ピーク到達時刻とピークCT値が条件でどう動くかを、計算モデルで学ぶためのツールです。<strong>診療の判断には使えません。</strong>撮影タイミング・造影プロトコル・生食の量の決定に用いないでください。ブラウザ完結・外部送信なし。</p>
+  </div>
+
+  <!-- 修正の告知: 過去の誤りと修正日 -->
+  <div class="card" id="correction-notice" style="border-left:4px solid #d69e2e;">
+    <h2 class="card-title">過去の版の計算に誤りがありました（2026年10月8日に修正）</h2>
+    <div style="font-size:0.9rem; color:#4a5568; line-height:1.9;">
+      <p>2026年3月の公開時から2026年10月8日の修正までの版には、次の誤りがありました。</p>
+      <ul style="margin:6px 0 6px 20px;">
+        <li>生食後押しの有無・量・速度を変えても、結果がまったく変わらなかった</li>
+        <li>肝実質・脾臓・膵臓のピークが計算範囲の端（299秒）に張り付いていた</li>
+        <li>注入から時間がたった時相で血中の値が下がらず、大動脈を含む各臓器のCT値の上昇が大きく出ていた（条件Aの180秒で、大動脈 修正前 169 HU、修正後 109 HU）</li>
+        <li>肝実質のCT値の上昇が大きく出ていた（条件Bで、修正前 159 HU〔計算範囲の端の値〕、修正後 約56 HU）</li>
+        <li>門脈のピークが高く出ていた（条件Aで、修正前 311 HU、修正後 198 HU）</li>
+        <li>スキャン時刻を300秒にすると 0 HU と表示された</li>
+      </ul>
+      <p>条件Aでは大動脈のピークも修正後に約3%低く、3秒遅くなりました（332 HU・37秒 → 321 HU・40秒）。修正日より前に控えた数値は使わないでください。</p>
+      <p style="margin-top:8px; font-size:0.8rem;">条件A: 350 mgI/mL・100 mL・毎秒3 mL・生食30 mL・体重60 kg・心拍出量5 L/分・120 kV。条件B: 320 mgI/mL・125 mL・毎秒2〜5 mL・生食なし・体重72 kg・心拍出量5 L/分・120 kV。いずれもモデル上の計算値（造影前からのCT値の上昇分）で、実測値ではありません。本告知の掲載は2026年11月1日です。</p>
+    </div>
   </div>
 
   <!-- How to use -->
@@ -401,7 +419,7 @@
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
-          <strong>患者情報・管電圧を入力</strong>
+          <strong>体格の条件・管電圧を入力</strong>
           <span>体重・心拍出量・管電圧を設定</span>
         </div>
       </div>
@@ -427,7 +445,7 @@
     <div>
       <!-- Patient parameters -->
       <div class="card">
-        <div class="card-title">患者パラメータ</div>
+        <div class="card-title">体格・循環の条件</div>
         <div class="preset-group" id="patientPresets">
           <button class="preset-btn" onclick="applyPatientPreset('small', event)">小柄（45kg）</button>
           <button class="preset-btn active" onclick="applyPatientPreset('standard', event)">標準（60kg）</button>
@@ -613,7 +631,7 @@
       <p style="margin-top:8px"><strong>主な前提（成人の目安）:</strong> 血液量 70 mL/kg、ヘマトクリット 40%、肝臓の細胞外液の割合 約24%。全身の細胞外液は75 mL/kgへ時定数450秒で広がるとしています。糸球体濾過量（GFR）は体格によらず100 mL/分とし、濾過された造影剤は平均90秒で腎臓から出ていきます（腎実質の値には尿細管の中の造影剤を含みます）。計算範囲は注入開始から300秒までです。</p>
       <p style="margin-top:8px"><strong>確かめている範囲:</strong> 大動脈・門脈・肝実質の値は、文献の値（肝実質のピーク、平衡相の肝と大動脈の比など）の範囲に入ることを確かめています。腎実質・脾臓・膵臓の曲線は、血流量などから置いた目安で、実測値との照合はしていません。</p>
       <p style="margin-top:8px"><strong>管電圧別CT値変換:</strong> ヨード造影剤のCT値上昇はX線エネルギーに依存します。低管電圧ではヨードのK吸収端（33.2 keV）に近づくため造影効果が増強されます。本シミュレータでは管電圧ごとの変換係数を適用しています。</p>
-      <p style="margin-top:8px">シミュレーション結果は理論的な推定値であり、実際の臨床値とは差異が生じます。個々の患者の循環動態、腎機能、体組成などにより実測値は変動します。</p>
+      <p style="margin-top:8px">シミュレーション結果は理論的な推定値であり、実際の臨床値とは差異が生じます。個々の患者の循環動態、腎機能、体組成などにより実測値は変動します。診療の判断には使えません。</p>
       <p style="margin-top:12px; font-size:0.75rem; color:#a0aec0;">
         参考文献: Bae KT. Intravenous contrast medium administration and scan timing at CT: considerations and approaches. Radiology. 2010;256(1):32-61.
       </p>
@@ -638,7 +656,7 @@
 <footer>
   <div><a href="/">RT-Lab</a> | 放射線技師のためのWebツール集</div>
   <div class="footer-disclaimer">
-    本ツールは医療機器ではありません。シミュレーション結果はあくまで参考値であり、臨床判断の根拠としての使用はご自身の責任においてご判断ください。実際の造影プロトコルは施設の基準・患者の状態に基づいて決定してください。
+    本ツールは医療機器ではありません。学習用の計算モデルであり、診療の判断には使えません。撮影タイミング・造影プロトコル・生食の量の決定に用いないでください。実際の造影プロトコルは施設の基準・患者の状態に基づいて決定してください。
   </div>
   <div style="margin-top:10px; font-size:0.8rem;">
     <a href="/about/">サイトについて</a> |

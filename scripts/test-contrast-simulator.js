@@ -198,5 +198,39 @@ const uiSrc = src;
 check(/function runSimulation\(\) \{\s*const \{ weight, co: CO \} = getPatientInputs\(\);/.test(uiSrc),
   'runSimulation が体重・心拍出量を getPatientInputs（min/max に収める）経由で読んでいない');
 
+// ── 13. 診療に使えない旨と、過去の誤りの告知がページから消えていないこと ──
+{
+  const body = html.replace(/<!--[\s\S]*?-->/g, '');
+  const start = body.indexOf('id="correction-notice"');
+  const end = body.indexOf('使い方</div>');
+  check(start >= 0 && end > start, '修正の告知（#correction-notice）がページに無い');
+  const notice = start >= 0 && end > start ? body.slice(start, end) : '';
+  const openTag = notice.slice(0, notice.indexOf('>'));
+  check(!/hidden|display\s*:\s*none/.test(openTag), '修正の告知が非表示になっている');
+  for (const word of ['2026年3月', '2026年10月8日', '有無・量・速度', '299秒', '180秒', '159 HU', '311 HU', '0 HU', '実測値ではありません']) {
+    check(notice.includes(word), `告知に「${word}」が無い`);
+  }
+  const SAFE = '診療の判断には使えません';
+  const metaOf = re => (body.match(re) || [''])[0];
+  const places = {
+    冒頭: metaOf(/<h1[\s\S]*?<\/p>/),
+    description: metaOf(/<meta name="description"[^>]*>/),
+    'og:description': metaOf(/<meta property="og:description"[^>]*>/),
+    'twitter:description': metaOf(/<meta name="twitter:description"[^>]*>/),
+    フッター: metaOf(/<div class="footer-disclaimer">[\s\S]*?<\/div>/),
+  };
+  for (const [name, text] of Object.entries(places)) check(text.includes(SAFE), `${name}に診療に使えない旨が無い`);
+
+  const top = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const quick = fs.readFileSync(path.join(ROOT, 'contrast-quick/index.html'), 'utf8');
+  const related = fs.readFileSync(path.join(ROOT, 'scripts/generate-related.js'), 'utf8');
+  const card = (top.match(/造影CT薬物動態シミュレータ<\/h3>[\s\S]*?<\/p>/) || [''])[0];
+  check(card.includes(SAFE), 'トップのカードに診療に使えない旨が無い');
+  check(quick.includes('診療の判断には使えません'), 'contrast-quick の案内に診療に使えない旨が無い');
+  for (const [name, text] of [['本ページ', body], ['トップ', card], ['関連リンク', related]]) {
+    check(!/ご自身の責任|スキャンタイミングの(検討|最適化)|スキャンタイミングを検討/.test(text), `${name}に臨床での使用を前提に読める文言が残っている`);
+  }
+}
+
 console.log(`contrast-simulator: ${pass} pass, ${fail} fail`);
 if (fail) { for (const b of bad) console.log('  FAIL ' + b); process.exit(1); }
