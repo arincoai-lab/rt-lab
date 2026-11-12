@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>冠動脈CTの再構成位相の決め方｜拡張中期（R-R 70〜80%）と収縮期（40%前後）を心拍数で使い分ける理由 | RT-Lab Blog</title>
+<meta name="description" content="冠動脈CTの再構成位相は、心拍数が低く安定していれば拡張中期（R-R間隔の70〜80%）、心拍数が高ければ収縮期（40%前後）が適することが多いとされます。その理由を「心臓が静止している時間」と「CTの時間分解能」の関係から説明し、心拍数が速い・不安定なときの考え方を、画像診断ガイドライン2021と原著論文をもとに現役放射線技師が整理します。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:title" content="冠動脈CTの再構成位相の決め方｜拡張中期（R-R 70〜80%）と収縮期（40%前後）を心拍数で使い分ける理由">
+<meta property="og:description" content="拡張中期（R-R 70〜80%）と収縮期（40%前後）を心拍数で使い分ける理由を、心臓の静止時間とCTの時間分解能の関係から解説。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://rt-ai-lab.com/blog/coronary-ct-reconstruction-phase/">
+<meta property="og:image" content="https://rt-ai-lab.com/assets/og/coronary-ct-reconstruction-phase.png">
+<meta property="og:image:alt" content="冠動脈CTの再構成位相の決め方｜拡張中期（R-R 70〜80%）と収縮期（40%前後）を心拍数で使い分ける理由｜RT-Lab Blog">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="RT-Lab">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="冠動脈CTの再構成位相の決め方｜拡張中期（R-R 70〜80%）と収縮期（40%前後）を心拍数で使い分ける理由">
+<meta name="twitter:description" content="拡張中期（R-R 70〜80%）と収縮期（40%前後）を心拍数で使い分ける理由を、心臓の静止時間とCTの時間分解能の関係から解説。">
+<meta name="twitter:image" content="https://rt-ai-lab.com/assets/og/coronary-ct-reconstruction-phase.png">
+<meta name="twitter:image:alt" content="冠動脈CTの再構成位相の決め方｜拡張中期（R-R 70〜80%）と収縮期（40%前後）を心拍数で使い分ける理由｜RT-Lab Blog">
+<link rel="canonical" href="https://rt-ai-lab.com/blog/coronary-ct-reconstruction-phase/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "冠動脈CTの再構成位相の決め方｜拡張中期（R-R 70〜80%）と収縮期（40%前後）を心拍数で使い分ける理由",
+  "description": "冠動脈CTの再構成位相を、心拍数が低く安定していれば拡張中期（R-R間隔の70〜80%）、高ければ収縮期（40%前後）が適することが多いとされる理由を、心臓の静止時間とCTの時間分解能の関係から解説。心拍数が速い・不安定なときの考え方（β遮断薬、分割再構成、二管球CT、レトロスペクティブ心電図同期）を画像診断ガイドライン2021と原著論文で整理。",
+  "datePublished": "2026-11-12",
+  "dateModified": "2026-11-12",
+  "author": {
+    "@type": "Person",
+    "name": "RT-Lab運営者",
+    "jobTitle": "診療放射線技師",
+    "url": "https://rt-ai-lab.com/about/",
+    "sameAs": ["https://note.com/ri_ai_lab"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "RT-Lab",
+    "url": "https://rt-ai-lab.com/"
+  },
+  "mainEntityOfPage": "https://rt-ai-lab.com/blog/coronary-ct-reconstruction-phase/",
+  "image": "https://rt-ai-lab.com/assets/og/coronary-ct-reconstruction-phase.png"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
+    { "@type": "ListItem", "position": 2, "name": "ブログ", "item": "https://rt-ai-lab.com/blog/" },
+    { "@type": "ListItem", "position": 3, "name": "冠動脈CTの再構成位相の決め方", "item": "https://rt-ai-lab.com/blog/coronary-ct-reconstruction-phase/" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "冠動脈CTの拡張中期は何%で再構成しますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "画像診断ガイドライン2021年版は、拡張中期をR-R間隔の70〜80%に相当する時相としています。実際に最も動きの少ない位相は患者や装置で変わるため、施設のプロトコルに従い、必要に応じて前後の位相も再構成して画像で確かめます。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "心拍数が高いときに収縮期で再構成するのはなぜですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "心拍数が上がって1心拍が短くなると、拡張中期の動きの少ない時間に余裕がなくなり、CTが1枚の画像に必要なデータを集める時間（時間分解能）に収まりにくくなるためです。ガイドラインは、心拍数が高い場合には拡張期よりも収縮期（R-R間隔の40%前後）での撮影が適していることも多いとしています。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "何回/分を超えたら収縮期を使えばよいですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "全装置に共通の境目はありません。拡張期と収縮期を分ける心拍数の閾値は、CTの時間分解能に依存するため装置ごとに異なると報告されています。たとえば管球回転時間0.275秒で動き補正機能つきの256列CTを使った研究では、67回/分未満を拡張期再構成に適した患者の目安としていますが、これはその装置と動き補正を併用した条件での結果です。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "心拍が不安定なときはどうすればよいですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "心拍が安定せず、動きの少ない時間が予測しにくい患者には、全心電図時相のデータを集めて後から静止時相を選べるレトロスペクティブ心電図同期が有用とされます。ただし被ばく線量は、決めた時相だけを撮るプロスペクティブ心電図同期より多くなります。撮影法の選択は装置と施設の方針、医師の判断に従ってください。"
+      }
+    }
+  ]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/blog.css">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+
+<header class="blog-header">
+  <div class="blog-header-inner">
+    <a class="blog-brand" href="/">RT-Lab</a>
+    <nav class="blog-subnav">
+      <a href="/#tools">ツール一覧</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/about/">サイトについて</a>
+      <a href="/contact/">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="blog-main">
+  <article class="blog-article">
+    <div class="blog-article-meta">
+      <span>公開: 2026-11-12</span>
+      <span>カテゴリ: 心臓CT</span>
+    </div>
+    <h1>冠動脈CTの再構成位相の決め方｜拡張中期（R-R 70〜80%）と収縮期（40%前後）を心拍数で使い分ける理由</h1>
+    <p class="blog-lead">
+      冠動脈CTでは「ふだんはR-R間隔の70〜80%、心拍数が速いときは40%前後」のように再構成位相を使い分けます。数字だけ覚えていると、心拍数が境目あたりの患者や、装置が変わったときに判断の拠りどころがなくなります。この記事では、位相を決めているのは<strong>心臓が静止している時間</strong>と<strong>CTの時間分解能</strong>の大小関係だ、という見方で、使い分けの理由と、心拍数が速い・不安定なときの考え方を整理します。
+    </p>
+
+    <nav class="blog-toc">
+      <div class="blog-toc-title">目次</div>
+      <ol>
+        <li><a href="#basics">基本の整理（30秒版）</a></li>
+        <li><a href="#principle">位相を決めるのは「静止時間」と「時間分解能」</a></li>
+        <li><a href="#heart-rate">心拍数が上がると何が変わるか</a></li>
+        <li><a href="#threshold">境目の心拍数は装置ごとに違う</a></li>
+        <li><a href="#fast">心拍数が速いときの打ち手</a></li>
+        <li><a href="#irregular">心拍が不安定なとき：プロスペクティブとレトロスペクティブ</a></li>
+        <li><a href="#tool">ツールで関係を確かめるときの注意</a></li>
+        <li><a href="#summary">まとめ</a></li>
+        <li><a href="#faq">よくある質問</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="basics">基本の整理（30秒版）</h2>
+    <p>
+      画像診断ガイドライン2021年版（日本医学放射線学会。表の1・2行目）と、256列CTの研究（Yang ら, 2019。3行目）の記述をまとめると、次のようになります。
+    </p>
+    <div class="blog-table-wrap">
+      <table>
+        <thead>
+          <tr><th>心拍の状態</th><th>再構成位相の考え方</th><th>R-R間隔のめやす</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>高くない（通常）</td><td>拡張中期</td><td>70〜80%</td></tr>
+          <tr><td>高い</td><td>収縮期が適していることも多い</td><td>40%前後</td></tr>
+          <tr><td>不安定（心拍数が変動する）</td><td>全時相のデータを集めて後から静止時相を選べるレトロスペクティブ心電図同期が有用（Yang ら。被ばくは多くなる）</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      ガイドラインは、一般に心拍数は低い方が良好な画質が得られるため、β遮断薬（β1選択性）による心拍コントロールが重要だとしています。
+    </p>
+
+    <a class="blog-cta" href="/cardiac-phase-optimizer/">
+      <span class="blog-cta-label">関連ツール</span>
+      <div class="blog-cta-title">心臓CT 最適位相決定ツール</div>
+      <div class="blog-cta-desc">心拍数・CT装置・再構成モードから、拡張中期と収縮末期の静止期と時間分解能の関係を計算して表示します。ECG画像のアップロードにも対応。ブラウザ完結・無料。</div>
+    </a>
+
+    <h2 id="principle">位相を決めるのは「静止時間」と「時間分解能」</h2>
+    <p>
+      心臓は拍動しているので、そのまま撮ると動きによるアーチファクトで冠動脈を正確に描けません。ガイドラインは、心周期の<strong>拡張中期（R-R間隔の70〜80%に相当）</strong>に心臓が緩やかに動く時間があり、冠動脈CTAではこの短い時間を利用すると説明しています。この時間を正確に捉えるために、心臓CTでは心電図同期によるスキャンもしくは再構成が必須です。
+    </p>
+    <p>
+      その時間はどのくらいか。なお、ガイドラインの総論は最も普及している64列CTを中心にした解説です。ガイドラインは、心拍数が60回/分程度で安定していれば1心拍が1秒間となり、<strong>拡張中期は0.2秒程度</strong>と考えられるとしています。
+    </p>
+    <p>
+      一方、CTが1枚の画像を作るには、少なくとも<strong>1/2回転＋コーン角分のデータ（ハーフデータ）</strong>が必要です。1回転分（フルデータ）から再構成すればデータが多い分だけノイズは減りますが、心拍動の影響が大きく出て冠動脈の評価が難しくなります。そのため心臓CTではハーフ再構成で時間分解能を上げています（ガイドライン）。
+    </p>
+    <p>
+      仮に管球回転時間が0.275秒の装置なら、半回転にかかる時間は 0.275 ÷ 2 ≈ 0.14秒です（回転時間は Yang らの256列CTの値を借りた例で、コーン角分を含めない概算）。心拍数60回/分で0.2秒程度ある拡張中期の中に、0.14秒のデータ収集が収まる計算になります。
+    </p>
+    <p>
+      つまり、<strong>データを集める時間（時間分解能）が、心臓の動きの少ない時間の中に収まるかどうか</strong>が、再構成位相を考えるときの基本の物差しです。
+    </p>
+
+    <h2 id="heart-rate">心拍数が上がると何が変わるか</h2>
+    <p>
+      R-R間隔（ms）は 60000 ÷ 心拍数 で求められます。
+    </p>
+    <div class="blog-table-wrap">
+      <table>
+        <thead>
+          <tr><th>心拍数（回/分）</th><th>R-R間隔</th><th>R-Rの75%の位置（R波から）</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>60</td><td>1000 ms</td><td>750 ms</td></tr>
+          <tr><td>70</td><td>約857 ms</td><td>約643 ms</td></tr>
+          <tr><td>80</td><td>750 ms</td><td>約563 ms</td></tr>
+          <tr><td>90</td><td>約667 ms</td><td>500 ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      1心拍が短くなれば、その中にある拡張中期の、動きの少ない時間の余裕も減っていきます。ハーフ再構成では時間分解能は管球回転時間で決まり、心拍数が上がっても短くはなりません。そのため、ある心拍数を超えると拡張中期の静止時間にデータ収集が収まりきらず、動きによるボケや冠動脈の途切れが出やすくなります。
+    </p>
+    <p>
+      そこで出てくるのがもう一つの静止時相、<strong>収縮期</strong>です。256列CTの研究（Yang ら, 2019）は、低く安定した心拍数では拡張中期（diastasis）が他の時相より比較的静止している一方、心拍数が高いときに最も静止している時相は収縮期にある、と整理しています。ガイドラインも、心拍数が高い場合には拡張期よりも<strong>収縮期（R-R間隔の40%前後）</strong>での撮影が適していることも多いとしています。
+    </p>
+
+    <h2 id="threshold">境目の心拍数は装置ごとに違う</h2>
+    <p>
+      「何回/分から収縮期にするか」に、全装置に共通の数字はありません。Yang らは、拡張期再構成と収縮期再構成のどちらに適した患者かを分ける心拍数の閾値は<strong>装置ごとに異なり、それはCTの時間分解能に依存するため</strong>だと述べています。
+    </p>
+    <p>
+      その研究では、管球回転時間0.275秒の256列CTでプロスペクティブ心電図同期の冠動脈CTを行った連続87例について、R-R間隔の1%刻みで画像を再構成し、冠動脈の動きが最も少ない位相を調べています。結果は次のとおりです。
+    </p>
+    <div class="blog-table-wrap">
+      <table>
+        <thead>
+          <tr><th>心拍数（bpm）</th><th>拡張期で再構成された血管セグメント</th><th>動き補正を使ったセグメント</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>57以下</td><td>すべて</td><td>36.5%</td></tr>
+          <tr><td>58〜62</td><td>すべて</td><td>77.8%</td></tr>
+          <tr><td>63〜67</td><td>89.3%</td><td>81%</td></tr>
+          <tr><td>68以上</td><td>71.7%</td><td>100%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      著者らは、この装置では心拍数67 bpm未満を拡張期再構成に適した患者の目安にできると結論しています。同時に、動き補正アルゴリズムは心拍動の影響を減らす有効な手段であるものの、心拍コントロールはなお重要だとも述べています。表を見ると、心拍数が上がるにつれて拡張期で再構成できた割合が下がり、動き補正に頼る割合が上がっていくのが分かります。
+    </p>
+    <p class="blog-note">
+      ※ 表の数値は論文の抄録の値です（本文の結果の節では、57以下の群の動き補正の割合が36.9%と書かれています）。
+      この数字は特定の256列CT（動き補正機能つき）での結果です。時間分解能の違う装置にそのまま当てはめることはできません。自施設の装置の閾値は、メーカーの推奨と自施設の画像で確かめる必要があります。
+    </p>
+
+    <h2 id="fast">心拍数が速いときの打ち手</h2>
+    <p>
+      静止時間と時間分解能の関係で考えると、打ち手は「心拍数を下げて静止時間を延ばす」か「時間分解能を上げる」かの2方向に分かれます。
+    </p>
+    <h3>心拍数を下げる：β遮断薬</h3>
+    <p>
+      ガイドラインは、β遮断薬の使い方として、検査1時間前に内服、5分前に静脈注射、もしくは両者を併用する方法を挙げ、<strong>60回/分以下を目標</strong>として使用するとしています。なお Yang らの論文は、日常診療では心拍数の高い患者に目標65 bpmで心拍コントロール薬を使うことが多い、と他の文献を引いて紹介しています。日本のガイドラインの目標値（60回/分以下）とは別の出典の記述なので、混同しないようにします。投薬の適応と方法は医師の判断です。
+    </p>
+    <h3>心拍数を見るタイミング</h3>
+    <p>
+      ガイドラインは、検査前の息止め練習には、息止め中の心拍数の変動を把握する目的もあるとしています。息止めでは生理的に心拍数が低下することが多い一方、逆に上昇することもあり、撮像方法や再構成法を選ぶうえで有用な情報になります。また、冠動脈を拡張させる硝酸剤を使うと一般に心拍数は上昇するので、<strong>心拍数の観察は硝酸剤使用後が望ましい</strong>としています。
+    </p>
+    <h3>時間分解能を上げる：分割再構成と二管球CT</h3>
+    <p>
+      ガイドラインは、複数心拍のデータからハーフデータを得る<strong>分割再構成法（セグメント再構成法、マルチセクター再構成法）</strong>で、時間分解能をさらに高められるとしています。また、<strong>2倍の時間分解能を持つ二管球CT</strong>や、心臓全体をカバーできるワイドディテクタのCTが普及し、プロスペクティブ心電図同期スキャンを行うことが増えてきたと述べています。
+    </p>
+
+    <h2 id="irregular">心拍が不安定なとき：プロスペクティブとレトロスペクティブ</h2>
+    <p>
+      心電図同期CTには2種類あります（ガイドライン）。
+    </p>
+    <ul>
+      <li><strong>プロスペクティブ心電図同期スキャン</strong>：あらかじめ決めておいた静止時相（一般に拡張中期）だけを撮像する</li>
+      <li><strong>レトロスペクティブ心電図同期再構成</strong>：全心電図時相のデータを取得し、そこから目的の静止時相の画像を後から抽出して再構成する</li>
+    </ul>
+    <p>
+      心拍が不安定だと、動きの少ない時間がいつ来るかを事前に決めにくくなります。Yang らは、レトロスペクティブ心電図同期は<strong>心拍が安定せず、動きの最も少ない時間が予測できない患者に有用</strong>だとしつつ、プロスペクティブ心電図同期より被ばく線量が多くなることが一般に知られていると述べています。なお、Yang らの研究自体は不整脈のある患者を対象から除外しています。被ばくについてはガイドラインも、一度にスキャンできる範囲が3〜4 cmの64列CTではレトロスペクティブ心電図同期再構成が一般的で、おのずと被ばく線量は大きくなるとしています（ガイドラインがここで挙げている理由は撮影範囲の狭さで、心拍の不安定さではありません）。
+    </p>
+    <p>
+      どちらを選ぶかは、画質の確実さと被ばくのバランスの問題です。装置の機能や施設のプロトコル、医師の判断に従って決めます。
+    </p>
+
+    <h2 id="tool">ツールで関係を確かめるときの注意</h2>
+    <p>
+      <a href="/cardiac-phase-optimizer/">心臓CT 最適位相決定ツール</a>では、心拍数と装置の条件を入れると、拡張中期・収縮末期の静止時間と時間分解能を並べて表示できます。心拍数を上げていくと拡張中期の静止時間が時間分解能を下回り、推奨が収縮末期へ切り替わる様子を確かめられます。
+    </p>
+    <p>
+      ただし、ツールの静止時間は、心周期の各相の長さを固定値で置いた<strong>教育用の簡略モデル</strong>で計算しています。たとえば心拍数60回/分では、拡張中期の長さは約400 ms（R-R間隔の約49〜89%）と表示されます。ガイドラインが目安とする「0.2秒程度」「R-R間隔の70〜80%」より長く広い値で、実際の静止時間には個人差もあります。また、ツールの収縮末期はR波から約270 msを中心に置いているため、心拍数が低〜中程度のときはガイドラインの「R-R間隔の40%前後」より手前（心拍数60回/分で約27%）に表示されます。ツールは「心拍数が上がると静止時間が時間分解能を下回る」という<strong>関係をつかむため</strong>に使い、位相の実際の値は装置の推奨と画像で確認してください。
+    </p>
+
+    <h2 id="summary">まとめ</h2>
+    <ul>
+      <li>再構成位相の基本の物差しは、<strong>時間分解能が心臓の動きの少ない時間の中に収まるか</strong></li>
+      <li>心拍数が低く安定していれば<strong>拡張中期（R-R間隔の70〜80%）</strong>。心拍数60回/分では拡張中期は0.2秒程度（ガイドライン）</li>
+      <li>心拍数が高いと拡張中期の余裕がなくなり、<strong>収縮期（R-R間隔の40%前後）</strong>が適していることも多い</li>
+      <li>拡張期と収縮期を分ける心拍数の閾値は<strong>装置ごとに違う</strong>（時間分解能に依存）。回転0.275秒・動き補正機能つきの256列CTの研究では67 bpm未満が拡張期の目安</li>
+      <li>打ち手は「心拍数を下げる（β遮断薬、日本のガイドラインの目標は60回/分以下）」と「時間分解能を上げる（分割再構成、二管球CT）」の2方向</li>
+      <li>心拍が不安定なら、全時相を集めて後から選べる<strong>レトロスペクティブ心電図同期</strong>が有用。ただし被ばくは多くなる</li>
+    </ul>
+
+    <a class="blog-cta" href="/cardiac-phase-optimizer/">
+      <span class="blog-cta-label">関連ツール</span>
+      <div class="blog-cta-title">心臓CT 最適位相決定ツール</div>
+      <div class="blog-cta-desc">心拍数・管球回転時間・再構成モード（ハーフ／セグメント、二管球）を変えて、静止期と時間分解能の関係がどう変わるかを確かめられます。</div>
+    </a>
+
+    <h2 id="faq">よくある質問</h2>
+    <h3>Q. 冠動脈CTの拡張中期は何%で再構成しますか？</h3>
+    <p>
+      画像診断ガイドライン2021年版は、拡張中期をR-R間隔の70〜80%に相当する時相としています。実際に最も動きの少ない位相は患者や装置で変わるため、施設のプロトコルに従い、必要に応じて前後の位相も再構成して画像で確かめます。
+    </p>
+    <h3>Q. 心拍数が高いときに収縮期で再構成するのはなぜですか？</h3>
+    <p>
+      心拍数が上がって1心拍が短くなると、拡張中期の動きの少ない時間に余裕がなくなり、CTが1枚の画像に必要なデータを集める時間（時間分解能）に収まりにくくなるためです。ガイドラインは、心拍数が高い場合には拡張期よりも収縮期（R-R間隔の40%前後）での撮影が適していることも多いとしています。
+    </p>
+    <h3>Q. 何回/分を超えたら収縮期を使えばよいですか？</h3>
+    <p>
+      全装置に共通の境目はありません。拡張期と収縮期を分ける心拍数の閾値は、CTの時間分解能に依存するため装置ごとに異なると報告されています。たとえば管球回転時間0.275秒で動き補正機能つきの256列CTを使った研究では、67回/分未満を拡張期再構成に適した患者の目安としていますが、これはその装置と動き補正を併用した条件での結果です。
+    </p>
+    <h3>Q. 心拍が不安定なときはどうすればよいですか？</h3>
+    <p>
+      心拍が安定せず、動きの少ない時間が予測しにくい患者には、全心電図時相のデータを集めて後から静止時相を選べるレトロスペクティブ心電図同期が有用とされます。ただし被ばく線量は、決めた時相だけを撮るプロスペクティブ心電図同期より多くなります。撮影法の選択は装置と施設の方針、医師の判断に従ってください。
+    </p>
+
+    <aside class="blog-related" aria-label="関連記事">
+      <div class="blog-related-title">関連記事</div>
+      <ul>
+        <li>
+          <span class="blog-related-tag">造影検査</span><a href="/blog/contrast-dose-guide/">CT造影剤量の決め方｜体重あたりヨード量（mgI/kg）の根拠と検査別の目安</a>
+          <p class="blog-related-desc">体重あたりヨード量で造影剤量を決める理由と、動脈相を決める注入速度（mgI/kg/s）の考え方。</p>
+        </li>
+        <li>
+          <span class="blog-related-tag">CT・線量管理</span><a href="/blog/drl-facility-comparison/">自施設の線量代表値の出し方｜DRLと比べるのは中央値、超えたときの見直し手順</a>
+          <p class="blog-related-desc">DRLと比べる自施設の値は中央値。全国調査と同じ条件での代表値の集め方と、超えたときの見直し手順。</p>
+        </li>
+      </ul>
+    </aside>
+
+    <div class="blog-author">
+      <div class="blog-author-icon" aria-hidden="true">👨‍⚕️</div>
+      <div>
+        <div class="blog-author-name">この記事を書いた人</div>
+        <p>現役16年目の診療放射線技師。CT・MRIを中心に臨床業務のかたわら、放射線技師向けの無料Webツール集 <a href="/about/">RT-Lab</a> を個人で企画・開発・運営しています。医療AI・画像診断まわりの記事は <a href="https://note.com/ri_ai_lab" target="_blank" rel="noopener">note</a> でも書いています。</p>
+      </div>
+    </div>
+
+    <div class="blog-disclaimer">
+      本記事は放射線技師・医療従事者向けの教育目的の解説です。記事中の時間分解能の計算は概算で、研究結果の心拍数の閾値は特定の装置での値です。再構成位相・撮影法は各装置の仕様と施設のプロトコルに従い、β遮断薬などの投薬、検査の適応、画像の解釈は医師の判断で行ってください。本記事の内容は個々の検査・診療上の判断に代わるものではありません。
+    </div>
+
+    <div class="blog-refs">
+      <div class="blog-refs-title">出典・参考文献</div>
+      <ol>
+        <li>日本医学放射線学会 編. 画像診断ガイドライン 2021年版「4 心血管」心血管領域の標準的撮像法 A CT（総論）. p.166–167. <a href="https://radiology.jp/content/files/gl2021/gl_2021_04.pdf" target="_blank" rel="noopener">PDF</a></li>
+        <li>Yang CC, Law WY, Lu KM, Wu TH. Relationship between heart rate and optimal reconstruction phase in coronary CT angiography performed on a 256-slice multidetector CT. Br J Radiol. 2019;92:20180945. doi:10.1259/bjr.20180945. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6732907/" target="_blank" rel="noopener">PMC</a></li>
+      </ol>
+    </div>
+  </article>
+</main>
+
+<footer class="blog-footer">
+  <div class="blog-footer-links">
+    <a href="/">トップ</a>
+    <a href="/blog/">ブログ一覧</a>
+    <a href="/privacy/">プライバシーポリシー</a>
+    <a href="/contact/">お問い合わせ</a>
+  </div>
+  <div>&copy; 2025 RT-Lab</div>
+</footer>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>
