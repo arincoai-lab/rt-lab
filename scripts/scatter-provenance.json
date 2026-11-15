@@ -24,9 +24,10 @@
       "url": "https://laws.e-gov.go.jp/law/323M40000100050"
     },
     "MHLW188": {
-      "title": "厚生労働省医政局長通知 医政発第188号（医療法施行規則の一部を改正する省令の施行等について）の E/Ka 換算係数 1.433（最大値）",
-      "note": "Hosono2017 本文の引用で把握。通知の原文は未照合",
-      "check": "pending"
+      "title": "「医療法施行規則の一部を改正する省令の施行について」（平成13年3月12日 医薬発第188号）を一部改正した 医政発0331第16号（平成26年3月31日、厚生労働省医政局長）",
+      "url": "https://jrias.or.jp/statute/pdf/iseisihatu0331_16.pdf",
+      "note": "日本アイソトープ協会の掲載版。通知番号は「医政発第188号」ではなく「医薬発第188号」（Hosono2017 の表記は誤り）",
+      "check": "text"
     }
   },
   "secondary_kerma_per_patient_1m": {
@@ -284,7 +285,7 @@
         0.7299
       ]
     },
-    "_pending": "鋼・板ガラス・木（PDF 159頁）は OCR のみで画像未照合。v1 で使うなら照合してから入れる"
+    "_pending": "鋼・板ガラス・木（PDF 159頁）は OCR のみで画像未照合。v1 で使うなら照合してから入れる。Table C.1 の当てはめの厚さの範囲（図 C.2〜C.7 の横軸）も未抽出。範囲外の外挿の表示は、範囲を照合してから入れる"
   },
   "ct": {
     "kappa": {
@@ -409,10 +410,56 @@
     },
     "conversion_E_over_Ka_Sv_per_Gy": {
       "value": 1.433,
-      "note": "エックス線室のエネルギー範囲を考えた最大値。Hosono2017 本文が厚労省通知188号を引用",
-      "source": "Hosono2017",
-      "_pending": "通知188号の原文で照合する（MHLW188）"
+      "note": "80 kV 以下は表10（告示第398号別表第1、光子エネルギー[keV]＝管電圧[kV]とみなす）の値。シミュレータは管電圧によらず最大値 1.433 を使う（80 kV 以下では安全側＝大きめ）",
+      "source": "MHLW188",
+      "where": "改正後の（六）線量等の算定等 注2）",
+      "quote": "使用管電圧が80キロボルトを超えるエックス線装置の換算係数は、最大値1.433を用いるものとすること"
     }
   },
-  "_review": "2026-11-16 独立レビュー（code-reviewer・opus、原典を自分で再取得）: 数値169個すべて一致。HIGH 2件（法令の値は実効線量で E/Ka 換算が必要／Hosono の 3.4% は過小評価になった方向の割合）、MEDIUM 5件・LOW 4件を反映済み"
+  "_review": "2026-11-16 独立レビュー（code-reviewer・opus、原典を自分で再取得）: 数値169個すべて一致。HIGH 2件（法令の値は実効線量で E/Ka 換算が必要／Hosono の 3.4% は過小評価になった方向の割合）、MEDIUM 5件・LOW 4件を反映済み",
+  "ncrp_worked_examples": {
+    "_about": "テストの期待値にする NCRP147 第5章の計算例（原典の丸めた値）",
+    "source": "NCRP147",
+    "check": "text",
+    "ct_cdti_example": {
+      "pdf_page": 108,
+      "printed_page": 97,
+      "Ksec_head_mGy": 0.12,
+      "Ksec_body_mGy": 0.38,
+      "weekly_at_3m_mGy": 3.1,
+      "B": 0.0065,
+      "lead_mm_120kVp": 1.3
+    },
+    "ct_dlp_example": {
+      "pdf_page": [
+        110,
+        111
+      ],
+      "printed_page": [
+        99,
+        100
+      ],
+      "dlp_body": 770,
+      "dlp_head": 1680,
+      "Ksec_body_mGy": 0.28,
+      "Ksec_head_mGy": 0.15,
+      "body_per_week": 150,
+      "head_per_week": 30,
+      "weekly_at_3m_mGy": 5.2,
+      "B": 0.0039,
+      "lead_mm": 1.5
+    },
+    "control_booth_example": {
+      "printed_page": [
+        85,
+        86
+      ],
+      "Ksec_per_patient": 0.034,
+      "patients": 25,
+      "d_m": 1.8,
+      "K_mGy": 0.26,
+      "B": 0.0019,
+      "lead_mm_rad_room_all": 1.3
+    }
+  }
 }
