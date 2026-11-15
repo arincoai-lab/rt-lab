@@ -62,7 +62,8 @@ const LAW = prov.japan_law;
 check(core.REFERENCE_LINES.controlledAreaBoundary_mSv_per_3mo === LAW.controlled_area_boundary_mSv_per_3mo.value, '管理区域境界の値が照合表と違う');
 check(core.REFERENCE_LINES.siteBoundary_mSv_per_3mo === LAW.site_boundary_uSv_per_3mo.value / 1000, '敷地境界の値が照合表と違う');
 check(core.REFERENCE_LINES.inpatientRoom_mSv_per_3mo === LAW.inpatient_room_mSv_per_3mo.value, '病室の値が照合表と違う');
-check(core.REFERENCE_LINES.eyeLens_mSv_per_year === LAW.eye_lens_mSv.per_year, '水晶体の年限度が照合表と違う');
+check(core.EYE_LENS_LIMIT.mSv_per_year === LAW.eye_lens_mSv.per_year && core.EYE_LENS_LIMIT.mSv_per_5yr === LAW.eye_lens_mSv.per_5yr, '水晶体の限度が照合表と違う');
+check(!Object.keys(core.REFERENCE_LINES).some(k => /eye/i.test(k)), '水晶体（等価線量）が点の実効線量の参考線に混ざっている');
 const H = prov.ivr_operator_eye;
 check(core.IVR_EYE.weightedLeft === H.weighted_left_eye && core.IVR_EYE.weightedRight === H.weighted_right_eye, 'IVR の水晶体係数が照合表と違う');
 
@@ -96,10 +97,11 @@ const EX = prov.ncrp_worked_examples;
   const x = X(e.B, core.ARCHER_CT.lead['120']);
   check(Math.abs(x - e.lead_mm_120kVp) < 0.1, 'CT CTDI 例: 鉛の厚さ ' + x + ' vs ' + e.lead_mm_120kVp);
 }
-{ // 一般撮影の操作室
+{ // 一般撮影の操作室（doseAtPoint で再現。管球は患者の上 1 m、操作室は横に 1.8 m、NCRP の距離のそろえ方）
   const e = EX.control_booth_example;
-  const K = e.Ksec_per_patient * e.patients / (e.d_m * e.d_m);
-  check(rel(K, e.K_mGy) < 0.03, '操作室例: K ' + K + ' vs ' + e.K_mGy);
+  const r = core.doseAtPoint({ x: 2 + e.d_m, y: 2.5, z: 1 }, { room: 'rad_room_all', patientsPerWeek: e.patients, leakageLimit: 'ncrp',
+    patient: { x: 2, y: 2.5, z: 1 }, tube: { x: 2, y: 2.5, z: 2 } }, []);
+  check(rel(r.total, e.K_mGy) < 0.03, '操作室例: K ' + r.total + ' vs ' + e.K_mGy);
   const x = X(e.B, core.ARCHER_SECONDARY.lead.rad_room_all);
   check(Math.abs(x - e.lead_mm_rad_room_all) < 0.1, '操作室例: 鉛の厚さ ' + x + ' vs ' + e.lead_mm_rad_room_all);
 }
@@ -131,10 +133,14 @@ const D = core.doseAtPoint;
   const a = D({ x: 3, y: 2.5, z: 1.0 }, s, noWalls), b = D({ x: 4, y: 2.5, z: 1.0 }, s, noWalls);
   check(finitePos(a.total) && finitePos(b.total), '線量が有限・非負でない');
   check(b.total < a.total, '遠いほうが高い');
-  // 側方（θ=90°）・1 m・漏れ線は管球から√(1+0.25) m
-  const exp = (K47.cardiac_angio.side + K47.cardiac_angio.leak / 1.25) * 20;
-  check(rel(a.total, exp) < 1e-9, '側方 1 m の値が表と合わない: ' + a.total + ' vs ' + exp);
-  check(rel(a.scatter / b.scatter, 4) < 1e-9, '散乱線が距離の2乗に反比例しない');
+  // 既定（NCRP）: 散乱線と漏れ線の距離を短いほう（患者から 1 m）にそろえる
+  check(rel(a.total, (K47.cardiac_angio.side + K47.cardiac_angio.leak) * 20) < 1e-9, '側方 1 m の値が表と合わない（NCRP の距離）: ' + a.total);
+  // 別々の距離: 漏れ線は管球から√(1+0.25) m
+  const sep = D({ x: 3, y: 2.5, z: 1.0 }, baseSetup({ distanceMode: 'separate' }), noWalls);
+  check(rel(sep.total, (K47.cardiac_angio.side + K47.cardiac_angio.leak / 1.25) * 20) < 1e-9, '側方 1 m の値が表と合わない（別々の距離）: ' + sep.total);
+  check(sep.total <= a.total, 'NCRP の距離のそろえ方が別々の距離より低い');
+  const as = D({ x: 3, y: 2.5, z: 1.0 }, baseSetup({ distanceMode: 'separate' }), noWalls), bs = D({ x: 4, y: 2.5, z: 1.0 }, baseSetup({ distanceMode: 'separate' }), noWalls);
+  check(rel(as.scatter / bs.scatter, 4) < 1e-9, '散乱線が距離の2乗に反比例しない');
   check(a.flags.length === 0, '通常の点に注意フラグが付いた: ' + a.flags);
 }
 { // 壁の向こうは手前より低い・厚いほど低い・斜めに通ると低い
@@ -143,13 +149,50 @@ const D = core.doseAtPoint;
   const open = D(p, s, noWalls).total, thin = D(p, s, wallX4(0.5)).total, thick = D(p, s, wallX4(2)).total;
   check(thin < open && thick < thin, '壁の厚さに対して線量が減っていない');
   check(rel(D(p, s, wallX4(0.5)).scatter, D(p, s, noWalls).scatter * B(0.5, core.ARCHER_SECONDARY.lead.cardiac_angio)) < 1e-9, '垂直に通るときの透過が式と合わない');
+  // 斜めに通るとき: 既定は垂直入射（NCRP 147）。obliquity=true なら 厚さ/|cos|（上限2倍）
+  const pB = core.ARCHER_SECONDARY.lead.cardiac_angio;
   const pd = { x: 5, y: 4.5, z: 1.0 };
-  const ratioOblique = D(pd, s, wallX4(0.5)).scatter / D(pd, s, noWalls).scatter;
-  check(ratioOblique < B(0.5, core.ARCHER_SECONDARY.lead.cardiac_angio), '斜めに通るときの透過が垂直より高い');
+  const ratioN = D(pd, s, wallX4(0.5)).scatter / D(pd, s, noWalls).scatter;
+  check(rel(ratioN, B(0.5, pB)) < 1e-9, '既定で垂直入射になっていない');
+  const so = baseSetup({ obliquity: true });
+  const pz = { x: 5, y: 3.5, z: 2.0 }; // 3D で斜め（z も違う）
+  const v = { x: 3, y: 1, z: 1 }, cos = Math.abs(v.x) / Math.hypot(v.x, v.y, v.z);
+  const ratioO = D(pz, so, wallX4(0.5)).scatter / D(pz, so, noWalls).scatter;
+  check(rel(ratioO, B(0.5 / cos, pB)) < 1e-9, '斜めの厚さが 3D の式（厚さ/cos）と合わない');
+  const longWall = [{ x1: 4, y1: 0, x2: 4, y2: 20, layers: [{ material: 'lead', mm: 0.5 }] }];
+  const graze = { x: 4.05, y: 15, z: 1.0 }; // cos ≈ 0.16（補正なしなら約6倍の厚さ）
+  const ratioG = D(graze, so, longWall).scatter / D(graze, so, noWalls).scatter;
+  check(rel(ratioG, B(1.0, pB)) < 1e-9, 'かすめる線で斜め補正が2倍の上限で止まっていない: ' + ratioG);
+  // 壁の端のわずかに手前で途切れる壁は効かない（端の判定を甘くしない）
+  const nearly = [{ x1: 4, y1: 0, x2: 4, y2: 2.5 - 1e-7, layers: [{ material: 'lead', mm: 2 }] }];
+  check(rel(D(p, s, nearly).total, open) < 1e-12, '線の手前で途切れる壁が効いている');
   const two = [{ x1: 4, y1: 0, x2: 4, y2: 5, layers: [{ material: 'lead', mm: 0.5 }, { material: 'concrete', mm: 100 }] }];
   check(D(p, s, two).total < thin, '複数の層が掛け合わされていない');
   const short = [{ x1: 4, y1: 0, x2: 4, y2: 1, layers: [{ material: 'lead', mm: 2 }] }]; // 線の通り道より外で途切れる壁
   check(rel(D(p, s, short).total, open) < 1e-12, '線の通り道に無い（端の外の）壁が効いている');
+  // 壁の継ぎ目・角を通る線で二重に数えない（2026-11-16 レビュー C1）
+  const split = [{ x1: 4, y1: 0, x2: 4, y2: 2.5, layers: [{ material: 'lead', mm: 0.5 }] }, { x1: 4, y1: 2.5, x2: 4, y2: 5, layers: [{ material: 'lead', mm: 0.5 }] }];
+  check(rel(D(p, s, split).total, thin) < 1e-12, '分けて描いた壁の継ぎ目で二重に数えている');
+  const corner = [{ x1: 3, y1: 3.5, x2: 3, y2: 6, layers: [{ material: 'lead', mm: 0.5 }] }, { x1: 3, y1: 3.5, x2: 6, y2: 3.5, layers: [{ material: 'lead', mm: 0.5 }] }];
+  const pc = { x: 4, y: 4.5, z: 1.0 }; // 患者(2,2.5)→(4,4.5) は角 (3,3.5) を通る
+  const one = [{ x1: 3, y1: 3.5, x2: 3, y2: 6, layers: [{ material: 'lead', mm: 0.5 }] }];
+  check(rel(D(pc, s, corner).scatter, D(pc, s, one).scatter) < 1e-12, '壁の角を通る線で二重に数えている');
+  // 漏れ線の線だけを遮る壁は漏れ線だけを減らす（管球 (2,2.5,0.5) → 点 (2,4,0.5) の間、患者からの線は通らない高さ）
+  const sl = baseSetup({ distanceMode: 'separate', ceiling: 3 });
+  const lowWallPt = { x: 2, y: 4, z: 0.2 };
+  const lw = [{ x1: 0, y1: 3, x2: 4, y2: 3, layers: [{ material: 'lead', mm: 1 }] }];
+  const r0 = D(lowWallPt, sl, noWalls), r1 = D(lowWallPt, sl, lw);
+  check(r1.leakage < r0.leakage && r1.scatter < r0.scatter, '壁が散乱線・漏れ線の両方の線を遮っていない');
+  check(rel(r1.leakage, r0.leakage * B(1, pB)) < 1e-9, '漏れ線の透過が管球からの線で計算されていない');
+  // 管球が患者の横にある（横向きの照射）とき、管球→点の線だけを遮る短い壁
+  const sx = { room: 'cardiac_angio', patientsPerWeek: 20, distanceMode: 'separate', patient: { x: 2, y: 2.5, z: 1 }, tube: { x: 1, y: 2.5, z: 1 } };
+  const px = { x: 2, y: 4, z: 1 };
+  const sw = [{ x1: 1.2, y1: 3, x2: 1.6, y2: 3, layers: [{ material: 'lead', mm: 1 }] }];
+  const q0 = D(px, sx, noWalls), q1 = D(px, sx, sw);
+  check(q1.scatter === q0.scatter && rel(q1.leakage, q0.leakage * B(1, pB)) < 1e-9, '漏れ線の透過が管球からの線で、散乱線の透過が患者からの線で計算されていない');
+  // 天井より上（別の階）を通る線では壁を差し引かない
+  const up = D({ x: 5, y: 2.5, z: 10 }, s, wallX4(0.5));
+  check(up.flags.includes('beyond-ceiling') && rel(up.total, D({ x: 5, y: 2.5, z: 10 }, s, noWalls).total) < 1e-12, '天井より上を通る線で壁を差し引いている');
   const behind = D({ x: 1, y: 2.5, z: 1.0 }, s, wallX4(2)).total;
   check(rel(behind, D({ x: 1, y: 2.5, z: 1.0 }, s, noWalls).total) < 1e-12, '線源と点の間に無い壁が効いている');
 }
@@ -173,11 +216,35 @@ const D = core.doseAtPoint;
   threw = false;
   try { D({ x: 5, y: 2.5, z: 1 }, baseSetup(), wallX4(1, 'unobtainium')); } catch (e) { threw = true; }
   check(threw, '存在しない材質でエラーにならない');
+  // 空欄・null・文字列・NaN を黙って0にしない（レビュー H3）
+  for (const bad of ['', null, '5', NaN, undefined, Infinity]) {
+    threw = false; try { D({ x: 3, y: 2.5, z: 1 }, baseSetup({ patientsPerWeek: bad }), noWalls); } catch (e) { threw = true; }
+    check(threw, '患者数 ' + JSON.stringify(bad) + ' でエラーにならない');
+  }
+  threw = false; try { D({ x: undefined, y: 2.5, z: 1 }, baseSetup(), noWalls); } catch (e) { threw = true; }
+  check(threw, '点の x が無くてもエラーにならない');
+  threw = false; try { D({ x: 5, y: 2.5, z: 1 }, baseSetup(), [{ x1: 4, y1: 0, x2: 4, y2: 5, layers: [{ material: 'lead', mm: '' }] }]); } catch (e) { threw = true; }
+  check(threw, '壁の厚さが空欄でもエラーにならない');
+  threw = false; try { D({ x: 3, y: 2.5, z: 1 }, baseSetup({ tube: { x: 2, y: 2.5, z: 1.0 } }), noWalls); } catch (e) { threw = true; }
+  check(threw, '管球と患者が同じ位置でもエラーにならない');
+  check(D({ x: 5, y: 2.5, z: 1 }, baseSetup(), [{ x1: 4, y1: 1, x2: 4, y2: 1, layers: [{ material: 'lead', mm: 3 }] }]).total > 0, '長さ0の壁で壊れる');
   const z = D({ x: 3, y: 2.5, z: 1 }, baseSetup({ patientsPerWeek: 0 }), noWalls);
   check(z.total === 0, '患者数0で線量が0でない');
   threw = false;
   try { D({ x: 3, y: 2.5, z: 1 }, baseSetup({ patientsPerWeek: -5 }), noWalls); } catch (e) { threw = true; }
   check(threw, '負の患者数でエラーにならない');
+}
+
+// ---------------------------------------------------------------- 5b. 一次線の方向（一般撮影）
+{
+  const s = { room: 'chest_room', patientsPerWeek: 50, patient: { x: 2, y: 2, z: 1.4 }, tube: { x: 2, y: 0.2, z: 1.4 } }; // 立位、y 方向に照射
+  check(D({ x: 2, y: 4, z: 1.4 }, s, noWalls).flags.includes('primary-direction'), '一般撮影で受像器の裏（一次線の方向）に印が付かない');
+  check(!D({ x: 4, y: 2, z: 1.4 }, s, noWalls).flags.includes('primary-direction'), '一次線の方向でない点に印が付いた');
+  const a = { room: 'cardiac_angio', patientsPerWeek: 5, patient: { x: 2, y: 2, z: 1 }, tube: { x: 2, y: 2, z: 0.5 } };
+  check(!D({ x: 2, y: 2, z: 2.5 }, a, noWalls).flags.includes('primary-direction'), '血管撮影（受像器が一次線を遮る前提）に印が付いた');
+}
+{ // 角度の補間の中間点
+  for (const r of ROOMS) check(rel(S(r, 112.5), (K47[r].side + K47[r].fb) / 2) < 1e-12, r + ': 112.5° が側方と前後方の中間でない');
 }
 
 // ---------------------------------------------------------------- 6. CT
@@ -192,6 +259,18 @@ const D = core.doseAtPoint;
   let threw = false;
   try { D({ x: 5, y: 3, z: 1 }, ct, wallX4(12, 'gypsum')); } catch (e) { threw = true; }
   check(threw, 'CT: 係数の無い材質（石こうボード）でエラーにならない');
+  threw = false;
+  try { D({ x: 5, y: 3, z: 1 }, Object.assign({}, ct, { kvp: undefined }), noWalls); } catch (e) { threw = true; }
+  check(threw, 'CT: 管電圧が空でも 120 kVp に黙って切り替わる');
+  const w140 = D({ x: 5, y: 3, z: 1.0 }, Object.assign({}, ct, { kvp: '140' }), wallX4(1.5));
+  check(rel(w140.total, r3.total * B(1.5, core.ARCHER_CT.lead['140'])) < 1e-9, 'CT: 140 kVp の透過係数が使われていない');
+  const headOnly = D({ x: 5, y: 3, z: 1.0 }, Object.assign({}, ct, { bodyPerWeek: 0, dlpBody: undefined }), noWalls);
+  check(rel(headOnly.total, 30 * 9e-5 * 1680 / 9) < 1e-9, 'CT: 頭部だけの計算');
+  threw = false;
+  try { D({ x: 5, y: 3, z: 1 }, Object.assign({}, ct, { dlpHead: NaN }), noWalls); } catch (e) { threw = true; }
+  check(threw, 'CT: DLP が NaN でもエラーにならない（黙って0）');
+  check(D({ x: 5, y: 3, z: 1.0 }, ct, wallX4(4)).flags.includes('extrapolated'), 'CT: 鉛 3 mm を超えても外挿の印が付かない');
+  check(!D({ x: 5, y: 3, z: 1.0 }, ct, wallX4(2)).flags.includes('extrapolated'), 'CT: 範囲内で外挿の印が付いた');
 }
 
 // ---------------------------------------------------------------- 7. 法令の参考線との比較（実効線量に換算）
@@ -204,6 +283,13 @@ const D = core.doseAtPoint;
   check(r.per3months_mSv > K * 13, '空気カーマのまま比べている（危険側）');
   check(rel(core.compareWithReference({ weekly_mGy: K, occupancy: 0.25 }).per3months_mSv, 1.433 * 13 * 0.25) < 1e-12, '滞在係数が掛かっていない');
   check(r.verdict === undefined && r.pass === undefined, '合否の判定を返している（D2: 判定はしない）');
+  check(rel(r.perYear_mSv, 1.433 * 52) < 1e-12, '1年（52週）の実効線量が合わない');
+  const rT = core.compareWithReference({ weekly_mGy: K, occupancy: 0.25 });
+  check(rel(rT.per3months_mSv_T1, 1.433 * 13) < 1e-12, '滞在係数を掛けない値（T=1）も返していない');
+  for (const bad of [null, '', NaN, 1.5, -0.1]) {
+    let threw = false; try { core.compareWithReference({ weekly_mGy: K, occupancy: bad }); } catch (e) { threw = true; }
+    check(threw, '滞在係数 ' + JSON.stringify(bad) + ' でエラーにならない（null は黙って0になる）');
+  }
 }
 
 // ---------------------------------------------------------------- 8. IVR 術者の水晶体
