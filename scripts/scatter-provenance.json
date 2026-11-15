@@ -1,0 +1,101 @@
+{
+  "_about": "散乱線シミュレータ（scatter-simulator）の係数と原典の照合表。P0（2026-11-16）。値を変えるときはここを先に直し、原典の頁を確認する。check: image＝PDFの頁画像を目で照合、text＝原典のテキスト（OCRでない）で照合、ocr＝OCRテキストのみ（画像未照合）",
+  "sources": {
+    "NCRP147": {
+      "title": "NCRP Report No. 147: Structural Shielding Design for Medical X-Ray Imaging Facilities (2004, rev. 2005)",
+      "url": "https://law.resource.org/pub/us/cfr/ibr/inc/ansi/ncrp.147.2020.pdf",
+      "note": "米国規則に参照取込みされた版を Public.Resource.Org が公開（Edict of government）。PDF は OCR 版のため、指数の欠落があり得る。数値は頁画像で照合する。pdf_page は PDF の通し頁、printed_page は本の頁"
+    },
+    "Hosono2017": {
+      "title": "A new shielding calculation method for X-ray computed tomography regarding scattered radiation. Radiol Phys Technol 10(2):213-226 (2017)",
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5487862/",
+      "doi": "10.1007/s12194-016-0387-9",
+      "license": "CC BY"
+    },
+    "Hulthen2024": {
+      "title": "Estimating brain and eye lens dose for the cardiologist in interventional cardiology—are the dose levels of concern? Br J Radiol (2024)",
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11817644/",
+      "doi": "10.1093/bjr/tqae089",
+      "license": "CC BY"
+    },
+    "IryoHoShikoKisoku": {
+      "title": "医療法施行規則（昭和二十三年厚生省令第五十号）e-Gov 法令データ（2026-10-01 施行版）",
+      "url": "https://laws.e-gov.go.jp/law/323M40000100050"
+    }
+  },
+  "secondary_kerma_per_patient_1m": {
+    "_about": "NCRP147 Table 4.7。未遮へいの二次線空気カーマ（mGy/患者、dS=dL=1 m）。side=90°散乱、fb=135°散乱（30°の前方散乱にも安全側として使う）。漏れ線は 150 kVp・3.3 mA で 0.876 mGy/h の前提",
+    "source": "NCRP147", "pdf_page": [57, 58], "printed_page": [46, 47], "check": "image",
+    "rows": {
+      "rad_room_all":        { "label": "Rad Room (all barriers)", "Wnorm_mAmin": 2.5, "F_cm2": 1000, "dF_m": 1.00, "leak": 5.3e-4, "side": 3.4e-2, "fb": 4.8e-2 },
+      "rad_room_chest_bucky":{ "label": "Rad Room (chest bucky)", "Wnorm_mAmin": 0.60, "F_cm2": 1535, "dF_m": 1.83, "leak": 3.9e-4, "side": 4.9e-3, "fb": 6.9e-3 },
+      "rad_room_floor":      { "label": "Rad Room (floor or other barriers)", "Wnorm_mAmin": 1.9, "F_cm2": 1000, "dF_m": 1.00, "leak": 1.4e-4, "side": 2.3e-2, "fb": 3.3e-2 },
+      "fluoro_tube_rf":      { "label": "Fluoroscopy Tube (R&F room)", "Wnorm_mAmin": 13, "F_cm2": 730, "dF_m": 0.80, "leak": 1.2e-2, "side": 3.1e-1, "fb": 4.4e-1 },
+      "rad_tube_rf":         { "label": "Rad Tube (R&F room)", "Wnorm_mAmin": 1.5, "F_cm2": 1000, "dF_m": 1.00, "leak": 9.4e-4, "side": 2.8e-2, "fb": 3.9e-2 },
+      "chest_room":          { "label": "Chest Room", "Wnorm_mAmin": 0.22, "F_cm2": 1535, "dF_m": 2.00, "leak": 3.8e-4, "side": 2.3e-3, "fb": 3.2e-3 },
+      "cardiac_angio":       { "label": "Cardiac Angiography", "Wnorm_mAmin": 160, "F_cm2": 730, "dF_m": 0.90, "leak": 8.8e-2, "side": 2.6, "fb": 3.7 },
+      "peripheral_angio":    { "label": "Peripheral Angiography (also Neuroangiography)", "Wnorm_mAmin": 64, "F_cm2": 730, "dF_m": 0.90, "leak": 3.4e-3, "side": 6.6e-1, "fb": 9.5e-1 }
+    },
+    "row_totals_for_check": {
+      "_about": "表の合計列（leak+side, leak+fb）。表の各値の読み取りの検算用",
+      "rad_room_all": [3.4e-2, 4.9e-2], "rad_room_chest_bucky": [5.3e-3, 7.3e-3], "rad_room_floor": [2.3e-2, 3.3e-2],
+      "fluoro_tube_rf": [3.2e-1, 4.6e-1], "rad_tube_rf": [2.9e-2, 4.0e-2], "chest_room": [2.7e-3, 3.6e-3],
+      "cardiac_angio": [2.7, 3.8], "peripheral_angio": [6.6e-1, 9.5e-1]
+    }
+  },
+  "secondary_transmission_archer": {
+    "_about": "NCRP147 Table C.1。二次線の広いビームの透過 B=[(1+β/α)e^{αγx}−β/α]^{−1/γ}（Equation A.2、x は mm）。[α, β, γ]（mm^-1, mm^-1, 無次元）。コンクリートは標準重量",
+    "source": "NCRP147", "pdf_page": 158, "printed_page": 147, "check": "image",
+    "lead": {
+      "rad_room_all": [2.298, 1.738e1, 6.193e-1], "rad_room_chest_bucky": [2.256, 1.380e1, 8.837e-1], "rad_room_floor": [2.513, 1.734e1, 4.994e-1],
+      "fluoro_tube_rf": [2.322, 1.291e1, 7.575e-1], "rad_tube_rf": [2.272, 1.360e1, 7.184e-1], "chest_room": [2.288, 9.848, 1.054],
+      "cardiac_angio": [2.354, 1.494e1, 7.481e-1], "peripheral_angio": [2.661, 1.954e1, 5.094e-1]
+    },
+    "concrete": {
+      "rad_room_all": [3.610e-2, 1.433e-1, 5.600e-1], "rad_room_chest_bucky": [3.560e-2, 1.079e-1, 7.705e-1], "rad_room_floor": [3.920e-2, 1.464e-1, 4.486e-1],
+      "fluoro_tube_rf": [3.630e-2, 9.360e-2, 5.955e-1], "rad_tube_rf": [3.560e-2, 1.114e-1, 6.620e-1], "chest_room": [3.640e-2, 6.590e-2, 7.543e-1],
+      "cardiac_angio": [3.710e-2, 1.067e-1, 5.733e-1], "peripheral_angio": [4.219e-2, 1.559e-1, 4.472e-1]
+    },
+    "gypsum": {
+      "rad_room_all": [1.380e-2, 5.700e-2, 7.937e-1], "rad_room_chest_bucky": [1.270e-2, 4.450e-2, 1.049], "rad_room_floor": [1.640e-2, 6.080e-2, 7.472e-1],
+      "fluoro_tube_rf": [1.330e-2, 4.100e-2, 9.566e-1], "rad_tube_rf": [1.290e-2, 4.570e-2, 9.355e-1], "chest_room": [1.300e-2, 2.970e-2, 1.195],
+      "cardiac_angio": [1.390e-2, 4.640e-2, 9.185e-1], "peripheral_angio": [1.747e-2, 6.422e-2, 7.299e-1]
+    },
+    "_pending": "鋼・板ガラス・木（PDF 159頁）は OCR のみで画像未照合。v1 で使うなら照合してから入れる"
+  },
+  "ct": {
+    "kappa": {
+      "_about": "NCRP147 Eq. 5.5a/b・5.10a/b。K1sec(head)=κhead×DLP、K1sec(body)=1.2×κbody×DLP（1 m、mGy）。1.2 は体幹ファントムで周辺の CTDI100 が中心の2倍と仮定したときの DLP（加重 CTDI 由来）から周辺値への換算。κ は小さな管球漏れ線を含む",
+      "head_per_cm": 9e-5, "body_per_cm": 3e-4, "body_factor": 1.2,
+      "source": "NCRP147", "pdf_page": [107, 109], "check": "text",
+      "check_note": "OCR 版では指数が欠落していたため、Hosono2017 本文（Eq.1-2、9×10^-5・3×10^-4・1.2）と Simpkin の AAPM 2004 講義資料で数値を相互確認。NCRP147 該当頁の画像照合は P1 開始前に行う"
+    },
+    "transmission_archer": {
+      "_about": "NCRP147 Fig. A.2（鉛）・Fig. A.3（コンクリート）の図中の当てはめ係数。CT の二次線。[α, β, γ]",
+      "lead": { "120": [2.246, 5.73, 0.547], "140": [2.009, 3.99, 0.342] },
+      "concrete": { "120": [0.0383, 0.0142, 0.658], "140": [0.0336, 0.0122, 0.519] },
+      "source": "NCRP147", "pdf_page": [134, 135], "printed_page": [123, 124], "check": "image"
+    },
+    "japanese_dlp_correction": {
+      "_about": "Hosono2017。日本の CT 室18台の1週間の実測。NCRP-DLP 法は遮へいの少ない方向で 3.4% 過小評価（計算/実測の最小 0.6）。実測からの提案: κ は NCRP-DLP の約2倍、ガントリ方向の減弱係数 0.1、寝台方向 0.4（実測平均はガントリ 0.036±0.014、寝台 0.24±0.061）",
+      "kappa_multiplier": 2, "gantry_reduction": 0.1, "couch_reduction": 0.4,
+      "measured_gantry_reduction": [0.036, 0.014], "measured_couch_reduction": [0.24, 0.061],
+      "source": "Hosono2017", "check": "text"
+    }
+  },
+  "ivr_operator_eye": {
+    "_about": "Hulthen2024。心臓 IVR 術者の水晶体の吸収線量/KAP（µGy/(Gy·cm²)）。天吊り防護板なし・下半身の防護のみで測定。左眼が高い",
+    "max_left_eye": 5.47, "weighted_eye": 3.39,
+    "source": "Hulthen2024", "check": "text",
+    "_pending": "投影別の値（Table 3）は v1 の術者モードで使う前に表全体を抽出して照合する"
+  },
+  "japan_law": {
+    "_about": "医療法施行規則（e-Gov、2026-10-01 施行版）。画面の参考線に使う（判定はしない）",
+    "check": "text", "source": "IryoHoShikoKisoku",
+    "leakage_diagnostic_mGy_per_h_at_1m": { "value": 1.0, "where": "第30条第1項第1号ホ（イ〜ニ以外のエックス線装置。エックス線管焦点から1 m）", "note": "NCRP147 の前提は 0.876 mGy/h（100 mR/h）" },
+    "controlled_area_boundary_mSv_per_3mo": { "value": 1.3, "where": "第30条の26第3項第1号（管理区域の外部放射線の線量）" },
+    "site_boundary_uSv_per_3mo": { "value": 250, "where": "第30条の26第4項（第30条の17の線量限度＝居住区域・敷地の境界）" },
+    "inpatient_room_mSv_per_3mo": { "value": 1.3, "where": "第30条の19（病室に入院している患者）" },
+    "eye_lens_mSv": { "per_year": 50, "per_5yr": 100, "where": "第30条の27第2項第1号（令和3年4月1日以後）" }
+  }
+}
