@@ -285,6 +285,84 @@ for (const p of pages) {
   }
 }
 
+// 8. サイトの基本部品: favicon・404 ページ・sitemap の日付
+// favicon が無いと、ブラウザのタブと Google の検索結果（モバイル）で既定の地球儀アイコンになる。
+const ICON_FILES = ['favicon.ico', 'apple-touch-icon.png', 'assets/icon-192.png'];
+for (const f of ICON_FILES) {
+  const fp = path.join(ROOT, f);
+  check(fs.existsSync(fp) && fs.statSync(fp).size > 100, f + ' が無い（python3 scripts/generate-favicon.py で生成）');
+}
+const ICON_LINKS = [
+  '<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">',
+  '<link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">',
+  '<link rel="apple-touch-icon" href="/apple-touch-icon.png">',
+];
+// /rousui/ は外部の原本から作る生成物なので head を手で直さない（ブラウザは /favicon.ico を自動で探す）
+const ICON_EXEMPT = ['/rousui/'];
+function checkIconLinks(html, label) {
+  // コメントアウトされた link を数えないよう、コメントを除いてから見る
+  const head = stripNonContent(html.slice(0, html.indexOf('</head>')));
+  for (const l of ICON_LINKS) check(head.split(l).length === 2, label + ': head に ' + l + ' が1個ではない');
+}
+for (const p of pages) if (!ICON_EXEMPT.includes(p.url)) checkIconLinks(p.html, p.url);
+
+// 404.html: GitHub Pages が存在しないURLに返すページ。相対パスだと深い階層のURLで壊れるので、リンクは / 始まりだけ。
+const nfPath = path.join(ROOT, '404.html');
+check(fs.existsSync(nfPath), '404.html が無い');
+if (fs.existsSync(nfPath)) {
+  const nf = fs.readFileSync(nfPath, 'utf8');
+  const nfBody = stripNonContent(nf);
+  check(/<meta\s+name="robots"\s+content="[^"]*\bnoindex\b[^"]*"/.test(nfBody), '404.html: noindex が無い');
+  check(!/<link rel="canonical"/.test(nf), '404.html: canonical を持たせない（どのURLでも同じ内容を返すため）');
+  check(/<title>[^<]+<\/title>/.test(nf), '404.html: title が無い');
+  check((nfBody.match(/<h1\b/gi) || []).length === 1, '404.html: h1 が1つではない');
+  checkIconLinks(nf, '404.html');
+  const refs = [...nf.matchAll(/\b(?:href|src)="([^"]+)"/g)].map(m => m[1]);
+  const internal = refs.filter(r => !/^(https?:|mailto:|#)/.test(r));
+  check(internal.length >= 5, '404.html: サイト内へのリンクが少ない（' + internal.length + '本）');
+  for (const r of internal) {
+    check(r.startsWith('/'), '404.html: 相対パスのリンク ' + r + '（/ 始まりにする）');
+    const clean = r.split('#')[0].split('?')[0];
+    const target = path.join(ROOT, clean.endsWith('/') ? clean + 'index.html' : clean);
+    check(fs.existsSync(target), '404.html: リンク先 ' + r + ' が無い');
+    const frag = r.includes('#') ? r.split('#')[1] : '';
+    if (frag && fs.existsSync(target)) {
+      check(new RegExp('\\bid="' + frag + '"').test(stripNonContent(fs.readFileSync(target, 'utf8'))),
+        '404.html: リンク ' + r + ' の飛び先（id="' + frag + '"）が無い');
+    }
+  }
+  for (const u of ['/', '/blog/', '/contact/']) check(internal.includes(u), '404.html: ' + u + ' へのリンクが無い');
+  // ツールの一覧は sitemap から導いたものと一致させる（ツールを足したのに 404 に載らない、を防ぐ）
+  for (const s of toolSlugs) check(internal.includes('/' + s + '/'), '404.html: ツール /' + s + '/ へのリンクが無い');
+}
+
+// sitemap の lastmod: 記事を足すと一覧（/blog/）の中身も変わる。
+// 一覧の日付が、一覧のカードに出ている最新の公開日より古ければ更新漏れ。
+// （記事ごとの lastmod とは比べない。既存記事の本文だけ直したときは、一覧の中身は変わらないため）
+const lastmods = new Map([...sitemap.matchAll(/<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/g)]
+  .map(m => [m[1].trim().replace(ORIGIN, ''), m[2].trim()]));
+for (const u of sitemapUrls) check(/^\d{4}-\d{2}-\d{2}$/.test(lastmods.get(u) || ''), 'sitemap: ' + u + ' の lastmod が無いか形式が違う');
+// 日本時間の日付で判定する（UTC だと、日本時間の0〜9時に当日の日付を入れたときに「未来」と誤判定する）
+const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+for (const [u, d] of lastmods) check(d <= today, 'sitemap: ' + u + ' の lastmod（' + d + '）が未来の日付');
+const blogIndex = byUrl.get('/blog/');
+const cardDates = blogIndex
+  ? [...stripNonContent(blogIndex.html).matchAll(/<div class="blog-card-meta">[\s\S]*?<span>(\d{4}-\d{2}-\d{2})<\/span>/g)].map(m => m[1]).sort()
+  : [];
+check(cardDates.length > 0, '/blog/: カードの公開日（.blog-card-meta の日付）が読めない');
+const newestCard = cardDates[cardDates.length - 1] || '';
+check((lastmods.get('/blog/') || '') >= newestCard,
+  'sitemap: /blog/ の lastmod（' + lastmods.get('/blog/') + '）が、一覧の最新の記事の公開日（' + newestCard + '）より古い');
+
+// 9. ファイル選択で選べる形式は、実際に読める形式だけにする
+// nps-calculator は常に parseDicom で読む（DICOM のみ）。accept に画像形式があると、選べるのに必ずエラーになる。
+{
+  const nps = byUrl.get('/nps-calculator/');
+  const acc = nps && (nps.html.match(/<input type="file" id="file-input" accept="([^"]*)"/) || [])[1];
+  check(typeof acc === 'string' && acc.length > 0, '/nps-calculator/: ファイル選択の accept が見つからない');
+  check(!/image\//.test(acc || ''), '/nps-calculator/: accept に画像形式（' + acc + '）がある。読み込みは DICOM のみ');
+}
+
 console.log('\n  pass ' + pass + ' / fail ' + fail);
 if (fail) { bad.forEach(b => console.log('  FAIL ' + b)); process.exit(1); }
 console.log('  すべてのチェックを通過しました。');
