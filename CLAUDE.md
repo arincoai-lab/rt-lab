@@ -25,8 +25,9 @@
   4. ルート `index.html`: 「最新記事」`.posts` の先頭に `.post-card` を追加し**最新3本に保つ**（タイトルは一覧と文字列一致）／「更新情報」`.news-list` にも1行追加
   5. 既存記事の `.blog-related` に新記事を足して**相互リンク**にする
   6. 誘導先ツールページに「📖 より詳しい解説」の逆リンクを追加（**PR記事＝アフィリエイトリンクを含む記事は例外で、ツールページから逆リンクを張らない**。「ツールのページに広告はありません」の表示と矛盾するため）
-  7. `sitemap.xml` に新記事の `<url>` を追加。**既存URLの `lastmod` は可視の内容が変わったときだけ動かす**（metaだけの変更で更新すると lastmod の信頼性が落ちる）
+  7. `sitemap.xml` に新記事の `<url>` を追加。**既存URLの `lastmod` は可視の内容が変わったときだけ動かす**（metaだけの変更で更新すると lastmod の信頼性が落ちる）。記事を足すと一覧の中身も変わるので、**`/blog/` の `lastmod` も新記事の日付にする**（古いままだと `test-onpage.js` が落ちる）
 - トップ（`index.html`）は `assets/blog.css` を読み込まない。blog.css は `*` リセット・`body`・`:root`（`--bg`/`--text`）をグローバルに定義しており、トップのインライン`<style>`より後に来ると配色が変わる。`.post-*` のスタイルはトップのインライン`<style>`側にある。
+- **favicon と 404 ページ**: 全ページの `<head>` に favicon の `<link>` 3行（`/favicon.ico`・`/assets/icon-192.png`・`/apple-touch-icon.png`）を置く。新しいページを作るときは既存ページからコピーする（`/rousui/` は生成物なので例外）。画像は `python3 scripts/generate-favicon.py` で作り直せる。`404.html`（ルート直下・noindex・リンクは `/` 始まりだけ）は GitHub Pages が存在しないURLに返すページで、**ツールを足したら 404.html のツール一覧にも1行足す**。どちらも抜けると `test-onpage.js` が落ちる。
 - 外部CDN（Chart.js / PapaParse）は SRI（`integrity` + `crossorigin`）付きで読み込む。
 - **ツールページの「関連ツール」ブロック**（`.rt-related`）は `scripts/generate-related.js` が `</main>` 直前に生成する。手で編集しない。ツールを足したら `TOOLS` / `RELATED` に追記して再生成する（関連は1ページ2〜3本・被リンク3本以上。研究公開の subtraction-demo のみ2本）。孤立・被リンク不足・ツールの登録漏れ・生成物のドリフトは `node scripts/test-onpage.js` が検知する。PR と main への push で `.github/workflows/test.yml`（Tests）が `test-onpage` / `test-drl-mapping` / `test-contrast-simulator` / 各生成スクリプトの `--check` を実行する。**失敗してもデプロイは止まらない（検知のみ）ので、ページを足す・リンクを変えたらコミット前にも手で実行し、PR の Tests が緑なのを確かめてからマージする。**
 - **可視FAQ**: FAQPage の JSON-LD を唯一の正とし、`scripts/generate-faq.js` がトップと6ツールページに可視ブロック（`.rt-faq`）を生成する（文面は JSON-LD のまま。JSON-LD を直したら再生成）。`drl-comparison`・`mri-simulator`・ブログ記事は手書きの可視FAQを持ち、`test-onpage.js` が「JSON-LD の質問と回答が可視テキストにある」ことを検査する。構造化データだけ先行させない
@@ -71,7 +72,7 @@
 ## 既知の課題
 
 - （解消 2026-10-03）FAQPage構造化データと可視コンテンツの不一致（トップ・`contrast-quick` / `ct-dose-estimator` / `egfr-checker` / `exposure-reference` / `mtf-calculator` / `nps-calculator` / `mri-simulator`）は、`scripts/generate-faq.js`（JSON-LD から可視ブロックを生成）と `mri-simulator` の手書き `<details>` の整合で解消した。再発は `node scripts/test-onpage.js` が検知する。**新規ツールページは FAQPage の JSON-LD を書き、`generate-faq.js` の `PAGES` に足して再生成する**（可視FAQは自動で付く）
-- **「対応している画像形式」まわりで未決の既存の食い違い（要判断）**: ①`nps-calculator` のファイル選択 `accept` に `image/png` が残っているが、読み込みは DICOM のみ（PNG を選ぶと「DICOM形式ではありません」。Chrome で再現済み）②`mtf-calculator` は TIFF 対応をうたう（meta description・og/twitter description・WebApplication JSON-LD・本文の紹介文・ドロップ領域の表示・`accept`・`.upload-hint`・エラーメッセージ・トップのFAQ）が、TIFF は `new Image()` で読むため Chromium（Chrome 154 で再現）では読み込めない。Safari は未検証。記載を外すか、デコーダを足して記載を真にするか
+- **「対応している画像形式」まわりで未決の既存の食い違い（要判断）**: ①（解消 2026-11-16）`nps-calculator` の `accept` から `image/png` を削除 ②`mtf-calculator` は TIFF 対応をうたう（meta description・og/twitter description・WebApplication JSON-LD・本文の紹介文・ドロップ領域の表示・`accept`・`.upload-hint`・エラーメッセージ・トップのFAQ）が、TIFF は `new Image()` で読むため Chromium（Chrome 154 で再現）では読み込めない。Safari は未検証。記載を外すか、デコーダを足して記載を真にするか
 
 ---
 
