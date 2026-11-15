@@ -25,8 +25,9 @@
   4. ルート `index.html`: 「最新記事」`.posts` の先頭に `.post-card` を追加し**最新3本に保つ**（タイトルは一覧と文字列一致）／「更新情報」`.news-list` にも1行追加
   5. 既存記事の `.blog-related` に新記事を足して**相互リンク**にする
   6. 誘導先ツールページに「📖 より詳しい解説」の逆リンクを追加（**PR記事＝アフィリエイトリンクを含む記事は例外で、ツールページから逆リンクを張らない**。「ツールのページに広告はありません」の表示と矛盾するため）
-  7. `sitemap.xml` に新記事の `<url>` を追加。**既存URLの `lastmod` は可視の内容が変わったときだけ動かす**（metaだけの変更で更新すると lastmod の信頼性が落ちる）
+  7. `sitemap.xml` に新記事の `<url>` を追加。**既存URLの `lastmod` は可視の内容が変わったときだけ動かす**（metaだけの変更で更新すると lastmod の信頼性が落ちる）。記事を足すと一覧の中身も変わるので、**`/blog/` の `lastmod` も新記事の日付にする**（古いままだと `test-onpage.js` が落ちる）
 - トップ（`index.html`）は `assets/blog.css` を読み込まない。blog.css は `*` リセット・`body`・`:root`（`--bg`/`--text`）をグローバルに定義しており、トップのインライン`<style>`より後に来ると配色が変わる。`.post-*` のスタイルはトップのインライン`<style>`側にある。
+- **favicon と 404 ページ**: 全ページの `<head>` に favicon の `<link>` 3行（`/favicon.ico`・`/assets/icon-192.png`・`/apple-touch-icon.png`）を置く。新しいページを作るときは既存ページからコピーする（`/rousui/` は生成物なので例外）。画像は `python3 scripts/generate-favicon.py` で作り直せる。`404.html`（ルート直下・noindex・リンクは `/` 始まりだけ）は GitHub Pages が存在しないURLに返すページで、**ツールを足したら 404.html のツール一覧にも1行足す**。どちらも抜けると `test-onpage.js` が落ちる。
 - 外部CDN（Chart.js / PapaParse）は SRI（`integrity` + `crossorigin`）付きで読み込む。
 - **ツールページの「関連ツール」ブロック**（`.rt-related`）は `scripts/generate-related.js` が `</main>` 直前に生成する。手で編集しない。ツールを足したら `TOOLS` / `RELATED` に追記して再生成する（関連は1ページ2〜3本・被リンク3本以上。研究公開の subtraction-demo のみ2本）。孤立・被リンク不足・ツールの登録漏れ・生成物のドリフトは `node scripts/test-onpage.js` が検知する。PR と main への push で `.github/workflows/test.yml`（Tests）が `test-onpage` / `test-drl-mapping` / `test-contrast-simulator` / 各生成スクリプトの `--check` を実行する。**失敗してもデプロイは止まらない（検知のみ）ので、ページを足す・リンクを変えたらコミット前にも手で実行し、PR の Tests が緑なのを確かめてからマージする。**
 - **可視FAQ**: FAQPage の JSON-LD を唯一の正とし、`scripts/generate-faq.js` がトップと6ツールページに可視ブロック（`.rt-faq`）を生成する（文面は JSON-LD のまま。JSON-LD を直したら再生成）。`drl-comparison`・`mri-simulator`・ブログ記事は手書きの可視FAQを持ち、`test-onpage.js` が「JSON-LD の質問と回答が可視テキストにある」ことを検査する。構造化データだけ先行させない
@@ -74,6 +75,10 @@
 rt-lab/
 ├── CLAUDE.md               ← このファイル
 ├── index.html              ← トップページ
+├── 404.html                ← 存在しないURLに返すページ（noindex）
+├── favicon.ico / apple-touch-icon.png  ← アイコン（scripts/generate-favicon.py で生成）
+├── blog/                   ← 解説記事（一覧 index.html ＋ 1記事1フォルダ）
+├── scripts/                ← 生成スクリプトと回帰テスト（非公開）
 ├── drl-comparison/
 │   └── index.html          ← DRL比較ツール（公開中）
 ├── mtf-calculator/
@@ -115,7 +120,7 @@ rt-lab/
 ## 既知の課題
 
 - （解消 2026-10-03）FAQPage構造化データと可視コンテンツの不一致（トップ・`contrast-quick` / `ct-dose-estimator` / `egfr-checker` / `exposure-reference` / `mtf-calculator` / `nps-calculator` / `mri-simulator`）は、`scripts/generate-faq.js`（JSON-LD から可視ブロックを生成）と `mri-simulator` の手書き `<details>` の整合で解消した。再発は `node scripts/test-onpage.js` が検知する。**新規ツールページは FAQPage の JSON-LD を書き、`generate-faq.js` の `PAGES` に足して再生成する**（可視FAQは自動で付く）
-- **「対応している画像形式」まわりで未決の既存の食い違い（要判断）**: ①`nps-calculator` のファイル選択 `accept` に `image/png` が残っているが、読み込みは DICOM のみ（PNG を選ぶと「DICOM形式ではありません」。Chrome で再現済み）②`mtf-calculator` は TIFF 対応をうたう（meta description・og/twitter description・WebApplication JSON-LD・本文の紹介文・ドロップ領域の表示・`accept`・`.upload-hint`・エラーメッセージ・トップのFAQ）が、TIFF は `new Image()` で読むため Chromium（Chrome 154 で再現）では読み込めない。Safari は未検証。記載を外すか、デコーダを足して記載を真にするか
+- **「対応している画像形式」まわりで未決の既存の食い違い（要判断）**: ①（解消 2026-11-16）`nps-calculator` の `accept` から `image/png` を削除 ②`mtf-calculator` は TIFF 対応をうたう（meta description・og/twitter description・WebApplication JSON-LD・本文の紹介文・ドロップ領域の表示・`accept`・`.upload-hint`・エラーメッセージ・トップのFAQ）が、TIFF は `new Image()` で読むため Chromium（Chrome 154 で再現）では読み込めない。Safari は未検証。記載を外すか、デコーダを足して記載を真にするか
 
 ---
 
@@ -156,3 +161,4 @@ rt-lab/
 | 2026-10-29 | 「施設の規模で変わること」の記事3本を公開（PR #27〜#29）: 働き方（`blog/rt-work-style-facility-size/`・提携承認前のため広告・PR表記なし版）、連載1 勉強法（`blog/rt-learning-facility-size/`）、連載2 研究（`blog/rt-research-facility-size/`）。筆者の実体験は本人の記述のみを掲載 |
 | 2026-11-01 | ブログ第5回「自施設の線量代表値の出し方｜DRLと比べるのは中央値、超えたときの見直し手順」公開（`blog/drl-facility-comparison/`・PR #26）。writer は 10-22 に Gate C 合格後の言い換えで IVR の調査頻度を誤り、修正上限で PR 停止→手動で修正。JRS の安全管理GL（2019年改訂・被ばく線量の評価は年1回以上）を併記し、独立レビュー3回を経てマージ |
 | 2026-11-01 | **造影CTシミュレータのページに診療に使えない旨と修正の告知を追加**。「スキャンタイミングの検討」「ご自身の責任」「患者情報を入力」など臨床での使用を前提に読める文言を、ページ・meta・構造化データ・関連リンク・contrast-quick の案内・トップから外した。2026年3月の公開時から10月8日までの誤りと修正日を `#correction-notice` に明記し、トップの更新情報にも掲載。文献の値 55〜64 HU は出典の段落をたどれないので告知には載せず、修正前後の計算値だけを書いた。消えないよう `test-contrast-simulator.js` に検査を追加 |
+| 2026-11-16 | **サイトの現状確認と、基本の抜け4点の修正**。現状: 回帰テスト3本・生成物の `--check` は全て緑、本番7URLは main とバイト一致、全32ページでリンク切れ0・h1は1個・375px幅の横はみ出し0。見つかった抜けと対応: ①**favicon が無かった**（`/favicon.ico` は本番で404、全ページに `rel="icon"` 無し。ブラウザのタブと Google のモバイル検索結果で既定のアイコンになる）→ `scripts/generate-favicon.py`（Pillow）で `favicon.ico`（16/32/48）・`apple-touch-icon.png`（180）・`assets/icon-192.png` を生成し、`/rousui/` を除く31ページの head に `<link>` 3行を追加 ②**独自の404ページが無かった**（GitHub の既定ページが出て、サイトに戻る導線が無い）→ `404.html` を新設（noindex・canonical なし・リンクは `/` 始まり・14ツールと記事一覧への導線）③**sitemap の lastmod が2件古かった**: `/contact/`（10/29 に要望フォームの節を追加したのに 03-27 のまま）と `/blog/`（11/12 に記事を足したのに 10-29 のまま）→ 実際の変更日に修正 ④`nps-calculator` のファイル選択 `accept` から `image/png` を削除（読み込みは常に `parseDicom`。PNG は選べるのに必ずエラーになっていた。既知の課題①を解消）。`test-onpage.js` に検査を追加（646→887チェック。先に98件の赤を確認してから実装）: アイコン3ファイルの存在、各ページの `<link>` 3行、404.html の noindex・リンク先の実在・全ツールへのリンク、sitemap の lastmod の形式・未来日付・`/blog/` が最新記事より古くないこと、NPS の accept。**やっていないこと**: `mtf-calculator` の TIFF（記載を外すか対応するかは未決）、解説の薄いツールページ4本（brain-diff・cnr-calculator・task-based-iq・cardiac-phase-optimizer は h2 が1個）の厚み付け、Search Console の最新数値の取得 |
