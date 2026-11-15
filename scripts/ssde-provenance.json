@@ -1,0 +1,26 @@
+{
+  "note": "ct-dose-estimator の SSDE 換算係数の照合表。値を変えるときは必ず原典 PDF と突き合わせ、このファイルと index.html の両方を直す（scripts/test-ct-dose.js が一致を検査する）。",
+  "verified": "2026-11-16",
+  "method": "aapm.org から PDF を取得し、pdftotext -layout で表と式を取り出して転記した。",
+  "body32": {
+    "source": "AAPM Report 204 (2011) Table 1D: Conversion factors as a function of effective diameter, 32 cm diameter body dosimetry phantom",
+    "url": "https://www.aapm.org/pubs/reports/RPT_204.pdf",
+    "fitCheck": { "a": 3.704369, "b": 0.03671937, "tolerance": 0.006, "comment": "同報告の指数近似 f = a·exp(−b·D)。表の値がこの式から外れていないことの二重の確認に使う" },
+    "pdfNote": "PDF の 41 cm の欄は「082」と印字されている（小数点の脱落）。前後の値 0.85・0.79 と近似式 0.822 から 0.82 と読んだ。",
+    "table": {
+      "8": 2.76, "9": 2.66, "10": 2.57, "11": 2.47, "12": 2.38, "13": 2.30, "14": 2.22, "15": 2.14,
+      "16": 2.06, "17": 1.98, "18": 1.91, "19": 1.84, "20": 1.78, "21": 1.71, "22": 1.65, "23": 1.59,
+      "24": 1.53, "25": 1.48, "26": 1.43, "27": 1.37, "28": 1.32, "29": 1.28, "30": 1.23, "31": 1.19,
+      "32": 1.14, "33": 1.10, "34": 1.06, "35": 1.02, "36": 0.99, "37": 0.95, "38": 0.92, "39": 0.88,
+      "40": 0.85, "41": 0.82, "42": 0.79, "43": 0.76, "44": 0.74, "45": 0.71
+    }
+  },
+  "head16": {
+    "source": "AAPM Report 293 (2019) Eq. 1: f_H16 = a·exp(−b·Dw)。Dw は水等価径（cm）、CTDIvol は 16 cm ファントム基準",
+    "url": "https://www.aapm.org/pubs/reports/RPT_293.pdf",
+    "a": 1.9852,
+    "b": 0.0486,
+    "dataRangeCm": [10.6, 20.2],
+    "rangeComment": "同報告のモンテカルロ計算に使われたファントムの Dw は 10.6 cm（生後7週）〜20.2 cm（ICRP 成人男性）。この外は外挿になる。"
+  }
+}
