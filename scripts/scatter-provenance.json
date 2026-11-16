@@ -385,6 +385,20 @@
       "gantry_reduction_proposed": 0.1,
       "couch_reduction_proposed": 0.4,
       "kappa_multiplier_proposed": 2
+    },
+    "default_dlp_table_5_2": {
+      "_about": "NCRP147 Table 5.2（施設の値が無いときの既定の DLP、mGy·cm）。脚注 c: 造影の前後撮影はその分を2倍。本文: 情報が無ければ全体の40%と仮定し平均1.4倍",
+      "head": 1200,
+      "chest": 525,
+      "abdomen": 625,
+      "pelvis": 500,
+      "body_average": 550,
+      "contrast_fraction_assumed": 0.4,
+      "average_multiplier": 1.4,
+      "source": "NCRP147",
+      "pdf_page": 110,
+      "printed_page": 99,
+      "check": "image"
     }
   },
   "ivr_operator_eye": {

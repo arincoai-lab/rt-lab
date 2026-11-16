@@ -306,5 +306,25 @@ const D = core.doseAtPoint;
   check(core.ivrEyeDose_uGy({ kap_Gycm2: 0, eye: 'left' }) === 0, 'IVR: KAP 0 で 0 でない');
 }
 
+// ---------------------------------------------------------------- 9. 画面の説明文の数値（照合表と一致）
+{
+  const html = fs.readFileSync(path.join(ROOT, 'scatter-simulator/index.html'), 'utf8');
+  const m = html.match(/var ROOM_HINTS = \{([\s\S]*?)\n    \};/);
+  check(!!m, 'index.html の ROOM_HINTS が見つからない');
+  if (m) for (const r of ROOMS) {
+    const h = (m[1].match(new RegExp(r + ": '([^']*)'")) || [])[1];
+    check(!!h, 'ROOM_HINTS に ' + r + ' が無い');
+    if (!h) continue;
+    const w = parseFloat((h.match(/([\d.]+) mA·min/) || [])[1]);
+    const dF = parseFloat((h.match(/（([\d.]+) m）/) || [])[1]);
+    check(w === K47[r].Wnorm_mAmin, r + ': 画面の mA·min が照合表と違う: ' + w);
+    check(dF === K47[r].dF_m, r + ': 画面の距離 dF が照合表と違う: ' + dF);
+  }
+  const d52 = prov.ct.default_dlp_table_5_2;
+  check(html.includes("dlpHead: " + d52.head) && html.includes("dlpBody: " + d52.body_average), 'CT のひな形の DLP が Table 5.2 と違う');
+  check(html.includes('頭部 1,200・体幹平均 550'), 'CT の DLP の説明が Table 5.2 と違う');
+  check(!/pass|合格|不合格|適合/.test((html.match(/<table class="probes"[\s\S]*?<\/table>/) || [''])[0]), '測定点の表に合否の言葉がある');
+}
+
 console.log(`\n${pass} pass, ${fail} fail`);
 process.exit(fail ? 1 : 0);

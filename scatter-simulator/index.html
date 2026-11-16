@@ -123,14 +123,18 @@
     .hidden { display: none !important; }
 
     .map-wrap { position: relative; width: 100%; }
-    #map { display: block; width: 100%; height: auto; border-radius: 8px; background: #fff; touch-action: none; cursor: crosshair; }
+    #map { display: block; width: 100%; height: auto; border-radius: 8px; background: #fff; touch-action: pan-y pinch-zoom; cursor: crosshair; }
     .map-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; margin-bottom: 8px; }
     .map-head .unit { font-size: 0.78rem; color: #4a5568; }
     #cursor-readout { font-size: 0.8rem; color: #1a365d; font-variant-numeric: tabular-nums; min-height: 1.4em; }
     .legend { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; font-size: 0.72rem; color: #4a5568; }
     .legend canvas { width: 220px; max-width: 60%; height: 12px; border-radius: 3px; border: 1px solid #e2e8f0; }
     .legend .sw { display: inline-block; width: 14px; height: 12px; vertical-align: middle; border: 1px solid #a0aec0; margin-right: 4px; }
-    .sw-primary { background: repeating-linear-gradient(45deg, #cbd5e0 0 3px, #fff 3px 6px); }
+    .sw-primary { background: conic-gradient(#cbd5e0 25%, #f7fafc 0 50%, #cbd5e0 0 75%, #f7fafc 0) 0 0 / 6px 6px; }
+    .sw-near { background: #fff; }
+    table.probes input { width: 4.2em; font-size: 0.74rem; padding: 2px 3px; border: 1px solid #cbd5e0; border-radius: 5px; text-align: right; font-family: inherit; }
+    .pos-row { display: flex; gap: 6px; align-items: center; }
+    .pos-row input { width: 4.6em !important; }
     .drag-hint { font-size: 0.74rem; color: #718096; margin-top: 6px; }
 
     table.probes { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 0.78rem; margin-top: 10px; font-variant-numeric: tabular-nums; }
@@ -141,6 +145,7 @@
     .table-scroll { overflow-x: auto; }
     .flag { display: inline-block; font-size: 0.66rem; border-radius: 999px; padding: 0 6px; margin: 2px 2px 0 0; background: #fefcbf; color: #744210; border: 1px solid #f6e05e; white-space: nowrap; }
     .flag.primary { background: #edf2f7; color: #2d3748; border-color: #a0aec0; }
+    .flag.inside { background: #ebf8ff; color: #2a4365; border-color: #90cdf4; white-space: normal; }
     .refbox { font-size: 0.78rem; color: #4a5568; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-top: 12px; }
     .refbox ul { margin: 6px 0 0 1.2em; }
     .refbox b { color: #1a365d; }
@@ -186,14 +191,17 @@
           <div class="field"><label for="patients">患者数（人/週）</label><input type="number" id="patients" min="0" step="1"></div>
           <div class="field"><label for="tube-z">管球の高さ（m）</label><input type="number" id="tube-z" min="0" max="3" step="0.05"><span class="hint">患者の真下＝アンダーチューブ、真上＝オーバーチューブ。平面上の位置は地図でドラッグ</span></div>
           <div class="field"><label for="patient-z">照射中心の高さ（m）</label><input type="number" id="patient-z" min="0" max="3" step="0.05"></div>
+          <div class="field"><label>患者の位置 x, y（m）</label><span class="pos-row"><input type="number" id="patient-x" step="0.05" aria-label="患者の位置 x（m）"><input type="number" id="patient-y" step="0.05" aria-label="患者の位置 y（m）"></span></div>
+          <div class="field"><label>管球の位置 x, y（m）</label><span class="pos-row"><input type="number" id="tube-x" step="0.05" aria-label="管球の位置 x（m）"><input type="number" id="tube-y" step="0.05" aria-label="管球の位置 y（m）"></span><span class="hint">位置は部屋の左上の角が (0, 0)。地図でのドラッグでも動かせる</span></div>
         </div>
         <div id="ct-fields" class="hidden">
           <div class="field"><label for="ct-kvp">管電圧</label><select id="ct-kvp"><option value="120">120 kV</option><option value="140">140 kV</option></select></div>
           <div class="field"><label for="ct-head">頭部（件/週）</label><input type="number" id="ct-head" min="0" step="1"></div>
           <div class="field"><label for="ct-dlp-head">頭部の DLP（mGy·cm）</label><input type="number" id="ct-dlp-head" min="0" step="10"></div>
           <div class="field"><label for="ct-body">体幹（件/週）</label><input type="number" id="ct-body" min="0" step="1"></div>
-          <div class="field"><label for="ct-dlp-body">体幹の DLP（mGy·cm）</label><input type="number" id="ct-dlp-body" min="0" step="10"><span class="hint">既定値は NCRP 147 Table 5.2（頭部 1,200・体幹 550）。造影の前後撮影はその分を足す。選んだ管電圧での値を入れる</span></div>
+          <div class="field"><label for="ct-dlp-body">体幹の DLP（mGy·cm）</label><input type="number" id="ct-dlp-body" min="0" step="10"><span class="hint">既定値は NCRP 147 Table 5.2（頭部 1,200・体幹平均 550）。造影の前後で2回撮る検査はその分 DLP を足す（NCRP は情報が無ければ全体の40%と仮定し平均1.4倍）。選んだ管電圧での値を入れる</span></div>
           <div class="field"><label for="iso-z">アイソセンタの高さ（m）</label><input type="number" id="iso-z" min="0" max="3" step="0.05"></div>
+          <div class="field"><label>アイソセンタの位置 x, y（m）</label><span class="pos-row"><input type="number" id="iso-x" step="0.05" aria-label="アイソセンタの位置 x（m）"><input type="number" id="iso-y" step="0.05" aria-label="アイソセンタの位置 y（m）"></span></div>
         </div>
 
         <h3>部屋と壁</h3>
@@ -208,8 +216,8 @@
 
         <h3>見る高さと計算の方法</h3>
         <div class="field"><label for="eval-z">地図の高さ（m）</label><input type="number" id="eval-z" min="0" max="3" step="0.05"><span class="hint">床から 1.0 m＝胴、1.55 m＝目の高さの目安</span></div>
-        <div class="field"><label for="leak-limit">漏れ線の上限</label><select id="leak-limit"><option value="japan">日本の法令 1.0 mGy/h</option><option value="ncrp">NCRP 147 の前提 0.876 mGy/h</option></select></div>
-        <div class="field"><label for="dist-mode">距離のとり方</label><select id="dist-mode"><option value="separate">散乱線と漏れ線で別々</option><option value="ncrp">NCRP の簡略化（短いほうにそろえる）</option></select><span class="hint">NCRP の簡略化は壁の向こうを安全側に見積もる方法。部屋の中では管球のまわりが実際より高く出る</span></div>
+        <div id="xray-method"><div class="field"><label for="leak-limit">漏れ線の上限</label><select id="leak-limit"><option value="japan">日本の法令 1.0 mGy/h</option><option value="ncrp">NCRP 147 の前提 0.876 mGy/h</option></select></div>
+        <div class="field"><label for="dist-mode">距離のとり方</label><select id="dist-mode"><option value="separate">散乱線と漏れ線で別々</option><option value="ncrp">NCRP の簡略化（短いほうにそろえる）</option></select><span class="hint">NCRP の簡略化は壁の向こうを安全側に見積もる方法。部屋の中では管球のまわりが実際より高く出る。測定点の表には両方の値を並べる</span></div></div>
         <div class="checkline"><input type="checkbox" id="obliquity"><label for="obliquity">壁を斜めに通る分を厚くみなす（上限2倍）</label></div>
       </div>
 
@@ -219,19 +227,21 @@
           <span class="unit">単位: mGy/週（空気カーマ）・高さ <span id="eval-z-label"></span> m</span>
         </div>
         <div class="map-wrap"><canvas id="map" aria-label="部屋の線量分布の地図" role="img"></canvas></div>
-        <div id="cursor-readout" aria-live="polite">地図の上にカーソルを置くか、タップすると、その点の値を表示します。</div>
+        <div id="cursor-readout">地図の上にカーソルを置くか、タップすると、その点の値を表示します。</div>
         <div class="legend">
           <span>低い</span><canvas id="legend-bar" width="220" height="12"></canvas><span>高い</span>
           <span id="legend-range"></span>
+          <span>範囲外は端の色</span>
           <span><span class="sw sw-primary"></span>一次線の方向（計算に含まない）</span>
+          <span><span class="sw sw-near"></span>線源から 0.3 m 以内（表示しない）</span>
         </div>
-        <p class="drag-hint">地図の上で、患者（●）・管球（■）・測定点（A〜C）・仕切り壁の両端をドラッグできます。細い線は1桁ごとの等線量線です。</p>
+        <p class="drag-hint">地図の上で、患者（●）・管球（■）・測定点（A〜C）・仕切り壁の両端をドラッグできます（位置は入力欄でも変えられます）。細い線は1桁ごとの等線量線です。</p>
         <div id="error-box" class="hidden" role="alert"></div>
 
         <h2 style="margin-top:14px">測定点の値</h2>
         <div class="table-scroll">
           <table class="probes" id="probe-table">
-            <thead><tr><th>測定点</th><th>空気カーマ<br>mGy/週</th><th>うち漏れ線</th><th>滞在係数</th><th>実効線量<br>mSv/3か月</th><th>同（滞在係数1）<br>mSv/3か月</th></tr></thead>
+            <thead><tr><th>測定点</th><th>位置 x, y（m）</th><th>空気カーマ<br>mGy/週</th><th>同・NCRP の<br>簡略化</th><th>滞在係数</th><th>実効線量<br>mSv/3か月</th><th>同（滞在係数1）<br>mSv/3か月</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -242,7 +252,7 @@
             <li>病院内の人が居住する区域・敷地の境界: 3か月あたり 250 µSv（同第4項）</li>
             <li>病室の入院患者: 3か月あたり 1.3 mSv（第30条の19）</li>
           </ul>
-          <p style="margin-top:6px">空気カーマ（mGy）に換算係数 1.433 Sv/Gy（厚生労働省通知の最大値）を掛け、3か月＝13週として実効線量にしています。合否の判定には使えません。どの区域に滞在係数を掛けてよいかは確認できていないため、掛けない値も並べています。</p>
+          <p style="margin-top:6px">空気カーマ（mGy）に換算係数 1.433 Sv/Gy（厚生労働省通知の最大値）を掛け、3か月＝13週として実効線量にしています。実効線量は、距離のとり方の2通り（別々・NCRP の簡略化）のうち大きいほうで計算します。合否の判定には使えません。どの区域に滞在係数を掛けてよいかは確認できていないため、掛けない値も並べています。部屋の中の点は、防護衣を考慮しない空間線量を換算したもので、従事者の実効線量ではなく、上の参考線の対象でもありません。</p>
         </div>
       </div>
     </div>
@@ -254,9 +264,9 @@
         <p>NCRP Report 147 は、患者を散乱線の出どころ、管球を漏れ線の出どころとみなし、距離の2乗で弱まる分と、壁を通るときの透過を掛け合わせて線量を見積もります。このシミュレータは、その考え方を部屋の見取り図の上で点ごとに計算しています。</p>
         <div class="eq">点の線量（mGy/週）＝ 患者数 ×〔散乱線（1 m・1患者あたり）÷ 距離² × 壁の透過 ＋ 漏れ線（1 m・1患者あたり）÷ 距離² × 壁の透過〕</div>
         <ul>
-          <li><b>1 m・1患者あたりの値</b>: NCRP 147 Table 4.7 の、部屋の種類ごとの値（米国 AAPM の調査による平均的な撮影条件・照射野込み）。散乱線は、一次線に対して横（90°）と前後（135°）の値を使い、その間は角度でなめらかにつないでいます（30° の前方にも 135° の値を使うのは NCRP と同じ安全側の扱い）。</li>
+          <li><b>1 m・1患者あたりの値</b>: NCRP 147 Table 4.7 の、部屋の種類ごとの値（米国 AAPM の調査による平均的な撮影条件・照射野込み）。散乱線は、一次線に対して横（90°）と前後（135°）の値を使い、その間は角度でなめらかにつないでいます（30° の前方にも、やや高い 135° の値を使うのは、Table 4.7 の脚注にある NCRP の安全側の扱い）。</li>
           <li><b>壁の透過</b>: Archer の式 <code>B=[(1+β/α)e^(αγx)−β/α]^(−1/γ)</code> と NCRP 147 Table C.1 の係数。NCRP と同じく、壁には垂直に入るとみなします。</li>
-          <li><b>CT</b>: 1 m の空気カーマ ＝ κ × DLP（頭部 κ=9×10⁻⁵ cm⁻¹、体幹 κ=3×10⁻⁴ cm⁻¹ に 1.2 を掛ける。NCRP 147 Eq. 5.10）。散乱は等方とし、壁の透過は CT 用の係数（Fig. A.2・A.3）を使います。</li>
+          <li><b>CT</b>: 1 m の空気カーマ ＝ κ × DLP（κ は小さな漏れ線を含む）（頭部 κ=9×10⁻⁵ cm⁻¹、体幹 κ=3×10⁻⁴ cm⁻¹ に 1.2 を掛ける。NCRP 147 Eq. 5.10）。散乱は等方とし、壁の透過は CT 用の係数（Fig. A.2・A.3）を使います。</li>
           <li><b>実効線量への換算</b>: 空気カーマに 1.433 Sv/Gy を掛けます（医薬発第188号を改正した医政発0331第16号。80 kV を超える装置の最大値）。</li>
         </ul>
       </div>
@@ -268,7 +278,7 @@
           <li><b>CT の散乱は等方として計算しています。</b>実際にはガントリの面の方向で大きく減り、面から約30°で最大になります。日本の CT 室での実測では、NCRP の方法が実測を下回った方向が全142点中3点あり、そのうち最も大きく下回った点では実測の 0.6 倍でした（Hosono ら 2017）。</li>
           <li><b>患者のすぐそば（約1 m 以内）は、点の近似が粗くなります。</b>0.3 m より近い点は 0.3 m として計算します。血管撮影の術者の目の線量は、面積線量（KAP）あたりの係数を使う別の計算が適しています（今後追加予定）。</li>
           <li><b>天井・床のスラブは計算に入れていません。</b>壁は床から天井までの面として扱います。</li>
-          <li><b>距離のとり方</b>: 既定では、散乱線は患者から、漏れ線は管球からの距離で計算します。NCRP 147 は壁の計算で両方を短いほうの距離にそろえる安全側の簡略化を使っており、「距離のとり方」で切り替えられます。壁の向こうの点では、簡略化のほうが最大で数割高くなることがあります。</li>
+          <li><b>距離のとり方</b>: 既定では、散乱線は患者から、漏れ線は管球からの距離で計算します。NCRP 147 は壁の計算で両方を短いほうの距離にそろえる安全側の簡略化を使っており、「距離のとり方」で切り替えられます。管球と患者が離れている部屋（胸部撮影室など）では、壁の向こうの点で簡略化のほうが2倍強高くなります（胸部撮影室のひな形の操作室で約2.2倍）。測定点の表には両方を並べ、実効線量は大きいほうで計算します。</li>
           <li><b>透過の式は、原典の図の厚さの範囲</b>（鉛 3 mm・コンクリート 300 mm・石こうボード 200 mm まで）で当てはめたものです。それを超える厚さでは外挿になります。</li>
         </ul>
       </div>
@@ -421,10 +431,7 @@
 
     function writeInputs() {
       roomSel.value = state.room;
-      $('room-hint').textContent = ROOM_HINTS[state.room] || '';
-      var isCT = state.room === 'ct';
-      $('xray-fields').classList.toggle('hidden', isCT);
-      $('ct-fields').classList.toggle('hidden', !isCT);
+      writePositions();
       $('patients').value = state.patients;
       $('tube-z').value = state.tube.z;
       $('patient-z').value = state.patient.z;
@@ -436,9 +443,26 @@
         $('wall-' + sd[0] + '-mat').value = w.material; $('wall-' + sd[0] + '-mm').value = w.mm; $('wall-' + sd[0] + '-lead').value = w.lead;
       });
       $('partition-on').checked = state.partition.on; $('partition-mm').value = state.partition.mm;
-      $('partition-fields').classList.toggle('hidden', !state.partition.on);
-      $('eval-z').value = state.evalZ; $('eval-z-label').textContent = state.evalZ;
+      $('eval-z').value = state.evalZ;
       $('leak-limit').value = state.leakLimit; $('dist-mode').value = state.distMode; $('obliquity').checked = state.obliquity;
+      updateVisibility();
+    }
+
+    // 表示の切り替えだけ（入力欄の値は書き戻さない。打っている途中の「0.」などを壊さないため）
+    function updateVisibility() {
+      var isCT = state.room === 'ct';
+      $('room-hint').textContent = ROOM_HINTS[state.room] || '';
+      $('xray-fields').classList.toggle('hidden', isCT);
+      $('xray-method').classList.toggle('hidden', isCT);
+      $('ct-fields').classList.toggle('hidden', !isCT);
+      $('partition-fields').classList.toggle('hidden', !state.partition.on);
+      $('eval-z-label').textContent = $('eval-z').value || '—';
+      Array.prototype.forEach.call(document.querySelectorAll('#wall-grid select option[value=gypsum]'), function (o) { o.disabled = isCT; });
+    }
+    function writePositions() {
+      $('patient-x').value = state.patient.x; $('patient-y').value = state.patient.y;
+      $('tube-x').value = state.tube.x; $('tube-y').value = state.tube.y;
+      $('iso-x').value = state.iso.x; $('iso-y').value = state.iso.y;
     }
 
     // 入力欄 → state。空欄・不正な値はそのまま渡し、計算側の検査でエラーを表示する（黙って0にしない）
@@ -447,16 +471,22 @@
       var prevRoom = state.room;
       state.room = roomSel.value;
       if ((prevRoom === 'ct') !== (state.room === 'ct')) {
-        if (state.room === 'ct') state.iso.x = state.patient.x, state.iso.y = state.patient.y;
-        else state.patient.x = state.iso.x, state.patient.y = state.iso.y, state.tube.x = state.iso.x, state.tube.y = state.iso.y;
+        if (state.room === 'ct') { state.iso.x = state.patient.x; state.iso.y = state.patient.y; }
+        else { // 管球と患者の相対位置は保つ
+          var dx = state.tube.x - state.patient.x, dy = state.tube.y - state.patient.y;
+          state.patient.x = state.iso.x; state.patient.y = state.iso.y; state.tube.x = state.iso.x + dx; state.tube.y = state.iso.y + dy;
+        }
+        writePositions();
+      } else {
+        state.patient.x = readNum('patient-x'); state.patient.y = readNum('patient-y');
+        state.tube.x = readNum('tube-x'); state.tube.y = readNum('tube-y');
+        state.iso.x = readNum('iso-x'); state.iso.y = readNum('iso-y');
       }
       state.patients = readNum('patients');
       state.tube.z = readNum('tube-z'); state.patient.z = readNum('patient-z');
       state.kvp = $('ct-kvp').value; state.head = readNum('ct-head'); state.dlpHead = readNum('ct-dlp-head');
       state.body = readNum('ct-body'); state.dlpBody = readNum('ct-dlp-body'); state.iso.z = readNum('iso-z');
-      var W = readNum('room-w'), D = readNum('room-d');
-      if (W >= 2 && W <= 15) state.W = W;
-      if (D >= 2 && D <= 15) state.D = D;
+      state.W = readNum('room-w'); state.D = readNum('room-d');
       state.ceiling = readNum('ceiling');
       SIDES.forEach(function (sd) {
         state.walls[sd[0]] = { material: $('wall-' + sd[0] + '-mat').value, mm: readNum('wall-' + sd[0] + '-mm'), lead: readNum('wall-' + sd[0] + '-lead') };
@@ -465,7 +495,24 @@
       state.evalZ = readNum('eval-z');
       state.leakLimit = $('leak-limit').value; state.distMode = $('dist-mode').value; state.obliquity = $('obliquity').checked;
       Array.prototype.forEach.call(presetBox.children, function (b) { b.setAttribute('aria-pressed', 'false'); });
-      writeInputs();
+      updateVisibility();
+    }
+
+    // 画面側の入力の検査。範囲外・空欄は黙って直さずエラーにする
+    function validate() {
+      function rng(v, lo, hi, name) { if (typeof v !== 'number' || !isFinite(v) || v < lo || v > hi) throw new Error(name + 'は ' + lo + '〜' + hi + ' の範囲で入れてください'); }
+      rng(state.W, 2, 15, '部屋の幅'); rng(state.D, 2, 15, '部屋の奥行き'); rng(state.ceiling, 2, 6, '天井の高さ');
+      rng(state.evalZ, 0, state.ceiling, '地図の高さ（m）');
+      var isCT = state.room === 'ct';
+      if (isCT) rng(state.iso.z, 0, state.ceiling, 'アイソセンタの高さ（m）');
+      else { rng(state.patient.z, 0, state.ceiling, '照射中心の高さ（m）'); rng(state.tube.z, 0, state.ceiling, '管球の高さ（m）'); }
+      SIDES.forEach(function (sd) {
+        var w = state.walls[sd[0]];
+        rng(w.mm, 0, 1000, sd[1] + 'の壁の厚さ（mm）'); rng(w.lead, 0, 20, sd[1] + 'の壁の鉛の内張り（mm）');
+        if (isCT && w.material === 'gypsum') throw new Error('CT の二次線には石こうボードの透過の係数がありません（NCRP 147 は鉛とコンクリートのみ）。' + sd[1] + 'の壁の材質を変えてください');
+      });
+      if (state.partition.on) rng(state.partition.mm, 0, 20, '仕切り壁の鉛当量（mm）');
+      state.probes.forEach(function (pr) { rng(pr.x, -MARGIN, state.W + MARGIN, pr.name + 'の x'); rng(pr.y, -MARGIN, state.D + MARGIN, pr.name + 'の y'); });
     }
     $('controls').addEventListener('input', function () { readInputs(); schedule(); });
     $('controls').addEventListener('change', function () { readInputs(); schedule(); });
@@ -521,7 +568,8 @@
 
     function resize() {
       var cssW = canvas.parentElement.clientWidth;
-      var worldW = state.W + 2 * MARGIN, worldH = state.D + 2 * MARGIN;
+      var Wv = state.W >= 2 && state.W <= 15 ? state.W : 5, Dv = state.D >= 2 && state.D <= 15 ? state.D : 6;
+      var worldW = Wv + 2 * MARGIN, worldH = Dv + 2 * MARGIN;
       var scale = cssW / worldW;
       var cssH = Math.min(worldH * scale, 720);
       scale = Math.min(scale, cssH / worldH);
@@ -535,7 +583,13 @@
     function toWorld(px, py) { return [(px - view.offX) / view.scale + view.x0, py / view.scale + view.y0]; }
 
     var pending = false;
-    function schedule() { if (!pending) { pending = true; requestAnimationFrame(function () { pending = false; render(); }); } }
+    function schedule() {
+      if (pending) return;
+      pending = true;
+      var run = function () { if (pending) { pending = false; render(); } };
+      requestAnimationFrame(run);
+      setTimeout(run, 120); // 画面が隠れていて requestAnimationFrame が止まっているときの予備
+    }
 
     function showError(msg) {
       var box = $('error-box');
@@ -548,15 +602,25 @@
       var dpr = view.dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      var walls = buildWalls(), setup = buildSetup(), z = state.evalZ;
+      var walls, setup, z = state.evalZ;
       try {
-        C.doseAtPoint({ x: state.W / 2 + 0.01, y: state.D / 2 + 0.37, z: z }, setup, walls); // 入力の検査を先に1回
+        validate();
+        walls = buildWalls(); setup = buildSetup();
+        renderGrid(setup, walls, z);
+        updateProbes(setup, walls);
         showError(null);
       } catch (e) {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         showError(e.message);
-        drawRoom(); drawMarkers(); updateProbes(null);
+        updateProbes(null);
+        if (isFinite(state.W) && isFinite(state.D)) { try { drawRoom(); drawMarkers(); } catch (e2) { /* 部屋も描けない入力 */ } }
         return;
       }
+      drawRoom(); drawMarkers();
+    }
+
+    function renderGrid(setup, walls, z) {
       // 格子ごとに計算
       var cell = Math.max(4, Math.round(view.w / 140));
       var nx = Math.ceil(view.w / cell), ny = Math.ceil(view.h / cell);
@@ -585,8 +649,6 @@
         if (j3 + 1 < ny && !kind[k3 + nx] && Math.floor(logs[k3 + nx]) !== d0) { var yy = (j3 + 1) * cell; ctx.moveTo(view.offX + i3 * cell, yy); ctx.lineTo(view.offX + (i3 + 1) * cell, yy); }
       }
       ctx.stroke();
-      drawRoom(); drawMarkers();
-      updateProbes(setup, walls);
     }
 
     function drawRoom() {
@@ -645,29 +707,42 @@
       return v.toExponential(1).replace('e', '×10^');
     }
     function flagLabels(flags) {
-      var map = { near: '0.3 m より近い', 'primary-direction': '一次線の方向', 'beyond-ceiling': '天井より上を通る線', extrapolated: '厚さが外挿の範囲' };
-      return flags.map(function (f) { return '<span class="flag' + (f === 'primary-direction' ? ' primary' : '') + '">' + map[f] + '</span>'; }).join('');
+      var map = { near: '0.3 m より近い', 'primary-direction': '一次線の方向', 'beyond-ceiling': '天井より上を通る線', extrapolated: '厚さが外挿の範囲',
+        inside: '部屋の中: 防護衣を考慮しない空間線量。参考線の対象外' };
+      return flags.map(function (f) { return '<span class="flag' + (f === 'primary-direction' ? ' primary' : f === 'inside' ? ' inside' : '') + '">' + map[f] + '</span>'; }).join('');
     }
+    function isInside(pr) { return pr.x > 0 && pr.x < state.W && pr.y > 0 && pr.y < state.D; }
     var tbody = document.querySelector('#probe-table tbody');
     function updateProbes(setup, walls) {
       var rows = state.probes.map(function (pr, i) {
         var tSel = '<select data-probe="' + i + '" aria-label="' + pr.name + 'の滞在係数">' + T_OPTIONS.map(function (o) {
           return '<option value="' + o[0] + '"' + (o[0] === pr.T ? ' selected' : '') + '>' + o[1] + '</option>';
         }).join('') + '</select>';
-        if (!setup) return '<tr><td>' + pr.name + '</td><td>—</td><td>—</td><td>' + tSel + '</td><td>—</td><td>—</td></tr>';
-        var r = C.doseAtPoint({ x: pr.x, y: pr.y, z: state.evalZ }, setup, walls);
+        var pos = '<span class="pos-row"><input type="number" step="0.05" data-probe-x="' + i + '" value="' + pr.x + '" aria-label="' + pr.name + 'の x（m）">' +
+          '<input type="number" step="0.05" data-probe-y="' + i + '" value="' + pr.y + '" aria-label="' + pr.name + 'の y（m）"></span>';
+        if (!setup) return '<tr><td>' + pr.name + '</td><td>' + pos + '</td><td>—</td><td>—</td><td>' + tSel + '</td><td>—</td><td>—</td></tr>';
+        var pt = { x: pr.x, y: pr.y, z: state.evalZ };
+        var r = C.doseAtPoint(pt, setup, walls);
+        var rN = setup.modality === 'ct' ? r : C.doseAtPoint(pt, Object.assign({}, setup, { distanceMode: 'ncrp' }), walls);
+        var rS = setup.modality === 'ct' ? r : C.doseAtPoint(pt, Object.assign({}, setup, { distanceMode: 'separate' }), walls);
+        var flags = r.flags.slice(); if (isInside(pr)) flags.push('inside');
+        var name = pr.name + (flags.length ? '<br>' + flagLabels(flags) : '');
         if (r.flags.indexOf('primary-direction') >= 0) {
-          return '<tr><td>' + pr.name + '<br>' + flagLabels(r.flags) + '</td><td colspan="2">一次線を含まないため表示しません</td><td>' + tSel + '</td><td>—</td><td>—</td></tr>';
+          return '<tr><td>' + name + '</td><td>' + pos + '</td><td colspan="2">一次線を含まないため表示しません</td><td>' + tSel + '</td><td>—</td><td>—</td></tr>';
         }
-        var cmp = C.compareWithReference({ weekly_mGy: r.total, occupancy: pr.T });
-        return '<tr><td>' + pr.name + (r.flags.length ? '<br>' + flagLabels(r.flags) : '') + '</td><td>' + fmt(r.total) + '</td><td>' + fmt(r.leakage) +
+        var cmp = C.compareWithReference({ weekly_mGy: Math.max(rN.total, rS.total), occupancy: pr.T });
+        return '<tr><td>' + name + '</td><td>' + pos + '</td><td>' + fmt(rS.total) + '</td><td>' + (setup.modality === 'ct' ? '（同じ）' : fmt(rN.total)) +
           '</td><td>' + tSel + '</td><td>' + fmt(cmp.per3months_mSv) + '</td><td>' + fmt(cmp.per3months_mSv_T1) + '</td></tr>';
       });
       tbody.innerHTML = rows.join('');
     }
     tbody.addEventListener('change', function (e) {
       var i = e.target.getAttribute('data-probe');
-      if (i !== null) { state.probes[+i].T = Number(e.target.value); schedule(); }
+      var ix = e.target.getAttribute('data-probe-x'), iy = e.target.getAttribute('data-probe-y');
+      if (i !== null) state.probes[+i].T = Number(e.target.value);
+      if (ix !== null) state.probes[+ix].x = e.target.value === '' ? NaN : Number(e.target.value);
+      if (iy !== null) state.probes[+iy].y = e.target.value === '' ? NaN : Number(e.target.value);
+      schedule();
       e.stopPropagation();
     });
 
@@ -703,19 +778,25 @@
     });
     canvas.addEventListener('pointermove', function (e) {
       var p = evtPos(e);
-      if (drag) { moveHandle(drag, clampWorld.apply(null, toWorld(p[0], p[1]))); schedule(); }
+      if (drag) { moveHandle(drag, clampWorld.apply(null, toWorld(p[0], p[1]))); writePositions(); schedule(); }
       else canvas.style.cursor = hit(p[0], p[1]) ? 'grab' : 'crosshair';
       readout(p);
     });
+    // スマートフォン: 動かせる印に触れたときだけページのスクロールを止める（それ以外は地図の上でもスクロールできる）
+    canvas.addEventListener('touchstart', function (e) {
+      var r = canvas.getBoundingClientRect(), t = e.touches[0];
+      if (t && hit(t.clientX - r.left, t.clientY - r.top)) e.preventDefault();
+    }, { passive: false });
     canvas.addEventListener('pointerup', function () { drag = null; });
     canvas.addEventListener('pointercancel', function () { drag = null; });
     function readout(p) {
       var w = toWorld(p[0], p[1]), out = $('cursor-readout');
       try {
+        validate();
         var r = C.doseAtPoint({ x: w[0], y: w[1], z: state.evalZ }, buildSetup(), buildWalls());
         var where = '(' + w[0].toFixed(2) + ' m, ' + w[1].toFixed(2) + ' m)';
         if (r.flags.indexOf('primary-direction') >= 0) out.textContent = where + ': 一次線の方向のため表示しません';
-        else out.textContent = where + ': ' + fmt(r.total) + ' mGy/週（散乱線 ' + fmt(r.scatter) + '・漏れ線 ' + fmt(r.leakage) + '）' + (r.flags.indexOf('near') >= 0 ? ' ※0.3 m より近い' : '');
+        else out.textContent = where + ': ' + fmt(r.total) + ' mGy/週' + (state.room === 'ct' ? '（漏れ線は κ に含む）' : '（散乱線 ' + fmt(r.scatter) + '・漏れ線 ' + fmt(r.leakage) + '）') + (r.flags.indexOf('near') >= 0 ? ' ※0.3 m より近い' : '');
       } catch (err) { out.textContent = ''; }
     }
 
