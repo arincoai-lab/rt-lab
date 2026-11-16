@@ -212,7 +212,9 @@
           <span class="h">壁</span><span class="h">材質</span><span class="h">厚さ mm</span><span class="h">鉛の内張り mm</span>
         </div>
         <div class="checkline"><input type="checkbox" id="partition-on"><label for="partition-on">仕切り壁（操作室など）を置く</label></div>
-        <div class="field" id="partition-fields"><label for="partition-mm">仕切り壁の鉛当量（mm）</label><input type="number" id="partition-mm" min="0" max="10" step="0.1"><span class="hint">鉛ガラス・鉛入りの仕切りは鉛当量で入れる。両端は地図でドラッグ</span></div>
+        <div class="field" id="partition-fields"><label for="partition-mm">仕切り壁の鉛当量（mm）</label><input type="number" id="partition-mm" min="0" max="10" step="0.1"><span class="hint">鉛ガラス・鉛入りの仕切りは鉛当量で入れる。両端は地図でドラッグか、下の欄で</span>
+          <label>端1 x, y（m）</label><span class="pos-row"><input type="number" id="part-x1" step="0.05" aria-label="仕切り壁の端1 x（m）"><input type="number" id="part-y1" step="0.05" aria-label="仕切り壁の端1 y（m）"></span>
+          <label>端2 x, y（m）</label><span class="pos-row"><input type="number" id="part-x2" step="0.05" aria-label="仕切り壁の端2 x（m）"><input type="number" id="part-y2" step="0.05" aria-label="仕切り壁の端2 y（m）"></span></div>
 
         <h3>見る高さと計算の方法</h3>
         <div class="field"><label for="eval-z">地図の高さ（m）</label><input type="number" id="eval-z" min="0" max="3" step="0.05"><span class="hint">床から 1.0 m＝胴、1.55 m＝目の高さの目安</span></div>
@@ -241,7 +243,7 @@
         <h2 style="margin-top:14px">測定点の値</h2>
         <div class="table-scroll">
           <table class="probes" id="probe-table">
-            <thead><tr><th>測定点</th><th>位置 x, y（m）</th><th>空気カーマ<br>mGy/週</th><th>同・NCRP の<br>簡略化</th><th>滞在係数</th><th>実効線量<br>mSv/3か月</th><th>同（滞在係数1）<br>mSv/3か月</th></tr></thead>
+            <thead><tr><th>測定点</th><th>位置 x, y（m）</th><th>空気カーマ（距離は<br>別々）mGy/週</th><th>同・NCRP の<br>簡略化</th><th>滞在係数</th><th>実効線量<br>mSv/3か月</th><th>同（滞在係数1）<br>mSv/3か月</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -273,7 +275,7 @@
       <div class="panel">
         <h2>前提と限界（必ずお読みください）</h2>
         <ul>
-          <li><b>一次線は含みません。</b>一般撮影で一次線が向かう方向（受像器の裏の壁など）は、地図を灰色の斜線で示し、値を表示しません。</li>
+          <li><b>一次線は含みません。</b>一般撮影で一次線が向かう方向（受像器の裏の壁など）は、地図を灰色の市松模様で示し、値を表示しません。</li>
           <li><b>撮影条件は平均値です。</b>Table 4.7 の値は、部屋の種類ごとの平均的な管電圧の分布・管電流時間積・照射野を前提にしています。自施設の条件とは違います。</li>
           <li><b>CT の散乱は等方として計算しています。</b>実際にはガントリの面の方向で大きく減り、面から約30°で最大になります。日本の CT 室での実測では、NCRP の方法が実測を下回った方向が全142点中3点あり、そのうち最も大きく下回った点では実測の 0.6 倍でした（Hosono ら 2017）。</li>
           <li><b>患者のすぐそば（約1 m 以内）は、点の近似が粗くなります。</b>0.3 m より近い点は 0.3 m として計算します。血管撮影の術者の目の線量は、面積線量（KAP）あたりの係数を使う別の計算が適しています（今後追加予定）。</li>
@@ -463,11 +465,13 @@
       $('patient-x').value = state.patient.x; $('patient-y').value = state.patient.y;
       $('tube-x').value = state.tube.x; $('tube-y').value = state.tube.y;
       $('iso-x').value = state.iso.x; $('iso-y').value = state.iso.y;
+      $('part-x1').value = state.partition.x1; $('part-y1').value = state.partition.y1;
+      $('part-x2').value = state.partition.x2; $('part-y2').value = state.partition.y2;
     }
 
     // 入力欄 → state。空欄・不正な値はそのまま渡し、計算側の検査でエラーを表示する（黙って0にしない）
     function readNum(id) { var v = $(id).value; return v === '' ? NaN : Number(v); }
-    function readInputs() {
+    function readInputs(target) {
       var prevRoom = state.room;
       state.room = roomSel.value;
       if ((prevRoom === 'ct') !== (state.room === 'ct')) {
@@ -478,7 +482,14 @@
         }
         writePositions();
       } else {
-        state.patient.x = readNum('patient-x'); state.patient.y = readNum('patient-y');
+        var npx = readNum('patient-x'), npy = readNum('patient-y');
+        if (target && (target.id === 'patient-x' || target.id === 'patient-y') && isFinite(npx) && isFinite(npy) && isFinite(state.patient.x) && isFinite(state.patient.y)) {
+          // ドラッグと同じく、患者を動かしたら管球も一緒に動かす（一次線の向きを保つ）
+          var ddx = npx - state.patient.x, ddy = npy - state.patient.y;
+          state.tube.x += ddx; state.tube.y += ddy;
+          $('tube-x').value = Math.round(state.tube.x * 100) / 100; $('tube-y').value = Math.round(state.tube.y * 100) / 100;
+        }
+        state.patient.x = npx; state.patient.y = npy;
         state.tube.x = readNum('tube-x'); state.tube.y = readNum('tube-y');
         state.iso.x = readNum('iso-x'); state.iso.y = readNum('iso-y');
       }
@@ -492,6 +503,7 @@
         state.walls[sd[0]] = { material: $('wall-' + sd[0] + '-mat').value, mm: readNum('wall-' + sd[0] + '-mm'), lead: readNum('wall-' + sd[0] + '-lead') };
       });
       state.partition.on = $('partition-on').checked; state.partition.mm = readNum('partition-mm');
+      state.partition.x1 = readNum('part-x1'); state.partition.y1 = readNum('part-y1'); state.partition.x2 = readNum('part-x2'); state.partition.y2 = readNum('part-y2');
       state.evalZ = readNum('eval-z');
       state.leakLimit = $('leak-limit').value; state.distMode = $('dist-mode').value; state.obliquity = $('obliquity').checked;
       Array.prototype.forEach.call(presetBox.children, function (b) { b.setAttribute('aria-pressed', 'false'); });
@@ -511,11 +523,20 @@
         rng(w.mm, 0, 1000, sd[1] + 'の壁の厚さ（mm）'); rng(w.lead, 0, 20, sd[1] + 'の壁の鉛の内張り（mm）');
         if (isCT && w.material === 'gypsum') throw new Error('CT の二次線には石こうボードの透過の係数がありません（NCRP 147 は鉛とコンクリートのみ）。' + sd[1] + 'の壁の材質を変えてください');
       });
-      if (state.partition.on) rng(state.partition.mm, 0, 20, '仕切り壁の鉛当量（mm）');
+      if (state.partition.on) {
+        rng(state.partition.mm, 0, 20, '仕切り壁の鉛当量（mm）');
+        rng(state.partition.x1, -MARGIN, state.W + MARGIN, '仕切り壁の端1 の x'); rng(state.partition.y1, -MARGIN, state.D + MARGIN, '仕切り壁の端1 の y');
+        rng(state.partition.x2, -MARGIN, state.W + MARGIN, '仕切り壁の端2 の x'); rng(state.partition.y2, -MARGIN, state.D + MARGIN, '仕切り壁の端2 の y');
+      }
+      if (isCT) { rng(state.iso.x, -MARGIN, state.W + MARGIN, 'アイソセンタの x'); rng(state.iso.y, -MARGIN, state.D + MARGIN, 'アイソセンタの y'); }
+      else {
+        rng(state.patient.x, -MARGIN, state.W + MARGIN, '患者の x'); rng(state.patient.y, -MARGIN, state.D + MARGIN, '患者の y');
+        rng(state.tube.x, -MARGIN, state.W + MARGIN, '管球の x'); rng(state.tube.y, -MARGIN, state.D + MARGIN, '管球の y');
+      }
       state.probes.forEach(function (pr) { rng(pr.x, -MARGIN, state.W + MARGIN, pr.name + 'の x'); rng(pr.y, -MARGIN, state.D + MARGIN, pr.name + 'の y'); });
     }
-    $('controls').addEventListener('input', function () { readInputs(); schedule(); });
-    $('controls').addEventListener('change', function () { readInputs(); schedule(); });
+    $('controls').addEventListener('input', function (e) { readInputs(e.target); schedule(); });
+    $('controls').addEventListener('change', function (e) { if (e.target.type !== 'number') { readInputs(e.target); schedule(); } });
 
     // ---------- 計算の入力
     function buildWalls() {
@@ -614,7 +635,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         showError(e.message);
         updateProbes(null);
-        if (isFinite(state.W) && isFinite(state.D)) { try { drawRoom(); drawMarkers(); } catch (e2) { /* 部屋も描けない入力 */ } }
+        if (state.W >= 2 && state.W <= 15 && state.D >= 2 && state.D <= 15) { try { drawRoom(); drawMarkers(); } catch (e2) { /* 部屋も描けない入力 */ } }
         return;
       }
       drawRoom(); drawMarkers();
@@ -711,30 +732,58 @@
         inside: '部屋の中: 防護衣を考慮しない空間線量。参考線の対象外' };
       return flags.map(function (f) { return '<span class="flag' + (f === 'primary-direction' ? ' primary' : f === 'inside' ? ' inside' : '') + '">' + map[f] + '</span>'; }).join('');
     }
-    function isInside(pr) { return pr.x > 0 && pr.x < state.W && pr.y > 0 && pr.y < state.D; }
+    function segCross(a, b, c, d) {
+      function o(p, q, r) { return (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x); }
+      return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0;
+    }
+    // 部屋の中で、線源との間に仕切り壁が無い点（仕切りの向こうの操作室は含めない）
+    function isInside(pr) {
+      if (!(pr.x > 0 && pr.x < state.W && pr.y > 0 && pr.y < state.D)) return false;
+      if (!state.partition.on) return true;
+      var src = state.room === 'ct' ? state.iso : state.patient, P = state.partition;
+      return !segCross(src, pr, { x: P.x1, y: P.y1 }, { x: P.x2, y: P.y2 });
+    }
     var tbody = document.querySelector('#probe-table tbody');
-    function updateProbes(setup, walls) {
-      var rows = state.probes.map(function (pr, i) {
+    // 行は一度だけ作り、値のセルだけ書き換える（入力中の欄のフォーカスを奪わない）
+    var builtFor = null;
+    function buildProbeRows() {
+      tbody.innerHTML = state.probes.map(function (pr, i) {
         var tSel = '<select data-probe="' + i + '" aria-label="' + pr.name + 'の滞在係数">' + T_OPTIONS.map(function (o) {
-          return '<option value="' + o[0] + '"' + (o[0] === pr.T ? ' selected' : '') + '>' + o[1] + '</option>';
+          return '<option value="' + o[0] + '">' + o[1] + '</option>';
         }).join('') + '</select>';
-        var pos = '<span class="pos-row"><input type="number" step="0.05" data-probe-x="' + i + '" value="' + pr.x + '" aria-label="' + pr.name + 'の x（m）">' +
-          '<input type="number" step="0.05" data-probe-y="' + i + '" value="' + pr.y + '" aria-label="' + pr.name + 'の y（m）"></span>';
-        if (!setup) return '<tr><td>' + pr.name + '</td><td>' + pos + '</td><td>—</td><td>—</td><td>' + tSel + '</td><td>—</td><td>—</td></tr>';
-        var pt = { x: pr.x, y: pr.y, z: state.evalZ };
-        var r = C.doseAtPoint(pt, setup, walls);
-        var rN = setup.modality === 'ct' ? r : C.doseAtPoint(pt, Object.assign({}, setup, { distanceMode: 'ncrp' }), walls);
-        var rS = setup.modality === 'ct' ? r : C.doseAtPoint(pt, Object.assign({}, setup, { distanceMode: 'separate' }), walls);
-        var flags = r.flags.slice(); if (isInside(pr)) flags.push('inside');
-        var name = pr.name + (flags.length ? '<br>' + flagLabels(flags) : '');
-        if (r.flags.indexOf('primary-direction') >= 0) {
-          return '<tr><td>' + name + '</td><td>' + pos + '</td><td colspan="2">一次線を含まないため表示しません</td><td>' + tSel + '</td><td>—</td><td>—</td></tr>';
+        var pos = '<span class="pos-row"><input type="number" step="0.05" data-probe-x="' + i + '" aria-label="' + pr.name + 'の x（m）">' +
+          '<input type="number" step="0.05" data-probe-y="' + i + '" aria-label="' + pr.name + 'の y（m）"></span>';
+        return '<tr><td><span class="pname"></span><span class="pflags"></span></td><td>' + pos + '</td><td class="v1"></td><td class="v2"></td><td>' + tSel + '</td><td class="v3"></td><td class="v4"></td></tr>';
+      }).join('');
+      builtFor = state.probes;
+    }
+    function setIfIdle(el, v) { if (document.activeElement !== el && el.value !== String(v)) el.value = v; }
+    function updateProbes(setup, walls) {
+      if (builtFor !== state.probes || tbody.children.length !== state.probes.length) buildProbeRows();
+      state.probes.forEach(function (pr, i) {
+        var tr = tbody.children[i];
+        tr.querySelector('.pname').textContent = pr.name;
+        setIfIdle(tr.querySelector('[data-probe-x]'), pr.x);
+        setIfIdle(tr.querySelector('[data-probe-y]'), pr.y);
+        setIfIdle(tr.querySelector('select'), pr.T);
+        var v = ['—', '—', '—', '—'], flags = [];
+        if (setup) {
+          var pt = { x: pr.x, y: pr.y, z: state.evalZ };
+          var r = C.doseAtPoint(pt, setup, walls);
+          var isCT = setup.modality === 'ct';
+          var rN = isCT ? r : C.doseAtPoint(pt, Object.assign({}, setup, { distanceMode: 'ncrp' }), walls);
+          var rS = isCT ? r : C.doseAtPoint(pt, Object.assign({}, setup, { distanceMode: 'separate' }), walls);
+          flags = r.flags.slice(); if (isInside(pr)) flags.push('inside');
+          if (r.flags.indexOf('primary-direction') >= 0) v = ['一次線を含まないため表示しません', '—', '—', '—'];
+          else {
+            var cmp = C.compareWithReference({ weekly_mGy: Math.max(rN.total, rS.total), occupancy: pr.T });
+            v = [fmt(rS.total), isCT ? '（同じ）' : fmt(rN.total), fmt(cmp.per3months_mSv), fmt(cmp.per3months_mSv_T1)];
+          }
         }
-        var cmp = C.compareWithReference({ weekly_mGy: Math.max(rN.total, rS.total), occupancy: pr.T });
-        return '<tr><td>' + name + '</td><td>' + pos + '</td><td>' + fmt(rS.total) + '</td><td>' + (setup.modality === 'ct' ? '（同じ）' : fmt(rN.total)) +
-          '</td><td>' + tSel + '</td><td>' + fmt(cmp.per3months_mSv) + '</td><td>' + fmt(cmp.per3months_mSv_T1) + '</td></tr>';
+        tr.querySelector('.pflags').innerHTML = flags.length ? '<br>' + flagLabels(flags) : '';
+        tr.querySelector('.v1').textContent = v[0]; tr.querySelector('.v2').textContent = v[1];
+        tr.querySelector('.v3').textContent = v[2]; tr.querySelector('.v4').textContent = v[3];
       });
-      tbody.innerHTML = rows.join('');
     }
     tbody.addEventListener('change', function (e) {
       var i = e.target.getAttribute('data-probe');

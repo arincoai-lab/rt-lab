@@ -151,7 +151,8 @@
         0.95
       ]
     },
-    "_excluded": "乳房撮影の行（Wnorm 6.7、720 cm²、0.58 m、漏れ 1.1e-5、側方 1.1e-2、前後 4.9e-2）は入れない。脚注 f のとおり「アイソセンタから1 m」で評価され、漏れ線の前提も 50 kVp・5 mA で条件が違うため。v1 の対象外"
+    "_excluded": "乳房撮影の行（Wnorm 6.7、720 cm²、0.58 m、漏れ 1.1e-5、側方 1.1e-2、前後 4.9e-2）は入れない。脚注 f のとおり「アイソセンタから1 m」で評価され、漏れ線の前提も 50 kVp・5 mA で条件が違うため。v1 の対象外",
+    "footnote_a": "Table 4.7 脚注 a（PDF 58頁・印刷47頁）: To be conservatively safe, the somewhat higher values for backscattered radiation (135 degrees) are used for both backscattered and forward-scattered (30 degrees) radiations"
   },
   "secondary_transmission_archer": {
     "_about": "NCRP147 Table C.1。二次線の広いビームの透過 B=[(1+β/α)e^{αγx}−β/α]^{−1/γ}（Equation A.2、x は mm）。[α, β, γ]（mm^-1, mm^-1, 無次元）。コンクリートは標準重量。原典はこの係数を二次線全体（漏れ線＋散乱線）の透過に使う。漏れ線だけ別の HVL で減弱させると二重計算になる。脚注 a: 図 C.2〜C.7 の厚さの範囲外では当てはめを信用しない（範囲外は外挿と表示）",
