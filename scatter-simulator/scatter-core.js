@@ -81,7 +81,13 @@
 
   // Hulthén 2024: 心臓 IVR 術者の水晶体の吸収線量/KAP（µGy/(Gy·cm²)）。投影の使用割合で重み付け。
   // 天吊り防護板なし・下半身の防護のみでの測定。防護板は「少なくとも75%」、眼鏡は「少なくとも30%」減らす（原典）
-  const IVR_EYE = { weightedLeft: 3.39, weightedRight: 2.32, ceilingShieldFactor: 0.25, glassesFactor: 0.7 };
+  const IVR_EYE = { weightedLeft: 3.39, weightedRight: 2.32, ceilingShieldFactor: 0.25, glassesFactor: 0.7, radialFactor: 2 };
+  // Hulthén 2024 Table 3 の投影別の値 [左眼, 右眼]。_XL は大柄な患者、_FL は透視。橈骨動脈アプローチは「最大約2倍」（原典）
+  const IVR_EYE_PROJECTIONS = {
+    'PA': [1.69, 1.09], 'LAO30': [3.87, 1.78], 'RAO30': [1.76, 1.52], 'CAUD30': [1.17, 0.80], 'CRAN30': [4.78, 3.69],
+    'LAO30/CAUD30': [2.03, 0.91], 'LAO30/CRAN30': [5.47, 4.83], 'RAO30/CAUD30': [0.52, 0.46], 'RAO30/CRAN30': [4.40, 4.01],
+    'LAO30_XL': [3.56, 1.66], 'LAO30_FL': [5.04, 2.56],
+  };
 
   const WEEKS_PER_3_MONTHS = 13;
   const MIN_DISTANCE_M = 0.3;
@@ -272,17 +278,51 @@
     };
   }
 
-  /** IVR 術者の水晶体の吸収線量（µGy）。防護は原典の「少なくとも」の減り方（正しく使った場合）なので、結果は上限側の見積もり */
-  function ivrEyeDose_uGy({ kap_Gycm2, eye = 'left', ceilingShield = false, glasses = false }) {
+  /** IVR 術者の水晶体の係数（µGy/(Gy·cm²)）。projection を省くと加重値 */
+  function ivrEyeCoefficient(eye, projection) {
+    if (eye !== 'left' && eye !== 'right') throw new Error('眼は left か right: ' + eye);
+    if (projection === undefined || projection === 'weighted') return eye === 'right' ? IVR_EYE.weightedRight : IVR_EYE.weightedLeft;
+    const row = IVR_EYE_PROJECTIONS[projection];
+    if (!row) throw new Error('投影が不正: ' + projection);
+    return row[eye === 'right' ? 1 : 0];
+  }
+
+  /**
+   * IVR 術者の水晶体の吸収線量（µGy）。防護は原典の「少なくとも」の減り方（正しく使った場合）なので、結果は上限側の見積もり。
+   * radial は橈骨動脈アプローチ（原典の「最大約2倍」をそのまま掛ける＝高めの見積もり）
+   */
+  function ivrEyeDose_uGy({ kap_Gycm2, eye = 'left', projection, ceilingShield = false, glasses = false, radial = false }) {
     num(kap_Gycm2, 'KAP', 0);
-    const cc = eye === 'right' ? IVR_EYE.weightedRight : IVR_EYE.weightedLeft;
-    return cc * kap_Gycm2 * (ceilingShield ? IVR_EYE.ceilingShieldFactor : 1) * (glasses ? IVR_EYE.glassesFactor : 1);
+    const cc = ivrEyeCoefficient(eye, projection);
+    return cc * kap_Gycm2 * (ceilingShield ? IVR_EYE.ceilingShieldFactor : 1) * (glasses ? IVR_EYE.glassesFactor : 1)
+      * (radial ? IVR_EYE.radialFactor : 1);
+  }
+
+  /**
+   * 年間の件数と1件あたりの KAP から、術者の左右の水晶体の年間線量（mGy）。
+   * rows: [{ count: 件/年, kap_Gycm2: Gy·cm²/件 }]。等価線量の限度と並べるときは、光子で Gy≈Sv とみなす（画面で明示）
+   */
+  function ivrEyeAnnual({ rows, projection, ceilingShield = false, glasses = false, radial = false }) {
+    if (!Array.isArray(rows)) throw new Error('rows が不正');
+    let kap = 0;
+    rows.forEach((r, i) => { kap += num(r && r.count, (i + 1) + '行目の件数', 0) * num(r && r.kap_Gycm2, (i + 1) + '行目の KAP', 0); });
+    const opt = { kap_Gycm2: kap, projection, ceilingShield, glasses, radial };
+    const left = ivrEyeDose_uGy(Object.assign({ eye: 'left' }, opt)) / 1000;
+    const right = ivrEyeDose_uGy(Object.assign({ eye: 'right' }, opt)) / 1000;
+    return {
+      kapTotal_Gycm2: kap,
+      left_mGy_per_year: left,
+      right_mGy_per_year: right,
+      max_mGy_per_year: Math.max(left, right),
+      fractionOfYearLimit: Math.max(left, right) / EYE_LENS_LIMIT.mSv_per_year,
+      fractionOf5yrAverage: Math.max(left, right) / (EYE_LENS_LIMIT.mSv_per_5yr / 5),
+    };
   }
 
   return {
-    SECONDARY_PER_PATIENT, ARCHER_SECONDARY, ARCHER_CT, CT, E_OVER_KA, LEAKAGE_LIMIT, REFERENCE_LINES, EYE_LENS_LIMIT, IVR_EYE,
+    SECONDARY_PER_PATIENT, ARCHER_SECONDARY, ARCHER_CT, CT, E_OVER_KA, LEAKAGE_LIMIT, REFERENCE_LINES, EYE_LENS_LIMIT, IVR_EYE, IVR_EYE_PROJECTIONS,
     WEEKS_PER_3_MONTHS, MIN_DISTANCE_M, DEFAULT_CEILING_M, RADIOGRAPHIC_ROOMS, SECONDARY_RANGE_MM, CT_RANGE_MM,
     archerTransmission, archerThickness, scatterPerPatientAt1m, ctKermaPerProcedureAt1m,
-    wallTransmission, doseAtPoint, toEffectiveDose_mSv, compareWithReference, ivrEyeDose_uGy,
+    wallTransmission, doseAtPoint, toEffectiveDose_mSv, compareWithReference, ivrEyeCoefficient, ivrEyeDose_uGy, ivrEyeAnnual,
   };
 });

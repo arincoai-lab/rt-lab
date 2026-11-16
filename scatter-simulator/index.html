@@ -68,6 +68,11 @@
         "@type": "Question",
         "name": "表示される値は法令の線量限度と比べられますか？",
         "acceptedAnswer": { "@type": "Answer", "text": "地図の値は空気カーマ（mGy）で、法令の線量限度は実効線量（mSv）なので、そのままでは比べられません。測定点の表では、厚生労働省通知の換算係数の最大値 1.433 Sv/Gy を掛け、3か月を13週として実効線量に直した値を参考に並べています。合否の判定はしません。" }
+      },
+      {
+        "@type": "Question",
+        "name": "血管撮影の術者の水晶体の線量も見積もれますか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "見積もれます。心臓カテーテル・IVR の術者について、面積線量（KAP）1 Gy·cm² あたりの水晶体の線量を人体ファントムで実測した係数（Hulthén ら 2024）を使い、1年間の件数と1件あたりの KAP から左右の眼の年間の線量を出します。投影、天吊り防護板、防護眼鏡、橈骨動脈アプローチを切り替えられ、法令の水晶体の限度（年 50 mSv・5年 100 mSv）を参考に並べます。合否の判定はしません。" }
       }
     ]
   }
@@ -158,6 +163,29 @@
     .explain code { background: #edf2f7; padding: 1px 6px; border-radius: 4px; font-size: 0.8rem; color: #2b6cb0; }
     .eq { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin: 8px 0; font-size: 0.82rem; color: #2d3748; overflow-x: auto; }
     .explain a { color: #1a56db; }
+    .eye-panel { margin-top: 16px; }
+    .eye-panel > p { font-size: 0.84rem; color: #4a5568; margin-bottom: 10px; }
+    .eye-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+    @media (max-width: 860px) { .eye-grid { grid-template-columns: minmax(0, 1fr); } }
+    table.eye-work { width: 100%; border-collapse: collapse; font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+    table.eye-work th, table.eye-work td { border-bottom: 1px solid #edf2f7; padding: 5px 4px; text-align: right; }
+    table.eye-work th { color: #718096; font-size: 0.72rem; background: #f7fafc; }
+    table.eye-work th:first-child, table.eye-work td:first-child { text-align: left; }
+    table.eye-work input { width: 5.2em; font-size: 0.78rem; padding: 2px 4px; border: 1px solid #cbd5e0; border-radius: 5px; text-align: right; font-family: inherit; }
+    .eye-reset { margin-top: 8px; font-size: 0.74rem; padding: 4px 10px; border: 1px solid #cbd5e0; border-radius: 999px; background: #fff; color: #2d3748; cursor: pointer; font-family: inherit; }
+    .eye-reset:hover, .eye-reset:focus-visible { border-color: #1a56db; color: #1a56db; outline: none; }
+    .eye-out { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 0.8rem; color: #4a5568; }
+    .eye-nums { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 10px; }
+    .eye-num { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; }
+    .eye-num .k { font-size: 0.72rem; color: #718096; font-weight: 700; }
+    .eye-num .v { font-size: 1.3rem; font-weight: 800; color: #1a365d; font-variant-numeric: tabular-nums; }
+    .eye-num .v small { font-size: 0.72rem; font-weight: 400; color: #4a5568; margin-left: 2px; }
+    .eye-bar { margin: 8px 0; }
+    .eye-bar .lbl { display: flex; justify-content: space-between; gap: 8px; font-size: 0.76rem; }
+    .eye-bar .track { position: relative; height: 10px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-top: 3px; }
+    .eye-bar .fill { position: absolute; left: 0; top: 0; bottom: 0; background: #3182ce; border-radius: 999px; }
+    .eye-bar .fill.over { background: #c05621; }
+    .eye-out ul { margin: 6px 0 0 1.2em; font-size: 0.74rem; display: grid; gap: 3px; }
     .disclaimer { font-size: 0.8rem; color: #718096; background: #fffaf0; border: 1px solid #feebc8; border-radius: 8px; padding: 10px 12px; }
   </style>
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
@@ -259,6 +287,40 @@
       </div>
     </div>
 
+    <section class="panel eye-panel" id="eye" aria-labelledby="eye-title">
+      <h2 id="eye-title">術者の水晶体の線量（心臓カテーテル・IVR）</h2>
+      <p>上の地図とは別の計算です。患者のすぐ横に立つ術者の目は、点線源の近似では粗すぎるため、面積線量（KAP）1 Gy·cm² あたりの水晶体の線量を実測した係数（Hulthén ら 2024）を使い、1年間の件数と1件あたりの KAP から見積もります。既定値は原典に載っている術者1人の年間の例です。自施設の線量管理システムの値に置き換えてください。</p>
+      <div class="eye-grid">
+        <div>
+          <table class="eye-work" id="eye-work">
+            <thead><tr><th>検査の種類</th><th>件数/年</th><th>1件の平均 KAP<br>（Gy·cm²）</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <button type="button" class="eye-reset" id="eye-reset">原典の例に戻す</button>
+          <div class="field" style="margin-top:12px"><label for="eye-proj">管球の向き（投影）</label><select id="eye-proj"></select><span class="hint">「加重値」は、原典の病院で使われた投影の割合で平均した値。1つの投影を選ぶと、その投影だけで1年間撮った場合になります</span></div>
+          <div class="checkline"><input type="checkbox" id="eye-shield"><label for="eye-shield">天吊り防護板を正しく使う（×0.25）</label></div>
+          <div class="checkline"><input type="checkbox" id="eye-glasses"><label for="eye-glasses">防護眼鏡をかける（×0.7）</label></div>
+          <div class="checkline"><input type="checkbox" id="eye-radial"><label for="eye-radial">橈骨動脈アプローチ（×2 で見積もる）</label></div>
+        </div>
+        <div class="eye-out" id="eye-out" aria-live="polite">
+          <div>年間の KAP の合計: <b id="eye-kap"></b> Gy·cm²</div>
+          <div class="eye-nums">
+            <div class="eye-num"><div class="k">左眼（患者側）</div><div class="v" id="eye-left"></div></div>
+            <div class="eye-num"><div class="k">右眼</div><div class="v" id="eye-right"></div></div>
+          </div>
+          <div class="eye-bar"><div class="lbl"><span>参考: 年 50 mSv に対して</span><b id="eye-pct-year"></b></div><div class="track"><div class="fill" id="eye-bar-year"></div></div></div>
+          <div class="eye-bar"><div class="lbl"><span>参考: 5年 100 mSv（平均 年 20 mSv）に対して</span><b id="eye-pct-5yr"></b></div><div class="track"><div class="fill" id="eye-bar-5yr"></div></div></div>
+          <div id="eye-error" class="hidden" role="alert" style="color:#9b2c2c"></div>
+          <ul>
+            <li>参考線は医療法施行規則の、放射線診療従事者の水晶体の等価線量限度（第30条の27第2項）。高いほうの眼の値で割合を出しています。合否の判定はしません。</li>
+            <li>係数は水の吸収線量（mGy）です。X線（光子）では等価線量（mSv）と数値上ほぼ同じとみなして並べています。</li>
+            <li>防護板と眼鏡の倍率は、原典の「正しく使えば<b>少なくとも</b>75%・さらに30%減る」をそのまま使った控えめな減り方です。防護板の位置がずれると、ほとんど減りません。</li>
+            <li>橈骨動脈アプローチは、原典の「術者の線量が最大約2倍」を上限として掛けています。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
     <section class="explain" aria-labelledby="explain-title">
       <h2 id="explain-title" class="hidden">解説</h2>
       <div class="panel">
@@ -278,10 +340,11 @@
           <li><b>一次線は含みません。</b>一般撮影で一次線が向かう方向（受像器の裏の壁など）は、地図を灰色の市松模様で示し、値を表示しません。</li>
           <li><b>撮影条件は平均値です。</b>Table 4.7 の値は、部屋の種類ごとの平均的な管電圧の分布・管電流時間積・照射野を前提にしています。自施設の条件とは違います。</li>
           <li><b>CT の散乱は等方として計算しています。</b>実際にはガントリの面の方向で大きく減り、面から約30°で最大になります。日本の CT 室での実測では、NCRP の方法が実測を下回った方向が全142点中3点あり、そのうち最も大きく下回った点では実測の 0.6 倍でした（Hosono ら 2017）。</li>
-          <li><b>患者のすぐそば（約1 m 以内）は、点の近似が粗くなります。</b>0.3 m より近い点は 0.3 m として計算します。血管撮影の術者の目の線量は、面積線量（KAP）あたりの係数を使う別の計算が適しています（今後追加予定）。</li>
+          <li><b>患者のすぐそば（約1 m 以内）は、点の近似が粗くなります。</b>0.3 m より近い点は 0.3 m として計算します。血管撮影の術者の目の線量は、面積線量（KAP）あたりの係数を使う別の計算が適しているため、<a href="#eye">術者の水晶体の線量</a>の欄で別に見積もります。</li>
           <li><b>天井・床のスラブは計算に入れていません。</b>壁は床から天井までの面として扱います。</li>
           <li><b>距離のとり方</b>: 既定では、散乱線は患者から、漏れ線は管球からの距離で計算します。NCRP 147 は壁の計算で両方を短いほうの距離にそろえる安全側の簡略化を使っており、「距離のとり方」で切り替えられます。管球と患者が離れている部屋（胸部撮影室など）では、壁の向こうの点で簡略化のほうが2倍強高くなります（胸部撮影室のひな形の操作室で約2.2倍）。測定点の表には両方を並べ、実効線量は大きいほうで計算します。</li>
           <li><b>透過の式は、原典の図の厚さの範囲</b>（鉛 3 mm・コンクリート 300 mm・石こうボード 200 mm まで）で当てはめたものです。それを超える厚さでは外挿になります。</li>
+          <li><b>術者の水晶体の係数の測定条件</b>: 人体ファントムで、心臓カテーテルの術者（身長172 cm・大腿動脈から穿刺する位置）の目の表面を測ったものです。装置は1台（Philips）、下半身の防護だけで天吊り防護板なし、主に撮影モード。身長・立ち位置・装置・手技が違えば値は変わります。左眼が高いのは、管球と患者が術者の左側にあるためです。</li>
         </ul>
       </div>
       <div class="panel">
@@ -289,6 +352,7 @@
         <ul>
           <li>NCRP Report No. 147: Structural Shielding Design for Medical X-Ray Imaging Facilities（2004）。米国の規則に参照取込みされた版が <a href="https://law.resource.org/pub/us/cfr/ibr/inc/ansi/ncrp.147.2020.pdf" rel="noopener" target="_blank">Public.Resource.Org</a> で公開されています。</li>
           <li>Hosono M, et al. A new shielding calculation method for X-ray computed tomography regarding scattered radiation. Radiol Phys Technol. 2017;10(2):213-226. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5487862/" rel="noopener" target="_blank">PMC5487862</a></li>
+          <li>Hulthén M, et al. Estimating brain and eye lens dose for the cardiologist in interventional cardiology—are the dose levels of concern? Br J Radiol. 2024;97(1158):1191-1201. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11817644/" rel="noopener" target="_blank">PMC11817644</a>（術者の水晶体の係数・年間の件数と KAP の例）</li>
           <li>医療法施行規則（昭和23年厚生省令第50号）<a href="https://laws.e-gov.go.jp/law/323M40000100050" rel="noopener" target="_blank">e-Gov 法令検索</a></li>
           <li>「医療法施行規則の一部を改正する省令の施行について」の一部改正について（平成26年3月31日 医政発0331第16号）</li>
         </ul>
@@ -307,6 +371,8 @@
     <p class="rt-faq-a">使えません。値は NCRP 147 の平均的な撮影条件を前提にした桁の目安で、一次線（直接線）は含まず、CT の散乱は等方として計算しています。施設の遮へい設計・届出・作業環境測定・被ばく管理には、関係法令と専門家の評価に従ってください。</p>
     <h3 class="rt-faq-q">表示される値は法令の線量限度と比べられますか？</h3>
     <p class="rt-faq-a">地図の値は空気カーマ（mGy）で、法令の線量限度は実効線量（mSv）なので、そのままでは比べられません。測定点の表では、厚生労働省通知の換算係数の最大値 1.433 Sv/Gy を掛け、3か月を13週として実効線量に直した値を参考に並べています。合否の判定はしません。</p>
+    <h3 class="rt-faq-q">血管撮影の術者の水晶体の線量も見積もれますか？</h3>
+    <p class="rt-faq-a">見積もれます。心臓カテーテル・IVR の術者について、面積線量（KAP）1 Gy·cm² あたりの水晶体の線量を人体ファントムで実測した係数（Hulthén ら 2024）を使い、1年間の件数と1件あたりの KAP から左右の眼の年間の線量を出します。投影、天吊り防護板、防護眼鏡、橈骨動脈アプローチを切り替えられ、法令の水晶体の限度（年 50 mSv・5年 100 mSv）を参考に並べます。合否の判定はしません。</p>
   </section>
   <!-- FAQ:END -->
 
@@ -851,6 +917,76 @@
 
     window.addEventListener('resize', schedule);
     loadPreset('rad');
+  })();
+  </script>
+  <script>
+  // 術者の水晶体（Hulthén 2024 の KAP あたりの係数）。地図とは独立
+  (function () {
+    'use strict';
+    var C = window.ScatterCore;
+    // 原典 Discussion の例（術者1人・年間）。scripts/scatter-provenance.json の example_workload_per_year と一致させる
+    var EYE_WORK = [
+      { label: '冠動脈造影（CA）', count: 150, kap: 10 },
+      { label: '冠動脈インターベンション（PCI）', count: 10, kap: 25 },
+      { label: 'CA と PCI を続けて', count: 150, kap: 29 },
+      { label: '経カテーテル大動脈弁留置（TAVI）', count: 150, kap: 33 }
+    ];
+    var PROJ_LABELS = {
+      'PA': 'PA（正面）', 'LAO30': 'LAO 30°', 'RAO30': 'RAO 30°', 'CAUD30': 'CAUD 30°', 'CRAN30': 'CRAN 30°',
+      'LAO30/CAUD30': 'LAO 30° / CAUD 30°', 'LAO30/CRAN30': 'LAO 30° / CRAN 30°（左眼で最大）',
+      'RAO30/CAUD30': 'RAO 30° / CAUD 30°', 'RAO30/CRAN30': 'RAO 30° / CRAN 30°',
+      'LAO30_XL': 'LAO 30°・大柄な患者', 'LAO30_FL': 'LAO 30°・透視'
+    };
+    function $(id) { return document.getElementById(id); }
+    var tbody = $('eye-work').querySelector('tbody');
+    tbody.innerHTML = EYE_WORK.map(function (r, i) {
+      return '<tr><td>' + r.label + '</td>' +
+        '<td><input type="number" min="0" step="1" id="eye-n' + i + '" aria-label="' + r.label + 'の件数/年"></td>' +
+        '<td><input type="number" min="0" step="1" id="eye-k' + i + '" aria-label="' + r.label + 'の1件の平均 KAP（Gy·cm²）"></td></tr>';
+    }).join('');
+    var sel = $('eye-proj');
+    var o = document.createElement('option'); o.value = 'weighted'; o.textContent = '加重値（既定）'; sel.appendChild(o);
+    Object.keys(C.IVR_EYE_PROJECTIONS).forEach(function (k) {
+      var op = document.createElement('option'); op.value = k; op.textContent = PROJ_LABELS[k] || k; sel.appendChild(op);
+    });
+    function reset() {
+      EYE_WORK.forEach(function (r, i) { $('eye-n' + i).value = r.count; $('eye-k' + i).value = r.kap; });
+      sel.value = 'weighted'; $('eye-shield').checked = false; $('eye-glasses').checked = false; $('eye-radial').checked = false;
+      update();
+    }
+    function readNum(id) { var v = $(id).value; return v === '' ? NaN : Number(v); }
+    function fmtDose(v) { return v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2); }
+    function bar(id, pctId, f) {
+      var pct = f * 100;
+      $(pctId).textContent = (pct >= 10 ? pct.toFixed(0) : pct.toFixed(1)) + '%';
+      $(id).style.width = Math.min(100, pct) + '%';
+      $(id).classList.toggle('over', f >= 1);
+    }
+    function update() {
+      var err = $('eye-error');
+      try {
+        var rows = EYE_WORK.map(function (r, i) {
+          var n = readNum('eye-n' + i), k = readNum('eye-k' + i);
+          if (!(n >= 0) || !(k >= 0) || !isFinite(n) || !isFinite(k)) throw new Error(r.label + 'の件数と KAP は 0 以上の数で入れてください（使わない行は 0）');
+          return { count: n, kap_Gycm2: k };
+        });
+        var res = C.ivrEyeAnnual({ rows: rows, projection: sel.value, ceilingShield: $('eye-shield').checked, glasses: $('eye-glasses').checked, radial: $('eye-radial').checked });
+        $('eye-kap').textContent = Math.round(res.kapTotal_Gycm2).toLocaleString('ja-JP');
+        $('eye-left').innerHTML = fmtDose(res.left_mGy_per_year) + '<small>mGy/年</small>';
+        $('eye-right').innerHTML = fmtDose(res.right_mGy_per_year) + '<small>mGy/年</small>';
+        bar('eye-bar-year', 'eye-pct-year', res.fractionOfYearLimit);
+        bar('eye-bar-5yr', 'eye-pct-5yr', res.fractionOf5yrAverage);
+        err.classList.add('hidden');
+      } catch (e) {
+        ['eye-kap', 'eye-left', 'eye-right', 'eye-pct-year', 'eye-pct-5yr'].forEach(function (id) { $(id).textContent = '—'; });
+        $('eye-bar-year').style.width = '0'; $('eye-bar-5yr').style.width = '0';
+        err.textContent = e.message; err.classList.remove('hidden');
+      }
+    }
+    $('eye').addEventListener('input', update);
+    $('eye').addEventListener('change', update);
+    $('eye-reset').addEventListener('click', reset);
+    reset();
   })();
   </script>
   <script src="/assets/site.js" defer></script>

@@ -304,6 +304,44 @@ const D = core.doseAtPoint;
   const sh = core.ivrEyeDose_uGy({ kap_Gycm2: 100, eye: 'left', ceilingShield: true, glasses: true });
   check(rel(sh, 339 * 0.25 * 0.7) < 1e-12, 'IVR: 防護の「少なくとも」の減り方（上限側の見積もり）になっていない');
   check(core.ivrEyeDose_uGy({ kap_Gycm2: 0, eye: 'left' }) === 0, 'IVR: KAP 0 で 0 でない');
+
+  // 投影別（Table 3）が照合表と一致し、加重値・最大値と矛盾しない
+  const P = H.projections;
+  check(Object.keys(P).length === 11 && Object.keys(core.IVR_EYE_PROJECTIONS).length === 11, 'IVR: 投影の数が11でない');
+  for (const k of Object.keys(P)) {
+    const c = core.IVR_EYE_PROJECTIONS[k];
+    check(!!c && c[0] === P[k][0] && c[1] === P[k][1], 'IVR: 投影 ' + k + ' が照合表と違う');
+    check(P[k][0] >= P[k][1], 'IVR: 投影 ' + k + ' で左眼が右眼より低い（原典はすべて左 ≥ 右）');
+  }
+  const leftAll = Object.values(core.IVR_EYE_PROJECTIONS).map(v => v[0]);
+  check(Math.max(...leftAll) === H.max_left_eye, 'IVR: 左眼の最大が要旨の 5.47 と違う');
+  check(Math.min(...leftAll) < H.weighted_left_eye && H.weighted_left_eye < Math.max(...leftAll), 'IVR: 加重値が投影の範囲の外');
+  check(core.ivrEyeCoefficient('left', 'weighted') === 3.39 && core.ivrEyeCoefficient('right') === 2.32, 'IVR: 既定が加重値でない');
+  check(core.ivrEyeCoefficient('left', 'LAO30/CRAN30') === 5.47, 'IVR: 投影の指定が効かない');
+  for (const bad of [['left', 'LAO45'], ['both', 'weighted'], [undefined, 'PA']]) {
+    let threw = false; try { core.ivrEyeCoefficient(bad[0], bad[1]); } catch (e) { threw = true; }
+    check(threw, 'IVR: 不正な眼・投影 ' + JSON.stringify(bad) + ' でエラーにならない');
+  }
+  check(rel(core.ivrEyeDose_uGy({ kap_Gycm2: 100, eye: 'left', radial: true }), 678) < 1e-12, 'IVR: 橈骨動脈の ×2 が効かない');
+
+  // 原典 Discussion の例: 術者1人の年間の件数と KAP。脳全体の加重値 0.70 で年 8 mGy（原文）を再現する
+  const W = H.example_workload_per_year.map(r => ({ count: r.count, kap_Gycm2: r.kap_Gycm2 }));
+  const kapYear = W.reduce((s, r) => s + r.count * r.kap_Gycm2, 0);
+  check(kapYear === 11050, 'IVR: 原典の例の年間 KAP が 11,050 でない: ' + kapYear);
+  check(Math.abs(H.example_whole_brain_weighted * kapYear / 1000 - H.example_whole_brain_mGy_per_year) < 0.5, 'IVR: 原典の例（脳全体 8 mGy/年）を再現しない');
+  const a = core.ivrEyeAnnual({ rows: W });
+  check(a.kapTotal_Gycm2 === 11050, 'IVR 年間: KAP の合計');
+  check(rel(a.left_mGy_per_year, 3.39 * 11.05) < 1e-12 && rel(a.right_mGy_per_year, 2.32 * 11.05) < 1e-12, 'IVR 年間: 左右の mGy');
+  check(rel(a.fractionOfYearLimit, 3.39 * 11.05 / 50) < 1e-12, 'IVR 年間: 年 50 mSv に対する割合');
+  check(rel(a.fractionOf5yrAverage, 3.39 * 11.05 / 20) < 1e-12, 'IVR 年間: 5年 100 mSv（年 20）に対する割合');
+  const b = core.ivrEyeAnnual({ rows: W, ceilingShield: true, glasses: true });
+  check(b.left_mGy_per_year < a.left_mGy_per_year && b.left_mGy_per_year > 0, 'IVR 年間: 防護で減らない・0 になる');
+  check(core.ivrEyeAnnual({ rows: [] }).max_mGy_per_year === 0, 'IVR 年間: 空の行で 0 でない');
+  for (const bad of [[{ count: null, kap_Gycm2: 10 }], [{ count: 10, kap_Gycm2: '' }], [{ count: -1, kap_Gycm2: 10 }], [{ count: 10, kap_Gycm2: NaN }], [null], 'x']) {
+    let threw = false; try { core.ivrEyeAnnual({ rows: bad }); } catch (e) { threw = true; }
+    check(threw, 'IVR 年間: 不正な入力 ' + JSON.stringify(bad) + ' でエラーにならない（黙って0は危険側）');
+  }
+  check(H.radial_access_factor_up_to === core.IVR_EYE.radialFactor, 'IVR: 橈骨動脈の倍率が照合表と違う');
 }
 
 // ---------------------------------------------------------------- 9. 画面の説明文の数値（照合表と一致）
@@ -324,6 +362,19 @@ const D = core.doseAtPoint;
   check(html.includes("dlpHead: " + d52.head) && html.includes("dlpBody: " + d52.body_average), 'CT のひな形の DLP が Table 5.2 と違う');
   check(html.includes('頭部 1,200・体幹平均 550'), 'CT の DLP の説明が Table 5.2 と違う');
   check(!/pass|合格|不合格|適合/.test((html.match(/<table class="probes"[\s\S]*?<\/table>/) || [''])[0]), '測定点の表に合否の言葉がある');
+  // 術者の水晶体の欄: 既定の件数・KAP が原典の例と一致し、合否の言葉を出さない
+  const ew = (html.match(/var EYE_WORK = \[([\s\S]*?)\];/) || [])[1];
+  check(!!ew, 'index.html の EYE_WORK が見つからない');
+  if (ew) {
+    const got = [...ew.matchAll(/count: (\d+), kap: (\d+)/g)].map(m => [Number(m[1]), Number(m[2])]);
+    const want = H.example_workload_per_year.map(r => [r.count, r.kap_Gycm2]);
+    check(JSON.stringify(got) === JSON.stringify(want), '画面の既定の件数・KAP が原典の例と違う: ' + JSON.stringify(got));
+  }
+  const eyeSec = (html.match(/<section class="panel eye-panel"[\s\S]*?<\/section>/) || [''])[0];
+  check(eyeSec.length > 0, '術者の水晶体の欄が無い');
+  check(!/合格|不合格|適合|超過/.test(eyeSec), '術者の水晶体の欄に合否の言葉がある');
+  check(eyeSec.includes('年 50 mSv') && eyeSec.includes('5年 100 mSv'), '術者の水晶体の欄の参考線が限度と違う');
+  check(eyeSec.includes('×0.25') && eyeSec.includes('×0.7') && eyeSec.includes('×2'), '術者の水晶体の欄の倍率の表示が係数と違う');
 }
 
 console.log(`\n${pass} pass, ${fail} fail`);
