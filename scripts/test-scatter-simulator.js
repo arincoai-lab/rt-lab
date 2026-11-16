@@ -395,5 +395,84 @@ const D = core.doseAtPoint;
   check(html.includes('172 cm') && html.includes('Philips') && html.includes('PMC11817644') && html.includes('先行研究より低め'), '術者の水晶体の測定条件・出典・低めの注意が無い');
 }
 
+// ---------------------------------------------------------------- 部屋の形（scatter-room.js）
+// 壁を「線分の一覧」に変えても、長方形＋仕切りのひな形の値が旧版と同じであること
+{
+  let R;
+  try { R = require(path.join(ROOT, 'scatter-simulator/scatter-room.js')); } catch (e) { check(false, 'scatter-room.js を読み込めない: ' + e.message); }
+  if (R) {
+    const sides = { N: { material: 'concrete', mm: 150, lead: 0 }, S: { material: 'concrete', mm: 150, lead: 0 },
+      W: { material: 'concrete', mm: 150, lead: 0 }, E: { material: 'gypsum', mm: 25, lead: 1.5 } };
+    const part = { on: true, x1: 0, y1: 4.6, x2: 1.9, y2: 4.6, mm: 1.5 };
+    const list = R.rectWalls(5, 6, sides, part);
+    check(list.length === 5 && list[4].material === 'lead' && list[4].mm === 1.5, '仕切りは鉛の壁として5本目に入る');
+    check(R.rectWalls(5, 6, sides, { on: false }).length === 4, '仕切りが無ければ4本');
+    // 旧版の buildWalls（index.html の 11/16 版）と同じ層になる
+    const legacy = [
+      { x1: 0, y1: 0, x2: 5, y2: 0, layers: [{ material: 'concrete', mm: 150 }] },
+      { x1: 0, y1: 6, x2: 5, y2: 6, layers: [{ material: 'concrete', mm: 150 }] },
+      { x1: 0, y1: 0, x2: 0, y2: 6, layers: [{ material: 'concrete', mm: 150 }] },
+      { x1: 5, y1: 0, x2: 5, y2: 6, layers: [{ material: 'gypsum', mm: 25 }, { material: 'lead', mm: 1.5 }] },
+      { x1: 0, y1: 4.6, x2: 1.9, y2: 4.6, layers: [{ material: 'lead', mm: 1.5 }] }
+    ];
+    check(JSON.stringify(R.toCoreWalls(list)) === JSON.stringify(legacy), '壁の一覧 → 計算の入力が旧版と同じ');
+    const setup = { room: 'rad_room_all', patientsPerWeek: 120, patient: { x: 2.6, y: 2.6, z: 0.8 }, tube: { x: 2.6, y: 2.6, z: 1.8 }, distanceMode: 'separate' };
+    for (const p of [{ x: 0.9, y: 5.3, z: 1 }, { x: 5.8, y: 2.6, z: 1 }, { x: 2.6, y: -0.8, z: 1 }, { x: 4, y: 4, z: 1 }]) {
+      const a = core.doseAtPoint(p, setup, legacy).total, b = core.doseAtPoint(p, setup, R.toCoreWalls(list)).total;
+      check(a === b, '旧版と同じ線量: ' + JSON.stringify(p));
+    }
+    // 鉛の内張りが空欄（NaN）なら黙って捨てず、計算側でエラーにする
+    const bad = R.toCoreWalls([{ x1: 0, y1: 0, x2: 1, y2: 0, material: 'concrete', mm: 100, lead: NaN }]);
+    let threw = false;
+    try { core.doseAtPoint({ x: 0.5, y: -1, z: 1 }, Object.assign({}, setup, { patient: { x: 0.5, y: 1, z: 0.8 }, tube: { x: 0.5, y: 1, z: 1.8 } }), bad); } catch (e) { threw = true; }
+    check(threw, '鉛の内張りが NaN なら計算がエラーになる');
+
+    // 幅・奥行きを変えると外壁だけ動く
+    const rs = R.resizeRect(list, 8, 9);
+    check(rs[1].y1 === 9 && rs[1].x2 === 8 && rs[3].x1 === 8 && rs[4].y1 === 4.6, '長方形の大きさを変えると外壁だけ動く');
+
+    // 線源から壁を通らずに届くか（旧版の「部屋の中」と同じ判定）
+    const src = { x: 2.6, y: 2.6 };
+    check(R.reachesWithoutWall(src, { x: 4, y: 4 }, list), '部屋の中は届く');
+    check(!R.reachesWithoutWall(src, { x: 0.9, y: 5.3 }, list), '仕切りの向こう（操作室）は届かない');
+    check(!R.reachesWithoutWall(src, { x: 5.8, y: 2.6 }, list), '外壁の向こうは届かない');
+    check(R.reachesWithoutWall(src, { x: 3, y: 5.3 }, list), '仕切りの脇（仕切りの無い所）は届く');
+
+    // 範囲
+    const ex = R.extent(list, [{ x: 7, y: 2 }, { x: NaN, y: 0 }], 1.6);
+    check(ex.x0 === -1.6 && ex.y0 === -1.6 && Math.abs(ex.x1 - 8.6) < 1e-12 && Math.abs(ex.y1 - 7.6) < 1e-12, '範囲は壁と点を囲み、NaN の点は無視: ' + JSON.stringify(ex));
+    check(R.extent([], [], 1) === null, '何も無ければ範囲は null');
+
+    // 一番広い向き（立位撮影で管球を置く向き）
+    check(JSON.stringify(R.farthestDirection({ x: 2, y: 0.9 }, R.rectWalls(4, 6, sides, { on: false }), 30)) === '[0,1]', '胸部撮影室の患者からは下が一番広い');
+    check(JSON.stringify(R.farthestDirection({ x: 1, y: 3 }, R.rectWalls(6, 6, sides, { on: false }), 30)) === '[1,0]', '左寄りなら右が一番広い');
+    check(JSON.stringify(R.farthestDirection({ x: 1, y: 1 }, [], 30)) === '[0,1]', '壁が無ければ下（同じ距離なら下が先）');
+
+    // 重なる端はまとめる（角を動かすと2本の壁が一緒に動く）
+    const vs = R.vertices(list);
+    const corner = vs.find(v => v.x === 0 && v.y === 0);
+    check(vs.length === 6 && corner && corner.ends.length === 2, '長方形の角は2本の壁の端をまとめる（4角＋仕切りの1端。もう1端は外壁の線の上）: ' + vs.length);
+
+    // 吸着
+    const tol = 0.2;
+    let s = R.snapPoint({ x: 0.1, y: 0.05 }, { tol, walls: list });
+    check(s.snap === 'vertex' && s.x === 0 && s.y === 0, '壁の端に吸着');
+    s = R.snapPoint({ x: 2.53, y: 0.12 }, { tol, walls: list });
+    check(s.snap === 'wall' && s.y === 0 && s.x === 2.55, '壁の線の上に吸着し、壁に沿う向きは 5 cm の格子: ' + JSON.stringify(s));
+    s = R.snapPoint({ x: 1.03, y: 1.1 }, { tol, walls: [{ x1: 0, y1: 0, x2: 3, y2: 3 }] });
+    check(s.snap === 'wall' && Math.abs(s.x - 1.065) < 1e-9 && Math.abs(s.y - 1.065) < 1e-9, '斜めの壁の上は最も近い点');
+    s = R.snapPoint({ x: 3.03, y: 2.47 }, { tol, walls: list });
+    check(s.snap === 'grid' && s.x === 3.05 && s.y === 2.45, '何も無ければ 5 cm の格子');
+    s = R.snapPoint({ x: 3.6, y: 2.12 }, { tol, walls: list, start: { x: 2, y: 2 } });
+    check(s.y === 2 && s.x === 3.6, 'ほぼ水平なら水平にそろえる: ' + JSON.stringify(s));
+    s = R.snapPoint({ x: 4.9, y: 3.1 }, { tol, walls: list, start: { x: 2, y: 3 } });
+    check(s.snap === 'wall' && s.x === 5 && s.y === 3, '水平にそろえた線と壁の交点に吸着: ' + JSON.stringify(s));
+    s = R.snapPoint({ x: 0.1, y: 0.05 }, { tol, walls: list, exclude: [0, 2] });
+    check(s.snap !== 'vertex', '動かしている壁の端には吸着しない');
+    s = R.snapPoint({ x: 1.02, y: 1.01 }, { tol, walls: [], extra: [{ x: 1, y: 1 }] });
+    check(s.snap === 'vertex' && s.x === 1, '追加の点（図面の線の端）に吸着');
+  }
+}
+
 console.log(`\n${pass} pass, ${fail} fail`);
 process.exit(fail ? 1 : 0);
