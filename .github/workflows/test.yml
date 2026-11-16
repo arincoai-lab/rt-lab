@@ -40,6 +40,10 @@ jobs:
       - name: Scatter simulator model checks
         run: node scripts/test-scatter-simulator.js
 
+      # CT線量推定ツールの SSDE 換算係数（AAPM Report 204 Table 1D / Report 293 Eq.1 との一致）
+      - name: CT dose estimator SSDE factor checks
+        run: node scripts/test-ct-dose.js
+
       - name: Generated blocks are up to date
         run: |
           node scripts/generate-related.js --check

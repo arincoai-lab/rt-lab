@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ページが見つかりません | RT-Lab</title>
+<meta name="description" content="お探しのページは見つかりませんでした。RT-Lab のツール一覧と解説記事はこちらから。">
+<meta name="robots" content="noindex">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f5f7fb;
+  color: #243447;
+  line-height: 1.85;
+}
+.wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+.card {
+  background: #fff;
+  border: 1px solid #dbe4ee;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(26, 95, 158, 0.08);
+  padding: 1.6rem;
+  margin-bottom: 1rem;
+}
+.card h1, .card h2 { margin-bottom: 0.8rem; }
+.card h1 { font-size: 1.5rem; }
+.card h2 { font-size: 1.1rem; }
+.card p { color: #5b6b7d; }
+a { color: #1a5f9e; }
+.nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+  background: #1a5f9e;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+}
+.btn.sub { background: #fff; color: #1a5f9e; border: 1px solid #1a5f9e; }
+.tools {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: 0.25rem 1.25rem;
+}
+.tools a { display: block; padding: 0.35rem 0; }
+</style>
+  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+</head>
+<body>
+<main class="wrap">
+  <nav class="nav" aria-label="サイト内の主なページ">
+    <a href="/">トップ</a>
+    <a href="/blog/">ブログ</a>
+    <a href="/about/">サイトについて</a>
+    <a href="/contact/">お問い合わせ</a>
+  </nav>
+
+  <section class="card">
+    <h1>ページが見つかりません</h1>
+    <p>URL が変わったか、入力に誤りがある可能性があります。下の一覧から目的のツールや記事を探してください。</p>
+    <div class="actions">
+      <a class="btn" href="/#tools">ツール一覧へ</a>
+      <a class="btn sub" href="/blog/">解説記事の一覧へ</a>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>ツール</h2>
+    <ul class="tools">
+      <li><a href="/drl-comparison/">DRLs2025 一覧・比較ツール</a></li>
+      <li><a href="/ct-dose-estimator/">SSDE計算ツール</a></li>
+      <li><a href="/exposure-reference/">一般撮影条件参照</a></li>
+      <li><a href="/contrast-quick/">造影剤クイック計算</a></li>
+      <li><a href="/contrast-simulator/">造影CTシミュレータ</a></li>
+      <li><a href="/egfr-checker/">腎機能チェッカー（eGFR）</a></li>
+      <li><a href="/mtf-calculator/">MTF計算ツール</a></li>
+      <li><a href="/nps-calculator/">NPS計算ツール</a></li>
+      <li><a href="/cnr-calculator/">CNR計測ツール</a></li>
+      <li><a href="/task-based-iq/">Task-based IQ評価ツール</a></li>
+      <li><a href="/cardiac-phase-optimizer/">心臓CT 最適位相決定ツール</a></li>
+      <li><a href="/mri-simulator/">MRIシミュレータ</a></li>
+      <li><a href="/brain-diff/">脳画像差分ツール</a></li>
+      <li><a href="/subtraction-demo/">Subtractionツール デモ</a></li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>リンク切れを見つけたら</h2>
+    <p>サイト内のリンクからこのページに来た場合は、<a href="/contact/">お問い合わせ</a>から教えていただけると助かります。</p>
+  </section>
+</main>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>
