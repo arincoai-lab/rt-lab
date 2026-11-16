@@ -126,6 +126,27 @@
     .wall-grid select { text-align: left; }
     .checkline { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #4a5568; margin-top: 6px; }
     .hidden { display: none !important; }
+    .bad { outline: 2px solid #e53e3e !important; outline-offset: 1px; }
+    .howto { font-size: 0.76rem; color: #4a5568; background: #ebf8ff; border: 1px solid #bee3f8; border-radius: 8px; padding: 8px 10px; margin-top: 10px; }
+    .flabel { color: #4a5568; font-weight: 700; }
+    .seg { display: inline-flex; border: 1px solid #cbd5e0; border-radius: 8px; overflow: hidden; }
+    .seg button { font: inherit; font-size: 0.76rem; padding: 4px 9px; border: 0; border-left: 1px solid #cbd5e0; background: #fff; color: #2d3748; cursor: pointer; }
+    .seg button:first-child { border-left: 0; }
+    .seg button[aria-pressed="true"] { background: #1a56db; color: #fff; }
+    .seg button:focus-visible { outline: 2px solid #90cdf4; outline-offset: -2px; }
+    .seg-wide { display: flex; }
+    .seg-wide button { flex: 1; padding: 6px 8px; }
+    details.adv { margin-top: 14px; border-top: 1px solid #edf2f7; padding-top: 10px; }
+    details.adv summary { cursor: pointer; font-size: 0.8rem; font-weight: 700; color: #2b6cb0; }
+    details.adv[open] summary { margin-bottom: 6px; }
+    #probe-table:not(.show-pos) .col-pos { display: none; }
+    .wall-pop { position: absolute; z-index: 5; background: #fff; border: 1px solid #a0aec0; border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,0.18); padding: 10px 12px; width: 250px; max-width: calc(100% - 8px); font-size: 0.78rem; }
+    .wall-pop .wp-title { font-weight: 800; color: #1a365d; margin-bottom: 4px; }
+    .wall-pop .field input { width: 6.4em; }
+    .wall-pop .field select { width: auto; max-width: 10em; }
+    .wall-pop .wp-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; }
+    .wall-pop button { font: inherit; font-size: 0.74rem; padding: 4px 10px; border: 1px solid #cbd5e0; border-radius: 999px; background: #fff; cursor: pointer; }
+    .wall-pop button:hover, .wall-pop button:focus-visible { border-color: #1a56db; color: #1a56db; outline: none; }
 
     .map-wrap { position: relative; width: 100%; }
     #map { display: block; width: 100%; height: auto; border-radius: 8px; background: #fff; touch-action: pan-y pinch-zoom; cursor: crosshair; }
@@ -208,6 +229,7 @@
       <div class="panel" id="controls">
         <h2>部屋のひな形</h2>
         <div class="presets" id="presets" role="group" aria-label="部屋のひな形"></div>
+        <p class="howto">ひな形を選び、地図の上の患者・管球・測定点をドラッグします。<b>壁をタップすると</b>、材質と厚さを変えられます（キーボードでは「詳細設定」の壁の表で変えられます）。</p>
 
         <h3>装置と件数</h3>
         <div class="field">
@@ -217,38 +239,52 @@
         </div>
         <div id="xray-fields">
           <div class="field"><label for="patients">患者数（人/週）</label><input type="number" id="patients" min="0" step="1"></div>
-          <div class="field"><label for="tube-z">管球の高さ（m）</label><input type="number" id="tube-z" min="0" max="3" step="0.05"><span class="hint">患者の真下＝アンダーチューブ、真上＝オーバーチューブ。平面上の位置は地図でドラッグ</span></div>
-          <div class="field"><label for="patient-z">照射中心の高さ（m）</label><input type="number" id="patient-z" min="0" max="3" step="0.05"></div>
-          <div class="field"><label>患者の位置 x, y（m）</label><span class="pos-row"><input type="number" id="patient-x" step="0.05" aria-label="患者の位置 x（m）"><input type="number" id="patient-y" step="0.05" aria-label="患者の位置 y（m）"></span></div>
-          <div class="field"><label>管球の位置 x, y（m）</label><span class="pos-row"><input type="number" id="tube-x" step="0.05" aria-label="管球の位置 x（m）"><input type="number" id="tube-y" step="0.05" aria-label="管球の位置 y（m）"></span><span class="hint">位置は部屋の左上の角が (0, 0)。地図でのドラッグでも動かせる</span></div>
+          <div class="field"><span class="flabel" id="tube-dir-label">管球の向き</span>
+            <span class="seg" id="tube-dir" role="group" aria-labelledby="tube-dir-label"><button type="button" data-dir="under">下から</button><button type="button" data-dir="over">上から</button><button type="button" data-dir="side">横から</button></span>
+            <span class="hint">下から＝アンダーチューブ（血管撮影・透視）、上から＝オーバーチューブ（臥位撮影）、横から＝立位撮影。斜めの配置は詳細設定で</span>
+            <span class="hint" id="tube-dir-msg" role="status"></span></div>
         </div>
         <div id="ct-fields" class="hidden">
-          <div class="field"><label for="ct-kvp">管電圧</label><select id="ct-kvp"><option value="120">120 kV</option><option value="140">140 kV</option></select></div>
           <div class="field"><label for="ct-head">頭部（件/週）</label><input type="number" id="ct-head" min="0" step="1"></div>
-          <div class="field"><label for="ct-dlp-head">頭部の DLP（mGy·cm）</label><input type="number" id="ct-dlp-head" min="0" step="10"></div>
-          <div class="field"><label for="ct-body">体幹（件/週）</label><input type="number" id="ct-body" min="0" step="1"></div>
-          <div class="field"><label for="ct-dlp-body">体幹の DLP（mGy·cm）</label><input type="number" id="ct-dlp-body" min="0" step="10"><span class="hint">既定値は NCRP 147 Table 5.2（頭部 1,200・体幹平均 550）。造影の前後で2回撮る検査はその分 DLP を足す（NCRP は情報が無ければ全体の40%と仮定し平均1.4倍）。選んだ管電圧での値を入れる</span></div>
-          <div class="field"><label for="iso-z">アイソセンタの高さ（m）</label><input type="number" id="iso-z" min="0" max="3" step="0.05"></div>
-          <div class="field"><label>アイソセンタの位置 x, y（m）</label><span class="pos-row"><input type="number" id="iso-x" step="0.05" aria-label="アイソセンタの位置 x（m）"><input type="number" id="iso-y" step="0.05" aria-label="アイソセンタの位置 y（m）"></span></div>
+          <div class="field"><label for="ct-body">体幹（件/週）</label><input type="number" id="ct-body" min="0" step="1"><span class="hint">1件の DLP は NCRP 147 の既定値（頭部 1,200・体幹 550 mGy·cm）で計算します。施設の値や、造影の前後で2回撮る検査が多いときは「詳細設定」で DLP を変えてください（既定値のままだと少なく見積もることがあります）</span></div>
         </div>
 
-        <h3>部屋と壁</h3>
-        <div class="field"><label for="room-w">部屋の幅（m）</label><input type="number" id="room-w" min="2" max="15" step="0.1"></div>
-        <div class="field"><label for="room-d">部屋の奥行き（m）</label><input type="number" id="room-d" min="2" max="15" step="0.1"></div>
-        <div class="field"><label for="ceiling">天井の高さ（m）</label><input type="number" id="ceiling" min="2" max="6" step="0.1"></div>
-        <div class="wall-grid" id="wall-grid" aria-label="壁の材質と厚さ">
-          <span class="h">壁</span><span class="h">材質</span><span class="h">厚さ mm</span><span class="h">鉛の内張り mm</span>
-        </div>
+        <h3>部屋</h3>
+        <div class="field"><span class="flabel">大きさ 幅 × 奥行き（m）</span><span class="pos-row"><input type="number" id="room-w" min="2" max="15" step="0.1" aria-label="部屋の幅（m）"><span>×</span><input type="number" id="room-d" min="2" max="15" step="0.1" aria-label="部屋の奥行き（m）"></span></div>
         <div class="checkline"><input type="checkbox" id="partition-on"><label for="partition-on">仕切り壁（操作室など）を置く</label></div>
-        <div class="field" id="partition-fields"><label for="partition-mm">仕切り壁の鉛当量（mm）</label><input type="number" id="partition-mm" min="0" max="10" step="0.1"><span class="hint">鉛ガラス・鉛入りの仕切りは鉛当量で入れる。両端は地図でドラッグか、下の欄で</span>
-          <label>端1 x, y（m）</label><span class="pos-row"><input type="number" id="part-x1" step="0.05" aria-label="仕切り壁の端1 x（m）"><input type="number" id="part-y1" step="0.05" aria-label="仕切り壁の端1 y（m）"></span>
-          <label>端2 x, y（m）</label><span class="pos-row"><input type="number" id="part-x2" step="0.05" aria-label="仕切り壁の端2 x（m）"><input type="number" id="part-y2" step="0.05" aria-label="仕切り壁の端2 y（m）"></span></div>
 
-        <h3>見る高さと計算の方法</h3>
-        <div class="field"><label for="eval-z">地図の高さ（m）</label><input type="number" id="eval-z" min="0" max="3" step="0.05"><span class="hint">床から 1.0 m＝胴、1.55 m＝目の高さの目安</span></div>
-        <div id="xray-method"><div class="field"><label for="leak-limit">漏れ線の上限</label><select id="leak-limit"><option value="japan">日本の法令 1.0 mGy/h</option><option value="ncrp">NCRP 147 の前提 0.876 mGy/h</option></select></div>
-        <div class="field"><label for="dist-mode">距離のとり方</label><select id="dist-mode"><option value="separate">散乱線と漏れ線で別々</option><option value="ncrp">NCRP の簡略化（短いほうにそろえる）</option></select><span class="hint">NCRP の簡略化は壁の向こうを安全側に見積もる方法。部屋の中では管球のまわりが実際より高く出る。測定点の表には両方の値を並べる</span></div></div>
-        <div class="checkline"><input type="checkbox" id="obliquity"><label for="obliquity">壁を斜めに通る分を厚くみなす（上限2倍）</label></div>
+        <h3>地図の高さ</h3>
+        <div class="seg seg-wide" id="evalz-seg" role="group" aria-label="地図の高さ"><button type="button" data-z="1">胴 1.0 m</button><button type="button" data-z="1.55">目 1.55 m</button></div>
+        <p class="hint" id="evalz-now" style="font-size:0.7rem;color:#718096;margin-top:4px"></p>
+
+        <details class="adv" id="adv">
+          <summary>詳細設定（座標・高さ・壁の厚さ・計算方法）</summary>
+          <div id="xray-adv">
+            <div class="field"><label for="tube-z">管球の高さ（m）</label><input type="number" id="tube-z" min="0" max="3" step="0.05"><span class="hint">患者の真下＝アンダーチューブ、真上＝オーバーチューブ</span></div>
+            <div class="field"><label for="patient-z">照射中心の高さ（m）</label><input type="number" id="patient-z" min="0" max="3" step="0.05"></div>
+            <div class="field"><label>患者の位置 x, y（m）</label><span class="pos-row"><input type="number" id="patient-x" step="0.05" aria-label="患者の位置 x（m）"><input type="number" id="patient-y" step="0.05" aria-label="患者の位置 y（m）"></span></div>
+            <div class="field"><label>管球の位置 x, y（m）</label><span class="pos-row"><input type="number" id="tube-x" step="0.05" aria-label="管球の位置 x（m）"><input type="number" id="tube-y" step="0.05" aria-label="管球の位置 y（m）"></span><span class="hint">位置は部屋の左上の角が (0, 0)。地図でのドラッグでも動かせる</span></div>
+          </div>
+          <div id="ct-adv" class="hidden">
+            <div class="field"><label for="ct-kvp">管電圧</label><select id="ct-kvp"><option value="120">120 kV</option><option value="140">140 kV</option></select></div>
+            <div class="field"><label for="ct-dlp-head">頭部の DLP（mGy·cm）</label><input type="number" id="ct-dlp-head" min="0" step="10"></div>
+            <div class="field"><label for="ct-dlp-body">体幹の DLP（mGy·cm）</label><input type="number" id="ct-dlp-body" min="0" step="10"><span class="hint">既定値は NCRP 147 Table 5.2（頭部 1,200・体幹平均 550）。造影の前後で2回撮る検査はその分 DLP を足す（NCRP は情報が無ければ全体の40%と仮定し平均1.4倍）。選んだ管電圧での値を入れる</span></div>
+            <div class="field"><label for="iso-z">アイソセンタの高さ（m）</label><input type="number" id="iso-z" min="0" max="3" step="0.05"></div>
+            <div class="field"><label>アイソセンタの位置 x, y（m）</label><span class="pos-row"><input type="number" id="iso-x" step="0.05" aria-label="アイソセンタの位置 x（m）"><input type="number" id="iso-y" step="0.05" aria-label="アイソセンタの位置 y（m）"></span></div>
+          </div>
+          <div class="field"><label for="ceiling">天井の高さ（m）</label><input type="number" id="ceiling" min="2" max="6" step="0.1"></div>
+          <div class="wall-grid" id="wall-grid" aria-label="壁の材質と厚さ">
+            <span class="h">壁</span><span class="h">材質</span><span class="h">厚さ mm</span><span class="h">鉛の内張り mm</span>
+          </div>
+          <div class="field" id="partition-fields"><label for="partition-mm">仕切り壁の鉛当量（mm）</label><input type="number" id="partition-mm" min="0" max="10" step="0.1"><span class="hint">鉛ガラス・鉛入りの仕切りは鉛当量で入れる。両端は地図でドラッグか、下の欄で</span>
+            <label>端1 x, y（m）</label><span class="pos-row"><input type="number" id="part-x1" step="0.05" aria-label="仕切り壁の端1 x（m）"><input type="number" id="part-y1" step="0.05" aria-label="仕切り壁の端1 y（m）"></span>
+            <label>端2 x, y（m）</label><span class="pos-row"><input type="number" id="part-x2" step="0.05" aria-label="仕切り壁の端2 x（m）"><input type="number" id="part-y2" step="0.05" aria-label="仕切り壁の端2 y（m）"></span></div>
+          <div class="field"><label for="eval-z">地図の高さ（m）</label><input type="number" id="eval-z" min="0" max="3" step="0.05"><span class="hint">床から 1.0 m＝胴、1.55 m＝目の高さの目安</span></div>
+          <div id="xray-method"><div class="field"><label for="leak-limit">漏れ線の上限</label><select id="leak-limit"><option value="japan">日本の法令 1.0 mGy/h</option><option value="ncrp">NCRP 147 の前提 0.876 mGy/h</option></select></div>
+          <div class="field"><label for="dist-mode">距離のとり方</label><select id="dist-mode"><option value="separate">散乱線と漏れ線で別々</option><option value="ncrp">NCRP の簡略化（短いほうにそろえる）</option></select><span class="hint">NCRP の簡略化は壁の向こうを安全側に見積もる方法。部屋の中では管球のまわりが実際より高く出る。測定点の表には両方の値を並べる</span></div></div>
+          <div class="checkline"><input type="checkbox" id="obliquity"><label for="obliquity">壁を斜めに通る分を厚くみなす（上限2倍）</label></div>
+          <p class="hint" style="margin-top:8px">詳細設定を開いているあいだは、測定点の表に座標の欄も出ます。</p>
+        </details>
       </div>
 
       <div class="panel" id="result">
@@ -256,7 +292,20 @@
           <h2>週あたりの空気カーマの地図</h2>
           <span class="unit">単位: mGy/週（空気カーマ）・高さ <span id="eval-z-label"></span> m</span>
         </div>
-        <div class="map-wrap"><canvas id="map" aria-label="部屋の線量分布の地図" role="img"></canvas></div>
+        <div class="map-wrap"><canvas id="map" aria-label="部屋の線量分布の地図" role="img" tabindex="-1"></canvas>
+          <div id="wall-pop" class="wall-pop hidden" role="dialog" aria-labelledby="wp-title" tabindex="-1">
+            <div class="wp-title" id="wp-title"></div>
+            <div id="wp-wall">
+              <div class="field"><label for="wp-mat">材質</label><select id="wp-mat"></select></div>
+              <div class="field"><label for="wp-mm">厚さ（mm）</label><input type="number" id="wp-mm" min="0" step="1"></div>
+              <div class="field"><label for="wp-lead">鉛の内張り（mm）</label><input type="number" id="wp-lead" min="0" step="0.1"></div>
+            </div>
+            <div id="wp-part">
+              <div class="field"><label for="wp-pmm">鉛当量（mm）</label><input type="number" id="wp-pmm" min="0" step="0.1"></div>
+            </div>
+            <div class="wp-actions"><button type="button" id="wp-remove">仕切り壁を外す</button><button type="button" id="wp-close">閉じる</button></div>
+          </div>
+        </div>
         <div id="cursor-readout">地図の上にカーソルを置くか、タップすると、その点の値を表示します。</div>
         <div class="legend">
           <span>低い</span><canvas id="legend-bar" width="220" height="12"></canvas><span>高い</span>
@@ -265,13 +314,13 @@
           <span><span class="sw sw-primary"></span>一次線の方向（計算に含まない）</span>
           <span><span class="sw sw-near"></span>線源から 0.3 m 以内（表示しない）</span>
         </div>
-        <p class="drag-hint">地図の上で、患者（●）・管球（■）・測定点（A〜C）・仕切り壁の両端をドラッグできます（位置は入力欄でも変えられます）。細い線は1桁ごとの等線量線です。</p>
+        <p class="drag-hint">地図の上で、患者（●）・管球（■）・測定点（A〜C）・仕切り壁の両端をドラッグできます。壁（黒い線）や仕切り壁（青い線）をタップすると、材質と厚さを変えられます。細い線は1桁ごとの等線量線です。</p>
         <div id="error-box" class="hidden" role="alert"></div>
 
         <h2 style="margin-top:14px">測定点の値</h2>
         <div class="table-scroll">
           <table class="probes" id="probe-table">
-            <thead><tr><th>測定点</th><th>位置 x, y（m）</th><th>空気カーマ（距離は<br>別々）mGy/週</th><th>同・NCRP の<br>簡略化</th><th>滞在係数</th><th>実効線量<br>mSv/3か月</th><th>同（滞在係数1）<br>mSv/3か月</th></tr></thead>
+            <thead><tr><th>測定点</th><th class="col-pos">位置 x, y（m）</th><th>空気カーマ（距離は<br>別々）mGy/週</th><th>同・NCRP の<br>簡略化</th><th>滞在係数</th><th>実効線量<br>mSv/3か月</th><th>同（滞在係数1）<br>mSv/3か月</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -494,6 +543,7 @@
       if (!state.iso) { state.iso = { x: state.patient.x, y: state.patient.y, z: 1 }; state.kvp = '120'; state.head = 30; state.dlpHead = 1200; state.body = 150; state.dlpBody = 550; }
       Array.prototype.forEach.call(presetBox.children, function (b) { b.setAttribute('aria-pressed', b.dataset.id === id ? 'true' : 'false'); });
       writeInputs();
+      closeWallPop();
       schedule();
     }
 
@@ -521,8 +571,15 @@
       var isCT = state.room === 'ct';
       $('room-hint').textContent = ROOM_HINTS[state.room] || '';
       $('xray-fields').classList.toggle('hidden', isCT);
+      $('xray-adv').classList.toggle('hidden', isCT);
       $('xray-method').classList.toggle('hidden', isCT);
       $('ct-fields').classList.toggle('hidden', !isCT);
+      $('ct-adv').classList.toggle('hidden', !isCT);
+      var dir = tubeDir();
+      Array.prototype.forEach.call($('tube-dir').children, function (b) { b.setAttribute('aria-pressed', b.dataset.dir === dir ? 'true' : 'false'); });
+      var zPressed = false;
+      Array.prototype.forEach.call($('evalz-seg').children, function (b) { var on = Math.abs(Number(b.dataset.z) - state.evalZ) < 1e-9; zPressed = zPressed || on; b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+      $('evalz-now').textContent = zPressed || !isFinite(state.evalZ) ? '' : '今の高さ: ' + state.evalZ + ' m（詳細設定で変えられます）';
       $('partition-fields').classList.toggle('hidden', !state.partition.on);
       $('eval-z-label').textContent = $('eval-z').value || '—';
       Array.prototype.forEach.call(document.querySelectorAll('#wall-grid select option[value=gypsum]'), function (o) { o.disabled = isCT; });
@@ -578,29 +635,76 @@
 
     // 画面側の入力の検査。範囲外・空欄は黙って直さずエラーにする
     function validate() {
-      function rng(v, lo, hi, name) { if (typeof v !== 'number' || !isFinite(v) || v < lo || v > hi) throw new Error(name + 'は ' + lo + '〜' + hi + ' の範囲で入れてください'); }
-      rng(state.W, 2, 15, '部屋の幅'); rng(state.D, 2, 15, '部屋の奥行き'); rng(state.ceiling, 2, 6, '天井の高さ');
-      rng(state.evalZ, 0, state.ceiling, '地図の高さ（m）');
+      function rng(v, lo, hi, name, field) {
+        if (typeof v !== 'number' || !isFinite(v) || v < lo || v > hi) { var er = new Error(name + 'は ' + lo + '〜' + hi + ' の範囲で入れてください'); er.field = field; throw er; }
+      }
+      rng(state.W, 2, 15, '部屋の幅', '#room-w'); rng(state.D, 2, 15, '部屋の奥行き', '#room-d'); rng(state.ceiling, 2, 6, '天井の高さ', '#ceiling');
+      rng(state.evalZ, 0, state.ceiling, '地図の高さ（m）', '#eval-z');
       var isCT = state.room === 'ct';
-      if (isCT) rng(state.iso.z, 0, state.ceiling, 'アイソセンタの高さ（m）');
-      else { rng(state.patient.z, 0, state.ceiling, '照射中心の高さ（m）'); rng(state.tube.z, 0, state.ceiling, '管球の高さ（m）'); }
+      if (isCT) rng(state.iso.z, 0, state.ceiling, 'アイソセンタの高さ（m）', '#iso-z');
+      else { rng(state.patient.z, 0, state.ceiling, '照射中心の高さ（m）', '#patient-z'); rng(state.tube.z, 0, state.ceiling, '管球の高さ（m）', '#tube-z'); }
       SIDES.forEach(function (sd) {
         var w = state.walls[sd[0]];
-        rng(w.mm, 0, 1000, sd[1] + 'の壁の厚さ（mm）'); rng(w.lead, 0, 20, sd[1] + 'の壁の鉛の内張り（mm）');
-        if (isCT && w.material === 'gypsum') throw new Error('CT の二次線には石こうボードの透過の係数がありません（NCRP 147 は鉛とコンクリートのみ）。' + sd[1] + 'の壁の材質を変えてください');
+        rng(w.mm, 0, 1000, sd[1] + 'の壁の厚さ（mm）', '#wall-' + sd[0] + '-mm'); rng(w.lead, 0, 20, sd[1] + 'の壁の鉛の内張り（mm）', '#wall-' + sd[0] + '-lead');
+        if (isCT && w.material === 'gypsum') { var eg = new Error('CT の二次線には石こうボードの透過の係数がありません（NCRP 147 は鉛とコンクリートのみ）。' + sd[1] + 'の壁の材質を変えてください'); eg.field = '#wall-' + sd[0] + '-mat'; throw eg; }
       });
       if (state.partition.on) {
-        rng(state.partition.mm, 0, 20, '仕切り壁の鉛当量（mm）');
-        rng(state.partition.x1, -MARGIN, state.W + MARGIN, '仕切り壁の端1 の x'); rng(state.partition.y1, -MARGIN, state.D + MARGIN, '仕切り壁の端1 の y');
-        rng(state.partition.x2, -MARGIN, state.W + MARGIN, '仕切り壁の端2 の x'); rng(state.partition.y2, -MARGIN, state.D + MARGIN, '仕切り壁の端2 の y');
+        rng(state.partition.mm, 0, 20, '仕切り壁の鉛当量（mm）', '#partition-mm');
+        rng(state.partition.x1, -MARGIN, state.W + MARGIN, '仕切り壁の端1 の x', '#part-x1'); rng(state.partition.y1, -MARGIN, state.D + MARGIN, '仕切り壁の端1 の y', '#part-y1');
+        rng(state.partition.x2, -MARGIN, state.W + MARGIN, '仕切り壁の端2 の x', '#part-x2'); rng(state.partition.y2, -MARGIN, state.D + MARGIN, '仕切り壁の端2 の y', '#part-y2');
       }
-      if (isCT) { rng(state.iso.x, -MARGIN, state.W + MARGIN, 'アイソセンタの x'); rng(state.iso.y, -MARGIN, state.D + MARGIN, 'アイソセンタの y'); }
+      if (isCT) { rng(state.iso.x, -MARGIN, state.W + MARGIN, 'アイソセンタの x', '#iso-x'); rng(state.iso.y, -MARGIN, state.D + MARGIN, 'アイソセンタの y', '#iso-y'); }
       else {
-        rng(state.patient.x, -MARGIN, state.W + MARGIN, '患者の x'); rng(state.patient.y, -MARGIN, state.D + MARGIN, '患者の y');
-        rng(state.tube.x, -MARGIN, state.W + MARGIN, '管球の x'); rng(state.tube.y, -MARGIN, state.D + MARGIN, '管球の y');
+        rng(state.patient.x, -MARGIN, state.W + MARGIN, '患者の x', '#patient-x'); rng(state.patient.y, -MARGIN, state.D + MARGIN, '患者の y', '#patient-y');
+        rng(state.tube.x, -MARGIN, state.W + MARGIN, '管球の x', '#tube-x'); rng(state.tube.y, -MARGIN, state.D + MARGIN, '管球の y', '#tube-y');
       }
-      state.probes.forEach(function (pr) { rng(pr.x, -MARGIN, state.W + MARGIN, pr.name + 'の x'); rng(pr.y, -MARGIN, state.D + MARGIN, pr.name + 'の y'); });
+      state.probes.forEach(function (pr, i) { rng(pr.x, -MARGIN, state.W + MARGIN, pr.name + 'の x', '[data-probe-x="' + i + '"]'); rng(pr.y, -MARGIN, state.D + MARGIN, pr.name + 'の y', '[data-probe-y="' + i + '"]'); });
     }
+    // 管球の向き。下から・上から＝患者の真下・真上、横から＝同じ高さで水平に離す（立位撮影の SID 1.8 m）。
+    // 斜めの配置はどのボタンにも当たらないので、押されていない表示にする。数値は詳細設定で細かく変えられる
+    var TUBE_DZ = { under: -0.55, over: 1.0 };
+    var SIDE_SID = 1.8;
+    function tubeDir() {
+      var dz = state.tube.z - state.patient.z, h = Math.hypot(state.tube.x - state.patient.x, state.tube.y - state.patient.y);
+      if (!isFinite(dz) || !isFinite(h)) return null;
+      if (h < 0.05) return dz < -0.05 ? 'under' : dz > 0.05 ? 'over' : null;
+      return Math.abs(dz) <= 0.05 ? 'side' : null;
+    }
+    function round2(v) { return Math.round(v * 100) / 100; }
+    $('tube-dir').addEventListener('click', function (e) {
+      var dir = e.target.dataset && e.target.dataset.dir, msg = $('tube-dir-msg');
+      msg.textContent = '';
+      if (!dir) return;
+      var P = state.patient;
+      if (![P.x, P.y, P.z, state.ceiling, state.W, state.D].every(isFinite)) { msg.textContent = '先に入力のエラーを直してください'; return; }
+      var tx, ty, tz;
+      if (dir === 'side') {
+        tz = P.z;
+        // いま水平に離れていればその向きを保ち、重なっていれば部屋の中で一番広い向きへ
+        var hx = state.tube.x - P.x, hy = state.tube.y - P.y, h = Math.hypot(hx, hy);
+        var ux, uy;
+        if (h >= 0.05) { ux = hx / h; uy = hy / h; }
+        else {
+          var room = [[0, 1, state.D - P.y], [0, -1, P.y], [1, 0, state.W - P.x], [-1, 0, P.x]].sort(function (a, b) { return b[2] - a[2]; })[0];
+          ux = room[0]; uy = room[1];
+        }
+        tx = round2(P.x + ux * SIDE_SID); ty = round2(P.y + uy * SIDE_SID);
+      } else {
+        tx = P.x; ty = P.y; tz = round2(P.z + TUBE_DZ[dir]);
+        tz = Math.max(0, Math.min(tz, round2(state.ceiling - 0.1)));
+        if (dir === 'over' && tz - P.z <= 0.05) { msg.textContent = '天井が低く、管球を照射中心より上に置けません。詳細設定で高さを変えてください'; return; }
+        if (dir === 'under' && P.z - tz <= 0.05) { msg.textContent = '照射中心が低く、管球を下に置けません。詳細設定で高さを変えてください'; return; }
+      }
+      $('tube-x').value = tx; $('tube-y').value = ty; $('tube-z').value = tz;
+      readInputs(null); writePositions(); schedule();
+    });
+    $('evalz-seg').addEventListener('click', function (e) {
+      var z = e.target.dataset && e.target.dataset.z;
+      if (!z) return;
+      $('eval-z').value = z;
+      readInputs(null); schedule();
+    });
+    $('adv').addEventListener('toggle', function () { $('probe-table').classList.toggle('show-pos', $('adv').open); });
     $('controls').addEventListener('input', function (e) { readInputs(e.target); schedule(); });
     $('controls').addEventListener('change', function (e) { if (e.target.type !== 'number') { readInputs(e.target); schedule(); } });
 
@@ -678,10 +782,23 @@
       setTimeout(run, 120); // 画面が隠れていて requestAnimationFrame が止まっているときの予備
     }
 
-    function showError(msg) {
+    // エラーの原因の欄が畳んだ詳細設定の中にあれば、詳細設定を開いて欄に印を付け、どこを直すかを書く（入力中のフォーカスは奪わない）
+    function showError(msg, field) {
       var box = $('error-box');
-      if (msg) { box.textContent = '計算できません: ' + msg + '。入力を確かめてください。'; box.classList.remove('hidden'); }
-      else box.classList.add('hidden');
+      Array.prototype.forEach.call(document.querySelectorAll('.bad'), function (el) { el.classList.remove('bad'); });
+      if (!msg) { box.classList.add('hidden'); return; }
+      var where = '';
+      var el = field ? document.querySelector(field) : null;
+      if (el) {
+        var adv = $('adv'), inAdv = adv.contains(el) || /data-probe/.test(field);
+        if (inAdv && !adv.open) { adv.open = true; $('probe-table').classList.add('show-pos'); }
+        el.classList.add('bad');
+        if (inAdv) where = '「詳細設定」の赤い枠の欄で直せます。';
+        if (/^#wall-/.test(field)) where += '地図の壁をタップしても変えられます。';
+        if (/data-probe/.test(field)) where = '測定点の表の赤い枠の欄（座標）で直せます。';
+      }
+      box.textContent = '計算できません: ' + msg + '。' + (where || '入力を確かめてください。');
+      box.classList.remove('hidden');
     }
 
     function render() {
@@ -699,8 +816,8 @@
       } catch (e) {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        showError(e.message);
         updateProbes(null);
+        showError(e.message, e.field);
         if (state.W >= 2 && state.W <= 15 && state.D >= 2 && state.D <= 15) { try { drawRoom(); drawMarkers(); } catch (e2) { /* 部屋も描けない入力 */ } }
         return;
       }
@@ -748,10 +865,36 @@
         ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
       });
+      drawWallLabels(walls);
       // 1 m の目盛り
       var o = toPx(state.W - 1, state.D + 0.35), e = toPx(state.W, state.D + 0.35);
       ctx.strokeStyle = '#1a202c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
       ctx.fillStyle = '#1a202c'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('1 m', (o[0] + e[0]) / 2, o[1] - 4);
+    }
+
+    function wallText(i) {
+      if (i === 4) return '仕切り 鉛 ' + state.partition.mm + ' mm';
+      var w = state.walls[SIDES[i][0]];
+      return MATERIALS[w.material] + ' ' + w.mm + ' mm' + (w.lead > 0 ? '＋鉛 ' + w.lead + ' mm' : '');
+    }
+    // 壁の外側に材質と厚さを書く（タップで変えられることの手がかり）
+    function drawWallLabels(walls) {
+      ctx.save();
+      ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.fillStyle = '#2d3748';
+      var off = 12 / view.scale; // 壁から約12px 外側
+      walls.forEach(function (w, i) {
+        var mx = (w.x1 + w.x2) / 2, my = (w.y1 + w.y2) / 2, ang = 0;
+        if (i === 0) my -= off; else if (i === 1) my += off;
+        else if (i === 2) { mx -= off; ang = -Math.PI / 2; } else if (i === 3) { mx += off; ang = Math.PI / 2; }
+        else { var dx = w.x2 - w.x1, dy = w.y2 - w.y1, L = Math.hypot(dx, dy) || 1; mx += -dy / L * off; my += dx / L * off; ang = Math.atan2(dy, dx); if (ang > Math.PI / 2 || ang < -Math.PI / 2) ang += Math.PI; }
+        var q = toPx(mx, my);
+        ctx.save(); ctx.translate(q[0], q[1]); ctx.rotate(ang);
+        var t = wallText(i);
+        ctx.strokeText(t, 0, 0); ctx.fillText(t, 0, 0);
+        ctx.restore();
+      });
+      ctx.restore();
     }
 
     function handles() {
@@ -819,7 +962,7 @@
         }).join('') + '</select>';
         var pos = '<span class="pos-row"><input type="number" step="0.05" data-probe-x="' + i + '" aria-label="' + pr.name + 'の x（m）">' +
           '<input type="number" step="0.05" data-probe-y="' + i + '" aria-label="' + pr.name + 'の y（m）"></span>';
-        return '<tr><td><span class="pname"></span><span class="pflags"></span></td><td>' + pos + '</td><td class="v1"></td><td class="v2"></td><td>' + tSel + '</td><td class="v3"></td><td class="v4"></td></tr>';
+        return '<tr><td><span class="pname"></span><span class="pflags"></span></td><td class="col-pos">' + pos + '</td><td class="v1"></td><td class="v2"></td><td>' + tSel + '</td><td class="v3"></td><td class="v4"></td></tr>';
       }).join('');
       builtFor = state.probes;
     }
@@ -888,7 +1031,8 @@
     }
     canvas.addEventListener('pointerdown', function (e) {
       var p = evtPos(e), h = hit(p[0], p[1]);
-      if (h) { drag = h.id; canvas.setPointerCapture(e.pointerId); e.preventDefault(); }
+      if (h) { closeWallPop(); drag = h.id; canvas.setPointerCapture(e.pointerId); e.preventDefault(); }
+      else { var wi = hitWall(p[0], p[1]); if (wi >= 0) { e.preventDefault(); openWallPop(wi, p); } else closeWallPop(); }
       readout(p);
     });
     canvas.addEventListener('pointermove', function (e) {
@@ -914,6 +1058,65 @@
         else out.textContent = where + ': ' + fmt(r.total) + ' mGy/週' + (state.room === 'ct' ? '（漏れ線は κ に含む）' : '（散乱線 ' + fmt(r.scatter) + '・漏れ線 ' + fmt(r.leakage) + '）') + (r.flags.indexOf('near') >= 0 ? ' ※0.3 m より近い' : '');
       } catch (err) { out.textContent = ''; }
     }
+
+    // ---------- 壁をタップして材質と厚さを変える（値は詳細設定の欄に書き、そこから読む。入口を1つにするため）
+    function hitWall(px, py) {
+      var walls; try { walls = buildWalls(); } catch (e) { return -1; }
+      var best = -1, bd = 10;
+      walls.forEach(function (w, i) {
+        var a = toPx(w.x1, w.y1), b = toPx(w.x2, w.y2);
+        var vx = b[0] - a[0], vy = b[1] - a[1], L2 = vx * vx + vy * vy;
+        var t = L2 ? Math.max(0, Math.min(1, ((px - a[0]) * vx + (py - a[1]) * vy) / L2)) : 0;
+        var d = Math.hypot(px - (a[0] + t * vx), py - (a[1] + t * vy));
+        if (d < bd) { bd = d; best = i; }
+      });
+      return best;
+    }
+    var pop = $('wall-pop'), popWall = -1;
+    var wpMat = $('wp-mat');
+    Object.keys(MATERIALS).forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = MATERIALS[m]; wpMat.appendChild(o); });
+    function openWallPop(i, p) {
+      popWall = i;
+      var isPart = i === 4;
+      $('wp-title').textContent = isPart ? '仕切り壁' : SIDES[i][1] + 'の壁';
+      $('wp-wall').classList.toggle('hidden', isPart);
+      $('wp-part').classList.toggle('hidden', !isPart);
+      $('wp-remove').classList.toggle('hidden', !isPart);
+      if (isPart) $('wp-pmm').value = $('partition-mm').value;
+      else {
+        var sd = SIDES[i][0];
+        Array.prototype.forEach.call(wpMat.options, function (o) { o.disabled = state.room === 'ct' && o.value === 'gypsum'; });
+        wpMat.value = $('wall-' + sd + '-mat').value; $('wp-mm').value = $('wall-' + sd + '-mm').value; $('wp-lead').value = $('wall-' + sd + '-lead').value;
+      }
+      pop.classList.remove('hidden');
+      var wrap = canvas.parentElement.clientWidth, pw = pop.offsetWidth, ph = pop.offsetHeight;
+      pop.style.left = Math.max(4, Math.min(wrap - pw - 4, p[0] + 12)) + 'px';
+      pop.style.top = Math.max(4, Math.min(view.h - ph - 4, p[1] + 12)) + 'px';
+      // 小窓そのものにフォーカス（数値の欄に当てるとスマートフォンでキーボードが開いて画面がずれる）
+      requestAnimationFrame(function () { pop.focus(); });
+      setTimeout(function () { if (popWall >= 0 && !pop.contains(document.activeElement)) pop.focus(); }, 50);
+    }
+    function closeWallPop() { if (popWall >= 0) { pop.classList.add('hidden'); popWall = -1; } }
+    // 触った欄だけを詳細設定に書き戻す（ほかの欄を古い値で上書きしない）
+    function syncFromPop(e) {
+      if (popWall < 0) return;
+      var t = e.target, sd = popWall === 4 ? null : SIDES[popWall][0];
+      if (t.id === 'wp-pmm') $('partition-mm').value = t.value;
+      else if (sd && t.id === 'wp-mat') $('wall-' + sd + '-mat').value = t.value;
+      else if (sd && t.id === 'wp-mm') $('wall-' + sd + '-mm').value = t.value;
+      else if (sd && t.id === 'wp-lead') $('wall-' + sd + '-lead').value = t.value;
+      else return;
+      readInputs(null); schedule();
+    }
+    pop.addEventListener('input', syncFromPop);
+    pop.addEventListener('change', syncFromPop);
+    $('wp-close').addEventListener('click', function () { closeWallPop(); canvas.focus(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && popWall >= 0) { closeWallPop(); canvas.focus(); } });
+    // 小窓の外（左の欄）で入力が変わったら、古い内容を見せ続けないよう閉じる
+    $('controls').addEventListener('input', closeWallPop);
+    $('controls').addEventListener('change', closeWallPop);
+    $('wp-remove').addEventListener('click', function () { $('partition-on').checked = false; readInputs(null); schedule(); closeWallPop(); });
+    pop.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
 
     window.addEventListener('resize', schedule);
     loadPreset('rad');
