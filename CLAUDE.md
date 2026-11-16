@@ -58,7 +58,7 @@
 | 造影剤クイック計算ツール | ✅ 公開中 | `contrast-quick/index.html` |
 | 一般撮影条件参照ツール | ✅ 公開中 | `exposure-reference/index.html` |
 | MRIシミュレータ（教育用） | ✅ 公開中 | `mri-simulator/index.html` |
-| 散乱線シミュレータ（教育用） | 🚧 PR中 | `scatter-simulator/index.html`（計算は `scatter-core.js`、係数の照合表は `scripts/scatter-provenance.json`） |
+| 散乱線シミュレータ（教育用） | ✅ 公開中 | `scatter-simulator/index.html`（計算は `scatter-core.js`、係数の照合表は `scripts/scatter-provenance.json`） |
 | 造影検査 腎機能チェッカー（eGFR/CT・MRI） | ✅ 公開中 | `egfr-checker/index.html` |
 | Task-based IQ評価ツール | 🔬 研究公開 | `task-based-iq/index.html` |
 | Subtractionツール（脳CT/MRI差分）デモ | 🔬 研究公開 | `subtraction-demo/index.html`（サンプルは `samples/`） |
