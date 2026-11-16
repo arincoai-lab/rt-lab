@@ -36,6 +36,10 @@ jobs:
       - name: Contrast simulator model checks
         run: node scripts/test-contrast-simulator.js
 
+      # 散乱線シミュレータの計算（照合表との一致・NCRP 147 の計算例・物理的にありえない値・実効線量への換算）
+      - name: Scatter simulator model checks
+        run: node scripts/test-scatter-simulator.js
+
       # CT線量推定ツールの SSDE 換算係数（AAPM Report 204 Table 1D / Report 293 Eq.1 との一致）
       - name: CT dose estimator SSDE factor checks
         run: node scripts/test-ct-dose.js
