@@ -282,7 +282,7 @@
   function ivrEyeCoefficient(eye, projection) {
     if (eye !== 'left' && eye !== 'right') throw new Error('眼は left か right: ' + eye);
     if (projection === undefined || projection === 'weighted') return eye === 'right' ? IVR_EYE.weightedRight : IVR_EYE.weightedLeft;
-    const row = IVR_EYE_PROJECTIONS[projection];
+    const row = Object.prototype.hasOwnProperty.call(IVR_EYE_PROJECTIONS, projection) ? IVR_EYE_PROJECTIONS[projection] : null;
     if (!row) throw new Error('投影が不正: ' + projection);
     return row[eye === 'right' ? 1 : 0];
   }

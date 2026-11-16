@@ -431,6 +431,10 @@
     "example_whole_brain_weighted": 0.70,
     "example_whole_brain_mGy_per_year": 8,
     "radial_access_factor_up_to": 2,
+    "_cataract_years_note": "Discussion の原文: 0.5 Gy のしきい値に、加重値で 13 年・最悪の幾何（LAO30/CRAN30 の 5.47）で 8 年で達する（筆者の病院の年間の件数・KAP で）。係数と件数・KAP の例を独立に裏付ける",
+    "example_cataract_threshold_Gy": 0.5,
+    "example_cataract_years_weighted": 13,
+    "example_cataract_years_worst": 8,
     "weighted_left_eye": 3.39,
     "weighted_right_eye": 2.32,
     "max_projection": "LAO30/CRAN30（左眼）"

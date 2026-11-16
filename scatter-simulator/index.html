@@ -289,7 +289,7 @@
 
     <section class="panel eye-panel" id="eye" aria-labelledby="eye-title">
       <h2 id="eye-title">術者の水晶体の線量（心臓カテーテル・IVR）</h2>
-      <p>上の地図とは別の計算です。患者のすぐ横に立つ術者の目は、点線源の近似では粗すぎるため、面積線量（KAP）1 Gy·cm² あたりの水晶体の線量を実測した係数（Hulthén ら 2024）を使い、1年間の件数と1件あたりの KAP から見積もります。既定値は原典に載っている術者1人の年間の例です。自施設の線量管理システムの値に置き換えてください。</p>
+      <p>上の地図とは別の計算です。患者のすぐ横に立つ術者の目は、点線源の近似では粗すぎるため、面積線量（KAP）1 Gy·cm² あたりの水晶体の線量を実測した係数（Hulthén ら 2024）を使い、1年間の件数と1件あたりの KAP から見積もります。既定値は原典に載っている術者1人の年間の例です。自施設の線量管理システムの値に置き換えてください（KAP の単位に注意: µGy·m² は ÷100、mGy·cm² は ÷1000 で Gy·cm² になります）。</p>
       <div class="eye-grid">
         <div>
           <table class="eye-work" id="eye-work">
@@ -297,14 +297,14 @@
             <tbody></tbody>
           </table>
           <button type="button" class="eye-reset" id="eye-reset">原典の例に戻す</button>
-          <div class="field" style="margin-top:12px"><label for="eye-proj">管球の向き（投影）</label><select id="eye-proj"></select><span class="hint">「加重値」は、原典の病院で使われた投影の割合で平均した値。1つの投影を選ぶと、その投影だけで1年間撮った場合になります</span></div>
+          <div class="field" style="margin-top:12px"><label for="eye-proj">管球の向き（投影）</label><select id="eye-proj"></select><span class="hint">「加重値」は、原典の病院で使われた投影の割合で平均した値。1つの投影を選ぶと、その投影だけの場合になります。ただし投影別の値は撮影モードでの測定です（「LAO 30°・透視」を除く）。透視は LAO 30° で撮影の約1.3倍で、原典の病院では KAP の約6割が透視だったため、1つの投影を選ぶと低めに出ることがあります</span></div>
           <div class="checkline"><input type="checkbox" id="eye-shield"><label for="eye-shield">天吊り防護板を正しく使う（×0.25）</label></div>
           <div class="checkline"><input type="checkbox" id="eye-glasses"><label for="eye-glasses">防護眼鏡をかける（×0.7）</label></div>
           <div class="checkline"><input type="checkbox" id="eye-radial"><label for="eye-radial">橈骨動脈アプローチ（×2 で見積もる）</label></div>
         </div>
-        <div class="eye-out" id="eye-out" aria-live="polite">
+        <div class="eye-out" id="eye-out">
           <div>年間の KAP の合計: <b id="eye-kap"></b> Gy·cm²</div>
-          <div class="eye-nums">
+          <div class="eye-nums" aria-live="polite" aria-atomic="true">
             <div class="eye-num"><div class="k">左眼（患者側）</div><div class="v" id="eye-left"></div></div>
             <div class="eye-num"><div class="k">右眼</div><div class="v" id="eye-right"></div></div>
           </div>
@@ -312,7 +312,7 @@
           <div class="eye-bar"><div class="lbl"><span>参考: 5年 100 mSv（平均 年 20 mSv）に対して</span><b id="eye-pct-5yr"></b></div><div class="track"><div class="fill" id="eye-bar-5yr"></div></div></div>
           <div id="eye-error" class="hidden" role="alert" style="color:#9b2c2c"></div>
           <ul>
-            <li>参考線は医療法施行規則の、放射線診療従事者の水晶体の等価線量限度（第30条の27第2項）。高いほうの眼の値で割合を出しています。合否の判定はしません。</li>
+            <li>参考線は医療法施行規則の、放射線診療従事者の水晶体の等価線量限度（第30条の27第2項）。高いほうの眼の値で割合を出しています。バーがオレンジになるのは、見積もりが参考線を上回るときです。合否の判定ではありません。</li>
             <li>係数は水の吸収線量（mGy）です。X線（光子）では等価線量（mSv）と数値上ほぼ同じとみなして並べています。</li>
             <li>防護板と眼鏡の倍率は、原典の「正しく使えば<b>少なくとも</b>75%・さらに30%減る」をそのまま使った控えめな減り方です。防護板の位置がずれると、ほとんど減りません。</li>
             <li>橈骨動脈アプローチは、原典の「術者の線量が最大約2倍」を上限として掛けています。</li>
@@ -344,7 +344,7 @@
           <li><b>天井・床のスラブは計算に入れていません。</b>壁は床から天井までの面として扱います。</li>
           <li><b>距離のとり方</b>: 既定では、散乱線は患者から、漏れ線は管球からの距離で計算します。NCRP 147 は壁の計算で両方を短いほうの距離にそろえる安全側の簡略化を使っており、「距離のとり方」で切り替えられます。管球と患者が離れている部屋（胸部撮影室など）では、壁の向こうの点で簡略化のほうが2倍強高くなります（胸部撮影室のひな形の操作室で約2.2倍）。測定点の表には両方を並べ、実効線量は大きいほうで計算します。</li>
           <li><b>透過の式は、原典の図の厚さの範囲</b>（鉛 3 mm・コンクリート 300 mm・石こうボード 200 mm まで）で当てはめたものです。それを超える厚さでは外挿になります。</li>
-          <li><b>術者の水晶体の係数の測定条件</b>: 人体ファントムで、心臓カテーテルの術者（身長172 cm・大腿動脈から穿刺する位置）の目の表面を測ったものです。装置は1台（Philips）、下半身の防護だけで天吊り防護板なし、主に撮影モード。身長・立ち位置・装置・手技が違えば値は変わります。左眼が高いのは、管球と患者が術者の左側にあるためです。</li>
+          <li><b>術者の水晶体の係数の測定条件</b>: 人体ファントムで、心臓カテーテルの術者（頭頂の高さ 172 cm・大腿動脈から穿刺する位置）の目の表面を測ったものです。装置は1台（Philips）、下半身の防護だけで天吊り防護板なし、主に撮影モード。身長・立ち位置・装置・手技が違えば値は変わります。原典の係数は先行研究より低め（桁は同じ）で、背の低い術者ほど水晶体の線量は高くなるとされています。一方で、腹部のない胸部ファントムを使ったため、加重値は高めの見積もりとも書かれています。左眼が高いのは、散乱線の出どころである照射中の胸部が術者の左前にあり、LAO・CRAN の向きで術者側への散乱が増えるためです。</li>
         </ul>
       </div>
       <div class="panel">
@@ -958,7 +958,7 @@
     function fmtDose(v) { return v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2); }
     function bar(id, pctId, f) {
       var pct = f * 100;
-      $(pctId).textContent = (pct >= 10 ? pct.toFixed(0) : pct.toFixed(1)) + '%';
+      $(pctId).textContent = pct > 0 && pct < 0.1 ? '<0.1%' : (pct >= 10 ? pct.toFixed(0) : pct.toFixed(1)) + '%';
       $(id).style.width = Math.min(100, pct) + '%';
       $(id).classList.toggle('over', f >= 1);
     }
@@ -983,8 +983,8 @@
         err.textContent = e.message; err.classList.remove('hidden');
       }
     }
-    $('eye').addEventListener('input', update);
-    $('eye').addEventListener('change', update);
+    $('eye').addEventListener('input', function (e) { if (e.target.type === 'number') update(); });
+    $('eye').addEventListener('change', function (e) { if (e.target.type !== 'number') update(); });
     $('eye-reset').addEventListener('click', reset);
     reset();
   })();

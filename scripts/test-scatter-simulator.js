@@ -342,6 +342,22 @@ const D = core.doseAtPoint;
     check(threw, 'IVR 年間: 不正な入力 ' + JSON.stringify(bad) + ' でエラーにならない（黙って0は危険側）');
   }
   check(H.radial_access_factor_up_to === core.IVR_EYE.radialFactor, 'IVR: 橈骨動脈の倍率が照合表と違う');
+  // 投影・防護・橈骨が年間の計算に正しく渡る（大小比較だけでは取り違えを見逃す。独立レビュー MEDIUM-3）
+  check(rel(core.ivrEyeAnnual({ rows: W, projection: 'LAO30_FL' }).left_mGy_per_year, 5.04 * 11.05) < 1e-12, 'IVR 年間: 投影が渡らない（左）');
+  check(rel(core.ivrEyeAnnual({ rows: W, projection: 'LAO30_FL' }).right_mGy_per_year, 2.56 * 11.05) < 1e-12, 'IVR 年間: 投影が渡らない（右）');
+  const all = core.ivrEyeAnnual({ rows: W, ceilingShield: true, glasses: true, radial: true });
+  check(rel(all.left_mGy_per_year, 3.39 * 11.05 * 0.25 * 0.7 * 2) < 1e-12 && rel(all.right_mGy_per_year, 2.32 * 11.05 * 0.25 * 0.7 * 2) < 1e-12, 'IVR 年間: 防護・橈骨の倍率');
+  check(rel(core.ivrEyeAnnual({ rows: W, ceilingShield: true }).left_mGy_per_year, 3.39 * 11.05 * 0.25) < 1e-12, 'IVR 年間: 防護板だけ ×0.25');
+  check(rel(core.ivrEyeAnnual({ rows: W, glasses: true }).left_mGy_per_year, 3.39 * 11.05 * 0.7) < 1e-12, 'IVR 年間: 眼鏡だけ ×0.7');
+  // 原典の独立した記述: 0.5 Gy に加重値で13年・最悪の幾何で8年（係数と件数・KAP を別の文で裏付ける）
+  const thr = H.example_cataract_threshold_Gy * 1000;
+  check(Math.round(thr / a.left_mGy_per_year) === H.example_cataract_years_weighted, 'IVR: 原典の「13年」を再現しない');
+  check(Math.round(thr / core.ivrEyeAnnual({ rows: W, projection: 'LAO30/CRAN30' }).left_mGy_per_year) === H.example_cataract_years_worst, 'IVR: 原典の「8年」を再現しない');
+  // 照合表に無い投影名（プロトタイプの名前を含む）は黙って NaN にせずエラー
+  for (const bad of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+    let threw = false; try { core.ivrEyeCoefficient('left', bad); } catch (e) { threw = true; }
+    check(threw, 'IVR: 投影 ' + bad + ' でエラーにならない');
+  }
 }
 
 // ---------------------------------------------------------------- 9. 画面の説明文の数値（照合表と一致）
@@ -375,6 +391,8 @@ const D = core.doseAtPoint;
   check(!/合格|不合格|適合|超過/.test(eyeSec), '術者の水晶体の欄に合否の言葉がある');
   check(eyeSec.includes('年 50 mSv') && eyeSec.includes('5年 100 mSv'), '術者の水晶体の欄の参考線が限度と違う');
   check(eyeSec.includes('×0.25') && eyeSec.includes('×0.7') && eyeSec.includes('×2'), '術者の水晶体の欄の倍率の表示が係数と違う');
+  check(eyeSec.includes('撮影モードでの測定') && eyeSec.includes('低めに出る'), '投影を選んだときに低めに出る注意が無い');
+  check(html.includes('172 cm') && html.includes('Philips') && html.includes('PMC11817644') && html.includes('先行研究より低め'), '術者の水晶体の測定条件・出典・低めの注意が無い');
 }
 
 console.log(`\n${pass} pass, ${fail} fail`);
