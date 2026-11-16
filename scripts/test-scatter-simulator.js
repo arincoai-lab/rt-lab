@@ -48,6 +48,8 @@ for (const r of ROOMS) {
     check(Array.isArray(a) && a.length === 3 && a.every((v, i) => v === b[i]), 'ARCHER_SECONDARY.' + m + '.' + r + ' が照合表と違う');
   }
 }
+for (const m of ['lead', 'concrete', 'gypsum']) check(JSON.stringify(core.SECONDARY_RANGE_MM[m]) === JSON.stringify(prov.secondary_transmission_archer.valid_range_mm[m]), '当てはめの範囲（' + m + '）が照合表と違う');
+check(JSON.stringify(core.CT_RANGE_MM) === JSON.stringify({ lead: prov.ct.transmission_archer.valid_range.lead_mm, concrete: prov.ct.transmission_archer.valid_range.concrete_mm }), 'CT の当てはめの範囲が照合表と違う');
 check(Object.keys(core.SECONDARY_PER_PATIENT).length === ROOMS.length, 'SECONDARY_PER_PATIENT に照合表に無い部屋がある');
 for (const m of ['lead', 'concrete']) for (const kv of ['120', '140']) {
   const a = core.ARCHER_CT[m][kv], b = prov.ct.transmission_archer[m][kv];
@@ -193,6 +195,8 @@ const D = core.doseAtPoint;
   // 天井より上（別の階）を通る線では壁を差し引かない
   const up = D({ x: 5, y: 2.5, z: 10 }, s, wallX4(0.5));
   check(up.flags.includes('beyond-ceiling') && rel(up.total, D({ x: 5, y: 2.5, z: 10 }, s, noWalls).total) < 1e-12, '天井より上を通る線で壁を差し引いている');
+  check(D(p, s, wallX4(3.5)).flags.includes('extrapolated') && !D(p, s, wallX4(2.5)).flags.includes('extrapolated'), '一般撮影系の鉛 3 mm 超で外挿の印が付かない（または範囲内で付く）');
+  check(D(p, s, wallX4(250, 'gypsum')).flags.includes('extrapolated') && !D(p, s, wallX4(150, 'gypsum')).flags.includes('extrapolated'), '石こうボード 200 mm 超で外挿の印が付かない');
   const behind = D({ x: 1, y: 2.5, z: 1.0 }, s, wallX4(2)).total;
   check(rel(behind, D({ x: 1, y: 2.5, z: 1.0 }, s, noWalls).total) < 1e-12, '線源と点の間に無い壁が効いている');
 }

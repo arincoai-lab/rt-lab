@@ -51,6 +51,10 @@
     },
   };
 
+  // Table C.1 の当てはめを信用してよい厚さ（mm）。NCRP 147 Fig. C.2〜C.4 の横軸の範囲（Table C.1 脚注 a）
+  const SECONDARY_RANGE_MM = { lead: [0, 3], concrete: [0, 300], gypsum: [0, 200] };
+  const CT_RANGE_MM = { lead: [0, 3], concrete: [0, 300] }; // Fig. A.2・A.3
+
   // NCRP 147 Fig. A.2（鉛）・A.3（コンクリート）: CT の二次線
   const ARCHER_CT = {
     lead: { '120': [2.246, 5.73, 0.547], '140': [2.009, 3.99, 0.342] },
@@ -214,7 +218,7 @@
                  (nb > 0 ? nb * ctKermaPerProcedureAt1m({ type: 'body', dlp: setup.dlpBody }) : 0);
       const d = distanceClamped(p, iso, flags);
       const B = wallTransmission(iso, p, walls, m => ARCHER_CT[m] && ARCHER_CT[m][kv],
-        Object.assign({ ranges: { lead: [0, 3], concrete: [0, 300] } }, opts), flags);
+        Object.assign({ ranges: CT_RANGE_MM }, opts), flags);
       const total = k1 / (d * d) * B; // κ は小さな漏れ線を含む（NCRP 147）。等方（NCRP の仮定）
       return { total, scatter: total, leakage: 0, flags };
     }
@@ -229,6 +233,7 @@
     if (mode !== 'ncrp' && mode !== 'separate') throw new Error('distanceMode が不明: ' + mode);
     const patient = pt(setup.patient, '患者'), tube = pt(setup.tube, '管球');
     const paramsFor = m => ARCHER_SECONDARY[m] && ARCHER_SECONDARY[m][room];
+    opts.ranges = SECONDARY_RANGE_MM;
 
     // 散乱角: 管球→患者（一次線の向き）と 患者→点 のなす角
     const beam = sub(patient, tube), toP = sub(p, patient);
@@ -276,7 +281,7 @@
 
   return {
     SECONDARY_PER_PATIENT, ARCHER_SECONDARY, ARCHER_CT, CT, E_OVER_KA, LEAKAGE_LIMIT, REFERENCE_LINES, EYE_LENS_LIMIT, IVR_EYE,
-    WEEKS_PER_3_MONTHS, MIN_DISTANCE_M, DEFAULT_CEILING_M, RADIOGRAPHIC_ROOMS,
+    WEEKS_PER_3_MONTHS, MIN_DISTANCE_M, DEFAULT_CEILING_M, RADIOGRAPHIC_ROOMS, SECONDARY_RANGE_MM, CT_RANGE_MM,
     archerTransmission, archerThickness, scatterPerPatientAt1m, ctKermaPerProcedureAt1m,
     wallTransmission, doseAtPoint, toEffectiveDose_mSv, compareWithReference, ivrEyeDose_uGy,
   };

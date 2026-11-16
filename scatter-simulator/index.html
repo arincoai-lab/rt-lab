@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>散乱線シミュレータ（教育用）｜部屋の散乱線・線量分布を見る | RT-Lab</title>
+  <meta name="description" content="X線撮影室・CT室・血管撮影室の見取り図に装置と壁を置くと、散乱線と漏れ線の届き方を線量の地図で表示する教育用シミュレータ。NCRP Report 147 の方法に基づき、壁の材質と厚さ、立ち位置で線量がどう変わるかを学べます。ブラウザ完結・外部送信なし。">
+  <meta property="og:title" content="散乱線シミュレータ（教育用）｜部屋の散乱線・線量分布を見る | RT-Lab">
+  <meta property="og:description" content="撮影室・CT室・血管撮影室の見取り図で、散乱線と漏れ線の届き方を線量の地図で表示。壁・立ち位置で線量がどう変わるかを学べる教育用シミュレータ。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rt-ai-lab.com/scatter-simulator/">
+  <meta property="og:image" content="https://rt-ai-lab.com/assets/og/og-default.png">
+  <meta property="og:image:alt" content="RT-Lab｜放射線技師のためのWebツール集">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="RT-Lab">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="散乱線シミュレータ（教育用）｜部屋の散乱線・線量分布を見る | RT-Lab">
+  <meta name="twitter:description" content="撮影室・CT室・血管撮影室の見取り図で、散乱線と漏れ線の届き方を線量の地図で表示する教育用シミュレータ。">
+  <meta name="twitter:image" content="https://rt-ai-lab.com/assets/og/og-default.png">
+  <meta name="twitter:image:alt" content="RT-Lab｜放射線技師のためのWebツール集">
+  <link rel="canonical" href="https://rt-ai-lab.com/scatter-simulator/">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "散乱線シミュレータ（教育用）",
+    "url": "https://rt-ai-lab.com/scatter-simulator/",
+    "description": "X線撮影室・CT室・血管撮影室の見取り図で、散乱線と漏れ線の届き方を線量の地図で表示する教育用シミュレータ。NCRP Report 147 の方法に基づく。",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "RT-Lab", "item": "https://rt-ai-lab.com/" },
+      { "@type": "ListItem", "position": 2, "name": "散乱線シミュレータ", "item": "https://rt-ai-lab.com/scatter-simulator/" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "散乱線シミュレータとは何ですか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "X線撮影室・CT室・血管撮影室の見取り図に、患者・管球・壁を置くと、散乱線と漏れ線の週あたりの空気カーマを色の地図で表示する教育用のツールです。壁の材質と厚さ、立ち位置、検査件数を変えて、線量がどう変わるかを確かめられます。計算はブラウザの中だけで行い、入力した値は外部に送信しません。" }
+      },
+      {
+        "@type": "Question",
+        "name": "計算の根拠は何ですか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "米国の遮へい設計の報告書 NCRP Report No. 147 の方法に基づきます。部屋の種類ごとの1 m・1患者あたりの散乱線と漏れ線（Table 4.7）を距離の2乗で弱め、壁の透過を Archer の式（Table C.1）で掛けています。CT は DLP に係数 κ を掛ける方法（Eq. 5.10）です。係数はすべて原典の表と照合しています。" }
+      },
+      {
+        "@type": "Question",
+        "name": "遮へい計算や線量測定の代わりに使えますか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "使えません。値は NCRP 147 の平均的な撮影条件を前提にした桁の目安で、一次線（直接線）は含まず、CT の散乱は等方として計算しています。施設の遮へい設計・届出・作業環境測定・被ばく管理には、関係法令と専門家の評価に従ってください。" }
+      },
+      {
+        "@type": "Question",
+        "name": "表示される値は法令の線量限度と比べられますか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "地図の値は空気カーマ（mGy）で、法令の線量限度は実効線量（mSv）なので、そのままでは比べられません。測定点の表では、厚生労働省通知の換算係数の最大値 1.433 Sv/Gy を掛け、3か月を13週として実効線量に直した値を参考に並べています。合否の判定はしません。" }
+      }
+    ]
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f0f4f8; color: #2d3748; line-height: 1.6; font-size: 14px;
+    }
+    header {
+      background: #1a56db; color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 100;
+    }
+    .logo { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.06em; }
+    .logo a { color: #fff; text-decoration: none; }
+    header .tagline { font-size: 0.82rem; opacity: 0.9; }
+    header .home-link { margin-left: auto; color: #fff; text-decoration: none; font-size: 0.85rem; opacity: 0.9; }
+    header .home-link:hover { opacity: 1; text-decoration: underline; }
+    main { max-width: 1180px; margin: 0 auto; padding: 20px 16px 40px; }
+    h1 { font-size: 1.4rem; color: #1a365d; margin-bottom: 6px; }
+    .lead { color: #4a5568; font-size: 0.9rem; margin-bottom: 10px; }
+    .notice {
+      font-size: 0.82rem; color: #744210; background: #fffaf0; border: 1px solid #f6e05e;
+      border-radius: 8px; padding: 10px 12px; margin-bottom: 16px;
+    }
+    .app { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
+    @media (max-width: 860px) { .app { grid-template-columns: minmax(0, 1fr); } }
+    .panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); min-width: 0; }
+    .panel h2 { font-size: 0.95rem; color: #1a365d; margin-bottom: 10px; }
+    .panel h3 { font-size: 0.8rem; color: #4a5568; margin: 14px 0 6px; font-weight: 700; border-top: 1px solid #edf2f7; padding-top: 10px; }
+    .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+    .preset {
+      font-size: 0.76rem; padding: 5px 10px; border: 1px solid #cbd5e0; border-radius: 999px;
+      background: #fff; color: #2d3748; cursor: pointer; font-family: inherit;
+    }
+    .preset:hover, .preset:focus-visible { border-color: #1a56db; color: #1a56db; outline: none; }
+    .preset[aria-pressed="true"] { background: #1a56db; border-color: #1a56db; color: #fff; }
+    .field { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 8px; margin: 7px 0; font-size: 0.8rem; }
+    .field label { color: #4a5568; font-weight: 700; }
+    .field input[type=number], .field select {
+      width: 7.2em; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.8rem; font-family: inherit;
+      background: #fff; color: #2d3748; text-align: right; font-variant-numeric: tabular-nums;
+    }
+    .field select { width: auto; max-width: 11em; text-align: left; }
+    .field .hint { grid-column: 1 / -1; font-size: 0.7rem; color: #718096; font-weight: 400; margin-top: -3px; }
+    .field input:focus-visible, .field select:focus-visible { outline: 2px solid #90cdf4; outline-offset: 1px; }
+    .wall-grid { display: grid; grid-template-columns: 3.2em 1fr 4.6em 4.6em; gap: 4px; align-items: center; font-size: 0.74rem; }
+    .wall-grid .h { color: #718096; font-weight: 700; font-size: 0.68rem; }
+    .wall-grid select, .wall-grid input { width: 100%; padding: 3px 4px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.74rem; font-family: inherit; text-align: right; }
+    .wall-grid select { text-align: left; }
+    .checkline { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #4a5568; margin-top: 6px; }
+    .hidden { display: none !important; }
+
+    .map-wrap { position: relative; width: 100%; }
+    #map { display: block; width: 100%; height: auto; border-radius: 8px; background: #fff; touch-action: none; cursor: crosshair; }
+    .map-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; margin-bottom: 8px; }
+    .map-head .unit { font-size: 0.78rem; color: #4a5568; }
+    #cursor-readout { font-size: 0.8rem; color: #1a365d; font-variant-numeric: tabular-nums; min-height: 1.4em; }
+    .legend { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; font-size: 0.72rem; color: #4a5568; }
+    .legend canvas { width: 220px; max-width: 60%; height: 12px; border-radius: 3px; border: 1px solid #e2e8f0; }
+    .legend .sw { display: inline-block; width: 14px; height: 12px; vertical-align: middle; border: 1px solid #a0aec0; margin-right: 4px; }
+    .sw-primary { background: repeating-linear-gradient(45deg, #cbd5e0 0 3px, #fff 3px 6px); }
+    .drag-hint { font-size: 0.74rem; color: #718096; margin-top: 6px; }
+
+    table.probes { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 0.78rem; margin-top: 10px; font-variant-numeric: tabular-nums; }
+    table.probes th, table.probes td { border-bottom: 1px solid #edf2f7; padding: 6px 6px; text-align: right; vertical-align: top; }
+    table.probes th { color: #718096; font-weight: 700; font-size: 0.72rem; background: #f7fafc; }
+    table.probes td:first-child, table.probes th:first-child { text-align: left; }
+    table.probes select { font-size: 0.74rem; padding: 2px 3px; border: 1px solid #cbd5e0; border-radius: 5px; font-family: inherit; }
+    .table-scroll { overflow-x: auto; }
+    .flag { display: inline-block; font-size: 0.66rem; border-radius: 999px; padding: 0 6px; margin: 2px 2px 0 0; background: #fefcbf; color: #744210; border: 1px solid #f6e05e; white-space: nowrap; }
+    .flag.primary { background: #edf2f7; color: #2d3748; border-color: #a0aec0; }
+    .refbox { font-size: 0.78rem; color: #4a5568; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-top: 12px; }
+    .refbox ul { margin: 6px 0 0 1.2em; }
+    .refbox b { color: #1a365d; }
+    #error-box { font-size: 0.8rem; color: #9b2c2c; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+
+    .explain { margin-top: 24px; display: grid; gap: 16px; }
+    .explain p, .explain li { font-size: 0.86rem; color: #4a5568; }
+    .explain p + p { margin-top: 8px; }
+    .explain ul { margin: 6px 0 0 1.3em; display: grid; gap: 4px; }
+    .explain code { background: #edf2f7; padding: 1px 6px; border-radius: 4px; font-size: 0.8rem; color: #2b6cb0; }
+    .eq { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin: 8px 0; font-size: 0.82rem; color: #2d3748; overflow-x: auto; }
+    .explain a { color: #1a56db; }
+    .disclaimer { font-size: 0.8rem; color: #718096; background: #fffaf0; border: 1px solid #feebc8; border-radius: 8px; padding: 10px 12px; }
+  </style>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+</head>
+<body>
+  <header>
+    <div class="logo"><a href="/">RT-Lab</a></div>
+    <span class="tagline">散乱線シミュレータ</span>
+    <a class="home-link" href="/#tools">← ツール一覧</a>
+  </header>
+
+  <main>
+    <h1>散乱線シミュレータ（教育用）— 部屋のどこに、どれだけ届くか</h1>
+    <p class="lead">撮影室・CT室・血管撮影室の見取り図に、患者・管球・壁を置くと、散乱線と漏れ線の週あたりの空気カーマを色の地図で表示します。壁の材質と厚さ、立ち位置、検査件数を変えると、線量がどう変わるかを確かめられます。計算は NCRP Report 147（米国の遮へい設計の報告書）の方法に基づきます。</p>
+    <p class="notice"><b>教育用の目安です。</b>法令に基づく遮へい計算や、作業環境の線量測定の代わりにはなりません。値は NCRP 147 の平均的な撮影条件を前提にした桁の目安で、合否の判定はしません。一次線（直接線）は計算に含みません。入力した値はこの端末の中だけで計算し、外部には送信しません。</p>
+
+    <div class="app">
+      <div class="panel" id="controls">
+        <h2>部屋のひな形</h2>
+        <div class="presets" id="presets" role="group" aria-label="部屋のひな形"></div>
+
+        <h3>装置と件数</h3>
+        <div class="field">
+          <label for="room">部屋の種類</label>
+          <select id="room"></select>
+          <span class="hint" id="room-hint"></span>
+        </div>
+        <div id="xray-fields">
+          <div class="field"><label for="patients">患者数（人/週）</label><input type="number" id="patients" min="0" step="1"></div>
+          <div class="field"><label for="tube-z">管球の高さ（m）</label><input type="number" id="tube-z" min="0" max="3" step="0.05"><span class="hint">患者の真下＝アンダーチューブ、真上＝オーバーチューブ。平面上の位置は地図でドラッグ</span></div>
+          <div class="field"><label for="patient-z">照射中心の高さ（m）</label><input type="number" id="patient-z" min="0" max="3" step="0.05"></div>
+        </div>
+        <div id="ct-fields" class="hidden">
+          <div class="field"><label for="ct-kvp">管電圧</label><select id="ct-kvp"><option value="120">120 kV</option><option value="140">140 kV</option></select></div>
+          <div class="field"><label for="ct-head">頭部（件/週）</label><input type="number" id="ct-head" min="0" step="1"></div>
+          <div class="field"><label for="ct-dlp-head">頭部の DLP（mGy·cm）</label><input type="number" id="ct-dlp-head" min="0" step="10"></div>
+          <div class="field"><label for="ct-body">体幹（件/週）</label><input type="number" id="ct-body" min="0" step="1"></div>
+          <div class="field"><label for="ct-dlp-body">体幹の DLP（mGy·cm）</label><input type="number" id="ct-dlp-body" min="0" step="10"><span class="hint">既定値は NCRP 147 Table 5.2（頭部 1,200・体幹 550）。造影の前後撮影はその分を足す。選んだ管電圧での値を入れる</span></div>
+          <div class="field"><label for="iso-z">アイソセンタの高さ（m）</label><input type="number" id="iso-z" min="0" max="3" step="0.05"></div>
+        </div>
+
+        <h3>部屋と壁</h3>
+        <div class="field"><label for="room-w">部屋の幅（m）</label><input type="number" id="room-w" min="2" max="15" step="0.1"></div>
+        <div class="field"><label for="room-d">部屋の奥行き（m）</label><input type="number" id="room-d" min="2" max="15" step="0.1"></div>
+        <div class="field"><label for="ceiling">天井の高さ（m）</label><input type="number" id="ceiling" min="2" max="6" step="0.1"></div>
+        <div class="wall-grid" id="wall-grid" aria-label="壁の材質と厚さ">
+          <span class="h">壁</span><span class="h">材質</span><span class="h">厚さ mm</span><span class="h">鉛の内張り mm</span>
+        </div>
+        <div class="checkline"><input type="checkbox" id="partition-on"><label for="partition-on">仕切り壁（操作室など）を置く</label></div>
+        <div class="field" id="partition-fields"><label for="partition-mm">仕切り壁の鉛当量（mm）</label><input type="number" id="partition-mm" min="0" max="10" step="0.1"><span class="hint">鉛ガラス・鉛入りの仕切りは鉛当量で入れる。両端は地図でドラッグ</span></div>
+
+        <h3>見る高さと計算の方法</h3>
+        <div class="field"><label for="eval-z">地図の高さ（m）</label><input type="number" id="eval-z" min="0" max="3" step="0.05"><span class="hint">床から 1.0 m＝胴、1.55 m＝目の高さの目安</span></div>
+        <div class="field"><label for="leak-limit">漏れ線の上限</label><select id="leak-limit"><option value="japan">日本の法令 1.0 mGy/h</option><option value="ncrp">NCRP 147 の前提 0.876 mGy/h</option></select></div>
+        <div class="field"><label for="dist-mode">距離のとり方</label><select id="dist-mode"><option value="separate">散乱線と漏れ線で別々</option><option value="ncrp">NCRP の簡略化（短いほうにそろえる）</option></select><span class="hint">NCRP の簡略化は壁の向こうを安全側に見積もる方法。部屋の中では管球のまわりが実際より高く出る</span></div>
+        <div class="checkline"><input type="checkbox" id="obliquity"><label for="obliquity">壁を斜めに通る分を厚くみなす（上限2倍）</label></div>
+      </div>
+
+      <div class="panel" id="result">
+        <div class="map-head">
+          <h2>週あたりの空気カーマの地図</h2>
+          <span class="unit">単位: mGy/週（空気カーマ）・高さ <span id="eval-z-label"></span> m</span>
+        </div>
+        <div class="map-wrap"><canvas id="map" aria-label="部屋の線量分布の地図" role="img"></canvas></div>
+        <div id="cursor-readout" aria-live="polite">地図の上にカーソルを置くか、タップすると、その点の値を表示します。</div>
+        <div class="legend">
+          <span>低い</span><canvas id="legend-bar" width="220" height="12"></canvas><span>高い</span>
+          <span id="legend-range"></span>
+          <span><span class="sw sw-primary"></span>一次線の方向（計算に含まない）</span>
+        </div>
+        <p class="drag-hint">地図の上で、患者（●）・管球（■）・測定点（A〜C）・仕切り壁の両端をドラッグできます。細い線は1桁ごとの等線量線です。</p>
+        <div id="error-box" class="hidden" role="alert"></div>
+
+        <h2 style="margin-top:14px">測定点の値</h2>
+        <div class="table-scroll">
+          <table class="probes" id="probe-table">
+            <thead><tr><th>測定点</th><th>空気カーマ<br>mGy/週</th><th>うち漏れ線</th><th>滞在係数</th><th>実効線量<br>mSv/3か月</th><th>同（滞在係数1）<br>mSv/3か月</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="refbox">
+          <b>参考: 医療法施行規則の線量（実効線量）</b>
+          <ul>
+            <li>管理区域の境界: 3か月あたり 1.3 mSv（第30条の26第3項）</li>
+            <li>病院内の人が居住する区域・敷地の境界: 3か月あたり 250 µSv（同第4項）</li>
+            <li>病室の入院患者: 3か月あたり 1.3 mSv（第30条の19）</li>
+          </ul>
+          <p style="margin-top:6px">空気カーマ（mGy）に換算係数 1.433 Sv/Gy（厚生労働省通知の最大値）を掛け、3か月＝13週として実効線量にしています。合否の判定には使えません。どの区域に滞在係数を掛けてよいかは確認できていないため、掛けない値も並べています。</p>
+        </div>
+      </div>
+    </div>
+
+    <section class="explain" aria-labelledby="explain-title">
+      <h2 id="explain-title" class="hidden">解説</h2>
+      <div class="panel">
+        <h2>計算のしくみ</h2>
+        <p>NCRP Report 147 は、患者を散乱線の出どころ、管球を漏れ線の出どころとみなし、距離の2乗で弱まる分と、壁を通るときの透過を掛け合わせて線量を見積もります。このシミュレータは、その考え方を部屋の見取り図の上で点ごとに計算しています。</p>
+        <div class="eq">点の線量（mGy/週）＝ 患者数 ×〔散乱線（1 m・1患者あたり）÷ 距離² × 壁の透過 ＋ 漏れ線（1 m・1患者あたり）÷ 距離² × 壁の透過〕</div>
+        <ul>
+          <li><b>1 m・1患者あたりの値</b>: NCRP 147 Table 4.7 の、部屋の種類ごとの値（米国 AAPM の調査による平均的な撮影条件・照射野込み）。散乱線は、一次線に対して横（90°）と前後（135°）の値を使い、その間は角度でなめらかにつないでいます（30° の前方にも 135° の値を使うのは NCRP と同じ安全側の扱い）。</li>
+          <li><b>壁の透過</b>: Archer の式 <code>B=[(1+β/α)e^(αγx)−β/α]^(−1/γ)</code> と NCRP 147 Table C.1 の係数。NCRP と同じく、壁には垂直に入るとみなします。</li>
+          <li><b>CT</b>: 1 m の空気カーマ ＝ κ × DLP（頭部 κ=9×10⁻⁵ cm⁻¹、体幹 κ=3×10⁻⁴ cm⁻¹ に 1.2 を掛ける。NCRP 147 Eq. 5.10）。散乱は等方とし、壁の透過は CT 用の係数（Fig. A.2・A.3）を使います。</li>
+          <li><b>実効線量への換算</b>: 空気カーマに 1.433 Sv/Gy を掛けます（医薬発第188号を改正した医政発0331第16号。80 kV を超える装置の最大値）。</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h2>前提と限界（必ずお読みください）</h2>
+        <ul>
+          <li><b>一次線は含みません。</b>一般撮影で一次線が向かう方向（受像器の裏の壁など）は、地図を灰色の斜線で示し、値を表示しません。</li>
+          <li><b>撮影条件は平均値です。</b>Table 4.7 の値は、部屋の種類ごとの平均的な管電圧の分布・管電流時間積・照射野を前提にしています。自施設の条件とは違います。</li>
+          <li><b>CT の散乱は等方として計算しています。</b>実際にはガントリの面の方向で大きく減り、面から約30°で最大になります。日本の CT 室での実測では、NCRP の方法が実測を下回った方向が全142点中3点あり、そのうち最も大きく下回った点では実測の 0.6 倍でした（Hosono ら 2017）。</li>
+          <li><b>患者のすぐそば（約1 m 以内）は、点の近似が粗くなります。</b>0.3 m より近い点は 0.3 m として計算します。血管撮影の術者の目の線量は、面積線量（KAP）あたりの係数を使う別の計算が適しています（今後追加予定）。</li>
+          <li><b>天井・床のスラブは計算に入れていません。</b>壁は床から天井までの面として扱います。</li>
+          <li><b>距離のとり方</b>: 既定では、散乱線は患者から、漏れ線は管球からの距離で計算します。NCRP 147 は壁の計算で両方を短いほうの距離にそろえる安全側の簡略化を使っており、「距離のとり方」で切り替えられます。壁の向こうの点では、簡略化のほうが最大で数割高くなることがあります。</li>
+          <li><b>透過の式は、原典の図の厚さの範囲</b>（鉛 3 mm・コンクリート 300 mm・石こうボード 200 mm まで）で当てはめたものです。それを超える厚さでは外挿になります。</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h2>出典</h2>
+        <ul>
+          <li>NCRP Report No. 147: Structural Shielding Design for Medical X-Ray Imaging Facilities（2004）。米国の規則に参照取込みされた版が <a href="https://law.resource.org/pub/us/cfr/ibr/inc/ansi/ncrp.147.2020.pdf" rel="noopener" target="_blank">Public.Resource.Org</a> で公開されています。</li>
+          <li>Hosono M, et al. A new shielding calculation method for X-ray computed tomography regarding scattered radiation. Radiol Phys Technol. 2017;10(2):213-226. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5487862/" rel="noopener" target="_blank">PMC5487862</a></li>
+          <li>医療法施行規則（昭和23年厚生省令第50号）<a href="https://laws.e-gov.go.jp/law/323M40000100050" rel="noopener" target="_blank">e-Gov 法令検索</a></li>
+          <li>「医療法施行規則の一部を改正する省令の施行について」の一部改正について（平成26年3月31日 医政発0331第16号）</li>
+        </ul>
+        <p>係数はすべて原典の表・頁と照合し、独立のレビューで確認しています。</p>
+      </div>
+      <div class="disclaimer">本ツールは放射線防護の考え方を学ぶための教育用の近似モデルです。表示される値は実際の線量を保証するものではなく、施設の遮へい設計・放射線障害防止の届出・作業環境測定・被ばく管理の根拠には使用できません。実際の評価は、関係法令と専門家の判断に従ってください。</div>
+    </section>
+  <!-- FAQ:START 自動生成。手で編集しない。元は同ページの FAQPage 構造化データ（scripts/generate-faq.js） -->
+  <section class="rt-faq" aria-labelledby="rt-faq-title">
+    <h2 class="rt-faq-title" id="rt-faq-title">よくある質問</h2>
+    <h3 class="rt-faq-q">散乱線シミュレータとは何ですか？</h3>
+    <p class="rt-faq-a">X線撮影室・CT室・血管撮影室の見取り図に、患者・管球・壁を置くと、散乱線と漏れ線の週あたりの空気カーマを色の地図で表示する教育用のツールです。壁の材質と厚さ、立ち位置、検査件数を変えて、線量がどう変わるかを確かめられます。計算はブラウザの中だけで行い、入力した値は外部に送信しません。</p>
+    <h3 class="rt-faq-q">計算の根拠は何ですか？</h3>
+    <p class="rt-faq-a">米国の遮へい設計の報告書 NCRP Report No. 147 の方法に基づきます。部屋の種類ごとの1 m・1患者あたりの散乱線と漏れ線（Table 4.7）を距離の2乗で弱め、壁の透過を Archer の式（Table C.1）で掛けています。CT は DLP に係数 κ を掛ける方法（Eq. 5.10）です。係数はすべて原典の表と照合しています。</p>
+    <h3 class="rt-faq-q">遮へい計算や線量測定の代わりに使えますか？</h3>
+    <p class="rt-faq-a">使えません。値は NCRP 147 の平均的な撮影条件を前提にした桁の目安で、一次線（直接線）は含まず、CT の散乱は等方として計算しています。施設の遮へい設計・届出・作業環境測定・被ばく管理には、関係法令と専門家の評価に従ってください。</p>
+    <h3 class="rt-faq-q">表示される値は法令の線量限度と比べられますか？</h3>
+    <p class="rt-faq-a">地図の値は空気カーマ（mGy）で、法令の線量限度は実効線量（mSv）なので、そのままでは比べられません。測定点の表では、厚生労働省通知の換算係数の最大値 1.433 Sv/Gy を掛け、3か月を13週として実効線量に直した値を参考に並べています。合否の判定はしません。</p>
+  </section>
+  <!-- FAQ:END -->
+
+  <!-- RELATED:START 自動生成。手で編集しない（scripts/generate-related.js） -->
+  <nav class="rt-related" aria-labelledby="rt-related-title">
+    <h2 class="rt-related-title" id="rt-related-title">関連ツール</h2>
+    <ul class="rt-related-list">
+      <li><a href="/ct-dose-estimator/">SSDE計算ツール</a><span class="rt-related-desc">SSDE・実効線量・Japan DRLs 2025との比較</span></li>
+      <li><a href="/drl-comparison/">DRLs2025 一覧・比較ツール</a><span class="rt-related-desc">Japan DRLs 2025の全値と自施設データの比較</span></li>
+      <li><a href="/exposure-reference/">一般撮影条件参照</a><span class="rt-related-desc">部位別のkVp・mAs・グリッドの早見表と補正計算</span></li>
+    </ul>
+  </nav>
+  <!-- RELATED:END -->
+
+  </main>
+
+  <script src="scatter-core.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var C = window.ScatterCore;
+
+    var ROOM_LABELS = {
+      rad_room_all: '一般撮影室（全方向）',
+      rad_room_chest_bucky: '一般撮影室（立位ブッキーの壁）',
+      rad_room_floor: '一般撮影室（床など）',
+      fluoro_tube_rf: 'X線TV室（透視の管球）',
+      rad_tube_rf: 'X線TV室（撮影の管球）',
+      chest_room: '胸部撮影室',
+      cardiac_angio: '心臓血管撮影室',
+      peripheral_angio: '末梢・脳血管撮影室',
+      ct: 'CT室'
+    };
+    var ROOM_HINTS = {
+      rad_room_all: 'NCRP の想定: 1患者あたり 2.5 mA·min、照射野 1,000 cm²（1 m）',
+      rad_room_chest_bucky: 'NCRP の想定: 0.60 mA·min、36×43 cm（1.83 m）',
+      rad_room_floor: 'NCRP の想定: 1.9 mA·min、1,000 cm²（1 m）',
+      fluoro_tube_rf: 'NCRP の想定: 13 mA·min、イメージインテンシファイア 30.5 cm（0.8 m）',
+      rad_tube_rf: 'NCRP の想定: 1.5 mA·min、1,000 cm²（1 m）',
+      chest_room: 'NCRP の想定: 0.22 mA·min、36×43 cm（2 m）',
+      cardiac_angio: 'NCRP の想定: 160 mA·min、30.5 cm（0.9 m）',
+      peripheral_angio: 'NCRP の想定: 64 mA·min、30.5 cm（0.9 m）。脳血管撮影にも使う',
+      ct: 'κ × DLP（NCRP 147 Eq. 5.10）。散乱は等方'
+    };
+    var MATERIALS = { concrete: 'コンクリート', gypsum: '石こうボード', lead: '鉛' };
+    var SIDES = [['N', '上'], ['S', '下'], ['W', '左'], ['E', '右']];
+
+    function wall(material, mm, lead) { return { material: material, mm: mm, lead: lead || 0 }; }
+
+    var PRESETS = [
+      { id: 'rad', name: '一般撮影室（臥位）', s: {
+        room: 'rad_room_all', W: 5, D: 6, ceiling: 3, evalZ: 1.0, patients: 120,
+        patient: { x: 2.6, y: 2.6, z: 0.8 }, tube: { x: 2.6, y: 2.6, z: 1.8 },
+        walls: { N: wall('concrete', 150), S: wall('concrete', 150), W: wall('concrete', 150), E: wall('gypsum', 25, 1.5) },
+        partition: { on: true, x1: 0, y1: 4.6, x2: 1.9, y2: 4.6, mm: 1.5 },
+        probes: [{ name: 'A 操作室', x: 0.9, y: 5.3, T: 1 }, { name: 'B 廊下', x: 5.8, y: 2.6, T: 0.2 }, { name: 'C 隣室', x: 2.6, y: -0.8, T: 1 }] } },
+      { id: 'chest', name: '胸部撮影室（立位）', s: {
+        room: 'chest_room', W: 4, D: 6, ceiling: 3, evalZ: 1.3, patients: 200,
+        patient: { x: 2, y: 0.9, z: 1.3 }, tube: { x: 2, y: 2.7, z: 1.3 },
+        walls: { N: wall('concrete', 150), S: wall('concrete', 150), W: wall('gypsum', 25, 1.0), E: wall('gypsum', 25, 1.0) },
+        partition: { on: true, x1: 0, y1: 4.4, x2: 1.6, y2: 4.4, mm: 1.5 },
+        probes: [{ name: 'A 操作室', x: 0.8, y: 5.2, T: 1 }, { name: 'B 横の部屋', x: 4.8, y: 1.5, T: 1 }, { name: 'C 廊下', x: 2.0, y: 6.8, T: 0.2 }] } },
+      { id: 'ct', name: 'CT室', s: {
+        room: 'ct', W: 6, D: 7, ceiling: 3, evalZ: 1.0, kvp: '120', head: 30, dlpHead: 1200, body: 150, dlpBody: 550,
+        iso: { x: 3, y: 3.2, z: 1.0 },
+        walls: { N: wall('concrete', 150, 1.5), S: wall('concrete', 150, 1.5), W: wall('concrete', 150, 1.5), E: wall('concrete', 150, 1.5) },
+        partition: { on: false, x1: 0, y1: 5.5, x2: 2, y2: 5.5, mm: 2 },
+        probes: [{ name: 'A 操作室', x: 3, y: 7.8, T: 1 }, { name: 'B 廊下', x: 6.8, y: 3.2, T: 0.2 }, { name: 'C 隣室', x: -0.8, y: 3.2, T: 1 }] } },
+      { id: 'cardiac', name: '心臓血管撮影室', s: {
+        room: 'cardiac_angio', W: 6, D: 7, ceiling: 3, evalZ: 1.0, patients: 20,
+        patient: { x: 3, y: 3.2, z: 1.0 }, tube: { x: 3, y: 3.2, z: 0.45 },
+        walls: { N: wall('concrete', 150, 2), S: wall('concrete', 150, 2), W: wall('concrete', 150, 2), E: wall('concrete', 150, 2) },
+        partition: { on: false, x1: 0, y1: 5.5, x2: 2, y2: 5.5, mm: 2 },
+        probes: [{ name: 'A 操作室', x: 3, y: 7.8, T: 1 }, { name: 'B 室内・壁ぎわ', x: 5.5, y: 6.5, T: 1 }, { name: 'C 隣室', x: 6.8, y: 3.2, T: 1 }] } },
+      { id: 'periph', name: '末梢・脳血管撮影室', s: {
+        room: 'peripheral_angio', W: 6, D: 7, ceiling: 3, evalZ: 1.0, patients: 15,
+        patient: { x: 3, y: 3.2, z: 1.0 }, tube: { x: 3, y: 3.2, z: 0.45 },
+        walls: { N: wall('concrete', 150, 1.5), S: wall('concrete', 150, 1.5), W: wall('concrete', 150, 1.5), E: wall('concrete', 150, 1.5) },
+        partition: { on: false, x1: 0, y1: 5.5, x2: 2, y2: 5.5, mm: 2 },
+        probes: [{ name: 'A 操作室', x: 3, y: 7.8, T: 1 }, { name: 'B 室内・壁ぎわ', x: 5.5, y: 6.5, T: 1 }, { name: 'C 隣室', x: 6.8, y: 3.2, T: 1 }] } }
+    ];
+    var T_OPTIONS = [[1, '1（常時）'], [0.5, '1/2'], [0.2, '1/5'], [0.125, '1/8'], [0.05, '1/20'], [0.025, '1/40']];
+
+    var state = null;
+    var MARGIN = 1.6; // 部屋の外も見せる幅（m）
+
+    function clone(o) { return JSON.parse(JSON.stringify(o)); }
+    function $(id) { return document.getElementById(id); }
+
+    // ---------- 入力欄の組み立て
+    var roomSel = $('room');
+    Object.keys(ROOM_LABELS).forEach(function (k) {
+      var o = document.createElement('option'); o.value = k; o.textContent = ROOM_LABELS[k]; roomSel.appendChild(o);
+    });
+    var presetBox = $('presets');
+    PRESETS.forEach(function (p) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'preset'; b.textContent = p.name;
+      b.setAttribute('aria-pressed', 'false'); b.dataset.id = p.id;
+      b.addEventListener('click', function () { loadPreset(p.id); });
+      presetBox.appendChild(b);
+    });
+    var wallGrid = $('wall-grid');
+    SIDES.forEach(function (sd) {
+      var lab = document.createElement('span'); lab.textContent = sd[1]; wallGrid.appendChild(lab);
+      var sel = document.createElement('select'); sel.id = 'wall-' + sd[0] + '-mat'; sel.setAttribute('aria-label', sd[1] + 'の壁の材質');
+      Object.keys(MATERIALS).forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = MATERIALS[m]; sel.appendChild(o); });
+      wallGrid.appendChild(sel);
+      var mm = document.createElement('input'); mm.type = 'number'; mm.min = '0'; mm.step = '1'; mm.id = 'wall-' + sd[0] + '-mm'; mm.setAttribute('aria-label', sd[1] + 'の壁の厚さ（mm）');
+      wallGrid.appendChild(mm);
+      var ld = document.createElement('input'); ld.type = 'number'; ld.min = '0'; ld.step = '0.1'; ld.id = 'wall-' + sd[0] + '-lead'; ld.setAttribute('aria-label', sd[1] + 'の壁の鉛の内張り（mm）');
+      wallGrid.appendChild(ld);
+    });
+
+    function loadPreset(id) {
+      var p = PRESETS.filter(function (q) { return q.id === id; })[0];
+      var base = { leakLimit: 'japan', distMode: 'separate', obliquity: false };
+      state = Object.assign(base, clone(p.s));
+      if (!state.patient) { state.patient = { x: state.W / 2, y: state.D / 2, z: 1 }; state.tube = { x: state.W / 2, y: state.D / 2, z: 0.45 }; state.patients = 20; }
+      if (!state.iso) { state.iso = { x: state.patient.x, y: state.patient.y, z: 1 }; state.kvp = '120'; state.head = 30; state.dlpHead = 1200; state.body = 150; state.dlpBody = 550; }
+      Array.prototype.forEach.call(presetBox.children, function (b) { b.setAttribute('aria-pressed', b.dataset.id === id ? 'true' : 'false'); });
+      writeInputs();
+      schedule();
+    }
+
+    function writeInputs() {
+      roomSel.value = state.room;
+      $('room-hint').textContent = ROOM_HINTS[state.room] || '';
+      var isCT = state.room === 'ct';
+      $('xray-fields').classList.toggle('hidden', isCT);
+      $('ct-fields').classList.toggle('hidden', !isCT);
+      $('patients').value = state.patients;
+      $('tube-z').value = state.tube.z;
+      $('patient-z').value = state.patient.z;
+      $('ct-kvp').value = state.kvp; $('ct-head').value = state.head; $('ct-dlp-head').value = state.dlpHead;
+      $('ct-body').value = state.body; $('ct-dlp-body').value = state.dlpBody; $('iso-z').value = state.iso.z;
+      $('room-w').value = state.W; $('room-d').value = state.D; $('ceiling').value = state.ceiling;
+      SIDES.forEach(function (sd) {
+        var w = state.walls[sd[0]];
+        $('wall-' + sd[0] + '-mat').value = w.material; $('wall-' + sd[0] + '-mm').value = w.mm; $('wall-' + sd[0] + '-lead').value = w.lead;
+      });
+      $('partition-on').checked = state.partition.on; $('partition-mm').value = state.partition.mm;
+      $('partition-fields').classList.toggle('hidden', !state.partition.on);
+      $('eval-z').value = state.evalZ; $('eval-z-label').textContent = state.evalZ;
+      $('leak-limit').value = state.leakLimit; $('dist-mode').value = state.distMode; $('obliquity').checked = state.obliquity;
+    }
+
+    // 入力欄 → state。空欄・不正な値はそのまま渡し、計算側の検査でエラーを表示する（黙って0にしない）
+    function readNum(id) { var v = $(id).value; return v === '' ? NaN : Number(v); }
+    function readInputs() {
+      var prevRoom = state.room;
+      state.room = roomSel.value;
+      if ((prevRoom === 'ct') !== (state.room === 'ct')) {
+        if (state.room === 'ct') state.iso.x = state.patient.x, state.iso.y = state.patient.y;
+        else state.patient.x = state.iso.x, state.patient.y = state.iso.y, state.tube.x = state.iso.x, state.tube.y = state.iso.y;
+      }
+      state.patients = readNum('patients');
+      state.tube.z = readNum('tube-z'); state.patient.z = readNum('patient-z');
+      state.kvp = $('ct-kvp').value; state.head = readNum('ct-head'); state.dlpHead = readNum('ct-dlp-head');
+      state.body = readNum('ct-body'); state.dlpBody = readNum('ct-dlp-body'); state.iso.z = readNum('iso-z');
+      var W = readNum('room-w'), D = readNum('room-d');
+      if (W >= 2 && W <= 15) state.W = W;
+      if (D >= 2 && D <= 15) state.D = D;
+      state.ceiling = readNum('ceiling');
+      SIDES.forEach(function (sd) {
+        state.walls[sd[0]] = { material: $('wall-' + sd[0] + '-mat').value, mm: readNum('wall-' + sd[0] + '-mm'), lead: readNum('wall-' + sd[0] + '-lead') };
+      });
+      state.partition.on = $('partition-on').checked; state.partition.mm = readNum('partition-mm');
+      state.evalZ = readNum('eval-z');
+      state.leakLimit = $('leak-limit').value; state.distMode = $('dist-mode').value; state.obliquity = $('obliquity').checked;
+      Array.prototype.forEach.call(presetBox.children, function (b) { b.setAttribute('aria-pressed', 'false'); });
+      writeInputs();
+    }
+    $('controls').addEventListener('input', function () { readInputs(); schedule(); });
+    $('controls').addEventListener('change', function () { readInputs(); schedule(); });
+
+    // ---------- 計算の入力
+    function buildWalls() {
+      var W = state.W, D = state.D, w = state.walls;
+      function layers(s) {
+        var L = [{ material: s.material, mm: s.mm }];
+        if (s.lead !== 0) L.push({ material: 'lead', mm: s.lead }); // NaN も渡して検査させる
+        return L;
+      }
+      var walls = [
+        { x1: 0, y1: 0, x2: W, y2: 0, layers: layers(w.N) },
+        { x1: 0, y1: D, x2: W, y2: D, layers: layers(w.S) },
+        { x1: 0, y1: 0, x2: 0, y2: D, layers: layers(w.W) },
+        { x1: W, y1: 0, x2: W, y2: D, layers: layers(w.E) }
+      ];
+      if (state.partition.on) {
+        var p = state.partition;
+        walls.push({ x1: p.x1, y1: p.y1, x2: p.x2, y2: p.y2, layers: [{ material: 'lead', mm: p.mm }] });
+      }
+      return walls;
+    }
+    function buildSetup() {
+      var base = { ceiling: state.ceiling, obliquity: state.obliquity };
+      if (state.room === 'ct') {
+        return Object.assign(base, { modality: 'ct', iso: state.iso, kvp: state.kvp, headPerWeek: state.head, bodyPerWeek: state.body, dlpHead: state.dlpHead, dlpBody: state.dlpBody });
+      }
+      return Object.assign(base, { room: state.room, patientsPerWeek: state.patients, leakageLimit: state.leakLimit, distanceMode: state.distMode, patient: state.patient, tube: state.tube });
+    }
+
+    // ---------- 地図
+    var canvas = $('map'), ctx = canvas.getContext('2d');
+    var view = { x0: 0, y0: 0, scale: 50, w: 600, h: 600 };
+    var LOG_MIN = -4, LOG_MAX = 2; // 0.0001〜100 mGy/週
+    var STOPS = [[0, [33, 64, 154]], [0.25, [32, 144, 185]], [0.5, [94, 189, 103]], [0.7, [240, 210, 70]], [0.85, [240, 140, 50]], [1, [200, 40, 40]]];
+    function color(t) {
+      t = Math.max(0, Math.min(1, t));
+      for (var i = 1; i < STOPS.length; i++) {
+        if (t <= STOPS[i][0]) {
+          var a = STOPS[i - 1], b = STOPS[i], f = (t - a[0]) / (b[0] - a[0]);
+          return [0, 1, 2].map(function (k) { return Math.round(a[1][k] + (b[1][k] - a[1][k]) * f); });
+        }
+      }
+      return STOPS[STOPS.length - 1][1];
+    }
+    (function drawLegend() {
+      var lc = $('legend-bar'), g = lc.getContext('2d');
+      for (var x = 0; x < lc.width; x++) { var c = color(x / (lc.width - 1)); g.fillStyle = 'rgb(' + c.join(',') + ')'; g.fillRect(x, 0, 1, lc.height); }
+      $('legend-range').textContent = '0.0001〜100 mGy/週（対数）';
+    })();
+
+    function resize() {
+      var cssW = canvas.parentElement.clientWidth;
+      var worldW = state.W + 2 * MARGIN, worldH = state.D + 2 * MARGIN;
+      var scale = cssW / worldW;
+      var cssH = Math.min(worldH * scale, 720);
+      scale = Math.min(scale, cssH / worldH);
+      var dpr = window.devicePixelRatio || 1;
+      view = { x0: -MARGIN, y0: -MARGIN, scale: scale, w: worldW * scale, h: worldH * scale, dpr: dpr };
+      canvas.style.height = view.h + 'px';
+      canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(view.h * dpr);
+      view.offX = (cssW - view.w) / 2;
+    }
+    function toPx(x, y) { return [view.offX + (x - view.x0) * view.scale, (y - view.y0) * view.scale]; }
+    function toWorld(px, py) { return [(px - view.offX) / view.scale + view.x0, py / view.scale + view.y0]; }
+
+    var pending = false;
+    function schedule() { if (!pending) { pending = true; requestAnimationFrame(function () { pending = false; render(); }); } }
+
+    function showError(msg) {
+      var box = $('error-box');
+      if (msg) { box.textContent = '計算できません: ' + msg + '。入力を確かめてください。'; box.classList.remove('hidden'); }
+      else box.classList.add('hidden');
+    }
+
+    function render() {
+      resize();
+      var dpr = view.dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var walls = buildWalls(), setup = buildSetup(), z = state.evalZ;
+      try {
+        C.doseAtPoint({ x: state.W / 2 + 0.01, y: state.D / 2 + 0.37, z: z }, setup, walls); // 入力の検査を先に1回
+        showError(null);
+      } catch (e) {
+        showError(e.message);
+        drawRoom(); drawMarkers(); updateProbes(null);
+        return;
+      }
+      // 格子ごとに計算
+      var cell = Math.max(4, Math.round(view.w / 140));
+      var nx = Math.ceil(view.w / cell), ny = Math.ceil(view.h / cell);
+      var logs = new Float32Array(nx * ny), kind = new Uint8Array(nx * ny); // 0=値 1=一次線の方向 2=近すぎ
+      for (var j = 0; j < ny; j++) for (var i = 0; i < nx; i++) {
+        var wpt = toWorld(view.offX + (i + 0.5) * cell, (j + 0.5) * cell);
+        var r = C.doseAtPoint({ x: wpt[0], y: wpt[1], z: z }, setup, walls);
+        var k = j * nx + i;
+        if (r.flags.indexOf('primary-direction') >= 0) kind[k] = 1;
+        else if (r.flags.indexOf('near') >= 0) kind[k] = 2;
+        logs[k] = r.total > 0 ? Math.log10(r.total) : -99;
+      }
+      for (var j2 = 0; j2 < ny; j2++) for (var i2 = 0; i2 < nx; i2++) {
+        var k2 = j2 * nx + i2, x = view.offX + i2 * cell, y = j2 * cell;
+        if (kind[k2] === 1) { ctx.fillStyle = (i2 + j2) % 2 ? '#cbd5e0' : '#f7fafc'; }
+        else if (kind[k2] === 2) { ctx.fillStyle = '#ffffff'; }
+        else { var c = color((logs[k2] - LOG_MIN) / (LOG_MAX - LOG_MIN)); ctx.fillStyle = 'rgb(' + c.join(',') + ')'; }
+        ctx.fillRect(x, y, cell + 0.5, cell + 0.5);
+      }
+      // 1桁ごとの等線量線
+      ctx.strokeStyle = 'rgba(26,32,44,0.55)'; ctx.lineWidth = 1; ctx.beginPath();
+      for (var j3 = 0; j3 < ny; j3++) for (var i3 = 0; i3 < nx; i3++) {
+        var k3 = j3 * nx + i3; if (kind[k3]) continue;
+        var d0 = Math.floor(logs[k3]);
+        if (i3 + 1 < nx && !kind[k3 + 1] && Math.floor(logs[k3 + 1]) !== d0) { var xx = view.offX + (i3 + 1) * cell; ctx.moveTo(xx, j3 * cell); ctx.lineTo(xx, (j3 + 1) * cell); }
+        if (j3 + 1 < ny && !kind[k3 + nx] && Math.floor(logs[k3 + nx]) !== d0) { var yy = (j3 + 1) * cell; ctx.moveTo(view.offX + i3 * cell, yy); ctx.lineTo(view.offX + (i3 + 1) * cell, yy); }
+      }
+      ctx.stroke();
+      drawRoom(); drawMarkers();
+      updateProbes(setup, walls);
+    }
+
+    function drawRoom() {
+      var walls = buildWalls();
+      walls.forEach(function (w, idx) {
+        var a = toPx(w.x1, w.y1), b = toPx(w.x2, w.y2);
+        var leadMm = w.layers.reduce(function (s, l) { return s + (l.material === 'lead' && l.mm > 0 ? l.mm : 0); }, 0);
+        ctx.strokeStyle = idx === 4 ? '#2c5282' : '#1a202c';
+        ctx.lineWidth = Math.min(10, 3 + leadMm * 2);
+        ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      });
+      // 1 m の目盛り
+      var o = toPx(state.W - 1, state.D + 0.35), e = toPx(state.W, state.D + 0.35);
+      ctx.strokeStyle = '#1a202c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
+      ctx.fillStyle = '#1a202c'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('1 m', (o[0] + e[0]) / 2, o[1] - 4);
+    }
+
+    function handles() {
+      var h = [];
+      if (state.room === 'ct') h.push({ id: 'iso', p: state.iso, label: 'CT', shape: 'gantry' });
+      else { h.push({ id: 'patient', p: state.patient, label: '患者', shape: 'circle' }); h.push({ id: 'tube', p: state.tube, label: '管球', shape: 'square' }); }
+      state.probes.forEach(function (pr, i) { h.push({ id: 'probe' + i, p: pr, label: pr.name.charAt(0), shape: 'probe' }); });
+      if (state.partition.on) {
+        h.push({ id: 'part1', p: { x: state.partition.x1, y: state.partition.y1 }, shape: 'end' });
+        h.push({ id: 'part2', p: { x: state.partition.x2, y: state.partition.y2 }, shape: 'end' });
+      }
+      return h;
+    }
+    function drawMarkers() {
+      handles().forEach(function (h) {
+        var q = toPx(h.p.x, h.p.y);
+        ctx.lineWidth = 2; ctx.strokeStyle = '#fff';
+        if (h.shape === 'circle') { ctx.fillStyle = '#1a202c'; ctx.beginPath(); ctx.arc(q[0], q[1], 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+        else if (h.shape === 'square') {
+          var off = (Math.abs(h.p.x - state.patient.x) < 0.05 && Math.abs(h.p.y - state.patient.y) < 0.05) ? 14 : 0;
+          ctx.fillStyle = '#c53030'; ctx.fillRect(q[0] + off - 6, q[1] - 6, 12, 12); ctx.strokeRect(q[0] + off - 6, q[1] - 6, 12, 12);
+        }
+        else if (h.shape === 'gantry') {
+          ctx.fillStyle = 'rgba(26,32,44,0.85)'; ctx.fillRect(q[0] - 22, q[1] - 6, 44, 12); ctx.strokeRect(q[0] - 22, q[1] - 6, 44, 12);
+          ctx.fillStyle = 'rgba(26,32,44,0.5)'; ctx.fillRect(q[0] - 4, q[1] + 6, 8, 40 * view.scale / 50);
+        }
+        else if (h.shape === 'probe') {
+          ctx.fillStyle = '#fff'; ctx.strokeStyle = '#1a365d'; ctx.beginPath(); ctx.arc(q[0], q[1], 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#1a365d'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(h.label, q[0], q[1] + 0.5); ctx.textBaseline = 'alphabetic';
+        }
+        else if (h.shape === 'end') { ctx.fillStyle = '#2c5282'; ctx.beginPath(); ctx.arc(q[0], q[1], 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+      });
+    }
+
+    // ---------- 測定点の表
+    function fmt(v) {
+      if (!(v > 0)) return '0';
+      if (v >= 100) return v.toFixed(0);
+      if (v >= 0.01) return v.toPrecision(2);
+      return v.toExponential(1).replace('e', '×10^');
+    }
+    function flagLabels(flags) {
+      var map = { near: '0.3 m より近い', 'primary-direction': '一次線の方向', 'beyond-ceiling': '天井より上を通る線', extrapolated: '厚さが外挿の範囲' };
+      return flags.map(function (f) { return '<span class="flag' + (f === 'primary-direction' ? ' primary' : '') + '">' + map[f] + '</span>'; }).join('');
+    }
+    var tbody = document.querySelector('#probe-table tbody');
+    function updateProbes(setup, walls) {
+      var rows = state.probes.map(function (pr, i) {
+        var tSel = '<select data-probe="' + i + '" aria-label="' + pr.name + 'の滞在係数">' + T_OPTIONS.map(function (o) {
+          return '<option value="' + o[0] + '"' + (o[0] === pr.T ? ' selected' : '') + '>' + o[1] + '</option>';
+        }).join('') + '</select>';
+        if (!setup) return '<tr><td>' + pr.name + '</td><td>—</td><td>—</td><td>' + tSel + '</td><td>—</td><td>—</td></tr>';
+        var r = C.doseAtPoint({ x: pr.x, y: pr.y, z: state.evalZ }, setup, walls);
+        if (r.flags.indexOf('primary-direction') >= 0) {
+          return '<tr><td>' + pr.name + '<br>' + flagLabels(r.flags) + '</td><td colspan="2">一次線を含まないため表示しません</td><td>' + tSel + '</td><td>—</td><td>—</td></tr>';
+        }
+        var cmp = C.compareWithReference({ weekly_mGy: r.total, occupancy: pr.T });
+        return '<tr><td>' + pr.name + (r.flags.length ? '<br>' + flagLabels(r.flags) : '') + '</td><td>' + fmt(r.total) + '</td><td>' + fmt(r.leakage) +
+          '</td><td>' + tSel + '</td><td>' + fmt(cmp.per3months_mSv) + '</td><td>' + fmt(cmp.per3months_mSv_T1) + '</td></tr>';
+      });
+      tbody.innerHTML = rows.join('');
+    }
+    tbody.addEventListener('change', function (e) {
+      var i = e.target.getAttribute('data-probe');
+      if (i !== null) { state.probes[+i].T = Number(e.target.value); schedule(); }
+      e.stopPropagation();
+    });
+
+    // ---------- ドラッグとカーソルの値
+    var drag = null;
+    function evtPos(e) { var r = canvas.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+    function hit(px, py) {
+      var best = null, bd = 18;
+      handles().forEach(function (h) {
+        var q = toPx(h.p.x, h.p.y);
+        if (h.shape === 'square' && Math.abs(h.p.x - state.patient.x) < 0.05 && Math.abs(h.p.y - state.patient.y) < 0.05) q = [q[0] + 14, q[1]];
+        var d = Math.hypot(q[0] - px, q[1] - py);
+        if (d < bd) { bd = d; best = h; }
+      });
+      return best;
+    }
+    function clampWorld(x, y) {
+      return [Math.max(-MARGIN + 0.1, Math.min(state.W + MARGIN - 0.1, x)), Math.max(-MARGIN + 0.1, Math.min(state.D + MARGIN - 0.1, y))];
+    }
+    function moveHandle(id, w) {
+      var x = Math.round(w[0] * 20) / 20, y = Math.round(w[1] * 20) / 20; // 5 cm 刻み
+      if (id === 'patient') { var dx = x - state.patient.x, dy = y - state.patient.y; state.patient.x = x; state.patient.y = y; state.tube.x += dx; state.tube.y += dy; }
+      else if (id === 'tube') { state.tube.x = x; state.tube.y = y; }
+      else if (id === 'iso') { state.iso.x = x; state.iso.y = y; }
+      else if (id === 'part1') { state.partition.x1 = x; state.partition.y1 = y; }
+      else if (id === 'part2') { state.partition.x2 = x; state.partition.y2 = y; }
+      else if (id.indexOf('probe') === 0) { var pr = state.probes[+id.slice(5)]; pr.x = x; pr.y = y; }
+    }
+    canvas.addEventListener('pointerdown', function (e) {
+      var p = evtPos(e), h = hit(p[0], p[1]);
+      if (h) { drag = h.id; canvas.setPointerCapture(e.pointerId); e.preventDefault(); }
+      readout(p);
+    });
+    canvas.addEventListener('pointermove', function (e) {
+      var p = evtPos(e);
+      if (drag) { moveHandle(drag, clampWorld.apply(null, toWorld(p[0], p[1]))); schedule(); }
+      else canvas.style.cursor = hit(p[0], p[1]) ? 'grab' : 'crosshair';
+      readout(p);
+    });
+    canvas.addEventListener('pointerup', function () { drag = null; });
+    canvas.addEventListener('pointercancel', function () { drag = null; });
+    function readout(p) {
+      var w = toWorld(p[0], p[1]), out = $('cursor-readout');
+      try {
+        var r = C.doseAtPoint({ x: w[0], y: w[1], z: state.evalZ }, buildSetup(), buildWalls());
+        var where = '(' + w[0].toFixed(2) + ' m, ' + w[1].toFixed(2) + ' m)';
+        if (r.flags.indexOf('primary-direction') >= 0) out.textContent = where + ': 一次線の方向のため表示しません';
+        else out.textContent = where + ': ' + fmt(r.total) + ' mGy/週（散乱線 ' + fmt(r.scatter) + '・漏れ線 ' + fmt(r.leakage) + '）' + (r.flags.indexOf('near') >= 0 ? ' ※0.3 m より近い' : '');
+      } catch (err) { out.textContent = ''; }
+    }
+
+    window.addEventListener('resize', schedule);
+    loadPreset('rad');
+  })();
+  </script>
+  <script src="/assets/site.js" defer></script>
+</body>
+</html>

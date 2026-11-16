@@ -33,7 +33,7 @@ const RELATED_START = '<!-- RELATED:START';
 const TOP_FOOTER = '<!-- ===== Footer ===== -->';
 
 // 可視FAQを生成するページ（'' = トップ）
-const PAGES = ['', 'ct-dose-estimator', 'nps-calculator', 'mtf-calculator', 'contrast-quick', 'egfr-checker', 'exposure-reference'];
+const PAGES = ['', 'ct-dose-estimator', 'nps-calculator', 'mtf-calculator', 'contrast-quick', 'egfr-checker', 'exposure-reference', 'scatter-simulator'];
 // 手書きの可視FAQを持つページ（生成しない。テストが可視テキストとの一致だけ検査する）。
 // ブログ記事（blog/ 配下）は本文と一体の可視FAQセクションを持つ（記事追加時のチェックリスト参照）ので、
 // 記事を足すたびに登録しなくて済むよう接頭辞で一律に扱う

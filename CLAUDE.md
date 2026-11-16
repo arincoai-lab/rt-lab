@@ -58,6 +58,7 @@
 | 造影剤クイック計算ツール | ✅ 公開中 | `contrast-quick/index.html` |
 | 一般撮影条件参照ツール | ✅ 公開中 | `exposure-reference/index.html` |
 | MRIシミュレータ（教育用） | ✅ 公開中 | `mri-simulator/index.html` |
+| 散乱線シミュレータ（教育用） | 🚧 PR中 | `scatter-simulator/index.html`（計算は `scatter-core.js`、係数の照合表は `scripts/scatter-provenance.json`） |
 | 造影検査 腎機能チェッカー（eGFR/CT・MRI） | ✅ 公開中 | `egfr-checker/index.html` |
 | Task-based IQ評価ツール | 🔬 研究公開 | `task-based-iq/index.html` |
 | Subtractionツール（脳CT/MRI差分）デモ | 🔬 研究公開 | `subtraction-demo/index.html`（サンプルは `samples/`） |
@@ -85,3 +86,4 @@
 - ガイドライン・DRL の数値は WebSearch の要約で確定させない。原典 PDF の原文と照合し、照合表を成果物に残し、独立レビューに原典を再取得させる（eGFR・DRL で2回事故）。
 - `drl-comparison` のマッチャは keywords を `toLowerCase()` してから `new RegExp()` に通す（`\S` `\D` は壊れる。`+` などはエスケープが要る）。exclude は正規表現でなく素の部分一致。
 - Search Console のサイトマップは「成功」表示でも再読込されていないことがある。最終読み込み日時と検出ページ数を見る。
+| 2026-11-16 | **散乱線シミュレータ（教育用）を新設（`scatter-simulator/`）**。撮影室・CT室・血管撮影室の見取り図に患者・管球・壁を置くと、散乱線と漏れ線の週あたりの空気カーマを線量の地図で表示。計算は NCRP Report 147（Public.Resource.Org の公開版で入手）の Table 4.7（1 m・1患者あたりの二次線）・Table C.1（Archer の透過）・CT の κ×DLP（Eq. 5.10）。係数169個を頁画像で照合し `scripts/scatter-provenance.json` に保存、独立レビューで全件一致。法令の参考線（実効線量）と並べる前に E/Ka 1.433（医薬発第188号を改正した医政発0331第16号）で換算し、合否は出さない。一次線は扱わず、一般撮影で一次線の方向は斜線で「計算に含まない」と表示。計算の中身の独立レビューで「実際より低く出る経路」4つ（壁の継ぎ目の二重計上・斜めの厚さの無制限な増加・一次線方向の扱い・空欄が黙って0）を修正。回帰テスト `scripts/test-scatter-simulator.js`（644件・変異29通りすべて赤）を test.yml に追加。画面の距離の既定は「散乱線と漏れ線で別々」（NCRP の短いほうにそろえる簡略化は、部屋の中で管球のまわりに実在しない高線量域を作るため選択式にした）。術者の水晶体モード（Hulthén 2024 の KAP 係数）は計算の関数のみで、画面は未実装 |

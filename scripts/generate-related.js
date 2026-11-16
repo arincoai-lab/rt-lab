@@ -44,6 +44,7 @@ const TOOLS = {
   'ct-dose-estimator': { name: 'SSDE計算ツール', desc: 'SSDE・実効線量・Japan DRLs 2025との比較' },
   'drl-comparison': { name: 'DRLs2025 一覧・比較ツール', desc: 'Japan DRLs 2025の全値と自施設データの比較' },
   'exposure-reference': { name: '一般撮影条件参照', desc: '部位別のkVp・mAs・グリッドの早見表と補正計算' },
+  'scatter-simulator': { name: '散乱線シミュレータ', desc: '撮影室・CT室・血管撮影室の散乱線の届き方を線量の地図で学ぶ（教育用）' },
 };
 
 // ページ → 関連ツール（表示順）。クラスタごとに結ぶ
@@ -63,8 +64,9 @@ const RELATED = {
   'egfr-checker': ['contrast-quick', 'contrast-simulator', 'mri-simulator'],
   // 線量
   'ct-dose-estimator': ['drl-comparison', 'exposure-reference', 'cardiac-phase-optimizer'],
-  'drl-comparison': ['ct-dose-estimator', 'exposure-reference'],
-  'exposure-reference': ['drl-comparison', 'ct-dose-estimator'],
+  'drl-comparison': ['ct-dose-estimator', 'exposure-reference', 'scatter-simulator'],
+  'exposure-reference': ['drl-comparison', 'ct-dose-estimator', 'scatter-simulator'],
+  'scatter-simulator': ['ct-dose-estimator', 'drl-comparison', 'exposure-reference'],
   // 心臓
   'cardiac-phase-optimizer': ['contrast-simulator', 'ct-dose-estimator', 'contrast-quick'],
 };
