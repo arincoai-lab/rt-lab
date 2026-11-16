@@ -126,6 +126,7 @@
     .wall-grid select { text-align: left; }
     .checkline { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #4a5568; margin-top: 6px; }
     .hidden { display: none !important; }
+    .bad { outline: 2px solid #e53e3e !important; outline-offset: 1px; }
     .howto { font-size: 0.76rem; color: #4a5568; background: #ebf8ff; border: 1px solid #bee3f8; border-radius: 8px; padding: 8px 10px; margin-top: 10px; }
     .flabel { color: #4a5568; font-weight: 700; }
     .seg { display: inline-flex; border: 1px solid #cbd5e0; border-radius: 8px; overflow: hidden; }
@@ -228,7 +229,7 @@
       <div class="panel" id="controls">
         <h2>部屋のひな形</h2>
         <div class="presets" id="presets" role="group" aria-label="部屋のひな形"></div>
-        <p class="howto">ひな形を選び、右の地図の患者・管球・測定点をドラッグします。<b>壁をタップすると</b>、材質と厚さを変えられます。</p>
+        <p class="howto">ひな形を選び、地図の上の患者・管球・測定点をドラッグします。<b>壁をタップすると</b>、材質と厚さを変えられます（キーボードでは「詳細設定」の壁の表で変えられます）。</p>
 
         <h3>装置と件数</h3>
         <div class="field">
@@ -240,11 +241,12 @@
           <div class="field"><label for="patients">患者数（人/週）</label><input type="number" id="patients" min="0" step="1"></div>
           <div class="field"><span class="flabel" id="tube-dir-label">管球の向き</span>
             <span class="seg" id="tube-dir" role="group" aria-labelledby="tube-dir-label"><button type="button" data-dir="under">下から</button><button type="button" data-dir="over">上から</button><button type="button" data-dir="side">横から</button></span>
-            <span class="hint">下から＝アンダーチューブ（血管撮影・透視）、上から＝オーバーチューブ（臥位撮影）、横から＝立位撮影</span></div>
+            <span class="hint">下から＝アンダーチューブ（血管撮影・透視）、上から＝オーバーチューブ（臥位撮影）、横から＝立位撮影。斜めの配置は詳細設定で</span>
+            <span class="hint" id="tube-dir-msg" role="status"></span></div>
         </div>
         <div id="ct-fields" class="hidden">
           <div class="field"><label for="ct-head">頭部（件/週）</label><input type="number" id="ct-head" min="0" step="1"></div>
-          <div class="field"><label for="ct-body">体幹（件/週）</label><input type="number" id="ct-body" min="0" step="1"></div>
+          <div class="field"><label for="ct-body">体幹（件/週）</label><input type="number" id="ct-body" min="0" step="1"><span class="hint">1件の DLP は NCRP 147 の既定値（頭部 1,200・体幹 550 mGy·cm）で計算します。施設の値や、造影の前後で2回撮る検査が多いときは「詳細設定」で DLP を変えてください（既定値のままだと少なく見積もることがあります）</span></div>
         </div>
 
         <h3>部屋</h3>
@@ -253,6 +255,7 @@
 
         <h3>地図の高さ</h3>
         <div class="seg seg-wide" id="evalz-seg" role="group" aria-label="地図の高さ"><button type="button" data-z="1">胴 1.0 m</button><button type="button" data-z="1.55">目 1.55 m</button></div>
+        <p class="hint" id="evalz-now" style="font-size:0.7rem;color:#718096;margin-top:4px"></p>
 
         <details class="adv" id="adv">
           <summary>詳細設定（座標・高さ・壁の厚さ・計算方法）</summary>
@@ -289,8 +292,8 @@
           <h2>週あたりの空気カーマの地図</h2>
           <span class="unit">単位: mGy/週（空気カーマ）・高さ <span id="eval-z-label"></span> m</span>
         </div>
-        <div class="map-wrap"><canvas id="map" aria-label="部屋の線量分布の地図" role="img"></canvas>
-          <div id="wall-pop" class="wall-pop hidden" role="dialog" aria-labelledby="wp-title">
+        <div class="map-wrap"><canvas id="map" aria-label="部屋の線量分布の地図" role="img" tabindex="-1"></canvas>
+          <div id="wall-pop" class="wall-pop hidden" role="dialog" aria-labelledby="wp-title" tabindex="-1">
             <div class="wp-title" id="wp-title"></div>
             <div id="wp-wall">
               <div class="field"><label for="wp-mat">材質</label><select id="wp-mat"></select></div>
@@ -574,7 +577,9 @@
       $('ct-adv').classList.toggle('hidden', !isCT);
       var dir = tubeDir();
       Array.prototype.forEach.call($('tube-dir').children, function (b) { b.setAttribute('aria-pressed', b.dataset.dir === dir ? 'true' : 'false'); });
-      Array.prototype.forEach.call($('evalz-seg').children, function (b) { b.setAttribute('aria-pressed', Math.abs(Number(b.dataset.z) - state.evalZ) < 1e-9 ? 'true' : 'false'); });
+      var zPressed = false;
+      Array.prototype.forEach.call($('evalz-seg').children, function (b) { var on = Math.abs(Number(b.dataset.z) - state.evalZ) < 1e-9; zPressed = zPressed || on; b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+      $('evalz-now').textContent = zPressed || !isFinite(state.evalZ) ? '' : '今の高さ: ' + state.evalZ + ' m（詳細設定で変えられます）';
       $('partition-fields').classList.toggle('hidden', !state.partition.on);
       $('eval-z-label').textContent = $('eval-z').value || '—';
       Array.prototype.forEach.call(document.querySelectorAll('#wall-grid select option[value=gypsum]'), function (o) { o.disabled = isCT; });
@@ -630,44 +635,68 @@
 
     // 画面側の入力の検査。範囲外・空欄は黙って直さずエラーにする
     function validate() {
-      function rng(v, lo, hi, name) { if (typeof v !== 'number' || !isFinite(v) || v < lo || v > hi) throw new Error(name + 'は ' + lo + '〜' + hi + ' の範囲で入れてください'); }
-      rng(state.W, 2, 15, '部屋の幅'); rng(state.D, 2, 15, '部屋の奥行き'); rng(state.ceiling, 2, 6, '天井の高さ');
-      rng(state.evalZ, 0, state.ceiling, '地図の高さ（m）');
+      function rng(v, lo, hi, name, field) {
+        if (typeof v !== 'number' || !isFinite(v) || v < lo || v > hi) { var er = new Error(name + 'は ' + lo + '〜' + hi + ' の範囲で入れてください'); er.field = field; throw er; }
+      }
+      rng(state.W, 2, 15, '部屋の幅', '#room-w'); rng(state.D, 2, 15, '部屋の奥行き', '#room-d'); rng(state.ceiling, 2, 6, '天井の高さ', '#ceiling');
+      rng(state.evalZ, 0, state.ceiling, '地図の高さ（m）', '#eval-z');
       var isCT = state.room === 'ct';
-      if (isCT) rng(state.iso.z, 0, state.ceiling, 'アイソセンタの高さ（m）');
-      else { rng(state.patient.z, 0, state.ceiling, '照射中心の高さ（m）'); rng(state.tube.z, 0, state.ceiling, '管球の高さ（m）'); }
+      if (isCT) rng(state.iso.z, 0, state.ceiling, 'アイソセンタの高さ（m）', '#iso-z');
+      else { rng(state.patient.z, 0, state.ceiling, '照射中心の高さ（m）', '#patient-z'); rng(state.tube.z, 0, state.ceiling, '管球の高さ（m）', '#tube-z'); }
       SIDES.forEach(function (sd) {
         var w = state.walls[sd[0]];
-        rng(w.mm, 0, 1000, sd[1] + 'の壁の厚さ（mm）'); rng(w.lead, 0, 20, sd[1] + 'の壁の鉛の内張り（mm）');
-        if (isCT && w.material === 'gypsum') throw new Error('CT の二次線には石こうボードの透過の係数がありません（NCRP 147 は鉛とコンクリートのみ）。' + sd[1] + 'の壁の材質を変えてください');
+        rng(w.mm, 0, 1000, sd[1] + 'の壁の厚さ（mm）', '#wall-' + sd[0] + '-mm'); rng(w.lead, 0, 20, sd[1] + 'の壁の鉛の内張り（mm）', '#wall-' + sd[0] + '-lead');
+        if (isCT && w.material === 'gypsum') { var eg = new Error('CT の二次線には石こうボードの透過の係数がありません（NCRP 147 は鉛とコンクリートのみ）。' + sd[1] + 'の壁の材質を変えてください'); eg.field = '#wall-' + sd[0] + '-mat'; throw eg; }
       });
       if (state.partition.on) {
-        rng(state.partition.mm, 0, 20, '仕切り壁の鉛当量（mm）');
-        rng(state.partition.x1, -MARGIN, state.W + MARGIN, '仕切り壁の端1 の x'); rng(state.partition.y1, -MARGIN, state.D + MARGIN, '仕切り壁の端1 の y');
-        rng(state.partition.x2, -MARGIN, state.W + MARGIN, '仕切り壁の端2 の x'); rng(state.partition.y2, -MARGIN, state.D + MARGIN, '仕切り壁の端2 の y');
+        rng(state.partition.mm, 0, 20, '仕切り壁の鉛当量（mm）', '#partition-mm');
+        rng(state.partition.x1, -MARGIN, state.W + MARGIN, '仕切り壁の端1 の x', '#part-x1'); rng(state.partition.y1, -MARGIN, state.D + MARGIN, '仕切り壁の端1 の y', '#part-y1');
+        rng(state.partition.x2, -MARGIN, state.W + MARGIN, '仕切り壁の端2 の x', '#part-x2'); rng(state.partition.y2, -MARGIN, state.D + MARGIN, '仕切り壁の端2 の y', '#part-y2');
       }
-      if (isCT) { rng(state.iso.x, -MARGIN, state.W + MARGIN, 'アイソセンタの x'); rng(state.iso.y, -MARGIN, state.D + MARGIN, 'アイソセンタの y'); }
+      if (isCT) { rng(state.iso.x, -MARGIN, state.W + MARGIN, 'アイソセンタの x', '#iso-x'); rng(state.iso.y, -MARGIN, state.D + MARGIN, 'アイソセンタの y', '#iso-y'); }
       else {
-        rng(state.patient.x, -MARGIN, state.W + MARGIN, '患者の x'); rng(state.patient.y, -MARGIN, state.D + MARGIN, '患者の y');
-        rng(state.tube.x, -MARGIN, state.W + MARGIN, '管球の x'); rng(state.tube.y, -MARGIN, state.D + MARGIN, '管球の y');
+        rng(state.patient.x, -MARGIN, state.W + MARGIN, '患者の x', '#patient-x'); rng(state.patient.y, -MARGIN, state.D + MARGIN, '患者の y', '#patient-y');
+        rng(state.tube.x, -MARGIN, state.W + MARGIN, '管球の x', '#tube-x'); rng(state.tube.y, -MARGIN, state.D + MARGIN, '管球の y', '#tube-y');
       }
-      state.probes.forEach(function (pr) { rng(pr.x, -MARGIN, state.W + MARGIN, pr.name + 'の x'); rng(pr.y, -MARGIN, state.D + MARGIN, pr.name + 'の y'); });
+      state.probes.forEach(function (pr, i) { rng(pr.x, -MARGIN, state.W + MARGIN, pr.name + 'の x', '[data-probe-x="' + i + '"]'); rng(pr.y, -MARGIN, state.D + MARGIN, pr.name + 'の y', '[data-probe-y="' + i + '"]'); });
     }
-    // 管球の向き（照射中心の高さに対する管球の高さ）。数値は詳細設定の「管球の高さ」で細かく変えられる
-    var TUBE_OFFSET = { under: -0.55, over: 1.0, side: 0 };
+    // 管球の向き。下から・上から＝患者の真下・真上、横から＝同じ高さで水平に離す（立位撮影の SID 1.8 m）。
+    // 斜めの配置はどのボタンにも当たらないので、押されていない表示にする。数値は詳細設定で細かく変えられる
+    var TUBE_DZ = { under: -0.55, over: 1.0 };
+    var SIDE_SID = 1.8;
     function tubeDir() {
-      var d = state.tube.z - state.patient.z;
-      if (!isFinite(d)) return null;
-      return d < -0.05 ? 'under' : d > 0.05 ? 'over' : 'side';
+      var dz = state.tube.z - state.patient.z, h = Math.hypot(state.tube.x - state.patient.x, state.tube.y - state.patient.y);
+      if (!isFinite(dz) || !isFinite(h)) return null;
+      if (h < 0.05) return dz < -0.05 ? 'under' : dz > 0.05 ? 'over' : null;
+      return Math.abs(dz) <= 0.05 ? 'side' : null;
     }
     function round2(v) { return Math.round(v * 100) / 100; }
     $('tube-dir').addEventListener('click', function (e) {
-      var dir = e.target.dataset && e.target.dataset.dir;
-      if (!dir || !isFinite(state.patient.z)) return;
-      var z = round2(state.patient.z + TUBE_OFFSET[dir]);
-      if (isFinite(state.ceiling)) z = Math.min(z, round2(state.ceiling - 0.1));
-      $('tube-z').value = Math.max(0, z);
-      readInputs(null); schedule();
+      var dir = e.target.dataset && e.target.dataset.dir, msg = $('tube-dir-msg');
+      msg.textContent = '';
+      if (!dir) return;
+      var P = state.patient;
+      if (![P.x, P.y, P.z, state.ceiling, state.W, state.D].every(isFinite)) { msg.textContent = '先に入力のエラーを直してください'; return; }
+      var tx, ty, tz;
+      if (dir === 'side') {
+        tz = P.z;
+        // いま水平に離れていればその向きを保ち、重なっていれば部屋の中で一番広い向きへ
+        var hx = state.tube.x - P.x, hy = state.tube.y - P.y, h = Math.hypot(hx, hy);
+        var ux, uy;
+        if (h >= 0.05) { ux = hx / h; uy = hy / h; }
+        else {
+          var room = [[0, 1, state.D - P.y], [0, -1, P.y], [1, 0, state.W - P.x], [-1, 0, P.x]].sort(function (a, b) { return b[2] - a[2]; })[0];
+          ux = room[0]; uy = room[1];
+        }
+        tx = round2(P.x + ux * SIDE_SID); ty = round2(P.y + uy * SIDE_SID);
+      } else {
+        tx = P.x; ty = P.y; tz = round2(P.z + TUBE_DZ[dir]);
+        tz = Math.max(0, Math.min(tz, round2(state.ceiling - 0.1)));
+        if (dir === 'over' && tz - P.z <= 0.05) { msg.textContent = '天井が低く、管球を照射中心より上に置けません。詳細設定で高さを変えてください'; return; }
+        if (dir === 'under' && P.z - tz <= 0.05) { msg.textContent = '照射中心が低く、管球を下に置けません。詳細設定で高さを変えてください'; return; }
+      }
+      $('tube-x').value = tx; $('tube-y').value = ty; $('tube-z').value = tz;
+      readInputs(null); writePositions(); schedule();
     });
     $('evalz-seg').addEventListener('click', function (e) {
       var z = e.target.dataset && e.target.dataset.z;
@@ -753,10 +782,23 @@
       setTimeout(run, 120); // 画面が隠れていて requestAnimationFrame が止まっているときの予備
     }
 
-    function showError(msg) {
+    // エラーの原因の欄が畳んだ詳細設定の中にあれば、詳細設定を開いて欄に印を付け、どこを直すかを書く（入力中のフォーカスは奪わない）
+    function showError(msg, field) {
       var box = $('error-box');
-      if (msg) { box.textContent = '計算できません: ' + msg + '。入力を確かめてください。'; box.classList.remove('hidden'); }
-      else box.classList.add('hidden');
+      Array.prototype.forEach.call(document.querySelectorAll('.bad'), function (el) { el.classList.remove('bad'); });
+      if (!msg) { box.classList.add('hidden'); return; }
+      var where = '';
+      var el = field ? document.querySelector(field) : null;
+      if (el) {
+        var adv = $('adv'), inAdv = adv.contains(el) || /data-probe/.test(field);
+        if (inAdv && !adv.open) { adv.open = true; $('probe-table').classList.add('show-pos'); }
+        el.classList.add('bad');
+        if (inAdv) where = '「詳細設定」の赤い枠の欄で直せます。';
+        if (/^#wall-/.test(field)) where += '地図の壁をタップしても変えられます。';
+        if (/data-probe/.test(field)) where = '測定点の表の赤い枠の欄（座標）で直せます。';
+      }
+      box.textContent = '計算できません: ' + msg + '。' + (where || '入力を確かめてください。');
+      box.classList.remove('hidden');
     }
 
     function render() {
@@ -774,8 +816,8 @@
       } catch (e) {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        showError(e.message);
         updateProbes(null);
+        showError(e.message, e.field);
         if (state.W >= 2 && state.W <= 15 && state.D >= 2 && state.D <= 15) { try { drawRoom(); drawMarkers(); } catch (e2) { /* 部屋も描けない入力 */ } }
         return;
       }
@@ -830,11 +872,10 @@
       ctx.fillStyle = '#1a202c'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('1 m', (o[0] + e[0]) / 2, o[1] - 4);
     }
 
-    var SHORT_MAT = { concrete: 'コンクリート', gypsum: '石こうボード', lead: '鉛' };
     function wallText(i) {
       if (i === 4) return '仕切り 鉛 ' + state.partition.mm + ' mm';
       var w = state.walls[SIDES[i][0]];
-      return SHORT_MAT[w.material] + ' ' + w.mm + ' mm' + (w.lead > 0 ? '＋鉛 ' + w.lead + ' mm' : '');
+      return MATERIALS[w.material] + ' ' + w.mm + ' mm' + (w.lead > 0 ? '＋鉛 ' + w.lead + ' mm' : '');
     }
     // 壁の外側に材質と厚さを書く（タップで変えられることの手がかり）
     function drawWallLabels(walls) {
@@ -991,7 +1032,7 @@
     canvas.addEventListener('pointerdown', function (e) {
       var p = evtPos(e), h = hit(p[0], p[1]);
       if (h) { closeWallPop(); drag = h.id; canvas.setPointerCapture(e.pointerId); e.preventDefault(); }
-      else { var wi = hitWall(p[0], p[1]); if (wi >= 0) openWallPop(wi, p); else closeWallPop(); }
+      else { var wi = hitWall(p[0], p[1]); if (wi >= 0) { e.preventDefault(); openWallPop(wi, p); } else closeWallPop(); }
       readout(p);
     });
     canvas.addEventListener('pointermove', function (e) {
@@ -1051,20 +1092,30 @@
       var wrap = canvas.parentElement.clientWidth, pw = pop.offsetWidth, ph = pop.offsetHeight;
       pop.style.left = Math.max(4, Math.min(wrap - pw - 4, p[0] + 12)) + 'px';
       pop.style.top = Math.max(4, Math.min(view.h - ph - 4, p[1] + 12)) + 'px';
-      (isPart ? $('wp-pmm') : wpMat).focus();
+      // 小窓そのものにフォーカス（数値の欄に当てるとスマートフォンでキーボードが開いて画面がずれる）
+      requestAnimationFrame(function () { pop.focus(); });
+      setTimeout(function () { if (popWall >= 0 && !pop.contains(document.activeElement)) pop.focus(); }, 50);
     }
     function closeWallPop() { if (popWall >= 0) { pop.classList.add('hidden'); popWall = -1; } }
-    function syncFromPop() {
+    // 触った欄だけを詳細設定に書き戻す（ほかの欄を古い値で上書きしない）
+    function syncFromPop(e) {
       if (popWall < 0) return;
-      if (popWall === 4) $('partition-mm').value = $('wp-pmm').value;
-      else { var sd = SIDES[popWall][0]; $('wall-' + sd + '-mat').value = wpMat.value; $('wall-' + sd + '-mm').value = $('wp-mm').value; $('wall-' + sd + '-lead').value = $('wp-lead').value; }
+      var t = e.target, sd = popWall === 4 ? null : SIDES[popWall][0];
+      if (t.id === 'wp-pmm') $('partition-mm').value = t.value;
+      else if (sd && t.id === 'wp-mat') $('wall-' + sd + '-mat').value = t.value;
+      else if (sd && t.id === 'wp-mm') $('wall-' + sd + '-mm').value = t.value;
+      else if (sd && t.id === 'wp-lead') $('wall-' + sd + '-lead').value = t.value;
+      else return;
       readInputs(null); schedule();
     }
     pop.addEventListener('input', syncFromPop);
     pop.addEventListener('change', syncFromPop);
-    $('wp-close').addEventListener('click', function () { closeWallPop(); canvas.focus && canvas.focus(); });
+    $('wp-close').addEventListener('click', function () { closeWallPop(); canvas.focus(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && popWall >= 0) { closeWallPop(); canvas.focus(); } });
+    // 小窓の外（左の欄）で入力が変わったら、古い内容を見せ続けないよう閉じる
+    $('controls').addEventListener('input', closeWallPop);
+    $('controls').addEventListener('change', closeWallPop);
     $('wp-remove').addEventListener('click', function () { $('partition-on').checked = false; readInputs(null); schedule(); closeWallPop(); });
-    pop.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeWallPop(); });
     pop.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
 
     window.addEventListener('resize', schedule);
