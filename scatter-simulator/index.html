@@ -318,7 +318,7 @@
           <input type="file" id="plan-file" class="hidden" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" aria-label="図面のファイル（PDF・PNG・JPG）">
           <span class="draw-msg" id="draw-msg" role="status"></span>
         </div>
-        <div id="plan-panel" class="plan-panel hidden" aria-live="polite"></div>
+        <div id="plan-panel" class="plan-panel hidden"></div>
         <div class="map-wrap"><canvas id="map" aria-label="部屋の線量分布の地図" role="img" tabindex="-1"></canvas>
           <div id="wall-pop" class="wall-pop hidden" role="dialog" aria-labelledby="wp-title" tabindex="-1">
             <div class="wp-title" id="wp-title"></div>
@@ -1266,27 +1266,31 @@
     }
 
     // ---------- 図面の下敷き（floorplan.js で読む。ファイルは外部に送らず、保存もしない）
-    // 手順: calib（2点をタップして実際の長さを入れる）→ confirm（図面の大きさを見て確かめる）→ crop（部屋のまわりを囲む）→ done
-    // calib・confirm・crop のあいだは、地図の単位は図面の px。done で m（mPerPx）に直し、壁と同じ座標に置く（図面の左上が (0, 0)）
+    // 手順: calib（2点をタップして実際の長さを入れる。または図面の横幅を入れる）→ confirm（図面全体の大きさで確かめる）
+    //       → crop（部屋のまわりを囲む）→ done
+    // calib・confirm・crop のあいだは、地図の単位は図面の px。done では m に直し、範囲の左上（plan.origin）を世界の (0, 0) にする
+    // （大きな図面の右下の部屋でも、座標が部屋の近くの小さな値になるように）
     var FP = window.FloorPlan;
     var plan = null;
+    var loadSeq = 0; // 読み込み・ページ切り替えの番号。古い結果が後から届いても捨てる
     function planSetup() { return !!plan && (plan.step === 'calib' || plan.step === 'confirm' || plan.step === 'crop'); }
+    function scene() { return { walls: state.walls, patient: state.patient, tube: state.tube, iso: state.iso, probes: state.probes }; }
     function planCropWorld() {
       if (!plan || !plan.placed || !plan.crop) return null;
-      var m = plan.mPerPx, c = plan.crop;
-      return { x0: c.x0 * m, y0: c.y0 * m, x1: c.x1 * m, y1: c.y1 * m };
+      var a = FP.pxToWorld(plan.crop.x0, plan.crop.y0, plan.origin, plan.mPerPx), b = FP.pxToWorld(plan.crop.x1, plan.crop.y1, plan.origin, plan.mPerPx);
+      return { x0: a.x, y0: a.y, x1: b.x, y1: b.y };
     }
     // 図面の線の端（ベクタの PDF のみ）のうち、点 (x, y) m から r m 以内のもの（m の座標で返す）
     function planSnapPoints(x, y, r) {
       if (!plan || !plan.placed || !plan.index) return [];
-      var m = plan.mPerPx, a = plan.index.near(x / m, y / m, r / m), out = [];
-      for (var i = 0; i < a.length; i += 2) out.push({ x: Math.round(a[i] * m * 1e4) / 1e4, y: Math.round(a[i + 1] * m * 1e4) / 1e4 });
+      var m = plan.mPerPx, o = plan.origin, a = plan.index.near(x / m + o.x, y / m + o.y, r / m), out = [];
+      for (var i = 0; i < a.length; i += 2) { var w = FP.pxToWorld(a[i], a[i + 1], o, m); out.push({ x: Math.round(w.x * 1e4) / 1e4, y: Math.round(w.y * 1e4) / 1e4 }); }
       return out;
     }
     // 線量の地図の下に図面を重ねる（乗算: 図面の白は地図の色のまま、線だけが暗く見える）
     function drawPlanUnder() {
       if (!plan || !plan.placed) return;
-      var m = plan.mPerPx, a = toPx(0, 0);
+      var m = plan.mPerPx, w0 = FP.pxToWorld(0, 0, plan.origin, m), a = toPx(w0.x, w0.y);
       ctx.save();
       ctx.globalCompositeOperation = 'multiply';
       ctx.globalAlpha = plan.opacity;
@@ -1298,6 +1302,7 @@
     // 縮尺合わせ・範囲選びの画面（線量は計算しない）
     function renderPlanSetup() {
       updateProbes(null);
+      showError(null);
       ctx.fillStyle = '#edf2f7'; ctx.fillRect(0, 0, view.w + 2 * view.offX, view.h);
       var a = toPx(0, 0);
       ctx.drawImage(plan.canvas, a[0], a[1], plan.wPx * view.scale, plan.hPx * view.scale);
@@ -1346,8 +1351,7 @@
         if (plan.calib.length >= 2) plan.calib = [];
         plan.calib.push({ x: q.x, y: q.y });
         plan.err = '';
-        renderPlanPanel();
-        if (plan.calib.length === 2) { var inp = $('plan-len'); if (inp) inp.focus({ preventScroll: true }); }
+        renderPlanPanel(plan.calib.length === 2 ? 'plan-len' : null);
       } else if (plan.step === 'crop') {
         if (!plan.cropStart || plan.cropDraft) { plan.cropStart = { x: q.x, y: q.y }; plan.cropDraft = null; plan.downPx = p; }
         else finishCrop(q);
@@ -1364,8 +1368,8 @@
     function finishCrop(q) {
       var s = plan.cropStart;
       var c = { x0: Math.min(s.x, q.x), y0: Math.min(s.y, q.y), x1: Math.max(s.x, q.x), y1: Math.max(s.y, q.y) };
-      var m = plan.mPerPx;
-      if ((c.x1 - c.x0) * m < 1 || (c.y1 - c.y0) * m < 1) { plan.err = '範囲が小さすぎます（1 m 以上）。もう一度、部屋のまわりの2つの角をタップしてください'; plan.cropStart = null; return; }
+      var err = FP.checkCrop(c, plan.mPerPx);
+      if (err) { plan.err = err; plan.cropStart = null; return; }
       plan.cropDraft = c; plan.err = '';
     }
 
@@ -1381,146 +1385,180 @@
       schedule();
     }
     function calibLenPx() { var c = plan.calib; return c.length === 2 ? Math.hypot(c[1].x - c[0].x, c[1].y - c[0].y) : 0; }
-    // 縮尺を決める前の検査。図面全体の大きさが建物としてありえない値なら止める（mm と m の取り違えなど）
-    function proposeScale(mPerPx, how) {
-      var W = plan.wPx * mPerPx, H = plan.hPx * mPerPx;
-      if (!(mPerPx > 0) || !isFinite(mPerPx)) { plan.err = '縮尺を計算できません'; renderPlanPanel(); return; }
-      if (Math.max(W, H) < 2 || Math.max(W, H) > 1000) {
-        plan.err = 'この縮尺だと図面の大きさが 横 ' + fmtM(W) + ' m × 縦 ' + fmtM(H) + ' m になり、建物としてありえません。長さの単位（m）か、2点の位置を確かめてください';
-        renderPlanPanel(); return;
-      }
-      plan.pending = { mPerPx: mPerPx, how: how };
+    function proposeScale(mPerPx, how, relErr) {
+      var err = FP.checkPlanSize(plan.wPx, plan.hPx, mPerPx);
+      if (err) { plan.err = err; renderPlanPanel(); return; }
+      plan.pending = { mPerPx: mPerPx, how: how, relErr: relErr };
       setPlanStep('confirm');
     }
     function applyScale() {
       var newM = plan.pending.mPerPx, oldM = plan.mPerPx;
       plan.mPerPx = newM; plan.pending = null;
       if (plan.placed && oldM && oldM !== newM) {
-        // 縮尺を合わせ直したら、壁・線源・測定点も図面に合わせて伸び縮みさせる
-        var k = newM / oldM;
-        state.walls.forEach(function (w) { w.x1 *= k; w.y1 *= k; w.x2 *= k; w.y2 *= k; });
-        [state.patient, state.tube, state.iso].concat(state.probes).forEach(function (p) { p.x *= k; p.y *= k; });
+        // 縮尺を合わせ直したら、壁・線源・測定点も図面に合わせて伸び縮みさせる（原点は範囲の左上のまま。管球は患者からのずれを保つ）
+        FP.rescaleScene(scene(), newM / oldM);
         touchShape(); writePositions(); updateVisibility();
-        setPlanStep('done');
-      } else setPlanStep(plan.placed ? 'done' : 'crop');
+      }
+      setPlanStep(plan.placed ? 'done' : 'crop');
     }
-    // 範囲を決める。初めてなら、今の壁は消し（図面と合わないため）、線源・測定点を範囲の中へ同じ並びで移す
+    // 範囲を決める。範囲の左上を世界の (0, 0) にする
     function applyCrop(c) {
       var m = plan.mPerPx, first = !plan.placed;
-      plan.crop = c;
       if (first) {
-        var cw = { x0: c.x0 * m, y0: c.y0 * m, x1: c.x1 * m, y1: c.y1 * m };
-        var old = R.extent(state.walls, [], 0) || R.extent([], markerPoints(), 0.5);
-        var inset = 0.15, tx = function (x) { return cw.x0 + (cw.x1 - cw.x0) * (inset + (1 - 2 * inset) * (x - old.x0) / Math.max(old.x1 - old.x0, 1e-9)); },
-          ty = function (y) { return cw.y0 + (cw.y1 - cw.y0) * (inset + (1 - 2 * inset) * (y - old.y0) / Math.max(old.y1 - old.y0, 1e-9)); };
-        var r2 = function (v) { return Math.round(v * 20) / 20; };
-        var dTube = { x: state.tube.x - state.patient.x, y: state.tube.y - state.patient.y };
-        [state.patient, state.iso].concat(state.probes).forEach(function (p) { p.x = r2(tx(p.x)); p.y = r2(ty(p.y)); });
-        state.tube.x = state.patient.x + dTube.x; state.tube.y = state.patient.y + dTube.y; // 一次線の向きと SID は保つ
+        // 初めて: 今の壁は消し（図面と合わないため）、線源・測定点を範囲の中へ同じ並びで移す
+        var old = R.extent(state.walls.filter(function (w) { return [w.x1, w.y1, w.x2, w.y2].every(isFinite); }), [], 0) || R.extent([], markerPoints(), 0.5) || { x0: 0, y0: 0, x1: 1, y1: 1 };
+        FP.layoutIntoBox(scene(), old, { x0: 0, y0: 0, x1: (c.x1 - c.x0) * m, y1: (c.y1 - c.y0) * m });
         state.walls = []; state.rect = null;
-        plan.placed = true;
-        writePositions(); updateVisibility();
+        unpressPresets();
+      } else {
+        // 選び直し: 原点を新しい範囲の左上へ移し、壁・線源・測定点も同じだけずらす（図面の上の位置は変えない）
+        var dx = (c.x0 - plan.origin.x) * m, dy = (c.y0 - plan.origin.y) * m;
+        var r4 = function (v) { return Math.round(v * 1e4) / 1e4; }; // 0.1 mm に丸める（表示に長い小数を出さない）
+        state.walls.forEach(function (w) { w.x1 = r4(w.x1 - dx); w.x2 = r4(w.x2 - dx); w.y1 = r4(w.y1 - dy); w.y2 = r4(w.y2 - dy); });
+        [state.patient, state.tube, state.iso].concat(state.probes).forEach(function (p) { p.x = r4(p.x - dx); p.y = r4(p.y - dy); });
       }
+      plan.origin = { x: c.x0, y: c.y0 };
+      plan.crop = c; plan.placed = true;
+      writePositions(); updateVisibility();
       setPlanStep('done');
       if (first) { setDraw(true); $('draw-msg').textContent = '図面の壁をなぞってください。' + $('draw-msg').textContent; }
     }
+    function destroyPlan(p) { if (p && p.doc) { try { p.doc.destroy(); } catch (e) { /* 破棄の失敗は無視 */ } } }
+    function removePlan() {
+      destroyPlan(plan); plan = null; loadSeq++;
+      $('draw-toggle').disabled = false;
+      canvas.style.touchAction = draw.on ? 'none' : '';
+      if (!draw.on) frozenExt = null;
+      renderPlanPanel(); schedule();
+      $('plan-load').focus();
+    }
 
-    function renderPlanPanel() {
+    function btn(act, label) { return '<button type="button" class="mini-btn" data-act="' + act + '">' + label + '</button>'; }
+    // パネルを描き直す。focusId（欄の id）か、直前に押したボタンと同じ働きのボタンへフォーカスを戻す（描き直しで body に落ちないように）
+    function renderPlanPanel(focusId) {
       var el = $('plan-panel');
-      if (!plan) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+      var hadFocus = !!document.activeElement && el.contains(document.activeElement);
+      var prevAct = hadFocus ? document.activeElement.getAttribute('data-act') : null;
+      if (!plan) { el.classList.toggle('hidden', !planNotice); el.innerHTML = planNotice ? '<div class="perr" role="alert">' + esc(planNotice) + '</div>' : ''; return; }
       el.classList.remove('hidden');
-      var html = '', m = plan.mPerPx;
-      if (plan.loading) html = '<div class="step">図面を読み込んでいます…</div>';
+      var html = '', m = plan.mPerPx, status = '';
+      if (plan.loading) status = '図面を読み込んでいます…';
       else if (plan.step === 'calib') {
-        html = '<div class="step">① 縮尺を合わせる: 長さの分かる2点をタップ</div>' +
-          '<div>寸法線の両端や、長さの分かる壁の両端など。離れた2点ほど正確です。' + (plan.index ? '図面の線の端にくっつきます。' : '') + '</div>';
-        if (plan.calib.length === 2) {
-          html += '<div class="row"><label for="plan-len">この2点の実際の長さ</label><input type="number" id="plan-len" min="0.1" max="1000" step="0.01" inputmode="decimal"> m <button type="button" class="mini-btn" data-act="len">決定</button><button type="button" class="mini-btn" data-act="redo">点を打ち直す</button></div>';
-        }
+        status = '① 縮尺を合わせる: 長さの分かる2点をタップ（' + plan.calib.length + '/2）';
+        html = '<div>寸法線の両端や、長さの分かる壁の両端など。画面の上で離れた2点ほど正確です。' + (plan.index ? '図面の線の端にくっつきます。' : '') + '</div>';
+        if (plan.calib.length === 2) html += '<div class="row"><label for="plan-len">この2点の実際の長さ</label><input type="number" id="plan-len" min="0.1" max="1000" step="0.01" inputmode="decimal"> m ' + btn('len', '決定') + btn('redo', '点を打ち直す') + '</div>';
+        html += '<div class="row"><label for="plan-width">または、図面全体の横幅</label><input type="number" id="plan-width" min="2" max="1000" step="0.1" inputmode="decimal"> m ' + btn('width', '決定') + '</div>';
         if (plan.hints && plan.hints.length && plan.paperMPerPx) {
-          html += '<div class="row">図面に「1:' + plan.hints[0] + '」の表記があります。<button type="button" class="mini-btn" data-act="hint">1:' + plan.hints[0] + ' で合わせる（印刷のとおりの大きさのときだけ）</button></div>';
+          html += '<div class="row">図面にある縮尺の表記: ' + plan.hints.slice(0, 4).map(function (n) { return btn('hint-' + n, '1:' + n + ' で合わせる'); }).join('') + '</div>' +
+            '<div class="hint-line">表記で合わせるのは、印刷・書き出しで拡大縮小していないときだけ。キープラン（位置を示す小さな図）など、本図と違う縮尺の表記もあります。</div>';
         }
-        if (plan.placed) html += '<div class="row"><button type="button" class="mini-btn" data-act="cancel">やめる（今の縮尺のまま）</button></div>';
       } else if (plan.step === 'confirm') {
-        var pm = plan.pending.mPerPx, L = calibLenPx() * pm;
-        html = '<div class="step">縮尺の確認</div><div>この縮尺だと、図面全体は <b>横 約 ' + fmtM(plan.wPx * pm) + ' m × 縦 約 ' + fmtM(plan.hPx * pm) + ' m</b>' +
-          (plan.calib.length === 2 ? '、2点の間は ' + fmtM(L) + ' m' : '') + 'です。建物の大きさとして合っていますか？</div>' +
-          '<div class="row"><button type="button" class="mini-btn" data-act="ok">合っている（次へ）</button><button type="button" class="mini-btn" data-act="back">やり直す</button></div>';
+        var pd = plan.pending, pm = pd.mPerPx;
+        status = '縮尺の確認';
+        html = '<div>この縮尺だと、図面全体は <b>横 約 ' + fmtM(plan.wPx * pm) + ' m × 縦 約 ' + fmtM(plan.hPx * pm) + ' m</b>' +
+          (pd.how === 'points' ? '、2点の間は ' + fmtM(calibLenPx() * pm) + ' m（タップのずれによる誤差の目安 ±' + Math.max(1, Math.round(pd.relErr * 100)) + '%）' : '') + 'です。建物の大きさとして合っていますか？</div>' +
+          (pd.how === 'hint' ? '<div class="perr">表記の縮尺で合わせました。図面の中の分かっている長さ（部屋の幅など）と合うかを確かめるには「2点で確かめる」を押してください。</div>' : '') +
+          (plan.placed ? '<div>決定すると、描いた壁・患者・測定点も同じ比で伸び縮みします。</div>' : '') +
+          '<div class="row">' + btn('ok', '合っている（次へ）') + (pd.how === 'hint' ? btn('back', '2点で確かめる') : btn('back', 'やり直す')) + '</div>';
       } else if (plan.step === 'crop') {
-        html = '<div class="step">② 部屋のまわりを囲む: 2つの角をタップ（またはドラッグ）</div>' +
-          '<div>計算するのは囲んだ範囲です。部屋と、線量を見たい隣の部屋・廊下まで含めてください。' + (plan.placed ? '' : '決めると、今の壁は消え、患者・管球・測定点はこの範囲の中に移ります。') + '</div>';
+        status = '② 部屋のまわりを囲む: 2つの角をタップ（またはドラッグ）';
+        html = '<div>計算するのは囲んだ範囲です（' + FP.MAX_CROP_M + ' m 四方まで）。部屋と、線量を見たい隣の部屋・廊下まで含めてください。' + (plan.placed ? '' : '決めると、今の壁は消え、患者・管球・測定点はこの範囲の中に移ります。') + '</div>';
         if (plan.cropDraft) {
           var cd = plan.cropDraft;
-          html += '<div class="row">横 ' + fmtM((cd.x1 - cd.x0) * m) + ' m × 縦 ' + fmtM((cd.y1 - cd.y0) * m) + ' m <button type="button" class="mini-btn" data-act="crop-ok">この範囲で決定</button><button type="button" class="mini-btn" data-act="crop-redo">囲み直す</button></div>';
+          html += '<div class="row">横 ' + fmtM((cd.x1 - cd.x0) * m) + ' m × 縦 ' + fmtM((cd.y1 - cd.y0) * m) + ' m ' + btn('crop-ok', 'この範囲で決定') + btn('crop-redo', '囲み直す') + '</div>';
         }
-        html += '<div class="row"><button type="button" class="mini-btn" data-act="crop-all">図面全体を使う</button>' + (plan.placed ? '<button type="button" class="mini-btn" data-act="cancel">やめる</button>' : '') + '</div>';
+        html += '<div class="row">' + btn('crop-all', '図面全体を使う') + '</div>';
       } else {
-        html = '<div class="row"><span class="step">図面</span>' +
-          (plan.pages > 1 ? '<label for="plan-page">ページ</label><select id="plan-page">' + Array.apply(null, Array(plan.pages)).map(function (_, i) { return '<option value="' + (i + 1) + '"' + (i + 1 === plan.page ? ' selected' : '') + '>' + (i + 1) + '</option>'; }).join('') + '</select>' : '') +
+        status = '図面を下に敷いています';
+        var opts = '';
+        for (var i = 1; i <= Math.min(plan.pages || 1, 500); i++) opts += '<option value="' + i + '"' + (i === plan.page ? ' selected' : '') + '>' + i + '</option>';
+        html = '<div class="row">' + ((plan.pages || 1) > 1 ? '<label for="plan-page">ページ</label><select id="plan-page">' + opts + '</select>' : '') +
           '<label for="plan-opacity">図面の濃さ</label><input type="range" id="plan-opacity" min="0.15" max="1" step="0.05" value="' + plan.opacity + '"></div>' +
-          '<div class="row"><button type="button" class="mini-btn" data-act="recalib">縮尺を合わせ直す</button><button type="button" class="mini-btn" data-act="recrop">範囲を選び直す</button><button type="button" class="mini-btn" data-act="remove">図面を外す</button></div>' +
+          '<div class="row">' + btn('recalib', '縮尺を合わせ直す') + btn('recrop', '範囲を選び直す') + '</div>' +
           '<div>縮尺: 図面 1 px = ' + (m * 1000).toFixed(1) + ' mm。' + (plan.index ? '図面の線の端（' + plan.nSegs.toLocaleString() + ' 本の線）にくっつきます。' : '画像の図面なので、くっつくのは描いた壁の端と線だけです。') +
           (plan.segsTruncated ? '線が多いため、一部の線にはくっつきません。' : '') + '</div>';
       }
+      if (!plan.loading && plan.step !== 'done' && plan.placed) html += '<div class="row">' + btn('cancel', 'やめる（今の縮尺・範囲のまま）') + '</div>';
+      html += '<div class="row">' + btn('remove', '図面を外す') + '</div>';
       if (plan.err) html += '<div class="perr" role="alert">' + esc(plan.err) + '</div>';
       html += '<div class="privacy">図面はこの端末のブラウザの中だけで表示し、外部に送りません。保存もしません（ページを閉じると消えます）。PDF のときは、読むための部品（pdf.js と文字の対応表）だけをインターネットから取得します。</div>';
-      el.innerHTML = html;
+      // 読み上げは手順の文だけ（パネル全体を毎回読ませない）
+      el.innerHTML = '<div class="step" role="status">' + esc(status) + '</div>' + html;
+      var f = focusId ? $(focusId) : hadFocus ? (prevAct && el.querySelector('[data-act="' + prevAct + '"]')) || el.querySelector('input, [data-act]') : null;
+      if (f) f.focus({ preventScroll: true });
     }
+    var planNotice = '';
     $('plan-panel').addEventListener('click', function (e) {
       var act = e.target.getAttribute && e.target.getAttribute('data-act');
       if (!act || !plan) return;
       if (act === 'len') {
-        var L = readNum('plan-len'), px = calibLenPx();
-        if (!(L >= 0.1 && L <= 1000)) { plan.err = '長さは 0.1〜1000 m の範囲で入れてください（単位は m）'; renderPlanPanel(); return; }
-        if (px < 5) { plan.err = '2点が近すぎます。離れた2点をタップしてください'; renderPlanPanel(); return; }
-        proposeScale(L / px, 'points');
-      } else if (act === 'redo') { plan.calib = []; plan.err = ''; renderPlanPanel(); schedule(); }
-      else if (act === 'hint') { plan.calib = []; proposeScale(plan.paperMPerPx * plan.hints[0], 'hint'); }
+        var r = FP.scaleFromPoints(plan.calib[0], plan.calib[1], readNum('plan-len'), calibLenPx() * view.scale);
+        if (r.err) { plan.err = r.err; renderPlanPanel(); return; }
+        proposeScale(r.mPerPx, 'points', r.relErr);
+      } else if (act === 'width') {
+        var W = readNum('plan-width');
+        if (!(W >= 2 && W <= 1000)) { plan.err = '図面全体の横幅は 2〜1000 m の範囲で入れてください（単位は m）'; renderPlanPanel('plan-width'); return; }
+        proposeScale(W / plan.wPx, 'width', 0);
+      } else if (act.indexOf('hint-') === 0) { proposeScale(plan.paperMPerPx * Number(act.slice(5)), 'hint', 0); }
+      else if (act === 'redo') { plan.calib = []; plan.err = ''; renderPlanPanel(); schedule(); }
       else if (act === 'ok') applyScale();
       else if (act === 'back') { plan.pending = null; setPlanStep('calib'); }
       else if (act === 'crop-ok') applyCrop(plan.cropDraft);
       else if (act === 'crop-redo') { plan.cropStart = null; plan.cropDraft = null; renderPlanPanel(); schedule(); }
-      else if (act === 'crop-all') applyCrop({ x0: 0, y0: 0, x1: plan.wPx, y1: plan.hPx });
-      else if (act === 'cancel') setPlanStep('done');
+      else if (act === 'crop-all') {
+        var all = { x0: 0, y0: 0, x1: plan.wPx, y1: plan.hPx }, ce = FP.checkCrop(all, plan.mPerPx);
+        if (ce) { plan.err = ce; renderPlanPanel(); return; }
+        applyCrop(all);
+      }
+      else if (act === 'cancel') { plan.pending = null; setPlanStep('done'); }
       else if (act === 'recalib') setPlanStep('calib');
       else if (act === 'recrop') setPlanStep('crop');
-      else if (act === 'remove') { plan = null; $('draw-toggle').disabled = false; canvas.style.touchAction = draw.on ? 'none' : ''; renderPlanPanel(); frozenExt = draw.on ? frozenExt : null; schedule(); $('plan-load').focus(); }
+      else if (act === 'remove') removePlan();
     });
     $('plan-panel').addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && e.target.id === 'plan-len') { e.preventDefault(); var b = $('plan-panel').querySelector('[data-act="len"]'); if (b) b.click(); }
+      if (e.key !== 'Enter') return;
+      var act = e.target.id === 'plan-len' ? 'len' : e.target.id === 'plan-width' ? 'width' : null;
+      if (act) { e.preventDefault(); $('plan-panel').querySelector('[data-act="' + act + '"]').click(); }
     });
     $('plan-panel').addEventListener('input', function (e) {
       if (e.target.id === 'plan-opacity' && plan) { plan.opacity = Number(e.target.value); schedule(); }
     });
     $('plan-panel').addEventListener('change', function (e) {
       if (e.target.id !== 'plan-page' || !plan || !plan.doc) return;
-      var n = Number(e.target.value), doc = plan.doc;
+      var n = Number(e.target.value), doc = plan.doc, my = ++loadSeq, target = plan;
       plan.loading = true; renderPlanPanel();
       FP.renderPdfPage(doc, n).then(function (pg) {
-        // 別のページは別の図面: 縮尺から合わせ直す（壁はそのまま残す）
-        Object.assign(plan, pg, { page: n, loading: false, index: pg.nSegs ? FP.endpointIndex(pg.segs, 20) : null });
+        if (my !== loadSeq || plan !== target) return; // 途中で図面を外した・別のファイルにした
+        // 別のページは別の図面: 縮尺・範囲は前のページのものを使わない（描いた壁は、範囲を決めるときに消える）
+        Object.assign(plan, pg, { page: n, loading: false, placed: false, crop: null, origin: null, mPerPx: null, pending: null, index: pg.nSegs ? FP.endpointIndex(pg.segs, 20) : null });
         setPlanStep('calib');
-      }, function (err) { plan.loading = false; plan.err = err.message; renderPlanPanel(); });
+      }, function (err) {
+        if (my !== loadSeq || plan !== target) return;
+        plan.loading = false; plan.err = 'ページを読み込めませんでした: ' + err.message; renderPlanPanel();
+      });
     });
     $('plan-load').addEventListener('click', function () { $('plan-file').value = ''; $('plan-file').click(); });
     $('plan-file').addEventListener('change', function () {
       var f = this.files && this.files[0];
       if (!f) return;
-      var prev = plan;
+      var my = ++loadSeq;
       if (draw.on) setDraw(false);
-      plan = { loading: true, step: 'loading', calib: [], opacity: 0.6 };
-      renderPlanPanel();
+      planNotice = '';
+      destroyPlan(plan);
+      plan = { loading: true, step: 'loading', calib: [], opacity: 0.6, placed: false };
+      $('draw-toggle').disabled = true;
+      renderPlanPanel(); schedule();
       FP.loadFile(f).then(function (pg) {
-        plan = Object.assign({ calib: [], opacity: 0.6, placed: false, mPerPx: null, crop: null, err: '' }, pg);
+        if (my !== loadSeq) { destroyPlan(pg); return; } // 後から選んだファイルが先に読み終わっていたら、古いほうは捨てる
+        plan = Object.assign({ calib: [], opacity: 0.6, placed: false, mPerPx: null, crop: null, origin: null, err: '' }, pg);
         plan.index = pg.nSegs ? FP.endpointIndex(pg.segs, 20) : null;
-        // 前の図面で描いた壁は残る。新しい図面は縮尺から合わせ、範囲を選ぶと壁は消える（案内に書く）
         setPlanStep('calib');
       }, function (err) {
-        plan = prev || { step: 'error', calib: [], opacity: 0.6 };
-        plan.err = '図面を読み込めませんでした: ' + err.message; plan.loading = false;
-        if (!prev) { renderPlanPanel(); plan = null; $('plan-panel').classList.remove('hidden'); }
-        else renderPlanPanel();
-        schedule();
+        if (my !== loadSeq) return;
+        plan = null;
+        planNotice = '図面を読み込めませんでした: ' + err.message;
+        $('draw-toggle').disabled = false;
+        renderPlanPanel(); schedule();
       });
     });
     document.addEventListener('keydown', function (e) {

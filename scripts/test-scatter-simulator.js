@@ -496,8 +496,11 @@ const D = core.doseAtPoint;
   let FP;
   try { FP = require(path.join(ROOT, 'scatter-simulator/floorplan.js')); } catch (e) { check(false, 'floorplan.js を読み込めない: ' + e.message); }
   if (FP) {
-    check(JSON.stringify(FP.scaleHints('平面図 S=1:100 詳細 1/50 縮尺 1：100')) === '[100,50]', '縮尺の候補は多い順: ' + JSON.stringify(FP.scaleHints('平面図 S=1:100 詳細 1/50 縮尺 1：100')));
-    check(FP.scaleHints('2026/11/17 11:30 12/31 1:2.5').length === 0, '日付・時刻・小数は縮尺の候補にしない: ' + JSON.stringify(FP.scaleHints('2026/11/17 11:30 12/31 1:2.5')));
+    // 縮尺の候補: 並び順で選ばせない（キープランの 1/500 が多くても本図の 1/100 が先とは限らない。独立レビュー 11/17 H1）
+    const hs = FP.scaleHints('平面図 S=1:100 キープラン S=1/500 S=1/500 詳細 1/50 縮尺 1：100');
+    check(JSON.stringify(hs) === '[50,100,500]', '縮尺の候補は重複を除いて小さい順に全部: ' + JSON.stringify(hs));
+    const junk = FP.scaleHints('2026/1/20 2026/11/17 11:30 1:30 A-1/12 12/31 1:2.5');
+    check(JSON.stringify(junk) === '[30]', '日付・図番・小数は候補にしない（1:30 は縮尺として残る）: ' + JSON.stringify(junk));
     // pdf.js の命令の並び（OPS の番号は仮）。viewport の変換（y 反転・2倍）と transform・save/restore を通す
     const OPS = { save: 10, restore: 11, transform: 12, constructPath: 91, moveTo: 13, lineTo: 14, curveTo: 15, curveTo2: 16, curveTo3: 17, closePath: 18, rectangle: 19 };
     const base = [2, 0, 0, -2, 0, 200]; // PDF の y 上向き → 画面の y 下向き、2倍
@@ -516,6 +519,34 @@ const D = core.doseAtPoint;
     check(JSON.stringify(segs.slice(0, 4)) === JSON.stringify([0, 200, 20, 200]), '最初の線は viewport の変換を通る: ' + segs.slice(0, 4));
     check(JSON.stringify(segs.slice(12, 16)) === JSON.stringify([100, 200, 108, 200]), 'transform で平行移動した長方形: ' + segs.slice(12, 16));
     check(JSON.stringify(segs.slice(28, 32)) === JSON.stringify([6, 180, 12, 180]), 'restore で変換が戻り、曲線の終点から直線が続く: ' + segs.slice(28, 32));
+    // 図面の中の部品（Form XObject）・グループの行列をかける。注釈の中の線は拾わない（独立レビュー 11/17 H2）
+    const OPS2 = Object.assign({ paintFormXObjectBegin: 74, paintFormXObjectEnd: 75, beginGroup: 76, endGroup: 77, beginAnnotation: 80, endAnnotation: 81 }, OPS);
+    const r2 = FP.segmentsFromOperators(
+      [OPS2.paintFormXObjectBegin, OPS2.constructPath, OPS2.paintFormXObjectEnd, OPS2.beginGroup, OPS2.constructPath, OPS2.endGroup, OPS2.beginAnnotation, OPS2.constructPath, OPS2.endAnnotation, OPS2.constructPath],
+      [[[1, 0, 0, 1, 100, 0], [0, 0, 10, 10]], [[OPS.moveTo, OPS.lineTo], [0, 0, 5, 0], null], null,
+       [{ matrix: [2, 0, 0, 2, 0, 0] }], [[OPS.moveTo, OPS.lineTo], [1, 1, 2, 1], null], null,
+       [], [[OPS.moveTo, OPS.lineTo], [0, 0, 9, 9], null], null,
+       [[OPS.moveTo, OPS.lineTo], [0, 0, 1, 0], null]],
+      OPS2, [1, 0, 0, 1, 0, 0]);
+    check(JSON.stringify(Array.from(r2.segs)) === JSON.stringify([100, 0, 105, 0, 2, 2, 4, 2, 0, 0, 1, 0]), '部品・グループの行列をかけ、終わったら戻し、注釈は飛ばす: ' + Array.from(r2.segs));
+
+    // 縮尺・範囲・座標の換算（独立レビュー 11/17 H3・M1・M5・M7）
+    check(FP.checkPlanSize(3000, 2120, 0.0099) === '', 'A4 の 1:100（約 30 m）は通る');
+    check(/ありえません/.test(FP.checkPlanSize(3000, 2120, 0.0000099)) && /ありえません/.test(FP.checkPlanSize(3000, 2120, 9.9)), 'mm と m の取り違え（3 cm・30 km）は止める');
+    check(/近すぎ/.test(FP.scaleFromPoints({ x: 0, y: 0 }, { x: 50, y: 0 }, 6, 5).err || ''), '画面で 5 px しか離れていない2点は止める');
+    const sp = FP.scaleFromPoints({ x: 0, y: 0 }, { x: 600, y: 0 }, 6, 120);
+    check(Math.abs(sp.mPerPx - 0.01) < 1e-15 && Math.abs(sp.relErr - 1 / 120) < 1e-15, '2点と長さから縮尺、誤差の目安 1/画面px');
+    check(/0\.1〜1000/.test(FP.scaleFromPoints({ x: 0, y: 0 }, { x: 600, y: 0 }, NaN, 120).err || ''), '長さが空欄なら止める（黙って0にしない）');
+    check(/大きすぎ/.test(FP.checkCrop({ x0: 0, y0: 0, x1: 20000, y1: 100 }, 0.01)) && /小さすぎ/.test(FP.checkCrop({ x0: 0, y0: 0, x1: 50, y1: 500 }, 0.01)) && FP.checkCrop({ x0: 0, y0: 0, x1: 1000, y1: 900 }, 0.01) === '', '範囲は 1〜100 m');
+    const pw = FP.pxToWorld(14000, 9000, { x: 13000, y: 8500 }, 0.01);
+    check(Math.abs(pw.x - 10) < 1e-9 && Math.abs(pw.y - 5) < 1e-9, '範囲の左上を原点にする（大きな図面の右下の部屋でも座標が小さい）');
+    const scn = { walls: [{ x1: 1, y1: 2, x2: 3, y2: 2 }], patient: { x: 2, y: 2 }, tube: { x: 3.8, y: 2 }, iso: { x: 2, y: 2 }, probes: [{ x: 4, y: 1 }] };
+    FP.rescaleScene(scn, 1.5);
+    check(scn.walls[0].x2 === 4.5 && scn.patient.x === 3 && Math.abs(scn.tube.x - 4.8) < 1e-12 && scn.probes[0].x === 6, '縮尺の合わせ直し: 壁・患者・測定点は k 倍、管球は患者からのずれ（SID 1.8 m）を保つ');
+    const scn2 = { walls: [], patient: { x: 2.6, y: 2.6 }, tube: { x: 2.6, y: 2.6 }, iso: { x: 2.6, y: 2.6 }, probes: [{ x: 0, y: 0 }, { x: 5, y: 6 }] };
+    FP.layoutIntoBox(scn2, { x0: 0, y0: 0, x1: 5, y1: 6 }, { x0: 0, y0: 0, x1: 10, y1: 12 });
+    check(scn2.probes[0].x === 1.5 && scn2.probes[0].y === 1.8 && scn2.probes[1].x === 8.5 && scn2.patient.x === 5.15 && scn2.tube.x === scn2.patient.x, '範囲への写し方: 内側15%・5 cm に丸める・管球は患者に付いていく');
+
     const idx = FP.endpointIndex(new Float32Array([0, 0, 100, 0, 5, 5, 40, 40]), 20);
     check(JSON.stringify(idx.near(4, 4, 2)) === JSON.stringify([5, 5]) && idx.near(60, 60, 5).length === 0, '端点の索引で近くの端だけを引ける');
     check(/^sha512-/.test(FP.PDFJS_SRI) && /^sha512-/.test(FP.WORKER_SRI) && /3\.11\.174/.test(FP.PDFJS_URL), 'pdf.js は版を固定し SRI で検査する');
