@@ -48,6 +48,10 @@ jobs:
       - name: Chest X-ray game scoring checks
         run: node scripts/test-chest-xray.js
 
+      # 海外旅行の被ばく線量（PARMA の格子・JISCARD との照合・行き先データ・比べるものの値）
+      - name: Flight dose model checks
+        run: node scripts/test-flight-dose.js
+
       - name: Generated blocks are up to date
         run: |
           node scripts/generate-related.js --check
