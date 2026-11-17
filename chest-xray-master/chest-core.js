@@ -174,7 +174,63 @@
     return { total: items.reduce((a, b) => a + b.pt, 0), items };
   }
 
+  // ---- 文言（日本語。英語は段階②で足す）----
+  const I18N = {
+    ja: {
+      title: '息を吸って止めてください！',
+      titleSub: '胸部X線写真の匠',
+      lead: '検診の胸部X線。患者さんの立ち方と呼吸を整えて、きれいな1枚を素早く撮る。',
+      start: '撮影をはじめる',
+      disclaimer: '教育・娯楽用のゲームです。実際の撮影手順や画質評価の基準ではありません。点数や操作はどこにも送信しません。',
+      breathe: '大きく吸って、止めてください',
+      shoot: '曝射',
+      hint: '患者さんの体・肩・肘、パネルの取っ手をつかんで動かせます',
+      grabTorso: '立ち位置 ↔', grabShoulder: '体のひねり ↔', grabElbow: '肘を前へ', grabPanel: 'パネル ↕',
+      sayTidal: 'ふつうに呼吸しています', sayInhale: 'すぅーっ……', sayHold: '（息を止めています）',
+      sayHoldEnd: '（そろそろ苦しい……）', sayRelease: 'ぷはっ',
+      patient_office: '30代・会社員', patient_stiff: '50代・肩こりがひどい', patient_large: '40代・体格が大きい',
+      patient_elderly: '80代・背中が丸い', patient_nervous: '20代・緊張している',
+      time: '撮影まで', points: '点',
+      again: '次の患者さん',
+      item_rot: '体のねじれ', item_center: '中心', item_coverage: '肺が全部入っているか',
+      item_scapula: '肩甲骨', item_inspiration: '吸気の深さ', item_motion: 'ブレ',
+      d_rot_ok: '左右の鎖骨の内側の端が、背骨から等距離です',
+      d_rot_ng: '約{deg}°ねじれています。鎖骨の内側の端と背骨の距離が左右で違います',
+      d_center_ok: '背骨がパネルの中心です', d_center_ng: '背骨が中心から{cm}cmずれています',
+      d_coverage_ok: '肺尖から肋横角まで入っています', d_coverage_ng: '{where}が欠けています（{cm}cm）',
+      cut_top: '肺尖', cut_bottom: '肋横角', cut_left: '患者の左側', cut_right: '患者の右側', sep: '・',
+      d_scapula_ok: '肩甲骨が肺の外に出ています', d_scapula_ng: '肩甲骨が肺に{cm}cmかぶっています。肘をもっと前へ',
+      d_inspiration_ok: '横隔膜の上に後ろの肋骨が{ribs}本。十分に吸えています',
+      d_inspiration_ng: '横隔膜の上に後ろの肋骨が{ribs}本（目標は10本）',
+      d_motion_ok: '止まっています', d_motion_ng: '胸が動いている最中に撮りました',
+    },
+  };
+  function t(lang, key, vars) {
+    const d = I18N[lang] || I18N.ja;
+    let s = key in d ? d[key] : (key in I18N.ja ? I18N.ja[key] : key);
+    if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
+    return s;
+  }
+  // 採点の一言（項目ごと）
+  function detail(lang, item) {
+    const ok = item.pt === item.max, i = item.info, f1 = v => (Math.round(v * 10) / 10).toFixed(1);
+    switch (item.key) {
+      case 'rot': return ok ? t(lang, 'd_rot_ok') : t(lang, 'd_rot_ng', { deg: f1(i.deg) });
+      case 'center': return ok ? t(lang, 'd_center_ok') : t(lang, 'd_center_ng', { cm: f1(i.cm) });
+      case 'coverage': {
+        if (ok) return t(lang, 'd_coverage_ok');
+        const where = ['top', 'bottom', 'left', 'right'].filter(k => i.cut[k] > 0).map(k => t(lang, 'cut_' + k)).join(t(lang, 'sep'));
+        return t(lang, 'd_coverage_ng', { where, cm: f1(i.cm) });
+      }
+      case 'scapula': return ok ? t(lang, 'd_scapula_ok') : t(lang, 'd_scapula_ng', { cm: f1(i.cm) });
+      case 'inspiration': return t(lang, ok ? 'd_inspiration_ok' : 'd_inspiration_ng', { ribs: i.ribs });
+      case 'motion': return ok ? t(lang, 'd_motion_ok') : t(lang, 'd_motion_ng');
+    }
+    return '';
+  }
+
   return {
+    I18N, t, detail,
     PANEL, POSTERIOR_RIBS_FULL, CONTROL_RANGE, PATIENT_TYPES,
     makeRng, makePatient, geom, ribLevel,
     newBreath, startInhale, breathStep,
