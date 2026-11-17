@@ -395,5 +395,184 @@ const D = core.doseAtPoint;
   check(html.includes('172 cm') && html.includes('Philips') && html.includes('PMC11817644') && html.includes('先行研究より低め'), '術者の水晶体の測定条件・出典・低めの注意が無い');
 }
 
+// ---------------------------------------------------------------- 部屋の形（scatter-room.js）
+// 壁を「線分の一覧」に変えても、長方形＋仕切りのひな形の値が旧版と同じであること
+{
+  let R;
+  try { R = require(path.join(ROOT, 'scatter-simulator/scatter-room.js')); } catch (e) { check(false, 'scatter-room.js を読み込めない: ' + e.message); }
+  if (R) {
+    const sides = { N: { material: 'concrete', mm: 150, lead: 0 }, S: { material: 'concrete', mm: 150, lead: 0 },
+      W: { material: 'concrete', mm: 150, lead: 0 }, E: { material: 'gypsum', mm: 25, lead: 1.5 } };
+    const part = { on: true, x1: 0, y1: 4.6, x2: 1.9, y2: 4.6, mm: 1.5 };
+    const list = R.rectWalls(5, 6, sides, part);
+    check(list.length === 5 && list[4].material === 'lead' && list[4].mm === 1.5, '仕切りは鉛の壁として5本目に入る');
+    check(R.rectWalls(5, 6, sides, { on: false }).length === 4, '仕切りが無ければ4本');
+    // 旧版の buildWalls（index.html の 11/16 版）と同じ層になる
+    const legacy = [
+      { x1: 0, y1: 0, x2: 5, y2: 0, layers: [{ material: 'concrete', mm: 150 }] },
+      { x1: 0, y1: 6, x2: 5, y2: 6, layers: [{ material: 'concrete', mm: 150 }] },
+      { x1: 0, y1: 0, x2: 0, y2: 6, layers: [{ material: 'concrete', mm: 150 }] },
+      { x1: 5, y1: 0, x2: 5, y2: 6, layers: [{ material: 'gypsum', mm: 25 }, { material: 'lead', mm: 1.5 }] },
+      { x1: 0, y1: 4.6, x2: 1.9, y2: 4.6, layers: [{ material: 'lead', mm: 1.5 }] }
+    ];
+    check(JSON.stringify(R.toCoreWalls(list)) === JSON.stringify(legacy), '壁の一覧 → 計算の入力が旧版と同じ');
+    const setup = { room: 'rad_room_all', patientsPerWeek: 120, patient: { x: 2.6, y: 2.6, z: 0.8 }, tube: { x: 2.6, y: 2.6, z: 1.8 }, distanceMode: 'separate' };
+    for (const p of [{ x: 0.9, y: 5.3, z: 1 }, { x: 5.8, y: 2.6, z: 1 }, { x: 2.6, y: -0.8, z: 1 }, { x: 4, y: 4, z: 1 }]) {
+      const a = core.doseAtPoint(p, setup, legacy).total, b = core.doseAtPoint(p, setup, R.toCoreWalls(list)).total;
+      check(a === b, '旧版と同じ線量: ' + JSON.stringify(p));
+    }
+    // 鉛の内張りが空欄（NaN）なら黙って捨てず、計算側でエラーにする
+    const bad = R.toCoreWalls([{ x1: 0, y1: 0, x2: 1, y2: 0, material: 'concrete', mm: 100, lead: NaN }]);
+    let threw = false;
+    try { core.doseAtPoint({ x: 0.5, y: -1, z: 1 }, Object.assign({}, setup, { patient: { x: 0.5, y: 1, z: 0.8 }, tube: { x: 0.5, y: 1, z: 1.8 } }), bad); } catch (e) { threw = true; }
+    check(threw, '鉛の内張りが NaN なら計算がエラーになる');
+
+    // 幅・奥行きを変えると外壁だけ動く
+    const rs = R.resizeRect(list, 8, 9);
+    check(rs[1].y1 === 9 && rs[1].x2 === 8 && rs[3].x1 === 8 && rs[4].y1 === 4.6, '長方形の大きさを変えると外壁だけ動く');
+
+    // 線源から壁を通らずに届くか（旧版の「部屋の中」と同じ判定）
+    const src = { x: 2.6, y: 2.6 };
+    check(R.reachesWithoutWall(src, { x: 4, y: 4 }, list), '部屋の中は届く');
+    check(!R.reachesWithoutWall(src, { x: 0.9, y: 5.3 }, list), '仕切りの向こう（操作室）は届かない');
+    check(!R.reachesWithoutWall(src, { x: 5.8, y: 2.6 }, list), '外壁の向こうは届かない');
+    check(R.reachesWithoutWall(src, { x: 3, y: 5.3 }, list), '仕切りの脇（仕切りの無い所）は届く');
+    // 壁の端（角）を通る線は、計算側と同じく「壁を通る」（独立レビュー 2026-11-17 L1）
+    const pe = { x: 1.55, y: 5.6 }; // 患者 (2.6, 2.6) からの線が仕切りの端 (1.9, 4.6) をちょうど通る
+    check(!R.reachesWithoutWall(src, pe, list), '仕切りの端を通る線は部屋の中としない');
+    const legacyB = core.doseAtPoint({ x: pe.x, y: pe.y, z: 1 }, setup, legacy).total, openB = core.doseAtPoint({ x: pe.x, y: pe.y, z: 1 }, setup, legacy.slice(0, 4)).total;
+    check(legacyB < openB, '計算側も、仕切りの端を通る線は遮へいする（判定とそろっている）');
+    // 壁の線の上の点は、計算側では遮へいしない（t<1）。判定も同じにして、表示と値を食い違わせない
+    check(R.reachesWithoutWall(src, { x: 5, y: 2.6 }, list) === (core.doseAtPoint({ x: 5, y: 2.6, z: 0.8 }, setup, legacy).total === core.doseAtPoint({ x: 5, y: 2.6, z: 0.8 }, setup, []).total), '壁の線の上の点: 判定と計算がそろう');
+    // 判定と計算がそろうことを格子で確かめる（線源と同じ高さで、天井の影響を外す）
+    let mism = 0;
+    for (let gx = -1; gx <= 6; gx += 0.05) for (let gy = -1; gy <= 7; gy += 0.05) {
+      const q = { x: Math.round(gx * 100) / 100, y: Math.round(gy * 100) / 100 };
+      const shielded = core.doseAtPoint({ x: q.x, y: q.y, z: 0.8 }, setup, legacy).scatter <
+        core.doseAtPoint({ x: q.x, y: q.y, z: 0.8 }, setup, []).scatter;
+      if (shielded === R.reachesWithoutWall(src, q, list)) mism++;
+    }
+    check(mism === 0, '5 cm の格子のすべての点で「部屋の中」の判定と計算の遮へいがそろう: 食い違い ' + mism);
+    check(R.reachesWithoutWall({ x: 0, y: 1 }, { x: 0, y: 3 }, list), '壁と同じ直線上の線は横切らない（計算側も平行は無視）');
+
+    // 範囲
+    const ex = R.extent(list, [{ x: 7, y: 2 }, { x: NaN, y: 0 }], 1.6);
+    check(ex.x0 === -1.6 && ex.y0 === -1.6 && Math.abs(ex.x1 - 8.6) < 1e-12 && Math.abs(ex.y1 - 7.6) < 1e-12, '範囲は壁と点を囲み、NaN の点は無視: ' + JSON.stringify(ex));
+    check(R.extent([], [], 1) === null, '何も無ければ範囲は null');
+
+    // 一番広い向き（立位撮影で管球を置く向き）
+    check(JSON.stringify(R.farthestDirection({ x: 2, y: 0.9 }, R.rectWalls(4, 6, sides, { on: false }), 30)) === '[0,1]', '胸部撮影室の患者からは下が一番広い');
+    check(JSON.stringify(R.farthestDirection({ x: 1, y: 3 }, R.rectWalls(6, 6, sides, { on: false }), 30)) === '[1,0]', '左寄りなら右が一番広い');
+    check(JSON.stringify(R.farthestDirection({ x: 1, y: 1 }, [], 30)) === '[0,1]', '壁が無ければ下（同じ距離なら下が先）');
+
+    // 重なる端はまとめる（角を動かすと2本の壁が一緒に動く）
+    const vs = R.vertices(list);
+    const corner = vs.find(v => v.x === 0 && v.y === 0);
+    check(vs.length === 6 && corner && corner.ends.length === 2, '長方形の角は2本の壁の端をまとめる（4角＋仕切りの1端。もう1端は外壁の線の上）: ' + vs.length);
+
+    // 吸着
+    const tol = 0.2;
+    let s = R.snapPoint({ x: 0.1, y: 0.05 }, { tol, walls: list });
+    check(s.snap === 'vertex' && s.x === 0 && s.y === 0, '壁の端に吸着');
+    s = R.snapPoint({ x: 2.53, y: 0.12 }, { tol, walls: list });
+    check(s.snap === 'wall' && s.y === 0 && s.x === 2.55, '壁の線の上に吸着し、壁に沿う向きは 5 cm の格子: ' + JSON.stringify(s));
+    s = R.snapPoint({ x: 1.03, y: 1.1 }, { tol, walls: [{ x1: 0, y1: 0, x2: 3, y2: 3 }] });
+    check(s.snap === 'wall' && Math.abs(s.x - 1.065) < 1e-9 && Math.abs(s.y - 1.065) < 1e-9, '斜めの壁の上は最も近い点');
+    s = R.snapPoint({ x: 3.03, y: 2.47 }, { tol, walls: list });
+    check(s.snap === 'grid' && s.x === 3.05 && s.y === 2.45, '何も無ければ 5 cm の格子');
+    s = R.snapPoint({ x: 3.6, y: 2.12 }, { tol, walls: list, start: { x: 2, y: 2 } });
+    check(s.y === 2 && s.x === 3.6, 'ほぼ水平なら水平にそろえる: ' + JSON.stringify(s));
+    s = R.snapPoint({ x: 4.9, y: 3.1 }, { tol, walls: list, start: { x: 2, y: 3 } });
+    check(s.snap === 'wall' && s.x === 5 && s.y === 3, '水平にそろえた線と壁の交点に吸着: ' + JSON.stringify(s));
+    s = R.snapPoint({ x: 0.1, y: 0.05 }, { tol, walls: list, exclude: [0, 2] });
+    check(s.snap !== 'vertex', '動かしている壁の端には吸着しない');
+    s = R.snapPoint({ x: 1.02, y: 1.01 }, { tol, walls: [], extra: [{ x: 1, y: 1 }] });
+    check(s.snap === 'vertex' && s.x === 1, '追加の点（図面の線の端）に吸着');
+  }
+}
+
+// ---------------------------------------------------------------- 図面の読み込み（floorplan.js の純粋な部分）
+{
+  let FP;
+  try { FP = require(path.join(ROOT, 'scatter-simulator/floorplan.js')); } catch (e) { check(false, 'floorplan.js を読み込めない: ' + e.message); }
+  if (FP) {
+    // 縮尺の候補: 並び順で選ばせない（キープランの 1/500 が多くても本図の 1/100 が先とは限らない。独立レビュー 11/17 H1）
+    const hs = FP.scaleHints('平面図 S=1:100 キープラン S=1/500 S=1/500 詳細 1/50 縮尺 1：100');
+    check(JSON.stringify(hs) === '[50,100,500]', '縮尺の候補は重複を除いて小さい順に全部: ' + JSON.stringify(hs));
+    const junk = FP.scaleHints('2026/1/20 2026/11/17 11:30 1:30 A-1/12 12/31 1:2.5');
+    check(JSON.stringify(junk) === '[30]', '日付・図番・小数は候補にしない（1:30 は縮尺として残る）: ' + JSON.stringify(junk));
+    // pdf.js の命令の並び（OPS の番号は仮）。viewport の変換（y 反転・2倍）と transform・save/restore を通す
+    const OPS = { save: 10, restore: 11, transform: 12, constructPath: 91, moveTo: 13, lineTo: 14, curveTo: 15, curveTo2: 16, curveTo3: 17, closePath: 18, rectangle: 19 };
+    const base = [2, 0, 0, -2, 0, 200]; // PDF の y 上向き → 画面の y 下向き、2倍
+    const fn = [OPS.constructPath, OPS.save, OPS.transform, OPS.constructPath, OPS.restore, OPS.constructPath];
+    const args = [
+      [[OPS.moveTo, OPS.lineTo, OPS.lineTo, OPS.closePath], [0, 0, 10, 0, 10, 5], null],
+      null,
+      [1, 0, 0, 1, 50, 0],
+      [[OPS.rectangle], [0, 0, 4, 2], null],
+      null,
+      [[OPS.moveTo, OPS.curveTo, OPS.lineTo], [0, 10, 1, 1, 2, 2, 3, 10, 6, 10], null]
+    ];
+    const r = FP.segmentsFromOperators(fn, args, OPS, base);
+    const segs = Array.from(r.segs);
+    check(r.n === 3 + 4 + 1, '線分の数（三角形3＋長方形4＋曲線のあとの直線1）: ' + r.n);
+    check(JSON.stringify(segs.slice(0, 4)) === JSON.stringify([0, 200, 20, 200]), '最初の線は viewport の変換を通る: ' + segs.slice(0, 4));
+    check(JSON.stringify(segs.slice(12, 16)) === JSON.stringify([100, 200, 108, 200]), 'transform で平行移動した長方形: ' + segs.slice(12, 16));
+    check(JSON.stringify(segs.slice(28, 32)) === JSON.stringify([6, 180, 12, 180]), 'restore で変換が戻り、曲線の終点から直線が続く: ' + segs.slice(28, 32));
+    // 図面の中の部品（Form XObject）の行列をかける。注釈の中の線は拾わない（独立レビュー 11/17 H2）。
+    // 透明グループ付きの部品は、pdf.js が beginGroup と paintFormXObjectBegin に同じ行列を並べる。かけるのは1回だけ（同 N1）
+    const OPS2 = Object.assign({ paintFormXObjectBegin: 74, paintFormXObjectEnd: 75, beginGroup: 76, endGroup: 77, beginAnnotation: 80, endAnnotation: 81 }, OPS);
+    const r2 = FP.segmentsFromOperators(
+      [OPS2.paintFormXObjectBegin, OPS2.constructPath, OPS2.paintFormXObjectEnd,
+       OPS2.beginGroup, OPS2.paintFormXObjectBegin, OPS2.constructPath, OPS2.paintFormXObjectEnd, OPS2.endGroup,
+       OPS2.beginAnnotation, OPS2.constructPath, OPS2.endAnnotation, OPS2.constructPath],
+      [[[1, 0, 0, 1, 100, 0], [0, 0, 10, 10]], [[OPS.moveTo, OPS.lineTo], [0, 0, 5, 0], null], null,
+       [{ matrix: [2, 0, 0, 2, 0, 0] }], [[2, 0, 0, 2, 0, 0], null], [[OPS.moveTo, OPS.lineTo], [1, 1, 2, 1], null], null, null,
+       [], [[OPS.moveTo, OPS.lineTo], [0, 0, 9, 9], null], null,
+       [[OPS.moveTo, OPS.lineTo], [0, 0, 1, 0], null]],
+      OPS2, [1, 0, 0, 1, 0, 0]);
+    check(JSON.stringify(Array.from(r2.segs)) === JSON.stringify([100, 0, 105, 0, 2, 2, 4, 2, 0, 0, 1, 0]), '部品の行列をかけ（グループ付きでも1回だけ）、終わったら戻し、注釈は飛ばす: ' + Array.from(r2.segs));
+    // 用紙の寸法（mm）を m のつもりで入れたら止める（独立レビュー 11/17 N2）
+    check(/用紙の横幅/.test(FP.checkPlanWidth(420, 420.0)) && /用紙の横幅/.test(FP.checkPlanWidth(410, 420)), 'A3 の 420 を横幅に入れたら止める');
+    check(FP.checkPlanWidth(42, 420) === '' && FP.checkPlanWidth(400, null) === '' && /2〜1000/.test(FP.checkPlanWidth(NaN, 420)), '実際の横幅は通す・空欄は止める');
+    // 用紙と組の縮尺（「A1:1/100 A3:1/200」）は、PDF の用紙に合う方だけを候補にする（最終確認レビュー 11/17 MEDIUM）
+    check(FP.paperName(841, 594) === 'A1' && FP.paperName(297.2, 210) === 'A4' && FP.paperName(500, 500) === null, '用紙の大きさの判定');
+    const ph = FP.pairedHints('A1:1/100 A3:1/200');
+    check(ph.A1 === 100 && ph.A3 === 200, '用紙と組の縮尺を拾う: ' + JSON.stringify(ph));
+    check(JSON.stringify(FP.hintsForPaper([100, 200], ph, 'A1')) === '[100]' && JSON.stringify(FP.hintsForPaper([100, 200], ph, 'A2')) === '[100,200]' && JSON.stringify(FP.hintsForPaper([100], {}, 'A1')) === '[100]', 'A1 の PDF なら 1:100 だけ。組に無い用紙・組の無い表記はそのまま');
+    check(/用紙の寸法/.test(FP.checkPlanWidth(420, null)) && FP.checkPlanWidth(42, null) === '', '画像の図面でも、用紙の寸法の代表値（420 など）は止める');
+    // 範囲の選び直し: 原点を動かした分だけずらす
+    const scn3 = { walls: [{ x1: 8.2, y1: 16.95, x2: 9.2, y2: 16.95 }], patient: { x: 1, y: 1 }, tube: { x: 1, y: 1 }, iso: { x: 1, y: 1 }, probes: [] };
+    FP.shiftScene(scn3, 2.97, 1.485);
+    check(scn3.walls[0].x1 === 5.23 && scn3.walls[0].y1 === 15.465 && scn3.tube.x === -1.97, '範囲の選び直しで壁・点を同じだけずらし、0.1 mm に丸める: ' + JSON.stringify(scn3.walls[0]));
+    // 表題欄の書き方（独立レビュー 11/17 N9）
+    check(JSON.stringify(FP.scaleHints('縮尺：1/100 S:1/200 A1:1/100 A3:1/200')) === '[100,200]', '「縮尺：1/100」「A1:1/100」も候補にする: ' + JSON.stringify(FP.scaleHints('縮尺：1/100 S:1/200 A1:1/100 A3:1/200')));
+
+    // 縮尺・範囲・座標の換算（独立レビュー 11/17 H3・M1・M5・M7）
+    check(FP.checkPlanSize(3000, 2120, 0.0099) === '', 'A4 の 1:100（約 30 m）は通る');
+    check(/ありえません/.test(FP.checkPlanSize(3000, 2120, 0.0000099)) && /ありえません/.test(FP.checkPlanSize(3000, 2120, 9.9)), 'mm と m の取り違え（3 cm・30 km）は止める');
+    check(/近すぎ/.test(FP.scaleFromPoints({ x: 0, y: 0 }, { x: 50, y: 0 }, 6, 5).err || ''), '画面で 5 px しか離れていない2点は止める');
+    const sp = FP.scaleFromPoints({ x: 0, y: 0 }, { x: 600, y: 0 }, 6, 120);
+    check(Math.abs(sp.mPerPx - 0.01) < 1e-15 && Math.abs(sp.relErr - 1 / 120) < 1e-15, '2点と長さから縮尺、誤差の目安 1/画面px');
+    check(/0\.1〜1000/.test(FP.scaleFromPoints({ x: 0, y: 0 }, { x: 600, y: 0 }, NaN, 120).err || ''), '長さが空欄なら止める（黙って0にしない）');
+    check(/大きすぎ/.test(FP.checkCrop({ x0: 0, y0: 0, x1: 20000, y1: 100 }, 0.01)) && /小さすぎ/.test(FP.checkCrop({ x0: 0, y0: 0, x1: 50, y1: 500 }, 0.01)) && FP.checkCrop({ x0: 0, y0: 0, x1: 1000, y1: 900 }, 0.01) === '', '範囲は 1〜100 m');
+    const pw = FP.pxToWorld(14000, 9000, { x: 13000, y: 8500 }, 0.01);
+    check(Math.abs(pw.x - 10) < 1e-9 && Math.abs(pw.y - 5) < 1e-9, '範囲の左上を原点にする（大きな図面の右下の部屋でも座標が小さい）');
+    const scn = { walls: [{ x1: 1, y1: 2, x2: 3, y2: 2 }], patient: { x: 2, y: 2 }, tube: { x: 3.8, y: 2 }, iso: { x: 2, y: 2 }, probes: [{ x: 4, y: 1 }] };
+    FP.rescaleScene(scn, 1.5);
+    check(scn.walls[0].x2 === 4.5 && scn.patient.x === 3 && Math.abs(scn.tube.x - 4.8) < 1e-12 && scn.probes[0].x === 6, '縮尺の合わせ直し: 壁・患者・測定点は k 倍、管球は患者からのずれ（SID 1.8 m）を保つ');
+    const scn2 = { walls: [], patient: { x: 2.6, y: 2.6 }, tube: { x: 2.6, y: 2.6 }, iso: { x: 2.6, y: 2.6 }, probes: [{ x: 0, y: 0 }, { x: 5, y: 6 }] };
+    FP.layoutIntoBox(scn2, { x0: 0, y0: 0, x1: 5, y1: 6 }, { x0: 0, y0: 0, x1: 10, y1: 12 });
+    check(scn2.probes[0].x === 1.5 && scn2.probes[0].y === 1.8 && scn2.probes[1].x === 8.5 && scn2.patient.x === 5.15 && scn2.tube.x === scn2.patient.x, '範囲への写し方: 内側15%・5 cm に丸める・管球は患者に付いていく');
+
+    const idx = FP.endpointIndex(new Float32Array([0, 0, 100, 0, 5, 5, 40, 40]), 20);
+    check(JSON.stringify(idx.near(4, 4, 2)) === JSON.stringify([5, 5]) && idx.near(60, 60, 5).length === 0, '端点の索引で近くの端だけを引ける');
+    check(/^sha512-/.test(FP.PDFJS_SRI) && /^sha512-/.test(FP.WORKER_SRI) && /3\.11\.174/.test(FP.PDFJS_URL), 'pdf.js は版を固定し SRI で検査する');
+    const src = fs.readFileSync(path.join(ROOT, 'scatter-simulator/floorplan.js'), 'utf8');
+    check(/isEvalSupported:\s*false/.test(src), 'pdf.js は isEvalSupported:false で使う（CVE-2024-4367）');
+    check(!/fetch\((?!WORKER_URL)/.test(src) && !/XMLHttpRequest|sendBeacon|navigator\.send/.test(src), '図面のファイルを送る通信が無い（fetch は worker の取得だけ）');
+  }
+}
+
 console.log(`\n${pass} pass, ${fail} fail`);
 process.exit(fail ? 1 : 0);
