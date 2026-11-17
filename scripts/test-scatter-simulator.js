@@ -534,7 +534,13 @@ const D = core.doseAtPoint;
     check(JSON.stringify(Array.from(r2.segs)) === JSON.stringify([100, 0, 105, 0, 2, 2, 4, 2, 0, 0, 1, 0]), '部品の行列をかけ（グループ付きでも1回だけ）、終わったら戻し、注釈は飛ばす: ' + Array.from(r2.segs));
     // 用紙の寸法（mm）を m のつもりで入れたら止める（独立レビュー 11/17 N2）
     check(/用紙の横幅/.test(FP.checkPlanWidth(420, 420.0)) && /用紙の横幅/.test(FP.checkPlanWidth(410, 420)), 'A3 の 420 を横幅に入れたら止める');
-    check(FP.checkPlanWidth(42, 420) === '' && FP.checkPlanWidth(420, null) === '' && /2〜1000/.test(FP.checkPlanWidth(NaN, 420)), '実際の横幅は通す・空欄は止める');
+    check(FP.checkPlanWidth(42, 420) === '' && FP.checkPlanWidth(400, null) === '' && /2〜1000/.test(FP.checkPlanWidth(NaN, 420)), '実際の横幅は通す・空欄は止める');
+    // 用紙と組の縮尺（「A1:1/100 A3:1/200」）は、PDF の用紙に合う方だけを候補にする（最終確認レビュー 11/17 MEDIUM）
+    check(FP.paperName(841, 594) === 'A1' && FP.paperName(297.2, 210) === 'A4' && FP.paperName(500, 500) === null, '用紙の大きさの判定');
+    const ph = FP.pairedHints('A1:1/100 A3:1/200');
+    check(ph.A1 === 100 && ph.A3 === 200, '用紙と組の縮尺を拾う: ' + JSON.stringify(ph));
+    check(JSON.stringify(FP.hintsForPaper([100, 200], ph, 'A1')) === '[100]' && JSON.stringify(FP.hintsForPaper([100, 200], ph, 'A2')) === '[100,200]' && JSON.stringify(FP.hintsForPaper([100], {}, 'A1')) === '[100]', 'A1 の PDF なら 1:100 だけ。組に無い用紙・組の無い表記はそのまま');
+    check(/用紙の寸法/.test(FP.checkPlanWidth(420, null)) && FP.checkPlanWidth(42, null) === '', '画像の図面でも、用紙の寸法の代表値（420 など）は止める');
     // 範囲の選び直し: 原点を動かした分だけずらす
     const scn3 = { walls: [{ x1: 8.2, y1: 16.95, x2: 9.2, y2: 16.95 }], patient: { x: 1, y: 1 }, tube: { x: 1, y: 1 }, iso: { x: 1, y: 1 }, probes: [] };
     FP.shiftScene(scn3, 2.97, 1.485);

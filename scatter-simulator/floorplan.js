@@ -93,6 +93,28 @@
     return { segs: new Float32Array(out), n: out.length / 4, truncated: truncated };
   }
 
+  // 用紙の大きさ（短辺×長辺 mm）。表題欄の「A1:1/100 A3:1/200」のような、用紙と組の縮尺を選び分けるのに使う
+  var PAPERS = { A0: [841, 1189], A1: [594, 841], A2: [420, 594], A3: [297, 420], A4: [210, 297] };
+  /** 用紙の寸法（mm）から A0〜A4 のどれか（±2%）。合わなければ null */
+  function paperName(wMm, hMm) {
+    var a = Math.min(wMm, hMm), b = Math.max(wMm, hMm);
+    for (var k in PAPERS) if (Math.abs(a - PAPERS[k][0]) <= PAPERS[k][0] * 0.02 && Math.abs(b - PAPERS[k][1]) <= PAPERS[k][1] * 0.02) return k;
+    return null;
+  }
+  /** 「A1:1/100」のように用紙と組になった縮尺。{ A1: 100, A3: 200 } */
+  function pairedHints(text) {
+    var out = {}, re = /\b(A[0-4])\s*[:：]?\s*1\s*[:：/／]\s*(\d{1,4})(?![\d.\/:：／])/g, m;
+    while ((m = re.exec(text))) { var n = Number(m[2]); if (COMMON_SCALES.indexOf(n) >= 0) out[m[1]] = n; }
+    return out;
+  }
+  /** 候補の縮尺を選ぶ。用紙と組の表記があり、PDF の用紙がそのどれかなら、その組の縮尺だけを返す（ほかの用紙用の縮尺で合わせない） */
+  function hintsForPaper(hints, paired, paper) {
+    if (paper && paired[paper]) return [paired[paper]];
+    return hints;
+  }
+  // 画像の図面で、用紙の横幅の代表値（mm）を m のつもりで入れていないか（PDF と違い用紙の大きさが分からないので、一致したら確かめる）
+  var PAPER_SIDES_MM = [210, 297, 420, 594, 841, 1189];
+
   // ---------------------------------------------------------------- 縮尺・範囲・座標の換算（画面から使う。node でテストする）
   var MIN_PLAN_M = 2, MAX_PLAN_M = 1000; // 図面全体の長辺としてありえる範囲（m）
   var MAX_CROP_M = 100;                  // 計算する範囲の上限（m）。画面の座標の上限（100 m）に合わせる
@@ -118,6 +140,8 @@
     if (!(widthM >= 2 && widthM <= 1000)) return '図面全体の横幅は 2〜1000 m の範囲で入れてください（単位は m）';
     if (paperWidthMm > 0 && Math.abs(widthM - paperWidthMm) <= paperWidthMm * 0.03)
       return '入れた ' + widthM + ' は、用紙の横幅（約 ' + Math.round(paperWidthMm) + ' mm）と同じです。用紙の寸法ではなく、図面に描かれた範囲の実際の横幅を m で入れてください';
+    if (!(paperWidthMm > 0) && PAPER_SIDES_MM.indexOf(widthM) >= 0)
+      return '入れた ' + widthM + ' は、用紙の寸法（mm）と同じ数です。用紙の寸法ではなく、図面に描かれた範囲の実際の横幅を m で入れてください（本当にその長さなら、2点の長さで合わせてください）';
     return '';
   }
   /** 範囲を選び直したとき、原点を (dx, dy) m 動かした分だけ、壁・管球・患者・アイソセンタ・測定点を逆にずらす（図面の上の位置は変えない） */
@@ -209,7 +233,8 @@
           // 用紙の 1 pt = 25.4/72 mm。描画の px あたりの用紙の長さ（m）。縮尺 1:N の候補の計算に使う
           paperMPerPx: 0.0254 / 72 / sc,
           segs: sg.segs, nSegs: sg.n, segsTruncated: sg.truncated,
-          hints: scaleHints(text)
+          hints: hintsForPaper(scaleHints(text), pairedHints(text), paperName(v1.width * 25.4 / 72, v1.height * 25.4 / 72)),
+          paper: paperName(v1.width * 25.4 / 72, v1.height * 25.4 / 72)
         };
       });
     });
@@ -268,6 +293,7 @@
   return {
     PDFJS_URL: PDFJS_URL, PDFJS_SRI: PDFJS_SRI, WORKER_URL: WORKER_URL, WORKER_SRI: WORKER_SRI, CMAP_URL: CMAP_URL,
     scaleHints: scaleHints, segmentsFromOperators: segmentsFromOperators, applyTransform: applyTransform, endpointIndex: endpointIndex,
+    paperName: paperName, pairedHints: pairedHints, hintsForPaper: hintsForPaper,
     checkPlanSize: checkPlanSize, scaleFromPoints: scaleFromPoints, checkCrop: checkCrop, pxToWorld: pxToWorld,
     rescaleScene: rescaleScene, layoutIntoBox: layoutIntoBox, checkPlanWidth: checkPlanWidth, shiftScene: shiftScene, MAX_CROP_M: MAX_CROP_M, MIN_CALIB_SCREEN_PX: MIN_CALIB_SCREEN_PX,
     loadFile: loadFile, renderPdfPage: renderPdfPage

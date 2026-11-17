@@ -1456,7 +1456,7 @@
         if (plan.calib.length === 2) html += '<div class="row"><label for="plan-len">この2点の実際の長さ</label><input type="number" id="plan-len" min="0.1" max="1000" step="0.01" inputmode="decimal"> m ' + btn('len', '決定') + btn('redo', '点を打ち直す') + '</div>';
         html += '<div class="row"><label for="plan-width">または、図面に描かれた範囲全体の実際の横幅（用紙の寸法ではなく）</label><input type="number" id="plan-width" min="2" max="1000" step="0.1" inputmode="decimal"> m ' + btn('width', '決定') + '</div>';
         if (plan.hints && plan.hints.length && plan.paperMPerPx) {
-          html += '<div class="row">図面にある縮尺の表記: ' + plan.hints.slice(0, 4).map(function (n) { return btn('hint-' + n, '1:' + n + ' で合わせる'); }).join('') + '</div>' +
+          html += '<div class="row">図面にある縮尺の表記' + (plan.paper ? '（用紙 ' + plan.paper + '）' : '') + ': ' + plan.hints.slice(0, 4).map(function (n) { return btn('hint-' + n, '1:' + n + ' で合わせる'); }).join('') + '</div>' +
             '<div class="hint-line">表記で合わせるのは、印刷・書き出しで拡大縮小していないときだけ。キープラン（位置を示す小さな図）など、本図と違う縮尺の表記もあります。</div>';
         }
       } else if (plan.step === 'confirm') {
@@ -1485,7 +1485,8 @@
           '<div>縮尺: 図面 1 px = ' + (m * 1000).toFixed(1) + ' mm。' + (plan.index ? '図面の線の端（' + plan.nSegs.toLocaleString() + ' 本の線）にくっつきます。' : '画像の図面なので、くっつくのは描いた壁の端と線だけです。') +
           (plan.segsTruncated ? '線が多いため、一部の線にはくっつきません。' : '') + '</div>';
       }
-      if (!plan.loading && plan.step !== 'done' && plan.placed) html += '<div class="row">' + btn('cancel', 'やめる（今の縮尺・範囲のまま）') + '</div>';
+      // 「やめる」は、今の範囲がそのまま使えるときだけ（縮尺を変えて範囲が上限を超えたあとは出さない）
+      if (!plan.loading && plan.step !== 'done' && plan.placed && !FP.checkCrop(plan.crop, plan.mPerPx)) html += '<div class="row">' + btn('cancel', 'やめる（今の縮尺・範囲のまま）') + '</div>';
       html += '<div class="row">' + btn('remove', '図面を外す') + '</div>';
       if (plan.err) html += '<div class="perr" role="alert">' + esc(plan.err) + '</div>';
       html += '<div class="privacy">図面はこの端末のブラウザの中だけで表示し、外部に送りません。保存もしません（ページを閉じると消えます）。PDF のときは、読むための部品（pdf.js と文字の対応表）だけをインターネットから取得します。</div>';
