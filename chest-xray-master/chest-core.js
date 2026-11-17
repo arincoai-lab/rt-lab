@@ -56,13 +56,13 @@
       type: T.id,
       s: r(T.s[0], T.s[1]),
       c7: half(r(-3, 3)),                      // 首の付け根の高さ（身長の差）
-      baseRot: sign() * half(r(2.5, 6)),       // 立ったときの体のねじれ（度）
-      baseX: sign() * half(r(2, 5)),           // 立ち位置のずれ（cm）
+      baseRot: sign() * half(r(3, 8)),         // 立ったときの体のねじれ（度）
+      baseX: sign() * half(r(3, 6)),           // 立ち位置のずれ（cm）
       hold: r(T.hold[0], T.hold[1]),
       scapBase: T.scapBase,
       apexUp: T.apexUp,
       drift: T.drift,
-      panelStart: sign() * half(r(10, 14)),    // 最初のパネルの高さのずれ（cm）
+      panelStart: sign() * half(r(12, 16)),    // 最初のパネルの高さのずれ（cm）
     };
   }
 
@@ -144,11 +144,11 @@
 
     // 1.1.2 左右の鎖骨の内側の端の真ん中に棘突起（＝体がねじれていない）
     const deg = Math.abs(p.baseRot + c.rot);
-    add('rot', 25, deg <= 0.5 ? 1 : 1 - deg / 5, { deg });
+    add('rot', 25, deg <= 1 ? 1 : 1 - (deg - 1) / 8, { deg });
 
     // （原典になし）背骨がパネルの左右中心
     const off = Math.abs(g.X);
-    add('center', 10, off <= 0.5 ? 1 : 1 - off / 5, { cm: off });
+    add('center', 10, off <= 1 ? 1 : 1 - (off - 1) / 5, { cm: off });
 
     // 1.1.4 / 1.1.6(c) 肺尖から肋横角まで入っている
     const cut = {
@@ -158,18 +158,18 @@
       right: Math.max(0, g.panel.l - g.lungR),
     };
     const cutSum = cut.top + cut.bottom + cut.left + cut.right;
-    add('coverage', 20, 1 - cutSum / 3, { cut, cm: cutSum });
+    add('coverage', 20, 1 - cutSum / 5, { cut, cm: cutSum });
 
     // 1.1.3 肩甲骨の内側の縁が肺野の外
     const ov = (Math.max(0, g.lungL - g.scapL) + Math.max(0, g.scapR - g.lungR)) / 2 / s;
-    add('scapula', 15, ov === 0 ? 1 : 1 - ov / 6.5, { cm: ov });
+    add('scapula', 15, ov === 0 ? 1 : 1 - ov / 8, { cm: ov });
 
     // 1.1.1 深吸気（横隔膜の上に後ろの肋骨10本）
     const lv = ribLevel(p, g), ribs = Math.floor(lv + 1e-9);
-    add('inspiration', 20, ribs >= POSTERIOR_RIBS_FULL ? 1 : (lv - 7) / (POSTERIOR_RIBS_FULL - 7), { ribs });
+    add('inspiration', 20, ribs >= POSTERIOR_RIBS_FULL ? 1 : (lv - 6) / (POSTERIOR_RIBS_FULL - 6), { ribs });
 
     // 1.1.1 息を止めて / 1.1.5 鮮明に（胸が動いている最中に撮るとブレる）
-    add('motion', 10, v < 0.03 ? 1 : 1 - v / 0.12, { moving: v >= 0.03 });
+    add('motion', 10, v < 0.03 ? 1 : 1 - v / 0.15, { moving: v >= 0.03 });
 
     return { total: items.reduce((a, b) => a + b.pt, 0), items };
   }
@@ -221,8 +221,8 @@
       disclaimer: '教育・娯楽用のゲームです。実際の撮影手順や画質評価の基準ではありません。採点の基準は欧州委員会の胸部正面の画質基準（EUR 16260）を単純化したものです。点数や操作はどこにも送信しません。',
       breathe: '大きく吸って、止めてください',
       shoot: '曝射',
-      hint: '患者さんの体・肩・肘、パネルの取っ手をつかんで動かせます',
-      grabTorso: '立ち位置 ↔', grabShoulder: '体のひねり ↔', grabElbow: '肘を前へ', grabPanel: 'パネル ↕',
+      hint: '患者さんの体・肩・肘、パネルの取っ手をつかんで動かせます。ひねりは左上の「上から見た図」で確かめられます',
+      grabTorso: '立ち位置 ↔', grabShoulder: '肩を押してひねる ↔', topView: '上から見た図', topViewHint: '両肩がパネルに同じだけ近ければ、ひねりなし', grabElbow: '肘を前へ', grabPanel: 'パネル ↕',
       sayTidal: 'ふつうに呼吸しています', sayInhale: 'すぅーっ……', sayHold: '（息を止めています）',
       sayHoldEnd: '（そろそろ苦しい……）', sayRelease: 'ぷはっ',
       patient_office: '30代・会社員', patient_stiff: '50代・肩こりがひどい', patient_large: '40代・体格が大きい',
@@ -259,8 +259,8 @@
       disclaimer: 'An educational game. It is not a clinical protocol or an image-quality standard. Scoring is a simplified version of the European Commission’s quality criteria for PA chest radiographs (EUR 16260). Your score and actions are never sent anywhere.',
       breathe: 'Take a deep breath in… and hold it',
       shoot: 'Expose',
-      hint: 'Drag the patient’s body, shoulders, elbows, or the panel handle',
-      grabTorso: 'Position ↔', grabShoulder: 'Rotation ↔', grabElbow: 'Elbows forward', grabPanel: 'Panel ↕',
+      hint: 'Drag the patient’s body, shoulders, elbows, or the panel handle. Check rotation in the top view at the upper left',
+      grabTorso: 'Position ↔', grabShoulder: 'Twist at the shoulders ↔', topView: 'Top view', topViewHint: 'No rotation when both shoulders are equally close to the panel', grabElbow: 'Elbows forward', grabPanel: 'Panel ↕',
       sayTidal: 'Breathing normally', sayInhale: '(breathing in…)', sayHold: '(holding breath)',
       sayHoldEnd: '(running out of breath…)', sayRelease: '(exhales)',
       patient_office: 'Office worker, 30s', patient_stiff: 'Stiff shoulders, 50s', patient_large: 'Large build, 40s',

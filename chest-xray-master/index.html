@@ -118,7 +118,7 @@
 
   <section id="result" hidden>
     <div class="who" id="whoResult"></div>
-    <canvas id="film" width="430" height="430"></canvas>
+    <canvas id="film" width="860" height="860"></canvas>
     <div class="scoreline"><div class="total" id="total"></div><div class="took" id="took"></div></div>
     <table id="tbl"></table>
     <button class="primary" id="btnNext" type="button"></button>
@@ -183,7 +183,7 @@
     $('tNote').textContent = T('disclaimer');
     $('btnBreath').textContent = T('breathe');
     $('btnShoot').textContent = T('shoot');
-    $('tHint').textContent = T('hint');
+    $('tHint').textContent = T('hint') + (mode === 'practice' ? ' ' + T('topViewHint') : '');
     $('tTime').textContent = T('time');
     $('btnRetry').textContent = T('retry');
     $('btnOther').textContent = T('otherPatient');
@@ -220,6 +220,7 @@
     br = C.newBreath();
     t0 = performance.now(); running = true; shotTaken = false; lastShot = null;
     $('who').innerHTML = whoLabel();
+    $('tHint').textContent = T('hint') + (mode === 'practice' ? ' ' + T('topViewHint') : '');
     $('btnShoot').disabled = false;
     show('play');
   }
@@ -263,6 +264,7 @@
     };
   }
   function hitTest(x, y) {
+    if (inTopView(x, y)) return 'shoulder';
     const h = handles(C.geom(live(), ctl, br.lvl)), d = a => Math.hypot(x - a.x, y - a.y) <= a.r;
     if (d(h.panel)) return 'panel';
     if (d(h.elbowL)) return 'elbowL';
@@ -376,6 +378,38 @@
     const mx = 452, mt = 70, mh = 300;
     rc.fillStyle = '#0e1318'; rc.fillRect(mx, mt, 14, mh);
     rc.fillStyle = '#8fd0ff'; rc.fillRect(mx, mt + mh * (1 - br.lvl), 14, mh * br.lvl);
+    drawTopView(LP);
+  }
+
+  // 上から見た図（両肩とパネルの距離でひねりを読む。見やすさのため角度は2倍に描く）
+  const TV = { x: 8, y: 8, w: 156, h: 112 };
+  function inTopView(x, y) { return x >= TV.x && x <= TV.x + TV.w && y >= TV.y && y <= TV.y + TV.h; }
+  function drawTopView(LP) {
+    const k = 2.4, cx = TV.x + TV.w / 2, py0 = TV.y + 30, cz = 16;
+    const th = 2 * (LP.baseRot + ctl.rot) * Math.PI / 180, sn = Math.sin(th), cs = Math.cos(th);
+    const s = LP.s, X = LP.baseX - ctl.x;
+    const P2 = (lx, z) => [cx - (X + s * (lx * cs + z * sn)) * k, py0 + (cz + s * (-lx * sn + z * cs)) * k];
+    const deg = Math.abs(LP.baseRot + ctl.rot), ok = deg <= 1;
+    rc.save();
+    rc.fillStyle = 'rgba(10,14,19,.92)'; rc.strokeStyle = hot === 'shoulder' ? 'rgba(143,208,255,.9)' : '#283342'; rc.lineWidth = 1.5;
+    rc.beginPath(); if (rc.roundRect) rc.roundRect(TV.x, TV.y, TV.w, TV.h, 8); else rc.rect(TV.x, TV.y, TV.w, TV.h); rc.fill(); rc.stroke();
+    rc.fillStyle = '#8e9bad'; rc.font = '11px sans-serif'; rc.textAlign = 'left'; rc.fillText(T('topView'), TV.x + 8, TV.y + 15);
+    rc.fillStyle = '#61738a'; rc.fillRect(cx - C.PANEL / 2 * k, py0 - 4, C.PANEL * k, 4);                // パネル
+    rc.beginPath();                                                                                       // 胴の断面
+    for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2, q = P2(19 * Math.cos(a), 10 * Math.sin(a)); if (i) rc.lineTo(q[0], q[1]); else rc.moveTo(q[0], q[1]); }
+    rc.closePath(); rc.fillStyle = '#86a6bd'; rc.fill();
+    const hd = P2(0, 0); rc.fillStyle = '#3a2e29'; rc.beginPath(); rc.arc(hd[0], hd[1], 6.5 * s * k, 0, 7); rc.fill();   // 頭
+    const n1 = P2(-1.2, -6.3), n2 = P2(1.2, -6.3), n3 = P2(0, -8.2);                                     // 鼻（顔はパネルの側）
+    rc.beginPath(); rc.moveTo(n1[0], n1[1]); rc.lineTo(n3[0], n3[1]); rc.lineTo(n2[0], n2[1]); rc.fill();
+    for (const sg of [1, -1]) {                                                                           // 両肩の前面とパネルの距離
+      const q = P2(sg * 17, -8);
+      rc.strokeStyle = ok ? '#5ccf9f' : '#f0b44c'; rc.fillStyle = rc.strokeStyle; rc.lineWidth = 2; rc.setLineDash([3, 3]);
+      rc.beginPath(); rc.moveTo(q[0], py0); rc.lineTo(q[0], q[1]); rc.stroke(); rc.setLineDash([]);
+      rc.beginPath(); rc.arc(q[0], q[1], 3, 0, 7); rc.fill();
+      rc.fillStyle = '#8e9bad'; rc.font = '10px sans-serif'; rc.textAlign = 'center';
+      rc.fillText(sg > 0 ? 'L' : 'R', q[0] + (sg > 0 ? -14 : 14), q[1] + 14);
+    }
+    rc.restore();
   }
 
   // ---- 呼吸 ----
@@ -401,69 +435,177 @@
     show('result');
   };
 
+  const FN = 860, FZ = 20;                       // X線画像は 43cm 四方を 860px（1cm = 20px）
   const film = $('film'), fc = film.getContext('2d');
-  const off = document.createElement('canvas'); off.width = off.height = 430; const oc = off.getContext('2d');
-  // X線画像（向かい合って見る向き：患者の右が画面の左）
+  const off = document.createElement('canvas'); off.width = off.height = FN; const oc = off.getContext('2d');
+  const soft = document.createElement('canvas'); soft.width = soft.height = FN;
+
+  // X線画像（向かい合って見る向き：患者の右が画面の左）。白いほどX線を通しにくい
   function drawFilm(patient, shot, res) {
-    const c = oc, g = C.geom(patient, shot.controls, shot.lvl), s = g.s;
-    const ix = wx => 215 + 10 * wx, iy = y => 215 + 10 * (y - shot.controls.panelY);
-    const X = lx => ix(g.rx(lx, 0)), Y = ly => iy(g.wy(ly));
-    c.fillStyle = '#050505'; c.fillRect(0, 0, 430, 430);
-    const gr = c.createLinearGradient(0, Y(0), 0, Y(40)); gr.addColorStop(0, '#626262'); gr.addColorStop(1, '#9a9a9a');
-    c.fillStyle = '#4c4c4c'; c.fillRect(X(-23), Y(3), X(23) - X(-23), 900);
-    c.fillStyle = gr; c.fillRect(X(-5.5), Y(-30), X(5.5) - X(-5.5), 400);
-    c.beginPath(); c.moveTo(X(-5.5), Y(-2)); c.lineTo(X(5.5), Y(-2)); c.lineTo(X(19), Y(2)); c.lineTo(X(17), Y(90)); c.lineTo(X(-17), Y(90)); c.lineTo(X(-19), Y(2)); c.closePath(); c.fill();
-    c.fillStyle = '#121212'; c.beginPath(); lungPath(c, g, 1, ix, iy); lungPath(c, g, -1, ix, iy); c.fill();
-    c.save(); c.beginPath(); lungPath(c, g, 1, ix, iy); lungPath(c, g, -1, ix, iy); c.clip();
-    c.strokeStyle = 'rgba(255,255,255,.2)'; c.lineWidth = 8; c.lineCap = 'round';
-    for (let i = 1; i <= 11; i++) for (const sg of [1, -1]) {
-      const w = sg > 0 ? g.wL : g.wR, y = 1.5 + 2.7 * i;
-      c.beginPath(); c.moveTo(ix(g.rx(sg * 1.5, 6)), Y(y - 1.2)); c.quadraticCurveTo(ix(g.X + s * sg * w * 0.65), Y(y - 1.6), ix(g.X + s * sg * (w + 0.5)), Y(y + 3)); c.stroke();
+    const c = oc, g = C.geom(patient, shot.controls, shot.lvl), s = g.s, lvl = shot.lvl;
+    const ix = wx => FN / 2 + FZ * wx, iy = y => FN / 2 + FZ * (y - shot.controls.panelY);
+    const X = (lx, z = 0) => ix(g.rx(lx, z)), Y = ly => iy(g.wy(ly)), S = v => v * FZ * s;
+    const Lp = Math.max(g.botL, g.botR) - g.apexY, rel = f => g.apexY + f * Lp;   // 肺尖からの割合 → y
+    const rng = C.makeRng(Math.round(Math.abs(patient.c7 * 1009 + patient.baseX * 7919 + patient.s * 104729)) + 7);
+    const bothLungs = () => { c.beginPath(); lungPath(c, g, 1, ix, iy); lungPath(c, g, -1, ix, iy); };
+    c.save();
+    c.globalAlpha = 1; c.filter = 'none';
+    c.fillStyle = '#000'; c.fillRect(0, 0, FN, FN);
+
+    // 1. 軟部組織（腕・首・胴）。下ほど厚く白い
+    c.filter = 'blur(7px)';
+    c.fillStyle = '#383838';
+    for (const sg of [1, -1]) {
+      c.beginPath(); c.moveTo(X(sg * 18), Y(0)); c.lineTo(X(sg * 25), Y(3)); c.lineTo(X(sg * 24), Y(90)); c.lineTo(X(sg * 19.5), Y(90)); c.lineTo(X(sg * 19.5), Y(10)); c.closePath(); c.fill();
+    }
+    const gb = c.createLinearGradient(0, Y(-6), 0, Y(50)); gb.addColorStop(0, '#565656'); gb.addColorStop(0.5, '#636363'); gb.addColorStop(1, '#8e8e8e');
+    c.fillStyle = gb;
+    c.beginPath(); c.moveTo(X(-5.5), Y(-40)); c.lineTo(X(5.5), Y(-40)); c.lineTo(X(6), Y(-3)); c.quadraticCurveTo(X(16), Y(-1.5), X(20), Y(2));
+    c.lineTo(X(18.5), Y(30)); c.lineTo(X(17.5), Y(90)); c.lineTo(X(-17.5), Y(90)); c.lineTo(X(-18.5), Y(30)); c.lineTo(X(-20), Y(2));
+    c.quadraticCurveTo(X(-16), Y(-1.5), X(-6), Y(-3)); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(210,210,210,.16)';                                                            // 肝臓（患者の右）
+    c.beginPath(); c.ellipse(ix(g.X - s * 6), iy(g.botR + 6 * s), S(11), S(7), 0, 0, 7); c.fill();
+
+    // 2. 肺野。肺門の周りと下のほうは少し白い
+    c.filter = 'blur(2.5px)';
+    c.fillStyle = '#141414'; bothLungs(); c.fill();
+    c.save(); bothLungs(); c.clip(); c.filter = 'blur(10px)';
+    for (const sg of [1, -1]) {
+      const hx = ix(g.X + s * sg * 4), hy = iy(rel(0.48));
+      const rg = c.createRadialGradient(hx, hy, 0, hx, hy, S(9)); rg.addColorStop(0, 'rgba(255,255,255,.16)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
+      c.fillStyle = rg; c.fillRect(0, 0, FN, FN);
+    }
+    const lb = c.createLinearGradient(0, iy(rel(0.6)), 0, iy(rel(1))); lb.addColorStop(0, 'rgba(255,255,255,0)'); lb.addColorStop(1, 'rgba(255,255,255,.07)');
+    c.fillStyle = lb; c.fillRect(0, 0, FN, FN);
+
+    // 3. 血管影（肺門から枝分かれして末梢へ細くなる）
+    c.filter = 'none'; c.lineCap = 'round'; c.strokeStyle = 'rgba(235,235,235,.085)';
+    const branch = (x, y, ang, len, w, depth) => {
+      if (depth > 6 || len < S(0.5)) return;
+      const x2 = x + Math.cos(ang) * len, y2 = y + Math.sin(ang) * len;
+      c.lineWidth = w; c.beginPath(); c.moveTo(x, y); c.lineTo(x2, y2); c.stroke();
+      const kids = depth < 2 ? 3 : 2;
+      for (let i = 0; i < kids; i++) branch(x2, y2, ang + (rng() - 0.5) * 0.8, len * (0.7 + rng() * 0.14), Math.max(0.8, w * 0.66), depth + 1);
+    };
+    for (const sg of [1, -1]) {
+      const hx = ix(g.X + s * sg * 3.6), hy = iy(rel(0.46)), lat = sg > 0 ? 0 : Math.PI;   // 画面での外側の向き
+      for (const a of [-1.2, -0.6, 0, 0.55, 1.15]) branch(hx, hy, lat + (sg > 0 ? a : -a), S(3.2), S(0.42), 0);
     }
     c.restore();
-    c.fillStyle = 'rgba(255,255,255,.3)';
-    c.beginPath(); c.ellipse(ix(g.rx(3.6, -5)), iy(g.botL - 6.3 * s), (6.4 - 1.3 * shot.lvl) * s * 10, 6.6 * s * 10, -0.35, 0, 7); c.fill();
-    c.fillStyle = 'rgba(255,255,255,.33)'; c.fillRect(X(-2.6), Y(-30), X(2.6) - X(-2.6), 900);
-    c.fillStyle = 'rgba(0,0,0,.3)'; c.fillRect(ix(g.rx(-0.9, -3)), Y(-12), 18 * s, Y(8) - Y(-12));
-    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1.5;
-    for (let i = -2; i <= 12; i++) { c.beginPath(); c.ellipse(ix(g.rx(0, 6)), Y(1 + 2.7 * i), 3.5, 7, 0, 0, 7); c.stroke(); }
-    c.lineCap = 'round';
-    for (const sg of [1, -1]) {
-      c.strokeStyle = 'rgba(255,255,255,.5)'; c.lineWidth = 11;
-      c.beginPath(); c.moveTo(ix(g.rx(sg * 1.6, -8)), Y(4.4)); c.quadraticCurveTo(ix(g.rx(sg * 9, -6)), Y(4.4), ix(g.rx(sg * 16.5, -2)), Y(2.2 + shot.controls.roll)); c.stroke();
-      const m = sg * g.scapM;
-      c.fillStyle = 'rgba(255,255,255,.16)'; c.strokeStyle = 'rgba(255,255,255,.3)'; c.lineWidth = 2;
-      c.beginPath(); c.moveTo(ix(g.rx(m, 7)), Y(4)); c.lineTo(ix(g.rx(m + sg * 1.5, 7)), Y(19)); c.lineTo(ix(g.rx(m + sg * 11, 5)), Y(3.5)); c.closePath(); c.fill(); c.stroke();
-      c.fillStyle = 'rgba(255,255,255,.28)'; c.beginPath(); c.arc(ix(g.rx(sg * 19.5, 0)), Y(4.5), 26 * s, 0, 7); c.fill();
+
+    // 4. 後ろの肋骨（背骨から外へ、外側で下がる）と、薄い前の肋骨。横隔膜より下は腹部の影に隠れる
+    c.save(); c.beginPath(); c.rect(0, 0, FN, iy(Math.max(g.botL, g.botR) + 1.5 * s)); c.clip();
+    c.filter = 'none';
+    const ribCurve = (sg, y0, dy) => {
+      const w = sg > 0 ? g.wL : g.wR;
+      c.beginPath(); c.moveTo(X(sg * 1.3, 6), Y(y0 - 1.0) + dy);
+      c.bezierCurveTo(ix(g.X + s * sg * w * 0.45), Y(y0 - 2.0) + dy, ix(g.X + s * sg * (w + 0.2)), Y(y0 - 0.6) + dy, ix(g.X + s * sg * (w + 1.2)), Y(y0 + 3.4) + dy);
+    };
+    for (let i = 1; i <= 12; i++) for (const sg of [1, -1]) {
+      const y0 = 1.5 + 2.7 * i;
+      ribCurve(sg, y0, 0); c.strokeStyle = 'rgba(255,255,255,.075)'; c.lineWidth = S(1.1); c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,.17)'; c.lineWidth = 1.6;
+      ribCurve(sg, y0, -S(0.55)); c.stroke(); ribCurve(sg, y0, S(0.55)); c.stroke();
     }
+    c.strokeStyle = 'rgba(255,255,255,.05)'; c.lineWidth = S(1.3);
+    for (let i = 1; i <= 7; i++) for (const sg of [1, -1]) {
+      const w = sg > 0 ? g.wL : g.wR, y0 = 4 + 2.7 * i;
+      c.beginPath(); c.moveTo(ix(g.X + s * sg * (w - 0.5)), Y(y0)); c.quadraticCurveTo(ix(g.X + s * sg * w * 0.55), Y(y0 + 0.8), ix(g.X + s * sg * 3.5), Y(y0 + 4.2)); c.stroke();
+    }
+    c.restore();
+
+    // 5. 縦隔と心臓（深く吸うと心臓は細長くなる）
+    c.filter = 'blur(5px)';
+    const hr = 7.8 * (1.06 - 0.12 * lvl), hb = Math.max(g.botL, g.botR) - 0.6 * s, hcY = hb - 5.6 * s;
+    c.fillStyle = 'rgba(214,214,214,.5)';
+    c.beginPath();                                                                                    // 上縦隔
+    c.moveTo(ix(g.X - s * 2.6), Y(-6)); c.lineTo(ix(g.X + s * 2.6), Y(-6));
+    c.lineTo(ix(g.X + s * 3.0), iy(rel(0.32))); c.lineTo(ix(g.X + s * 2.5), iy(hcY)); c.lineTo(ix(g.X - s * 2.8), iy(hcY)); c.lineTo(ix(g.X - s * 2.9), iy(rel(0.32)));
+    c.closePath(); c.fill();
+    c.beginPath(); c.ellipse(ix(g.X + s * 3.4), iy(rel(0.3)), S(1.9), S(1.7), 0, 0, 7); c.fill();       // 大動脈弓
+    c.beginPath(); c.ellipse(ix(g.X + s * 3.5), iy(rel(0.43)), S(1.3), S(1.6), 0, 0, 7); c.fill();      // 肺動脈
+    c.beginPath(); c.ellipse(ix(g.X + s * hr * 0.4), iy(hcY), S(hr * 0.84), S(6.6), -0.3, 0, 7); c.fill();   // 左室を中心とした心臓
+    c.beginPath(); c.ellipse(ix(g.X - s * 2.2), iy(hcY + 0.8 * s), S(2.5), S(5.0), 0.1, 0, 7); c.fill();     // 右房
+
+    // 6. 気管と主気管支（空気なので黒い）
+    c.filter = 'blur(2px)'; c.strokeStyle = 'rgba(0,0,0,.32)'; c.lineCap = 'round';
+    const tx = ix(g.rx(-0.4, -3)), car = iy(rel(0.38));
+    c.lineWidth = S(1.7); c.beginPath(); c.moveTo(tx, Y(-14)); c.lineTo(tx, car); c.stroke();
+    c.lineWidth = S(1.1); c.beginPath(); c.moveTo(tx - S(2.6), car + S(2.2)); c.lineTo(tx, car); c.lineTo(tx + S(3), car + S(2.8)); c.stroke();
+
+    // 7. 椎体と棘突起（心臓の影を透けて見える）
+    c.filter = 'none';
+    const vx = ix(g.rx(0, -2)), spx = ix(g.rx(0, 6));
+    for (let i = -4; i <= 13; i++) {
+      const vy = Y(1 + 2.7 * i);
+      c.fillStyle = 'rgba(255,255,255,.06)'; c.strokeStyle = 'rgba(255,255,255,.13)'; c.lineWidth = 1.5;
+      c.beginPath(); if (c.roundRect) c.roundRect(vx - S(2.1), vy - S(1.05), S(4.2), S(2.1), S(0.5)); else c.rect(vx - S(2.1), vy - S(1.05), S(4.2), S(2.1)); c.fill(); c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,.2)';
+      for (const sg of [1, -1]) { c.beginPath(); c.ellipse(vx + sg * S(1.5), vy - S(0.2), S(0.35), S(0.55), 0, 0, 7); c.stroke(); }
+      c.fillStyle = 'rgba(255,255,255,.28)'; c.beginPath(); c.ellipse(spx, vy + S(0.5), S(0.42), S(0.8), 0, 0, 7); c.fill();
+    }
+
+    // 8. 鎖骨（皮質の縁が白い）
+    c.filter = 'none'; c.lineCap = 'round';
+    const clav = (sg, dy) => { c.beginPath(); c.moveTo(X(sg * 1.6, -8), Y(4.6) + dy); c.bezierCurveTo(X(sg * 6, -7), Y(3.4) + dy, X(sg * 11, -5), Y(4.4) + dy, X(sg * 16.5, -2), Y(2.4 + shot.controls.roll) + dy); };
+    for (const sg of [1, -1]) {
+      clav(sg, 0); c.strokeStyle = 'rgba(255,255,255,.32)'; c.lineWidth = S(1.0); c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 2;
+      clav(sg, -S(0.45)); c.stroke(); clav(sg, S(0.45)); c.stroke();
+    }
+
+    // 9. 肩甲骨と上腕骨
+    for (const sg of [1, -1]) {
+      const m = sg * g.scapM;
+      c.fillStyle = 'rgba(255,255,255,.1)'; c.strokeStyle = 'rgba(255,255,255,.3)'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(X(m, 7), Y(4)); c.lineTo(X(m + sg * 1.5, 7), Y(19)); c.lineTo(X(m + sg * 11, 5), Y(3.5)); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.2)'; c.fillRect(Math.min(X(sg * 20.3), X(sg * 22.7)), Y(5), Math.abs(X(sg * 22.7) - X(sg * 20.3)), Y(32) - Y(5));
+      c.beginPath(); c.arc(X(sg * 19.8), Y(4.6), S(2.7), 0, 7); c.fillStyle = 'rgba(255,255,255,.24)'; c.fill();
+      c.strokeStyle = 'rgba(255,255,255,.42)'; c.stroke();
+    }
+    c.restore();
+
+    // 骨と血管の線を一度にやわらげる（1本ずつぼかすと遅い）
+    soft.getContext('2d').clearRect(0, 0, FN, FN); soft.getContext('2d').drawImage(off, 0, 0);
+    c.save(); c.filter = 'blur(0.9px)'; c.drawImage(soft, 0, 0); c.restore();
+
+    // 10. 量子ノイズ（ざらつき）
+    const im = c.getImageData(0, 0, FN, FN), d = im.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const v = d[i] + (Math.random() + Math.random() - 1) * 16;
+      d[i] = d[i + 1] = d[i + 2] = v < 0 ? 0 : v > 255 ? 255 : v;
+    }
+    c.putImageData(im, 0, 0);
+
     // 動いている最中に撮ると上下にブレる
-    const n = Math.round(Math.min(Math.abs(shot.v), 0.5) * 30);
-    fc.globalAlpha = 1; fc.fillStyle = '#000'; fc.fillRect(0, 0, 430, 430);
+    const n = Math.round(Math.min(Math.abs(shot.v), 0.5) * 60);
+    fc.globalAlpha = 1; fc.fillStyle = '#000'; fc.fillRect(0, 0, FN, FN);
     for (let k = 0; k <= n; k++) { fc.globalAlpha = 1 / (k + 1); fc.drawImage(off, 0, k - n / 2); }
     fc.globalAlpha = 1;
+
     // 採点の線
     const by = Object.fromEntries(res.items.map(i => [i.key, i]));
     const col = k => (by[k].pt === by[k].max ? 'rgba(92,207,159,.95)' : 'rgba(255,127,110,.95)');
-    fc.lineWidth = 2;
+    fc.lineWidth = 3;
     fc.strokeStyle = col('rot'); fc.fillStyle = col('rot');                                      // 鎖骨の内側の端と棘突起
-    const cy = Y(4.4), cl = ix(g.rx(1.6, -8)), cr = ix(g.rx(-1.6, -8)), sp = ix(g.rx(0, 6));
-    fc.beginPath(); fc.moveTo(cl, cy - 12); fc.lineTo(cl, cy + 12); fc.moveTo(cr, cy - 12); fc.lineTo(cr, cy + 12); fc.stroke();
-    fc.beginPath(); fc.arc(sp, cy, 4, 0, 7); fc.fill();
-    fc.strokeStyle = col('scapula'); fc.setLineDash([5, 4]);                                     // 肩甲骨の内側の縁
+    const cy = Y(4.6), cl = X(1.6, -8), cr = X(-1.6, -8), sp = X(0, 6);
+    fc.beginPath(); fc.moveTo(cl, cy - 24); fc.lineTo(cl, cy + 24); fc.moveTo(cr, cy - 24); fc.lineTo(cr, cy + 24); fc.stroke();
+    fc.beginPath(); fc.arc(sp, cy, 7, 0, 7); fc.fill();
+    fc.strokeStyle = col('scapula'); fc.setLineDash([10, 8]);                                    // 肩甲骨の内側の縁
     for (const sg of [1, -1]) { const xx = ix(sg > 0 ? g.scapL : g.scapR); fc.beginPath(); fc.moveTo(xx, Y(4)); fc.lineTo(xx, Y(19)); fc.stroke(); }
     fc.setLineDash([]);
     fc.strokeStyle = col('inspiration');                                                         // 横隔膜の高さ
     fc.beginPath(); fc.moveTo(ix(g.lungR), iy(g.botR)); fc.lineTo(ix(g.X), iy(g.botR)); fc.stroke();
-    fc.font = 'bold 12px sans-serif'; fc.fillStyle = col('inspiration'); fc.textAlign = 'left';
-    fc.fillText(by.inspiration.info.ribs, ix(g.lungR) - 18, iy(g.botR) + 4);
+    fc.font = 'bold 24px sans-serif'; fc.fillStyle = col('inspiration'); fc.textAlign = 'left';
+    fc.fillText(by.inspiration.info.ribs, ix(g.lungR) - 36, iy(g.botR) + 8);
     if (by.coverage.pt < by.coverage.max) {                                                      // 欠けた所
       fc.fillStyle = 'rgba(255,127,110,.35)'; const cut = by.coverage.info.cut;
-      if (cut.top) fc.fillRect(0, 0, 430, 10);
-      if (cut.bottom) fc.fillRect(0, 420, 430, 10);
-      if (cut.left) fc.fillRect(420, 0, 10, 430);
-      if (cut.right) fc.fillRect(0, 0, 10, 430);
+      if (cut.top) fc.fillRect(0, 0, FN, 18);
+      if (cut.bottom) fc.fillRect(0, FN - 18, FN, 18);
+      if (cut.left) fc.fillRect(FN - 18, 0, 18, FN);
+      if (cut.right) fc.fillRect(0, 0, 18, FN);
     }
-    fc.fillStyle = 'rgba(255,255,255,.85)'; fc.font = 'bold 18px sans-serif'; fc.fillText('R', 12, 28);
+    fc.fillStyle = 'rgba(255,255,255,.88)'; fc.font = 'bold 36px sans-serif'; fc.textAlign = 'left'; fc.fillText('R', 24, 56);
   }
 
   function renderResult() {

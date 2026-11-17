@@ -59,14 +59,24 @@ eachPatient((p, id, seed) => {
   eachPatient(p => {
     sum += C.score(p, { controls: C.defaultControls(p), lvl: 0.35, v: 0.1 }).total; n++;
   });
-  check(sum / n <= 30, `何もせず普通の呼吸中に撮ると平均30点以下（実際 ${(sum / n).toFixed(1)}）`);
+  check(sum / n <= 45, `何もせず普通の呼吸中に撮ると平均45点以下（実際 ${(sum / n).toFixed(1)}）`);
+}
+{
+  // 大まかに合わせて息止め中に撮れば 65〜90 点（設計書の「ライトで70点前後」）
+  let sum = 0, n = 0;
+  eachPatient(p => {
+    const id = C.ideal(p).controls;
+    const shot = { controls: { x: id.x + 2.5, rot: id.rot + 4, roll: 0.6, panelY: id.panelY + 4 }, lvl: 0.85, v: -0.05 };
+    sum += C.score(p, shot).total; n++;
+  });
+  check(sum / n >= 65 && sum / n <= 90, `大まかに合わせると平均65〜90点（実際 ${(sum / n).toFixed(1)}）`);
 }
 
 // ---------------------------------------------------------------- 3. 1項目だけ崩す（oneItemOnly）
 {
   const breaks = [
-    ['rot', s => { s.controls.rot += 3; }],
-    ['center', s => { s.controls.x += 3; }],
+    ['rot', s => { s.controls.rot += s.controls.rot > 0 ? -3 : 3; }],      // 操作の範囲の内側へ崩す
+    ['center', s => { s.controls.x += s.controls.x > 0 ? -3 : 3; }],
     ['scapula', s => { s.controls.roll = 0; }],
     ['coverage', s => { s.controls.panelY += 10; }],
     ['inspiration', s => { s.lvl = 0.6; }],
