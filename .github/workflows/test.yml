@@ -44,6 +44,10 @@ jobs:
       - name: CT dose estimator SSDE factor checks
         run: node scripts/test-ct-dose.js
 
+      # 胸部X線写真の匠の採点（EUR 16260 との照合表・満点に届く・1項目だけ崩すとその項目だけ減点）
+      - name: Chest X-ray game scoring checks
+        run: node scripts/test-chest-xray.js
+
       - name: Generated blocks are up to date
         run: |
           node scripts/generate-related.js --check

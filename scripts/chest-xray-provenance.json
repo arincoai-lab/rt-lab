@@ -1,0 +1,45 @@
+{
+  "_about": "胸部X線写真の匠（chest-xray-master）の採点基準と原典の照合表。2026-11-17。採点の項目・点・基準値を変えるときはここを先に直し、原典の頁を確認する。check: text＝原典のテキスト（OCRでない）で照合、none＝原典に記載がないゲーム上の項目",
+  "sources": {
+    "EUR16260": {
+      "title": "European Guidelines on Quality Criteria for Diagnostic Radiographic Images, EUR 16260 EN (European Commission, June 1996)",
+      "url": "https://static.seram.es/wp-content/uploads/2021/09/129_eur16260.pdf",
+      "sha256": "3ddaf57732d2942f07a38fc724d760712fca2dc27982bee1ef33b052da321230",
+      "note": "Chest (Lungs and Heart), PA projection, 1.1 Image criteria。pdf_page は PDF の通し頁。"
+    }
+  },
+  "criteria": {
+    "rot": {
+      "max": 25,
+      "source": "EUR16260", "clause": "1.1.2", "pdf_page": 20, "check": "text",
+      "quote": "Symmetrical reproduction of the thorax as shown by central position of the spinous process between the medial ends of the clavicles"
+    },
+    "center": {
+      "max": 10,
+      "source": null, "clause": null, "pdf_page": null, "check": "none",
+      "quote": null,
+      "note": "原典に直接の記載はない。背骨をパネルの左右中心に置くことはゲームの設計上の項目"
+    },
+    "coverage": {
+      "max": 20,
+      "source": "EUR16260", "clause": "1.1.4 / 1.1.6(c)", "pdf_page": 20, "check": "text",
+      "quote": "Reproduction of the whole rib cage above the diaphragm / Visually sharp reproduction of: (c) the diaphragm and lateral costo-phrenic angles"
+    },
+    "scapula": {
+      "max": 15,
+      "source": "EUR16260", "clause": "1.1.3", "pdf_page": 20, "check": "text",
+      "quote": "Medial border of the scapulae to be outside the lung fields"
+    },
+    "inspiration": {
+      "max": 20,
+      "source": "EUR16260", "clause": "1.1.1", "pdf_page": 20, "check": "text",
+      "quote": "Performed at full inspiration (as assessed by the position of the ribs above the diaphragm — either 6 anteriorly or 10 posteriorly) and with suspended respiration",
+      "posterior_ribs_full": 10
+    },
+    "motion": {
+      "max": 10,
+      "source": "EUR16260", "clause": "1.1.1 / 1.1.5", "pdf_page": 20, "check": "text",
+      "quote": "with suspended respiration / Visually sharp reproduction of the vascular pattern in the whole lung, particularly the peripheral vessels"
+    }
+  }
+}
