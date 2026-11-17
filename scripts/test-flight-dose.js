@@ -147,6 +147,27 @@ const tot = C.journeyTotals(trip);
 check(tot.flights === 3 && Math.abs(tot.doseUSv - trip.reduce((s, r) => s + r.doseUSv, 0)) < 1e-9
   && Math.abs(tot.hours - trip.reduce((s, r) => s + r.hours, 0)) < 1e-9, '渡航歴の合計が便の和にならない');
 check(C.journeyTotals([]).doseUSv === 0, '空の渡航歴の合計が 0 でない');
+check(Math.abs(tot.distanceKm - trip.reduce((s, r) => s + r.distanceKm, 0)) < 1e-9, '渡航歴の距離の合計が便の和にならない');
+// 保存された渡航歴の検証（壊れた値・知らない空港・つながらない便を捨てる）
+const PJ = raw => C.parseJourney(places, raw);
+check(PJ('{broken').length === 0 && PJ('{"a":1}').length === 0 && PJ(null).length === 0 && PJ(42).length === 0, '壊れた保存データで空にならない');
+check(PJ('[["NRT","__proto__"],["NRT","constructor"],["NRT","toString"]]').length === 0, '"__proto__" などを空港として通している');
+check(PJ('[["NRT","NRT"],["NRT"],["NRT",1]]').length === 0, '同じ空港が続く便・1空港だけ・文字でないコードを通している');
+check(JSON.stringify(PJ('[["NRT","LHR"],["JFK","NRT"],["LHR","GRU"]]')) === JSON.stringify([['NRT', 'LHR'], ['LHR', 'GRU']]), 'つながらない便を捨てていない');
+check(JSON.stringify(PJ([['LHR', 'JFK'], ['JFK', 'NRT']])) === JSON.stringify([['LHR', 'JFK'], ['JFK', 'NRT']]), '外国から始まる記録（上限で古い便を捨てた後）を受け付けない');
+const long = [['NRT', 'LHR']]; for (let i = 0; i < 260; i++) long.push(i % 2 ? ['JFK', 'LHR'] : ['LHR', 'JFK']);
+const kept = C.parseJourney(places, long, 200);
+check(kept.length === 200 && C.parseJourney(places, kept, 200).length === 200, `上限を超えた記録を読み直すと便が消える（${kept.length} 便）`);
+for (const codes of kept) check(Number.isFinite(C.routeDose(grid, codes.map(c => places.airports[c])).doseUSv), `検証済みの便 ${codes.join('-')} の線量が NaN`);
+// 帰りのルート: 東京から来たなら同じ経由地、外国から来たなら東京へのルートの最初
+const rr1 = C.returnRoute(places, ['NRT', 'DXB', 'LHR']);
+check(rr1.sameWay && rr1.codes.join('-') === 'LHR-DXB-NRT', 'ドバイ経由で来たのに帰りがドバイ経由にならない');
+const rr2 = C.returnRoute(places, ['LHR', 'GRU']);
+check(!rr2.sameWay && rr2.codes[0] === 'GRU' && rr2.codes[rr2.codes.length - 1] === 'NRT', 'サンパウロから東京への帰りのルートがおかしい');
+for (const a of codes) if (a !== places.origin) {
+  const rr = C.returnRoute(places, [places.origin, a]);
+  check(rr && rr.codes[0] === a && rr.codes[rr.codes.length - 1] === places.origin, `${a} から東京に帰るルートがない`);
+}
 check(Math.abs(C.EARTH_CIRCUMFERENCE_KM - 40030) < 50, `地球一周 ${C.EARTH_CIRCUMFERENCE_KM} km がおかしい`);
 
 // 7. 比べるもの: 画面の定数（index.html）が照合表と一致する

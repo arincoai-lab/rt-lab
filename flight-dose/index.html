@@ -181,7 +181,7 @@
       <div class="big"><span id="lcdDose">0.0</span><small>μSv</small></div>
       <div class="row"><span id="lcdRate">0.00 μSv/h</span><span id="lcdTime">00:00</span></div>
     </div>
-    <div class="msg" id="meterMsg" aria-live="polite">行き先を選んでください。<b>直行便と乗り継ぎ便</b>がある行き先は、どちらが多いか予想してから飛んでみてください。</div>
+    <div class="msg" id="meterMsg" aria-live="polite" tabindex="-1">行き先を選んでください。<b>直行便と乗り継ぎ便</b>がある行き先は、どちらが多いか予想してから飛んでみてください。</div>
   </section>
 
   <section id="result" style="display:grid;gap:14px" hidden>
@@ -204,6 +204,7 @@
       <button class="go" id="btnReturn" hidden>✈ 帰りも飛ぶ</button>
       <span class="hint" id="nextHint">上の「行き先」から、ここを出発地にして続けて飛べます。</span>
     </div>
+    <div class="actions" id="retry" aria-label="同じ行き先へ別のルートで飛び直す"></div>
 
     <div class="cmp" id="cmp"></div>
 
@@ -278,17 +279,15 @@
   const STORE_KEY = 'rtlab.flightDose.journey.v1', MAX_FLIGHTS = 200;
   let here = null, journey = [];   // here = いまいる空港、journey = [{codes, ...routeDose の結果}]
   function loadJourney() {
-    let codesList = [];
-    try { codesList = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch (e) { codesList = []; }
-    if (!Array.isArray(codesList)) codesList = [];
+    let raw = '[]';
+    try { raw = localStorage.getItem(STORE_KEY) || '[]'; } catch (e) { raw = '[]'; }
+    // 壊れた記録・知らない空港・つながらない便は FlightCore.parseJourney が捨てる
     journey = [];
-    here = places.origin;
-    for (const codes of codesList.slice(-MAX_FLIGHTS)) {
-      // 壊れた記録・知らない空港・つながらない便は捨てる
-      if (!Array.isArray(codes) || codes.length < 2 || !codes.every(c => places.airports[c]) || codes[0] !== here) continue;
-      journey.push({ codes, ...C.routeDose(grid, codes.map(c => places.airports[c])) });
-      here = codes[codes.length - 1];
+    for (const codes of C.parseJourney(places, raw, MAX_FLIGHTS)) {
+      const r = C.routeDose(grid, codes.map(c => places.airports[c]));
+      if (Number.isFinite(r.doseUSv)) journey.push({ codes, ...r });
     }
+    here = journey.length ? journey[journey.length - 1].codes.slice(-1)[0] : places.origin;
   }
   function saveJourney() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(journey.map(j => j.codes))); } catch (e) { /* 保存できなくても画面は動かす */ }
@@ -493,7 +492,7 @@
     anim = requestAnimationFrame(step);
   }
   function stopAnim() { if (anim) cancelAnimationFrame(anim); anim = null; $('btnSkip').hidden = true; }
-  function skip() { stopAnim(); const r = results[routeIdx]; setMeter(r.doseUSv, 0, r.hours); finish(); }
+  function skip() { stopAnim(); const r = results[routeIdx]; setMeter(r.doseUSv, 0, r.hours); finish(); $('meterMsg').focus(); }
 
   // ---- 結果 ----
   const fmt = (v, d = 1) => v.toLocaleString('ja-JP', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -515,7 +514,20 @@
       (journey.length > 1 ? `　旅の合計は <b>${fmt(C.journeyTotals(journey).doseUSv)} μSv</b>（${journey.length}便）。` : '');
     const home = here === places.origin;
     $('btnReturn').hidden = home;
-    $('btnReturn').textContent = codes.length > 2 ? `✈ 帰りも飛ぶ（${routeLabel(codes)}で）` : '✈ 帰りも飛ぶ（直行便で）';
+    if (!home) {
+      const rr = C.returnRoute(places, codes);
+      $('btnReturn').textContent = (rr.sameWay ? '✈ 帰りも飛ぶ' : '✈ 東京に帰る') + `（${routeLabel(rr.codes)}で）`;
+    }
+    // 同じ行き先のほかのルート（飛び比べ）。押すと今の便を置き換えて飛び直す
+    $('retry').innerHTML = '';
+    dest.routes.forEach((r, k) => {
+      if (k === routeIdx) return;
+      const b = document.createElement('button');
+      b.className = 'ghost'; b.type = 'button';
+      b.textContent = `${routeLabel(r)}で飛び直す`;
+      b.addEventListener('click', () => retryRoute(k));
+      $('retry').appendChild(b);
+    });
     $('nextHint').textContent = home ? '上の「行き先」から、また次の旅に出られます。' : '上の「次の行き先」から、ここを出発地にして続けて飛ぶこともできます。';
 
     $('passCodes').innerHTML = codes.map((c, i) => (i ? '<span class="arrow">✈</span>' : '') + c).join(' ');
@@ -541,7 +553,7 @@
   function shareText(codes, dose, days) {
     if (journey.length > 1) {
       const t = C.journeyTotals(journey);
-      return `${t.flights}便の空の旅（${journeyCities()}）で、機内で受けた宇宙線は合計 ${fmt(t.doseUSv)} μSv。胸部X線の${fmt(t.doseUSv / CHEST_USV, 2)}回分、地上で暮らす${fmt(t.doseUSv / (NATURAL_JP_USV_Y / 365))}日分、地球${fmt(t.distanceKm / C.EARTH_CIRCUMFERENCE_KM, 2)}周ぶん飛びました。`;
+      return `${t.flights}便の空の旅（${journeyCities()}）で、機内で受けた宇宙線は合計 ${fmt(t.doseUSv)} μSv（胸部X線の${fmt(t.doseUSv / CHEST_USV, 2)}回分・地上で暮らす${fmt(t.doseUSv / (NATURAL_JP_USV_Y / 365))}日分）。地球${fmt(t.distanceKm / C.EARTH_CIRCUMFERENCE_KM, 2)}周ぶん飛びました。`;
     }
     return `${codes.map(c => places.airports[c].ja).join('→')}（${routeLabel(codes)}）の機内で受けた宇宙線は ${fmt(dose)} μSv。胸部X線の${fmt(dose / CHEST_USV, 2)}回分、地上で暮らす${fmt(days)}日分でした。`;
   }
@@ -549,7 +561,8 @@
   function journeyCities() {
     const list = [cityName(journey[0].codes[0])];
     for (const j of journey) list.push(cityName(j.codes[j.codes.length - 1]));
-    return list.filter((c, i) => i === 0 || c !== list[i - 1]).join('→');
+    const u = list.filter((c, i) => i === 0 || c !== list[i - 1]);
+    return u.length > 7 ? u.slice(0, 6).join('→') + '→…ほか' : u.join('→');   // X の文字数に収める
   }
 
   // ---- 渡航歴 ----
@@ -564,7 +577,7 @@
       `<div class="card"><span class="num">${fmt(t.doseUSv)}<small>μSv</small></span><p>旅の合計。100 mSv（健康影響が確認されている線量）の約${fmt(HEALTH_USV / t.doseUSv, 0)}分の1。</p></div>`,
       `<div class="card"><span class="num">${fmt(t.doseUSv / CHEST_USV, 2)}<small>回分</small></span><p>胸部X線（正面）1回 0.08 mSv と比べて。</p></div>`,
       `<div class="card"><span class="num">${fmt(t.doseUSv / (NATURAL_JP_USV_Y / 365))}<small>日分</small></span><p>日本で暮らして自然放射線から受ける量（年 2.1 mSv）の何日分か。</p></div>`,
-      `<div class="card"><span class="num">${fmt(t.distanceKm / C.EARTH_CIRCUMFERENCE_KM, 2)}<small>周</small></span><p>飛んだ距離は地球（赤道）の何周ぶんか。</p></div>`,
+      `<div class="card"><span class="num">${fmt(t.distanceKm / C.EARTH_CIRCUMFERENCE_KM, 2)}<small>周</small></span><p>飛んだ距離は地球一周（約4万 km）の何周ぶんか。</p></div>`,
     ].join('');
     $('stamps').innerHTML = journey.map((j, k) =>
       `<li class="stamp"><span class="no">FLIGHT ${String(k + 1).padStart(2, '0')}</span><span class="codes">${j.codes.join(' › ')}</span><span class="meta">${j.codes.map(cityName).join(' → ')}</span><span class="meta">${C.formatHours(j.hours)}・<b>${fmt(j.doseUSv)} μSv</b></span></li>`).join('');
@@ -591,11 +604,23 @@
   // 帰りも飛ぶ: 来たルートを逆にたどる（東京から来た便なら、同じ経由地で帰る）
   function flyReturn() {
     if (!lastFlight || here === places.origin) return;
+    const rr = C.returnRoute(places, lastFlight.codes);
     selectDest(places.origin);
-    const back = lastFlight.codes.slice().reverse().join('-');
-    const k = dest.routes.findIndex(r => r.join('-') === back);
-    routeIdx = k >= 0 ? k : 0;
+    routeIdx = Math.max(0, dest.routes.findIndex(r => r.join('-') === rr.codes.join('-')));
     renderRoutes(); drawMap();
+    $('meterMsg').focus();
+    fly();
+  }
+  // 飛び比べ: 直前の便を渡航歴から外し、同じ行き先へ別のルートで飛び直す
+  function retryRoute(k) {
+    if (!lastFlight || !journey.length) return;
+    const id = dest.id;
+    journey.pop(); saveJourney();
+    here = lastFlight.codes[0];
+    selectDest(id);
+    routeIdx = k;
+    renderRoutes(); drawMap();
+    $('meterMsg').focus();
     fly();
   }
 
@@ -626,20 +651,20 @@
     const x0 = 30, x1 = 690, lmin = 0, lmax = 5;     // 10^0..10^5 μSv
     const X = v => x0 + (Math.log10(v) - lmin) / (lmax - lmin) * (x1 - x0);
     let s = `<line x1="${x0}" y1="70" x2="${x1}" y2="70" stroke="#93a0ba" stroke-width="1.5"/>`;
+    // 旅の合計は目盛りの下の段（y=166 の文字）。線が CT などの文字の上に乗らないよう最初に描く。文字は左右の端で切れないように寄せる
+    if (total) {
+      const tx = X(total), anchor = tx > 640 ? 'end' : tx < 80 ? 'start' : 'middle';
+      s += `<line x1="${tx}" y1="70" x2="${tx}" y2="140" stroke="#6fd3a8" stroke-width="2"/><polygon points="${tx - 7},152 ${tx + 7},152 ${tx},140" fill="#6fd3a8"/><circle cx="${tx}" cy="70" r="9" fill="none" stroke="#6fd3a8" stroke-width="2.5"/><text x="${tx}" y="168" fill="#6fd3a8" font-size="13" font-weight="700" text-anchor="${anchor}">旅の合計 ${fmt(total)} μSv</text>`;
+    }
     const ticks = [[1, '1 μSv'], [10, '10'], [100, '100'], [1000, '1 mSv'], [10000, '10'], [100000, '100 mSv']];
     for (const [v, l] of ticks) s += `<line x1="${X(v)}" y1="64" x2="${X(v)}" y2="76" stroke="#93a0ba"/><text x="${X(v)}" y="92" fill="#93a0ba" font-size="12" text-anchor="middle">${l}</text>`;
-    s += `<rect x="${X(CT_USV[0])}" y="104" width="${X(CT_USV[1]) - X(CT_USV[0])}" height="8" rx="4" fill="#8ec5ff" opacity=".55"/><text x="${(X(CT_USV[0]) + X(CT_USV[1])) / 2}" y="128" fill="#8ec5ff" font-size="12" text-anchor="middle">CT 1回（0.06〜17 mSv 程度）</text>`;
+    s += `<rect x="${X(CT_USV[0])}" y="104" width="${X(CT_USV[1]) - X(CT_USV[0])}" height="8" rx="4" fill="#8ec5ff" opacity=".55"/><text x="${(X(CT_USV[0]) + X(CT_USV[1])) / 2}" y="128" fill="#8ec5ff" font-size="12" text-anchor="middle" paint-order="stroke" stroke="#121a2e" stroke-width="4">CT 1回（0.06〜17 mSv 程度）</text>`;
     // 基準の印は目盛りの上（y=52 の文字）、このフライトはさらに上の段（y=14 の文字）に置いて重ならないようにする
-    const mark = (v, label, color) => `<line x1="${X(v)}" y1="58" x2="${X(v)}" y2="70" stroke="${color}" stroke-width="2"/><circle cx="${X(v)}" cy="70" r="5" fill="${color}"/><text x="${X(v)}" y="52" fill="${color}" font-size="12" text-anchor="middle">${label}</text>`;
+    const mark = (v, label, color) => `<line x1="${X(v)}" y1="58" x2="${X(v)}" y2="70" stroke="${color}" stroke-width="2"/><circle cx="${X(v)}" cy="70" r="5" fill="${color}"/><text x="${X(v)}" y="52" fill="${color}" font-size="12" text-anchor="middle" paint-order="stroke" stroke="#121a2e" stroke-width="4">${label}</text>`;
     s += mark(CHEST_USV, '胸部X線', '#e8edf6');
     s += mark(NATURAL_JP_USV_Y, '自然放射線1年', '#6fd3a8');
     s += `<line x1="${X(HEALTH_USV)}" y1="20" x2="${X(HEALTH_USV)}" y2="112" stroke="#e2433f" stroke-width="2" stroke-dasharray="4 3"/><text x="${X(HEALTH_USV) - 4}" y="142" fill="#e2433f" font-size="12" text-anchor="end">健康影響が確認されている線量</text>`;
-    s += `<text x="${X(dose)}" y="14" fill="#ffb547" font-size="13" font-weight="700" text-anchor="middle">このフライト</text><polygon points="${X(dose) - 7},20 ${X(dose) + 7},20 ${X(dose)},32" fill="#ffb547"/><line x1="${X(dose)}" y1="32" x2="${X(dose)}" y2="70" stroke="#ffb547" stroke-width="2"/><circle cx="${X(dose)}" cy="70" r="7" fill="#ffb547"/>`;
-    // 旅の合計は目盛りの下の段（y=166 の文字）。文字は左右の端で切れないように寄せる
-    if (total) {
-      const tx = X(total), anchor = tx > 640 ? 'end' : tx < 80 ? 'start' : 'middle';
-      s += `<line x1="${tx}" y1="70" x2="${tx}" y2="140" stroke="#6fd3a8" stroke-width="2"/><polygon points="${tx - 7},152 ${tx + 7},152 ${tx},140" fill="#6fd3a8"/><circle cx="${tx}" cy="70" r="6" fill="#0b1020" stroke="#6fd3a8" stroke-width="3"/><text x="${tx}" y="168" fill="#6fd3a8" font-size="13" font-weight="700" text-anchor="${anchor}">旅の合計 ${fmt(total)} μSv</text>`;
-    }
+    s += `<text x="${X(dose)}" y="14" fill="#ffb547" font-size="13" font-weight="700" text-anchor="middle">このフライト</text><polygon points="${X(dose) - 7},20 ${X(dose) + 7},20 ${X(dose)},32" fill="#ffb547"/><line x1="${X(dose)}" y1="32" x2="${X(dose)}" y2="40" stroke="#ffb547" stroke-width="2"/><line x1="${X(dose)}" y1="57" x2="${X(dose)}" y2="70" stroke="#ffb547" stroke-width="2"/><circle cx="${X(dose)}" cy="70" r="7" fill="#ffb547"/>`;
     $('ladder').innerHTML = s;
   }
 
@@ -655,8 +680,11 @@
     ctx.fillStyle = '#6b6450'; ctx.font = '600 20px ' + F; ctx.fillText('COSMIC RAY BOARDING PASS', 110, 170);
     ctx.fillStyle = '#1b2233'; ctx.font = '800 64px ui-monospace, Menlo, monospace';
     ctx.fillText(codes.join(' › '), 110, 250);
-    ctx.font = '500 24px ' + F; ctx.fillStyle = '#4b4f5c';
-    ctx.fillText(codes.map(c => A[c].ja).join(' → ') + '　' + routeLabel(codes) + '　' + C.formatHours(res.hours), 110, 295);
+    // 都市名の行は、半券（x=870）に食い込まないよう幅に合わせて文字を小さくする
+    const line = codes.map(c => A[c].ja).join(' → ') + '　' + routeLabel(codes) + '　' + C.formatHours(res.hours);
+    let fs = 24; ctx.font = `500 ${fs}px ` + F;
+    while (ctx.measureText(line).width > 740 && fs > 14) { fs--; ctx.font = `500 ${fs}px ` + F; }
+    ctx.fillStyle = '#4b4f5c'; ctx.fillText(line, 110, 295);
     ctx.fillStyle = '#6b6450'; ctx.font = '600 20px ' + F; ctx.fillText('機内で受けた宇宙線', 110, 360);
     ctx.fillStyle = '#1b2233'; ctx.font = '800 96px ' + F; const dtext = fmt(res.doseUSv);
     ctx.fillText(dtext, 110, 455); const w = ctx.measureText(dtext).width; ctx.font = '700 36px ' + F; ctx.fillText('μSv', 120 + w, 455);

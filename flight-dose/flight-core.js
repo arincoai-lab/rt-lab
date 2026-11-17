@@ -163,6 +163,40 @@
     return [[from, to]];
   }
 
+  /**
+   * 保存された渡航歴（空港コードの配列の配列）を検証して、使える便だけを返す。
+   * 壊れた値・知らない空港（"__proto__" なども）・同じ空港が続く便・前の便の到着地から出ていない便は捨てる。
+   * 1便目はどこから出てもよい（上限を超えて古い便を捨てたあとも、続きがつながるように）。
+   */
+  function parseJourney(places, raw, maxFlights = 200) {
+    let list = raw;
+    if (typeof raw === 'string') { try { list = JSON.parse(raw); } catch (e) { return []; } }
+    if (!Array.isArray(list)) return [];
+    const known = c => typeof c === 'string' && Object.prototype.hasOwnProperty.call(places.airports, c);
+    const out = [];
+    for (const codes of list) {
+      if (!Array.isArray(codes) || codes.length < 2 || !codes.every(known)) continue;
+      if (codes.some((c, i) => i > 0 && c === codes[i - 1])) continue;
+      const prev = out[out.length - 1];
+      if (prev && codes[0] !== prev[prev.length - 1]) continue;
+      out.push(codes.slice());
+    }
+    return out.slice(-maxFlights);
+  }
+
+  /**
+   * 「帰る」便のルート。前の便が東京から来たなら、その逆ルート（同じ経由地）。
+   * そうでなければ東京へのルートの最初のもの。返り値 { codes, sameWay }。
+   */
+  function returnRoute(places, lastCodes) {
+    const here = lastCodes[lastCodes.length - 1];
+    const opts = routeOptions(places, here, places.origin);
+    if (!opts.length) return null;
+    const back = lastCodes.slice().reverse().join('-');
+    const k = opts.findIndex(r => r.join('-') === back);
+    return k >= 0 ? { codes: opts[k], sameWay: true } : { codes: opts[0], sameWay: false };
+  }
+
   /** 渡航歴（{doseUSv, hours, distanceKm} の配列）の合計 */
   function journeyTotals(legs) {
     return legs.reduce((t, l) => ({
@@ -173,7 +207,7 @@
     }), { flights: 0, doseUSv: 0, hours: 0, distanceKm: 0 });
   }
 
-  /** 赤道の長さ（km）。「地球◯周」に使う */
+  /** 地球一周の長さ（km、平均半径から）。「地球◯周」に使う */
   const EARTH_CIRCUMFERENCE_KM = 2 * Math.PI * R_EARTH_KM;
 
   /** 「◯時間◯分」 */
@@ -186,6 +220,6 @@
     R_EARTH_KM, CLIMB_H, DESCENT_H, RAMP_FACTOR, FLIGHT_TIME,
     distanceKm, interpolate, greatCircle, bearing, eastwardFraction, flightTimeH,
     rateAt, profileFactor, legDose, routeDose, formatHours, wrapLon,
-    routeOptions, journeyTotals, EARTH_CIRCUMFERENCE_KM,
+    routeOptions, returnRoute, parseJourney, journeyTotals, EARTH_CIRCUMFERENCE_KM,
   };
 });
