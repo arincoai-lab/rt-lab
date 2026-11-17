@@ -21,6 +21,7 @@
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/assets/site.css">
   <style>
     /* 読影室の暗さ。単一の暗い見た目で固定（ゲーム） */
     :root {
@@ -230,7 +231,7 @@
     P = patient;
     ctl = C.defaultControls(P);
     br = C.newBreath();
-    t0 = performance.now(); running = true; shotTaken = false; lastShot = null;
+    t0 = performance.now(); running = true; shotTaken = false; lastShot = null; drag = null; hot = null;
     $('who').innerHTML = whoLabel();
     $('tHint').textContent = T('hint') + (mode === 'practice' ? ' ' + T('topViewHint') : '');
     $('btnShoot').disabled = false;
@@ -513,7 +514,7 @@
     shotTaken = true; running = false;
     const sec = elapsed();
     const patient = C.livePatient(P, sec);      // 撮った瞬間の立ち位置で採点
-    const shot = { controls: { ...ctl }, lvl: br.lvl, v: br.v };
+    const shot = { controls: { ...ctl }, lvl: br.lvl, v: br.v, held: br.mode === 'hold' };
     const res = C.score(patient, shot);
     lastShot = { patient, shot, res, sec };
     if (mode === 'round') { scores.push(res.total); times.push(sec); }
@@ -740,5 +741,6 @@
   window.__chest = { get P() { return P; }, get ctl() { return ctl; }, set ctl(v) { ctl = v; }, get br() { return br; }, set br(v) { br = v; }, live, elapsed, get state() { return { mode, idx, scores, times, screen }; }, handles: () => handles(C.geom(live(), ctl, br.lvl), live()), draw: () => drawRoom() };
 })();
 </script>
+  <script src="/assets/site.js" defer></script>
 </body>
 </html>

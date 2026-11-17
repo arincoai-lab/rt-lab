@@ -224,5 +224,29 @@ for (const lang of ['ja', 'en']) {
   }
 }
 
+// ---------------------------------------------------------------- 13. 息止めなし・満点の境目（独立レビュー 2026-11-17 の指摘）
+{
+  // 普通の呼吸の山（lvl 0.45、ほぼ止まって見える）で、息止めの合図なしに撮っても90点（匠の線）に届かない
+  eachPatient((p, id, seed) => {
+    const shot = { controls: C.ideal(p).controls, lvl: 0.45, v: 0, held: false };
+    const r = C.score(p, shot), m = byKey(r).motion;
+    check(r.total < 90, `${id}#${seed}: 息止めなしで ${r.total} 点（90点未満のはず）`);
+    check(m.pt === 0 && m.info.noHold, `${id}#${seed}: 息止めなしはブレ0点`);
+    for (const lang of ['ja', 'en']) check(C.detail(lang, m) === C.t(lang, 'd_motion_nohold'), `${lang}: 息止めなしの一言`);
+  });
+  // 満点の条件を満たさない項目は、四捨五入で満点にならない（肋骨9本なら吸気は20点にならない）
+  eachPatient((p, id, seed) => {
+    const ctl = C.ideal(p).controls;
+    for (let lvl = 0.5; lvl <= 1.0001; lvl += 0.005) {
+      for (const it of C.score(p, { controls: ctl, lvl, v: 0, held: true }).items) {
+        if (it.key === 'inspiration' && it.info.ribs < C.POSTERIOR_RIBS_FULL) check(it.pt < it.max, `${id}#${seed} lvl ${lvl.toFixed(3)}: 肋骨${it.info.ribs}本なのに吸気が満点`);
+      }
+    }
+    const tilt = { controls: { ...ctl, rot: ctl.rot + 1.1 * Math.sign(-ctl.rot || 1) }, lvl: 1, v: 0, held: true };
+    const rot = byKey(C.score(p, tilt)).rot;
+    check(rot.info.deg <= 1 || rot.pt < rot.max, `${id}#${seed}: ねじれ ${rot.info.deg.toFixed(2)}° で満点にならない`);
+  });
+}
+
 console.log(`\nchest-xray: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

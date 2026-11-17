@@ -140,7 +140,8 @@
     const c = clampControls(shot.controls), g = geom(p, c, clamp(shot.lvl)), s = g.s;
     const v = Number.isFinite(shot.v) ? Math.abs(shot.v) : 1;
     const items = [];
-    const add = (key, max, ratio, info) => items.push({ key, max, pt: Math.round(max * clamp(ratio)), info });
+    // 満点の条件を満たさないときは、四捨五入で満点にならないよう max-1 で止める（「ok」の文言と点をそろえる）
+    const add = (key, max, ratio, info) => items.push({ key, max, pt: ratio >= 1 ? max : Math.min(max - 1, Math.round(max * clamp(ratio))), info });
 
     // 1.1.2 左右の鎖骨の内側の端の真ん中に棘突起（＝体がねじれていない）
     const deg = Math.abs(p.baseRot + c.rot);
@@ -169,7 +170,9 @@
     add('inspiration', 20, ribs >= POSTERIOR_RIBS_FULL ? 1 : (lv - 6) / (POSTERIOR_RIBS_FULL - 6), { ribs });
 
     // 1.1.1 息を止めて / 1.1.5 鮮明に（胸が動いている最中に撮るとブレる）
-    add('motion', 10, v < 0.03 ? 1 : 1 - v / 0.15, { moving: v >= 0.03 });
+    // 息止めの合図なしに撮ったもの（held === false）は、たまたま止まって見えても 0 点（原典は suspended respiration）
+    const noHold = shot.held === false;
+    add('motion', 10, noHold ? 0 : v < 0.03 ? 1 : 1 - v / 0.15, { moving: noHold || v >= 0.03, noHold });
 
     return { total: items.reduce((a, b) => a + b.pt, 0), items };
   }
@@ -246,13 +249,13 @@
       d_scapula_ok: '肩甲骨が肺の外に出ています', d_scapula_ng: '肩甲骨が肺に{cm}cmかぶっています。肘をもっと前へ',
       d_inspiration_ok: '横隔膜の上に後ろの肋骨が{ribs}本。十分に吸えています',
       d_inspiration_ng: '横隔膜の上に後ろの肋骨が{ribs}本（目標は10本）',
-      d_motion_ok: '止まっています', d_motion_ng: '胸が動いている最中に撮りました',
+      d_motion_ok: '止まっています', d_motion_ng: '胸が動いている最中に撮りました', d_motion_nohold: '息を止めてもらわずに撮りました',
       roomLabel: 'X線撮影室。患者さんを背中側から見た図', filmLabel: '撮影したX線画像',
     },
     en: {
       title: 'Breathe In, Hold It!',
       titleSub: 'Chest X-ray Master',
-      lead: 'A screening chest X-ray. Line up five patients and time their breath to take one clean image each, as fast as you can.',
+      lead: 'A screening chest X-ray. Position five patients and time their breath to take one clean image each, as fast as you can.',
       start: 'Start (5 patients)',
       practice: 'Practice',
       practiceNote: 'In practice the lungs are outlined on the patient’s back and you can retake as often as you like. The real round gives you one exposure per patient.',
@@ -272,8 +275,8 @@
       takumiRule: '“Master” rank: average 90 or higher and 20 s or less per patient',
       share: 'I scored {avg} on “Breathe In, Hold It! Chest X-ray Master” (5 patients in {sec} s). Rank: {title}. #ChestXrayMaster',
       shareBtn: 'Share on X', playAgain: 'Play again',
-      title_takumi: 'Chest X-ray Master', title_veteran: 'Meticulous Veteran', title_ace: 'Screening Bus Ace',
-      title_solid: 'Reliable Radiographer', title_rookie: 'Rookie Radiographer', title_student: 'Student',
+      title_takumi: 'Chest X-ray Master', title_veteran: 'Meticulous Veteran', title_ace: 'Mobile Screening Ace',
+      title_solid: 'Reliable Radiographer', title_rookie: 'Rookie Radiographer', title_student: 'Radiography Student',
       item_rot: 'Rotation', item_center: 'Centering', item_coverage: 'Lungs fully included',
       item_scapula: 'Scapulae', item_inspiration: 'Inspiration', item_motion: 'Motion',
       d_rot_ok: 'The medial ends of the clavicles are equidistant from the spinous process',
@@ -284,7 +287,7 @@
       d_scapula_ok: 'The scapulae are clear of the lung fields', d_scapula_ng: 'The scapulae overlap the lungs by {cm} cm. Bring the elbows further forward',
       d_inspiration_ok: '{ribs} posterior ribs above the diaphragm: full inspiration',
       d_inspiration_ng: '{ribs} posterior ribs above the diaphragm (target: 10)',
-      d_motion_ok: 'No motion', d_motion_ng: 'Taken while the chest was moving',
+      d_motion_ok: 'No motion', d_motion_ng: 'Taken while the chest was moving', d_motion_nohold: 'Taken without a breath-hold',
       roomLabel: 'X-ray room. The patient seen from behind', filmLabel: 'The exposed X-ray image',
     },
   };
@@ -307,7 +310,7 @@
       }
       case 'scapula': return ok ? t(lang, 'd_scapula_ok') : t(lang, 'd_scapula_ng', { cm: f1(i.cm) });
       case 'inspiration': return t(lang, ok ? 'd_inspiration_ok' : 'd_inspiration_ng', { ribs: i.ribs });
-      case 'motion': return ok ? t(lang, 'd_motion_ok') : t(lang, 'd_motion_ng');
+      case 'motion': return ok ? t(lang, 'd_motion_ok') : t(lang, i.noHold ? 'd_motion_nohold' : 'd_motion_ng');
     }
     return '';
   }
