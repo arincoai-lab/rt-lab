@@ -437,6 +437,23 @@ const D = core.doseAtPoint;
     check(!R.reachesWithoutWall(src, { x: 0.9, y: 5.3 }, list), '仕切りの向こう（操作室）は届かない');
     check(!R.reachesWithoutWall(src, { x: 5.8, y: 2.6 }, list), '外壁の向こうは届かない');
     check(R.reachesWithoutWall(src, { x: 3, y: 5.3 }, list), '仕切りの脇（仕切りの無い所）は届く');
+    // 壁の端（角）を通る線は、計算側と同じく「壁を通る」（独立レビュー 2026-11-17 L1）
+    const pe = { x: 1.55, y: 5.6 }; // 患者 (2.6, 2.6) からの線が仕切りの端 (1.9, 4.6) をちょうど通る
+    check(!R.reachesWithoutWall(src, pe, list), '仕切りの端を通る線は部屋の中としない');
+    const legacyB = core.doseAtPoint({ x: pe.x, y: pe.y, z: 1 }, setup, legacy).total, openB = core.doseAtPoint({ x: pe.x, y: pe.y, z: 1 }, setup, legacy.slice(0, 4)).total;
+    check(legacyB < openB, '計算側も、仕切りの端を通る線は遮へいする（判定とそろっている）');
+    // 壁の線の上の点は、計算側では遮へいしない（t<1）。判定も同じにして、表示と値を食い違わせない
+    check(R.reachesWithoutWall(src, { x: 5, y: 2.6 }, list) === (core.doseAtPoint({ x: 5, y: 2.6, z: 0.8 }, setup, legacy).total === core.doseAtPoint({ x: 5, y: 2.6, z: 0.8 }, setup, []).total), '壁の線の上の点: 判定と計算がそろう');
+    // 判定と計算がそろうことを格子で確かめる（線源と同じ高さで、天井の影響を外す）
+    let mism = 0;
+    for (let gx = -1; gx <= 6; gx += 0.05) for (let gy = -1; gy <= 7; gy += 0.05) {
+      const q = { x: Math.round(gx * 100) / 100, y: Math.round(gy * 100) / 100 };
+      const shielded = core.doseAtPoint({ x: q.x, y: q.y, z: 0.8 }, setup, legacy).scatter <
+        core.doseAtPoint({ x: q.x, y: q.y, z: 0.8 }, setup, []).scatter;
+      if (shielded === R.reachesWithoutWall(src, q, list)) mism++;
+    }
+    check(mism === 0, '5 cm の格子のすべての点で「部屋の中」の判定と計算の遮へいがそろう: 食い違い ' + mism);
+    check(R.reachesWithoutWall({ x: 0, y: 1 }, { x: 0, y: 3 }, list), '壁と同じ直線上の線は横切らない（計算側も平行は無視）');
 
     // 範囲
     const ex = R.extent(list, [{ x: 7, y: 2 }, { x: NaN, y: 0 }], 1.6);
@@ -471,6 +488,40 @@ const D = core.doseAtPoint;
     check(s.snap !== 'vertex', '動かしている壁の端には吸着しない');
     s = R.snapPoint({ x: 1.02, y: 1.01 }, { tol, walls: [], extra: [{ x: 1, y: 1 }] });
     check(s.snap === 'vertex' && s.x === 1, '追加の点（図面の線の端）に吸着');
+  }
+}
+
+// ---------------------------------------------------------------- 図面の読み込み（floorplan.js の純粋な部分）
+{
+  let FP;
+  try { FP = require(path.join(ROOT, 'scatter-simulator/floorplan.js')); } catch (e) { check(false, 'floorplan.js を読み込めない: ' + e.message); }
+  if (FP) {
+    check(JSON.stringify(FP.scaleHints('平面図 S=1:100 詳細 1/50 縮尺 1：100')) === '[100,50]', '縮尺の候補は多い順: ' + JSON.stringify(FP.scaleHints('平面図 S=1:100 詳細 1/50 縮尺 1：100')));
+    check(FP.scaleHints('2026/11/17 11:30 12/31 1:2.5').length === 0, '日付・時刻・小数は縮尺の候補にしない: ' + JSON.stringify(FP.scaleHints('2026/11/17 11:30 12/31 1:2.5')));
+    // pdf.js の命令の並び（OPS の番号は仮）。viewport の変換（y 反転・2倍）と transform・save/restore を通す
+    const OPS = { save: 10, restore: 11, transform: 12, constructPath: 91, moveTo: 13, lineTo: 14, curveTo: 15, curveTo2: 16, curveTo3: 17, closePath: 18, rectangle: 19 };
+    const base = [2, 0, 0, -2, 0, 200]; // PDF の y 上向き → 画面の y 下向き、2倍
+    const fn = [OPS.constructPath, OPS.save, OPS.transform, OPS.constructPath, OPS.restore, OPS.constructPath];
+    const args = [
+      [[OPS.moveTo, OPS.lineTo, OPS.lineTo, OPS.closePath], [0, 0, 10, 0, 10, 5], null],
+      null,
+      [1, 0, 0, 1, 50, 0],
+      [[OPS.rectangle], [0, 0, 4, 2], null],
+      null,
+      [[OPS.moveTo, OPS.curveTo, OPS.lineTo], [0, 10, 1, 1, 2, 2, 3, 10, 6, 10], null]
+    ];
+    const r = FP.segmentsFromOperators(fn, args, OPS, base);
+    const segs = Array.from(r.segs);
+    check(r.n === 3 + 4 + 1, '線分の数（三角形3＋長方形4＋曲線のあとの直線1）: ' + r.n);
+    check(JSON.stringify(segs.slice(0, 4)) === JSON.stringify([0, 200, 20, 200]), '最初の線は viewport の変換を通る: ' + segs.slice(0, 4));
+    check(JSON.stringify(segs.slice(12, 16)) === JSON.stringify([100, 200, 108, 200]), 'transform で平行移動した長方形: ' + segs.slice(12, 16));
+    check(JSON.stringify(segs.slice(28, 32)) === JSON.stringify([6, 180, 12, 180]), 'restore で変換が戻り、曲線の終点から直線が続く: ' + segs.slice(28, 32));
+    const idx = FP.endpointIndex(new Float32Array([0, 0, 100, 0, 5, 5, 40, 40]), 20);
+    check(JSON.stringify(idx.near(4, 4, 2)) === JSON.stringify([5, 5]) && idx.near(60, 60, 5).length === 0, '端点の索引で近くの端だけを引ける');
+    check(/^sha512-/.test(FP.PDFJS_SRI) && /^sha512-/.test(FP.WORKER_SRI) && /3\.11\.174/.test(FP.PDFJS_URL), 'pdf.js は版を固定し SRI で検査する');
+    const src = fs.readFileSync(path.join(ROOT, 'scatter-simulator/floorplan.js'), 'utf8');
+    check(/isEvalSupported:\s*false/.test(src), 'pdf.js は isEvalSupported:false で使う（CVE-2024-4367）');
+    check(!/fetch\((?!WORKER_URL)/.test(src) && !/XMLHttpRequest|sendBeacon|navigator\.send/.test(src), '図面のファイルを送る通信が無い（fetch は worker の取得だけ）');
   }
 }
 

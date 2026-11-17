@@ -55,10 +55,16 @@
     });
   }
 
-  // 線分 ab と cd が（端を除いて）交わるか
+  // 線源→点の線 ab が壁 cd を横切るか。計算側（scatter-core の wallTransmission）とそろえる:
+  // ab の両端（線源・点そのもの）は含めず、壁の端（角）を通る線は含める。同じ直線上に重なるときは横切らない
+  // 浮動小数の丸めまで計算側と同じになるよう、wallTransmission と同じ式で t（線の上）と u（壁の上）を求める
   function segCross(a, b, c, d) {
-    function o(p, q, r) { return (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x); }
-    return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0;
+    var dx = b.x - a.x, dy = b.y - a.y, ex = d.x - c.x, ey = d.y - c.y;
+    var den = dx * ey - dy * ex;
+    if (den === 0) return false;
+    var t = ((c.x - a.x) * ey - (c.y - a.y) * ex) / den;
+    var u = ((c.x - a.x) * dy - (c.y - a.y) * dx) / den;
+    return t > 0 && t < 1 && u >= 0 && u <= 1;
   }
 
   /** 線源 src から点 p まで、どの壁も通らずに届くか（＝遮へいの無い「部屋の中」） */
