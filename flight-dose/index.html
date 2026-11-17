@@ -117,6 +117,18 @@
     a.btn { display: inline-block; font-weight: 700; border-radius: 12px; padding: 12px 16px; text-decoration: none; }
     a.btn.x { background: #e8edf6; color: #0b1020; }
 
+    .hint { font-size: 13px; color: var(--sub); }
+    .chip.home { border-color: var(--ok); }
+    .journey { display: grid; gap: 12px; }
+    #jTotals { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    @media (max-width: 760px) { #jTotals { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .journey h2 small { color: var(--sub); font-weight: 500; font-size: 12px; margin-left: 6px; }
+    .stamps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+    .stamp { border: 1.5px dashed var(--line); border-radius: 12px; padding: 8px 12px; display: grid; gap: 2px; background: var(--deck); min-width: 0; }
+    .stamp .no { font-family: var(--mono); font-size: 10px; color: var(--amber); letter-spacing: .12em; }
+    .stamp .codes { font-family: var(--mono); font-weight: 800; font-size: 16px; }
+    .stamp .meta { font-size: 12px; color: var(--sub); font-variant-numeric: tabular-nums; }
+    .note { margin: 0; font-size: 12px; color: var(--sub); }
     .health { margin: 0; font-size: 13px; line-height: 1.75; color: var(--text); background: var(--deck); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
     details.about { background: var(--deck); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 13px; line-height: 1.75; color: var(--sub); }
     details.about summary { cursor: pointer; color: var(--text); font-weight: 600; }
@@ -151,7 +163,7 @@
   </section>
 
   <section style="display:grid;gap:10px">
-    <h2>行き先（東京・成田から）</h2>
+    <h2 id="destTitle">行き先（東京・成田から）</h2>
     <div class="dests" id="dests"></div>
   </section>
 
@@ -188,11 +200,16 @@
       </div>
     </div>
 
+    <div class="actions" id="nextBox">
+      <button class="go" id="btnReturn" hidden>✈ 帰りも飛ぶ</button>
+      <span class="hint" id="nextHint">上の「行き先」から、ここを出発地にして続けて飛べます。</span>
+    </div>
+
     <div class="cmp" id="cmp"></div>
 
     <div class="ladder">
       <h2 style="margin-bottom:6px">放射線のものさし（目盛りは10倍ずつ）</h2>
-      <svg id="ladder" viewBox="0 0 720 150" role="img" aria-label="このフライトの線量を、胸部X線・CT・日本の自然放射線1年分・100ミリシーベルトと並べた対数の目盛り"></svg>
+      <svg id="ladder" viewBox="0 0 720 172" role="img" aria-label="このフライトと旅の合計の線量を、胸部X線・CT・日本の自然放射線1年分・100ミリシーベルトと並べた対数の目盛り"></svg>
     </div>
 
     <div id="vsBox" style="display:grid;gap:8px" hidden>
@@ -210,6 +227,17 @@
         <a class="btn x" id="btnShare" target="_blank" rel="noopener">X にポストする</a>
         <button class="ghost" id="btnSave">画像を保存</button>
       </div>
+    </div>
+  </section>
+
+  <section id="journey" class="journey" hidden>
+    <h2>渡航歴 <small id="jSummary"></small></h2>
+    <div class="cmp" id="jTotals"></div>
+    <ol class="stamps" id="stamps"></ol>
+    <p class="note">渡航歴は、このブラウザの中にだけ保存されます（どこにも送信しません）。</p>
+    <div class="actions">
+      <button class="ghost" id="btnUndo">最後の便を取り消す</button>
+      <button class="ghost" id="btnReset">渡航歴を消して東京から</button>
     </div>
   </section>
 
@@ -246,6 +274,25 @@
 
   let grid, land, places, heatImg;
   let dest = null, routeIdx = 0, results = [], anim = null, plane = null, drawnRoutes = [];
+  // 渡航歴: 飛んだ便の空港コードの配列だけを、このブラウザの localStorage に保存する（線量は毎回計算し直す）
+  const STORE_KEY = 'rtlab.flightDose.journey.v1', MAX_FLIGHTS = 200;
+  let here = null, journey = [];   // here = いまいる空港、journey = [{codes, ...routeDose の結果}]
+  function loadJourney() {
+    let codesList = [];
+    try { codesList = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch (e) { codesList = []; }
+    if (!Array.isArray(codesList)) codesList = [];
+    journey = [];
+    here = places.origin;
+    for (const codes of codesList.slice(-MAX_FLIGHTS)) {
+      // 壊れた記録・知らない空港・つながらない便は捨てる
+      if (!Array.isArray(codes) || codes.length < 2 || !codes.every(c => places.airports[c]) || codes[0] !== here) continue;
+      journey.push({ codes, ...C.routeDose(grid, codes.map(c => places.airports[c])) });
+      here = codes[codes.length - 1];
+    }
+  }
+  function saveJourney() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(journey.map(j => j.codes))); } catch (e) { /* 保存できなくても画面は動かす */ }
+  }
 
   // ---- 投影（太平洋が中心の正距円筒） ----
   const relLon = lon => ((lon - CENTER_LON + 540) % 360) - 180;          // -180..180
@@ -315,6 +362,12 @@
     ctx.setLineDash([]);
     ctx.fillStyle = 'rgba(232,237,246,.55)'; ctx.font = '13px ' + getComputedStyle(document.body).fontFamily;
     ctx.fillText('北緯60°', 8, py(60) - 6); ctx.fillText('赤道', 8, py(0) - 6);
+    // これまでの渡航歴（細い白線）
+    ctx.strokeStyle = 'rgba(232,237,246,.6)'; ctx.lineWidth = 1.4;
+    for (const j of journey) {
+      const pts = j.codes.map(c => places.airports[c]);
+      for (let i = 0; i + 1 < pts.length; i++) strokeLonLat(ctx, C.greatCircle(pts[i], pts[i + 1], 96));
+    }
     // ルート
     drawnRoutes.forEach((r, k) => {
       const sel = k === routeIdx;
@@ -327,7 +380,7 @@
     const A = places.airports;
     for (const code of Object.keys(A)) {
       const a = A[code], x = px(a.lon), y = py(a.lat);
-      const on = dest && (code === dest.id || code === places.origin || drawnRoutes.some(r => r.includes(a)));
+      const on = (dest && (code === dest.id || drawnRoutes.some(r => r.includes(a)))) || code === here;
       ctx.beginPath(); ctx.arc(x, y, on ? 5 : 3.5, 0, Math.PI * 2);
       ctx.fillStyle = on ? '#ffb547' : 'rgba(232,237,246,.85)'; ctx.fill();
       if (on || code === places.origin) {
@@ -350,29 +403,38 @@
 
   // ---- 行き先とルート ----
   const routeLabel = codes => codes.length === 2 ? '直行便' : codes.slice(1, -1).map(c => places.airports[c].ja) .join('・') + '乗り継ぎ';
+  const cityName = c => c === places.origin ? '東京' : places.airports[c].ja;
+  // いまいる空港から行ける行き先（東京にいるときは決まった行き先、外国にいるときは東京＝帰国を先頭にほかの全部）
+  function destIds() {
+    const o = places.origin;
+    if (here === o) return places.destinations.map(d => d.id);
+    return [o, ...Object.keys(places.airports).filter(c => c !== o && c !== here)];
+  }
   function renderDests() {
+    $('destTitle').textContent = here === places.origin ? '行き先（東京・成田から）' : `次の行き先（いまは${cityName(here)}）`;
     const box = $('dests'); box.innerHTML = '';
-    for (const d of places.destinations) {
+    for (const id of destIds()) {
+      const n = C.routeOptions(places, here, id).length;
       const b = document.createElement('button');
-      b.className = 'chip'; b.type = 'button'; b.dataset.id = d.id;
-      b.setAttribute('aria-pressed', dest && dest.id === d.id ? 'true' : 'false');
-      b.innerHTML = places.airports[d.id].ja + (d.routes.length > 1 ? `<small>${d.routes.length}ルート</small>` : '');
-      b.addEventListener('click', () => selectDest(d.id));
+      b.className = 'chip' + (id === places.origin ? ' home' : ''); b.type = 'button'; b.dataset.id = id;
+      b.setAttribute('aria-pressed', dest && dest.id === id && !$('routeBox').hidden ? 'true' : 'false');
+      b.innerHTML = (id === places.origin && here !== places.origin ? '日本に帰る（東京）' : places.airports[id].ja) + (n > 1 ? `<small>${n}ルート</small>` : '');
+      b.addEventListener('click', () => selectDest(id));
       box.appendChild(b);
     }
   }
   function selectDest(id) {
     stopAnim();
-    dest = places.destinations.find(d => d.id === id);
+    dest = { id, routes: C.routeOptions(places, here, id) };
     routeIdx = 0;
     results = dest.routes.map(r => C.routeDose(grid, r.map(c => places.airports[c])));
     drawnRoutes = dest.routes.map(r => r.map(c => places.airports[c]));
-    renderDests(); renderRoutes();
     $('routeBox').hidden = false; $('result').hidden = true;
+    renderDests(); renderRoutes();
     resetMeter();
     $('meterMsg').innerHTML = dest.routes.length > 1
-      ? `<b>${places.airports[id].ja}</b>には ${dest.routes.length} つのルートがあります。どれが一番少ないか、予想してから飛んでください。`
-      : `<b>${places.airports[id].ja}</b>まで。「飛ぶ」を押してください。`;
+      ? `<b>${cityName(id)}</b>まで ${dest.routes.length} つのルートがあります。どれが一番少ないか、予想してから飛んでください。`
+      : `<b>${cityName(here)}</b>から<b>${cityName(id)}</b>まで。「飛ぶ」を押してください。`;
     plane = null; drawMap();
   }
   function renderRoutes() {
@@ -382,7 +444,7 @@
       const b = document.createElement('button');
       b.className = 'route'; b.type = 'button';
       b.setAttribute('aria-pressed', k === routeIdx ? 'true' : 'false');
-      b.innerHTML = `<span class="k">${routeLabel(codes)}</span><span class="v">${codes.map(c => c === places.origin ? '東京' : places.airports[c].ja).join(' → ')}</span><span class="k">約 ${C.formatHours(results[k].hours)}</span>`;
+      b.innerHTML = `<span class="k">${routeLabel(codes)}</span><span class="v">${codes.map(cityName).join(' → ')}</span><span class="k">約 ${C.formatHours(results[k].hours)}</span>`;
       b.addEventListener('click', () => { stopAnim(); routeIdx = k; renderRoutes(); resetMeter(); $('result').hidden = true; plane = null; drawMap(); });
       box.appendChild(b);
     });
@@ -439,9 +501,22 @@
     $('btnSkip').hidden = true;
     const codes = dest.routes[routeIdx], res = results[routeIdx], A = places.airports;
     const dose = res.doseUSv, last = codes[codes.length - 1];
+    // 渡航歴に入れて、着いた空港を次の出発地にする
+    journey.push({ codes: codes.slice(), ...res });
+    if (journey.length > MAX_FLIGHTS) journey.shift();
+    saveJourney();
+    lastFlight = { codes: codes.slice(), routeIdx };
+    here = last;
+    $('routeBox').hidden = true;
+    renderDests(); renderJourney();
     plane = { lat: A[last].lat, lon: A[last].lon, angle: 0 }; drawMap();
     setMeter(dose, 0, res.hours);
-    $('meterMsg').innerHTML = `到着！ <b>${fmt(dose)} μSv</b>（${C.formatHours(res.hours)}）でした。`;
+    $('meterMsg').innerHTML = `${cityName(last)}に到着！ <b>${fmt(dose)} μSv</b>（${C.formatHours(res.hours)}）でした。` +
+      (journey.length > 1 ? `　旅の合計は <b>${fmt(C.journeyTotals(journey).doseUSv)} μSv</b>（${journey.length}便）。` : '');
+    const home = here === places.origin;
+    $('btnReturn').hidden = home;
+    $('btnReturn').textContent = codes.length > 2 ? `✈ 帰りも飛ぶ（${routeLabel(codes)}で）` : '✈ 帰りも飛ぶ（直行便で）';
+    $('nextHint').textContent = home ? '上の「行き先」から、また次の旅に出られます。' : '上の「次の行き先」から、ここを出発地にして続けて飛ぶこともできます。';
 
     $('passCodes').innerHTML = codes.map((c, i) => (i ? '<span class="arrow">✈</span>' : '') + c).join(' ');
     $('passCities').textContent = codes.map(c => A[c].ja).join(' → ') + '　/　' + routeLabel(codes);
@@ -455,13 +530,73 @@
       `<div class="card"><span class="num">${fmt(days)}<small>日分</small></span><p>日本で暮らして自然放射線から受ける量（年 2.1 mSv）の何日分か。</p></div>`,
       `<div class="card"><span class="num">${fmt(HEALTH_USV / dose, 0)}<small>分の1</small></span><p>健康影響が確認されている線量（100 mSv 以上）と比べて。</p></div>`,
     ].join('');
-    drawLadder(dose);
+    drawLadder(dose, journey.length > 1 ? C.journeyTotals(journey).doseUSv : null);
     renderVs();
     $('health').innerHTML = `人への健康影響が確認されている被ばく線量は100ミリシーベルト（＝100,000 μSv）以上と考えられていて（環境省 統一的な基礎資料）、このフライトはその<b>約${fmt(HEALTH_USV / dose, 0)}分の1</b>です。宇宙線は飛行機に乗る人みんなが受ける自然放射線で、地上でも毎日少しずつ受けています。`;
     drawCard(codes, res);
-    const text = `${codes.map(c => A[c].ja).join('→')}（${routeLabel(codes)}）の機内で受けた宇宙線は ${fmt(dose)} μSv。胸部X線の${fmt(dose / CHEST_USV, 2)}回分、地上で暮らす${fmt(days)}日分でした。`;
-    $('btnShare').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(URL_SELF);
+    $('btnShare').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText(codes, dose, days)) + '&url=' + encodeURIComponent(URL_SELF);
     $('result').hidden = false;
+  }
+
+  function shareText(codes, dose, days) {
+    if (journey.length > 1) {
+      const t = C.journeyTotals(journey);
+      return `${t.flights}便の空の旅（${journeyCities()}）で、機内で受けた宇宙線は合計 ${fmt(t.doseUSv)} μSv。胸部X線の${fmt(t.doseUSv / CHEST_USV, 2)}回分、地上で暮らす${fmt(t.doseUSv / (NATURAL_JP_USV_Y / 365))}日分、地球${fmt(t.distanceKm / C.EARTH_CIRCUMFERENCE_KM, 2)}周ぶん飛びました。`;
+    }
+    return `${codes.map(c => places.airports[c].ja).join('→')}（${routeLabel(codes)}）の機内で受けた宇宙線は ${fmt(dose)} μSv。胸部X線の${fmt(dose / CHEST_USV, 2)}回分、地上で暮らす${fmt(days)}日分でした。`;
+  }
+  // 渡航歴の都市（経由地は除き、続けて同じ都市は1回）
+  function journeyCities() {
+    const list = [cityName(journey[0].codes[0])];
+    for (const j of journey) list.push(cityName(j.codes[j.codes.length - 1]));
+    return list.filter((c, i) => i === 0 || c !== list[i - 1]).join('→');
+  }
+
+  // ---- 渡航歴 ----
+  let lastFlight = null;
+  function renderJourney() {
+    const box = $('journey');
+    if (!journey.length) { box.hidden = true; return; }
+    box.hidden = false;
+    const t = C.journeyTotals(journey);
+    $('jSummary').textContent = `${t.flights}便・${C.formatHours(t.hours)}・${fmt(t.distanceKm, 0)} km`;
+    $('jTotals').innerHTML = [
+      `<div class="card"><span class="num">${fmt(t.doseUSv)}<small>μSv</small></span><p>旅の合計。100 mSv（健康影響が確認されている線量）の約${fmt(HEALTH_USV / t.doseUSv, 0)}分の1。</p></div>`,
+      `<div class="card"><span class="num">${fmt(t.doseUSv / CHEST_USV, 2)}<small>回分</small></span><p>胸部X線（正面）1回 0.08 mSv と比べて。</p></div>`,
+      `<div class="card"><span class="num">${fmt(t.doseUSv / (NATURAL_JP_USV_Y / 365))}<small>日分</small></span><p>日本で暮らして自然放射線から受ける量（年 2.1 mSv）の何日分か。</p></div>`,
+      `<div class="card"><span class="num">${fmt(t.distanceKm / C.EARTH_CIRCUMFERENCE_KM, 2)}<small>周</small></span><p>飛んだ距離は地球（赤道）の何周ぶんか。</p></div>`,
+    ].join('');
+    $('stamps').innerHTML = journey.map((j, k) =>
+      `<li class="stamp"><span class="no">FLIGHT ${String(k + 1).padStart(2, '0')}</span><span class="codes">${j.codes.join(' › ')}</span><span class="meta">${j.codes.map(cityName).join(' → ')}</span><span class="meta">${C.formatHours(j.hours)}・<b>${fmt(j.doseUSv)} μSv</b></span></li>`).join('');
+  }
+  function afterJourneyChange() {
+    stopAnim();
+    dest = null; drawnRoutes = []; plane = null; lastFlight = null;
+    $('routeBox').hidden = true; $('result').hidden = true;
+    resetMeter();
+    $('meterMsg').innerHTML = here === places.origin ? '行き先を選んでください。' : `いまは<b>${cityName(here)}</b>にいます。次の行き先を選んでください。`;
+    renderDests(); renderJourney(); drawMap();
+  }
+  function undoLast() {
+    if (!journey.length) return;
+    journey.pop(); saveJourney();
+    here = journey.length ? journey[journey.length - 1].codes.slice(-1)[0] : places.origin;
+    afterJourneyChange();
+  }
+  function resetJourney() {
+    if (!window.confirm('渡航歴をすべて消して、東京からやり直しますか？')) return;
+    journey = []; saveJourney(); here = places.origin;
+    afterJourneyChange();
+  }
+  // 帰りも飛ぶ: 来たルートを逆にたどる（東京から来た便なら、同じ経由地で帰る）
+  function flyReturn() {
+    if (!lastFlight || here === places.origin) return;
+    selectDest(places.origin);
+    const back = lastFlight.codes.slice().reverse().join('-');
+    const k = dest.routes.findIndex(r => r.join('-') === back);
+    routeIdx = k >= 0 ? k : 0;
+    renderRoutes(); drawMap();
+    fly();
   }
 
   function renderVs() {
@@ -487,7 +622,7 @@
   }
 
   // 対数の目盛り（1 μSv 〜 100 mSv）
-  function drawLadder(dose) {
+  function drawLadder(dose, total) {
     const x0 = 30, x1 = 690, lmin = 0, lmax = 5;     // 10^0..10^5 μSv
     const X = v => x0 + (Math.log10(v) - lmin) / (lmax - lmin) * (x1 - x0);
     let s = `<line x1="${x0}" y1="70" x2="${x1}" y2="70" stroke="#93a0ba" stroke-width="1.5"/>`;
@@ -500,6 +635,11 @@
     s += mark(NATURAL_JP_USV_Y, '自然放射線1年', '#6fd3a8');
     s += `<line x1="${X(HEALTH_USV)}" y1="20" x2="${X(HEALTH_USV)}" y2="112" stroke="#e2433f" stroke-width="2" stroke-dasharray="4 3"/><text x="${X(HEALTH_USV) - 4}" y="142" fill="#e2433f" font-size="12" text-anchor="end">健康影響が確認されている線量</text>`;
     s += `<text x="${X(dose)}" y="14" fill="#ffb547" font-size="13" font-weight="700" text-anchor="middle">このフライト</text><polygon points="${X(dose) - 7},20 ${X(dose) + 7},20 ${X(dose)},32" fill="#ffb547"/><line x1="${X(dose)}" y1="32" x2="${X(dose)}" y2="70" stroke="#ffb547" stroke-width="2"/><circle cx="${X(dose)}" cy="70" r="7" fill="#ffb547"/>`;
+    // 旅の合計は目盛りの下の段（y=166 の文字）。文字は左右の端で切れないように寄せる
+    if (total) {
+      const tx = X(total), anchor = tx > 640 ? 'end' : tx < 80 ? 'start' : 'middle';
+      s += `<line x1="${tx}" y1="70" x2="${tx}" y2="140" stroke="#6fd3a8" stroke-width="2"/><polygon points="${tx - 7},152 ${tx + 7},152 ${tx},140" fill="#6fd3a8"/><circle cx="${tx}" cy="70" r="6" fill="#0b1020" stroke="#6fd3a8" stroke-width="3"/><text x="${tx}" y="168" fill="#6fd3a8" font-size="13" font-weight="700" text-anchor="${anchor}">旅の合計 ${fmt(total)} μSv</text>`;
+    }
     $('ladder').innerHTML = s;
   }
 
@@ -525,6 +665,12 @@
     ctx.fillStyle = '#6b6450'; ctx.font = '600 20px ' + F; ctx.fillText('回分', 1000, 375);
     ctx.fillText('地上で暮らす', 1000, 430); ctx.fillStyle = '#1b2233'; ctx.font = '700 30px ' + F; ctx.fillText(fmt(res.doseUSv / (NATURAL_JP_USV_Y / 365)) + ' 日分', 1000, 470);
     ctx.textAlign = 'left'; ctx.fillStyle = '#e8edf6'; ctx.font = '700 26px ' + F; ctx.fillText('その旅、何マイクロシーベルト？', 70, 80);
+    if (journey.length > 1) {   // 続けて飛んだときは、旅の合計を右上に
+      const t = C.journeyTotals(journey);
+      ctx.textAlign = 'right'; ctx.fillStyle = '#6fd3a8'; ctx.font = '800 30px ' + F;
+      ctx.fillText(`旅の合計 ${t.flights}便・${fmt(t.doseUSv)} μSv`, 1130, 82);
+      ctx.textAlign = 'left';
+    }
     ctx.fillStyle = '#93a0ba'; ctx.font = '500 18px ' + F; ctx.fillText('rt-ai-lab.com/flight-dose　PARMA（JAEA）で計算・2025年の太陽活動・最短ルートでの目安', 70, 580);
   }
   function saveCard() {
@@ -541,15 +687,23 @@
     if (!places) return;   // データを読み込む前
     const r = $('map').getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * W, y = (e.clientY - r.top) / r.height * H;
     let best = null, bd = 30 * 30;
-    for (const d of places.destinations) { const a = places.airports[d.id]; const dd = (px(a.lon) - x) ** 2 + (py(a.lat) - y) ** 2; if (dd < bd) { bd = dd; best = d.id; } }
+    for (const id of destIds()) { const a = places.airports[id]; const dd = (px(a.lon) - x) ** 2 + (py(a.lat) - y) ** 2; if (dd < bd) { bd = dd; best = id; } }
     if (best) selectDest(best);
   });
   $('btnFly').addEventListener('click', fly);
+  $('btnReturn').addEventListener('click', flyReturn);
+  $('btnUndo').addEventListener('click', undoLast);
+  $('btnReset').addEventListener('click', resetJourney);
   $('btnSkip').addEventListener('click', skip);
   $('btnSave').addEventListener('click', saveCard);
 
   Promise.all(['doserate-2025.json', 'land-110m.json', 'places.json'].map(f => fetch(f).then(r => { if (!r.ok) throw new Error(f + ' ' + r.status); return r.json(); })))
-    .then(([g, l, p]) => { grid = g; land = l; places = p; heatImg = buildHeat(); renderDests(); drawMap(); })
+    .then(([g, l, p]) => {
+      grid = g; land = l; places = p; heatImg = buildHeat();
+      loadJourney();
+      if (here !== places.origin) $('meterMsg').innerHTML = `前回の旅の続きです。いまは<b>${cityName(here)}</b>にいます。次の行き先を選んでください。`;
+      renderDests(); renderJourney(); drawMap();
+    })
     .catch(err => { $('meterMsg').textContent = 'データを読み込めませんでした。ページを再読み込みしてください。（' + err.message + '）'; });
 })();
 </script>

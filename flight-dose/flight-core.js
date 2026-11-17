@@ -147,6 +147,35 @@
     };
   }
 
+  /**
+   * from から to へのルートの候補（空港コードの配列の配列）。順番は places.json の routes のまま
+   * （たいていは直行便が先。サンパウロのように直行便がない行き先もある）。
+   *  - 出発地（places.origin）から行き先へ: places.destinations の routes
+   *  - 行き先から出発地へ（帰り）: 同じ routes を逆にしたもの
+   *  - それ以外: 直行便だけ
+   */
+  function routeOptions(places, from, to) {
+    if (from === to) return [];
+    const o = places.origin;
+    const find = id => places.destinations.find(d => d.id === id);
+    if (from === o && find(to)) return find(to).routes.map(r => r.slice());
+    if (to === o && find(from)) return find(from).routes.map(r => r.slice().reverse());
+    return [[from, to]];
+  }
+
+  /** 渡航歴（{doseUSv, hours, distanceKm} の配列）の合計 */
+  function journeyTotals(legs) {
+    return legs.reduce((t, l) => ({
+      flights: t.flights + 1,
+      doseUSv: t.doseUSv + l.doseUSv,
+      hours: t.hours + l.hours,
+      distanceKm: t.distanceKm + l.distanceKm,
+    }), { flights: 0, doseUSv: 0, hours: 0, distanceKm: 0 });
+  }
+
+  /** 赤道の長さ（km）。「地球◯周」に使う */
+  const EARTH_CIRCUMFERENCE_KM = 2 * Math.PI * R_EARTH_KM;
+
   /** 「◯時間◯分」 */
   function formatHours(h) {
     const m = Math.round(h * 60);
@@ -157,5 +186,6 @@
     R_EARTH_KM, CLIMB_H, DESCENT_H, RAMP_FACTOR, FLIGHT_TIME,
     distanceKm, interpolate, greatCircle, bearing, eastwardFraction, flightTimeH,
     rateAt, profileFactor, legDose, routeDose, formatHours, wrapLon,
+    routeOptions, journeyTotals, EARTH_CIRCUMFERENCE_KM,
   };
 });
