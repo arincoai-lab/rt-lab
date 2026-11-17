@@ -269,7 +269,7 @@
   const LOOK = {
     office:  { bw: 1.00, hair: '#2a201b', gown: '#8aa9c0', skin: '#d9b59a', pants: '#2c3440', shrug: 0,   hunch: 0 },
     stiff:   { bw: 1.04, hair: '#3a3632', gown: '#93abbd', skin: '#d2a98d', pants: '#33302c', shrug: 1,   hunch: 0 },
-    large:   { bw: 1.32, hair: '#241c18', gown: '#86a3b8', skin: '#cfa587', pants: '#262c35', shrug: 0,   hunch: 0 },
+    large:   { bw: 1.17, hair: '#241c18', gown: '#86a3b8', skin: '#cfa587', pants: '#262c35', shrug: 0,   hunch: 0 },
     elderly: { bw: 0.96, hair: '#d2cdc5', gown: '#97afc0', skin: '#dcbea8', pants: '#3b3a40', shrug: 0,   hunch: 1 },
     nervous: { bw: 0.86, hair: '#4b3427', gown: '#8eb0c7', skin: '#e2c0a5', pants: '#2a3348', shrug: 0.5, hunch: 0 },
   };
@@ -532,6 +532,7 @@
     const c = oc, g = C.geom(patient, shot.controls, shot.lvl), s = g.s, lvl = shot.lvl;
     const ix = wx => FN / 2 + FZ * wx, iy = y => FN / 2 + FZ * (y - shot.controls.panelY);
     const X = (lx, z = 0) => ix(g.rx(lx, z)), Y = ly => iy(g.wy(ly)), S = v => v * FZ * s;
+    const Xw = (lx, z = 0) => X(lx * g.wide, z);                                   // 胸郭の横幅に合わせる（軟部組織）
     const Lp = Math.max(g.botL, g.botR) - g.apexY, rel = f => g.apexY + f * Lp;   // 肺尖からの割合 → y
     const rng = C.makeRng(Math.round(Math.abs(patient.c7 * 1009 + patient.baseX * 7919 + patient.s * 104729)) + 7);
     const bothLungs = () => { c.beginPath(); lungPath(c, g, 1, ix, iy); lungPath(c, g, -1, ix, iy); };
@@ -543,13 +544,13 @@
     c.filter = 'blur(7px)';
     c.fillStyle = '#383838';
     for (const sg of [1, -1]) {
-      c.beginPath(); c.moveTo(X(sg * 18), Y(0)); c.lineTo(X(sg * 25), Y(3)); c.lineTo(X(sg * 24), Y(90)); c.lineTo(X(sg * 19.5), Y(90)); c.lineTo(X(sg * 19.5), Y(10)); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(Xw(sg * 18), Y(0)); c.lineTo(Xw(sg * 25), Y(3)); c.lineTo(Xw(sg * 24), Y(90)); c.lineTo(Xw(sg * 19.5), Y(90)); c.lineTo(Xw(sg * 19.5), Y(10)); c.closePath(); c.fill();
     }
     const gb = c.createLinearGradient(0, Y(-6), 0, Y(50)); gb.addColorStop(0, '#565656'); gb.addColorStop(0.5, '#636363'); gb.addColorStop(1, '#8e8e8e');
     c.fillStyle = gb;
-    c.beginPath(); c.moveTo(X(-5.5), Y(-40)); c.lineTo(X(5.5), Y(-40)); c.lineTo(X(6), Y(-3)); c.quadraticCurveTo(X(16), Y(-1.5), X(20), Y(2));
-    c.lineTo(X(18.5), Y(30)); c.lineTo(X(17.5), Y(90)); c.lineTo(X(-17.5), Y(90)); c.lineTo(X(-18.5), Y(30)); c.lineTo(X(-20), Y(2));
-    c.quadraticCurveTo(X(-16), Y(-1.5), X(-6), Y(-3)); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(Xw(-5.5), Y(-40)); c.lineTo(Xw(5.5), Y(-40)); c.lineTo(Xw(6), Y(-3)); c.quadraticCurveTo(Xw(16), Y(-1.5), Xw(20), Y(2));
+    c.lineTo(Xw(18.5), Y(30)); c.lineTo(Xw(17.5), Y(90)); c.lineTo(Xw(-17.5), Y(90)); c.lineTo(Xw(-18.5), Y(30)); c.lineTo(Xw(-20), Y(2));
+    c.quadraticCurveTo(Xw(-16), Y(-1.5), Xw(-6), Y(-3)); c.closePath(); c.fill();
     c.fillStyle = 'rgba(210,210,210,.16)';                                                            // 肝臓（患者の右）
     c.beginPath(); c.ellipse(ix(g.X - s * 6), iy(g.botR + 6 * s), S(11), S(7), 0, 0, 7); c.fill();
 
