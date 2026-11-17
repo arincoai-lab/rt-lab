@@ -76,7 +76,7 @@ eachPatient((p, id, seed) => {
 {
   const breaks = [
     ['rot', s => { s.controls.rot += s.controls.rot > 0 ? -3 : 3; }],      // 操作の範囲の内側へ崩す
-    ['center', s => { s.controls.x += s.controls.x > 0 ? -3 : 3; }],
+    ['center', s => { s.controls.x += s.controls.x > 0 ? -1.5 : 1.5; }],   // 大柄な人の左右の余白（最小1.6cm）の内側
     ['scapula', s => { s.controls.roll = 0; }],
     ['coverage', s => { s.controls.panelY += 10; }],
     ['inspiration', s => { s.lvl = 0.6; }],
@@ -93,6 +93,22 @@ eachPatient((p, id, seed) => {
     }
   });
 }
+
+// ---------------------------------------------------------------- 3b. パネルに対する肺野の大きさ（panelFit）
+// 43×43 のパネルに対し、標準体型は左右に余裕があり、大柄な人はぎりぎり（左右の余白 1〜3cm）
+eachPatient((p, id, seed) => {
+  const g = C.geom(p, C.ideal(p).controls, 1);
+  const side = (C.PANEL - (g.lungL - g.lungR)) / 2;
+  if (id === 'large') {
+    check(side >= 1 && side <= 3, `large#${seed}: 左右の余白は1〜3cm（実際 ${side.toFixed(2)}）`);
+    const shot = C.ideal(p); shot.controls = { ...shot.controls, x: shot.controls.x + 3 };
+    check(byKey(C.score(p, shot)).coverage.pt < 20, `large#${seed}: 3cm ずれると肺野が切れる`);
+  } else {
+    check(side >= 5, `${id}#${seed}: 左右の余白は5cm以上（実際 ${side.toFixed(2)}）`);
+  }
+  const w = g.lungL - g.lungR, h = Math.max(g.botL, g.botR) - g.apexY;
+  check(w >= 26 && w <= 41 && h >= 26 && h <= 36, `${id}#${seed}: 肺野の幅と高さが実寸の範囲（幅 ${w.toFixed(1)} / 高さ ${h.toFixed(1)}）`);
+});
 
 // ---------------------------------------------------------------- 4. 呼吸の全区間（scoreFiniteEverywhere）
 eachPatient((p, id, seed) => {
