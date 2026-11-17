@@ -261,8 +261,8 @@
     nervous: { bw: 0.86, hair: '#4b3427', gown: '#8eb0c7', skin: '#e2c0a5', pants: '#2a3348', shrug: 0.5, hunch: 0 },
   };
   const lookOf = p => LOOK[p.type] || LOOK.office;
-  // 肘の位置（肘を前に出すほど、背中側から見ると内側へ）
-  const elbowAt = (bw, roll) => ({ lx: (24.5 - 4 * roll) * bw, ly: 24, z: -6 * roll });
+  // 肘の位置（肘を前に出すほど肩が前に回り、肘は外へ開く。肩甲骨も一緒に外へ動く）
+  const elbowAt = (bw, roll) => ({ lx: (21.5 + 4.5 * roll) * bw, ly: 24 - 1.5 * roll, z: -6 * roll });
 
   function handles(g, LP) {
     const L = lookOf(LP), bw = L.bw;
@@ -308,7 +308,7 @@
     if (drag.what === 'torso') c.x = drag.c.x + dx / K;                 // 体を右へ押す → 背骨が画面の右へ
     else if (drag.what === 'shoulder') c.rot = drag.c.rot - dx * 0.06; // 背骨の線が指についてくる向き
     else if (drag.what === 'panel') c.panelY = drag.c.panelY + dy / K;
-    else { const sg = drag.what === 'elbowL' ? 1 : -1; c.roll = drag.c.roll + sg * dx / 70; } // 肘を内側（背骨側）へ
+    else { const sg = drag.what === 'elbowL' ? 1 : -1; c.roll = drag.c.roll - sg * dx / 70; } // 肘を外へ引くと前に出る（肩甲骨が外へ）
     ctl = C.clampControls(c);
     room.style.cursor = 'grabbing';
   });
@@ -349,9 +349,9 @@
     rc.fillStyle = '#2e3a4a'; rc.beginPath(); rc.roundRect ? rc.roundRect(pl - bz, pt - bz, pw + 2 * bz, pw + 2 * bz, 10) : rc.rect(pl - bz, pt - bz, pw + 2 * bz, pw + 2 * bz); rc.fill();
     rc.fillStyle = '#10161d'; rc.fillRect(pl, pt, pw, pw);                                             // 受像面
 
-    // 患者（背中）。手は腰、肘を前に出すほど肘が内側へ
+    // 患者（背中）。手は腰、肘を前に出すほど肘が外へ開く
     const skin = L.skin, gown = L.gown, hy = -13 + 3 * L.hunch, shY = 1.5 - 1.8 * L.shrug;
-    const e = elbowAt(bw, ctl.roll);
+    const e = elbowAt(bw, ctl.roll), rw = bw * (1 + 0.05 * ctl.roll);   // 肩が前に回ると肩幅が少し広がって見える
     // 脚
     rc.fillStyle = L.pants;
     for (const sg of [1, -1]) { rc.beginPath(); rc.moveTo(px(sg * 2 * bw), py(64)); rc.lineTo(px(sg * 15.5 * bw), py(64)); rc.lineTo(px(sg * 13 * bw), py(95)); rc.lineTo(px(sg * 3 * bw), py(95)); rc.closePath(); rc.fill(); }
@@ -369,15 +369,15 @@
     const torso = () => {
       rc.beginPath();
       rc.moveTo(px(-5.5 * bw, 3), py(-0.5));
-      rc.bezierCurveTo(px(-10 * bw, 2), py(shY - 0.5), px(-15 * bw, 1), py(shY), px(-18 * bw), py(shY + 2.2));   // 僧帽筋の傾き
-      rc.quadraticCurveTo(px(-20.5 * bw), py(shY + 4.5), px(-19.2 * bw), py(10));                            // 肩の丸み
+      rc.bezierCurveTo(px(-10 * bw, 2), py(shY - 0.5), px(-15 * rw, 1), py(shY), px(-18 * rw), py(shY + 2.2));   // 僧帽筋の傾き
+      rc.quadraticCurveTo(px(-20.5 * rw), py(shY + 4.5), px(-19.2 * rw), py(10));                            // 肩の丸み
       rc.bezierCurveTo(px(-17.2 * bw), py(18), px(-15.6 * bw * (L.bw > 1.2 ? 1.08 : 1)), py(28), px(-15.8 * bw), py(36));   // 脇からくびれ
       rc.bezierCurveTo(px(-16 * bw), py(44), px(-17.6 * bw), py(52), px(-17.4 * bw), py(66));               // 腰
       rc.lineTo(px(17.4 * bw), py(66));
       rc.bezierCurveTo(px(17.6 * bw), py(52), px(16 * bw), py(44), px(15.8 * bw), py(36));
-      rc.bezierCurveTo(px(15.6 * bw * (L.bw > 1.2 ? 1.08 : 1)), py(28), px(17.2 * bw), py(18), px(19.2 * bw), py(10));
-      rc.quadraticCurveTo(px(20.5 * bw), py(shY + 4.5), px(18 * bw), py(shY + 2.2));
-      rc.bezierCurveTo(px(15 * bw, 1), py(shY), px(10 * bw, 2), py(shY - 0.5), px(5.5 * bw, 3), py(-0.5));
+      rc.bezierCurveTo(px(15.6 * bw * (L.bw > 1.2 ? 1.08 : 1)), py(28), px(17.2 * bw), py(18), px(19.2 * rw), py(10));
+      rc.quadraticCurveTo(px(20.5 * rw), py(shY + 4.5), px(18 * rw), py(shY + 2.2));
+      rc.bezierCurveTo(px(15 * rw, 1), py(shY), px(10 * bw, 2), py(shY - 0.5), px(5.5 * bw, 3), py(-0.5));
       rc.closePath();
     };
     const tg = rc.createLinearGradient(px(-19 * bw), 0, px(19 * bw), 0);
@@ -409,9 +409,9 @@
     // 上腕（胴の外側。袖つき）
     for (const sg of [1, -1]) {
       rc.strokeStyle = tint(gown, -0.12); rc.lineWidth = 7 * s * K * Math.sqrt(bw);
-      rc.beginPath(); rc.moveTo(px(sg * 18.4 * bw), py(shY + 4.5)); rc.lineTo(px(sg * e.lx, e.z), py(e.ly)); rc.stroke();
+      rc.beginPath(); rc.moveTo(px(sg * 18.4 * rw), py(shY + 4.5)); rc.lineTo(px(sg * e.lx, e.z), py(e.ly)); rc.stroke();
       rc.strokeStyle = tint(skin, -0.05); rc.lineWidth = 5.8 * s * K;
-      rc.beginPath(); rc.moveTo(px(sg * (e.lx * 0.55 + 18.4 * bw * 0.45), e.z * 0.5), py(shY + 4.5 + (e.ly - shY - 4.5) * 0.55)); rc.lineTo(px(sg * e.lx, e.z), py(e.ly)); rc.stroke();
+      rc.beginPath(); rc.moveTo(px(sg * (e.lx * 0.55 + 18.4 * rw * 0.45), e.z * 0.5), py(shY + 4.5 + (e.ly - shY - 4.5) * 0.55)); rc.lineTo(px(sg * e.lx, e.z), py(e.ly)); rc.stroke();
       rc.fillStyle = tint(skin, -0.22); rc.beginPath(); rc.arc(px(sg * e.lx, e.z), py(e.ly), 2.6 * s * K, 0, 7); rc.fill();   // 肘
     }
     // 頭（後ろから見ると髪）と耳
