@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>その旅、何マイクロシーベルト？ 海外旅行の宇宙線被ばくを地図で見る | RT-Lab</title>
+  <meta name="description" content="行き先を選ぶと、飛行機が地図の上を飛び、機内で受ける宇宙線の量（μSv）を線量計で表示します。直行便と乗り継ぎ便の比較、胸部X線や自然放射線との比べ方つき。JAEA の計算モデル PARMA で計算し、QST の JISCARD と比べています。">
+  <link rel="canonical" href="https://rt-ai-lab.com/flight-dose/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="RT-Lab">
+  <meta property="og:url" content="https://rt-ai-lab.com/flight-dose/">
+  <meta property="og:title" content="その旅、何マイクロシーベルト？ 海外旅行の宇宙線を地図で測る">
+  <meta property="og:description" content="行き先を選ぶと飛行機が地図の上を飛び、機内で受ける宇宙線を線量計が刻む。直行便と乗り継ぎ便の飛び比べ、胸部X線や自然放射線との比較つき。">
+  <meta property="og:image" content="https://rt-ai-lab.com/assets/og/flight-dose.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="その旅、何マイクロシーベルト？ 海外旅行の宇宙線を地図で測る">
+  <meta name="twitter:description" content="行き先を選ぶと飛行機が地図の上を飛び、機内で受ける宇宙線を線量計が刻む。直行便と乗り継ぎ便の飛び比べ、胸部X線や自然放射線との比較つき。">
+  <meta name="twitter:image" content="https://rt-ai-lab.com/assets/og/flight-dose.png">
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/assets/site.css">
+  <style>
+    /* 夜間飛行の地図と、個人線量計の液晶。単一の暗い見た目で固定（遊べるページ） */
+    :root {
+      --night: #0b1020; --deck: #121a2e; --line: #26324d; --text: #e8edf6; --sub: #93a0ba;
+      --lcd: #c8f0b4; --lcd-bg: #0f1c12; --amber: #ffb547; --ok: #6fd3a8; --sky: #8ec5ff;
+      --font: -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", system-ui, sans-serif;
+      --mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--night); color: var(--text); font-family: var(--font); }
+    [hidden] { display: none !important; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 12px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 16px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--sub); }
+    .topbar a { color: var(--sub); text-decoration: none; }
+
+    header.hero { display: grid; gap: 8px; }
+    .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: var(--amber); }
+    h1 { margin: 0; font-size: clamp(24px, 5.6vw, 38px); line-height: 1.25; text-wrap: balance; }
+    h1 small { display: block; font-size: .5em; color: var(--sub); font-weight: 600; margin-top: 6px; letter-spacing: .04em; }
+    .lead { margin: 0; color: var(--sub); line-height: 1.75; font-size: 14px; max-width: 62ch; }
+
+    /* 地図 */
+    .mapbox { position: relative; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #070b16; }
+    #map { display: block; width: 100%; height: auto; cursor: pointer; }
+    .legend { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--sub); padding: 8px 12px; border-top: 1px solid var(--line); background: var(--deck); }
+    .legend .bar { width: 140px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #1d3f7a, #1f8a9a, #e7d35a, #f08a3c, #e2433f); }
+    .legend b { color: var(--text); font-weight: 600; }
+
+    /* 行き先 */
+    h2 { margin: 0; font-size: 15px; letter-spacing: .04em; }
+    .dests { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { font: inherit; font-size: 14px; font-weight: 600; color: var(--text); background: var(--deck); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+    .chip small { color: var(--sub); font-weight: 500; margin-left: 4px; font-size: 11px; }
+    .chip[aria-pressed="true"] { background: var(--amber); color: #1d1404; border-color: var(--amber); }
+    .chip[aria-pressed="true"] small { color: #4a3510; }
+    .chip:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+
+    .routes { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .route { font: inherit; text-align: left; color: var(--text); background: var(--deck); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; cursor: pointer; display: grid; gap: 2px; }
+    .route .k { font-size: 11px; color: var(--sub); letter-spacing: .06em; }
+    .route .v { font-weight: 700; font-size: 15px; }
+    .route[aria-pressed="true"] { border-color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber); }
+
+    button.go { font: inherit; font-size: 16px; font-weight: 800; border: 0; border-radius: 12px; padding: 14px 18px; cursor: pointer; background: var(--amber); color: #1d1404; }
+    button.ghost { font: inherit; font-weight: 700; border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; cursor: pointer; background: transparent; color: var(--text); }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    /* 線量計 */
+    .meter { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; background: #1a2238; border: 1px solid var(--line); border-radius: 16px; padding: 12px; }
+    .lcd { background: var(--lcd-bg); color: var(--lcd); border-radius: 10px; padding: 10px 14px; font-family: var(--mono); min-width: 210px; box-shadow: inset 0 0 18px rgba(0,0,0,.6); }
+    .lcd .big { font-size: 34px; font-variant-numeric: tabular-nums; letter-spacing: .02em; line-height: 1.1; }
+    .lcd .big small { font-size: 14px; margin-left: 4px; }
+    .lcd .row { display: flex; justify-content: space-between; gap: 16px; font-size: 12px; opacity: .85; font-variant-numeric: tabular-nums; }
+    .meter .msg { font-size: 13px; color: var(--sub); line-height: 1.6; min-width: 0; }
+    .meter .msg b { color: var(--text); }
+
+    /* 結果: 搭乗券 */
+    .pass { display: grid; grid-template-columns: 1fr auto; background: #f4f1e8; color: #1b2233; border-radius: 16px; overflow: hidden; }
+    .pass .main { padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+    .pass .stub { background: #e3dccb; padding: 16px; border-left: 2px dashed #b9ae94; display: grid; align-content: center; gap: 4px; text-align: center; min-width: 120px; }
+    .pass .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: #6b6450; }
+    .pass .codes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-family: var(--mono); font-weight: 800; font-size: 28px; }
+    .pass .codes .arrow { color: #b0782a; font-size: 20px; }
+    .pass .cities { font-size: 12px; color: #4b4f5c; }
+    .pass .dose { font-size: 44px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+    .pass .dose small { font-size: 16px; margin-left: 4px; }
+    .pass .facts { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; }
+    .pass .facts b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
+
+    .cmp { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .cmp .card { background: var(--deck); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 4px; }
+    .cmp .num { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--amber); }
+    .cmp .num small { font-size: 13px; color: var(--sub); margin-left: 4px; font-weight: 600; }
+    .cmp p { margin: 0; font-size: 12px; color: var(--sub); line-height: 1.6; }
+
+    .ladder { background: var(--deck); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+    .ladder svg { display: block; width: 100%; height: auto; }
+
+    table.vs { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .vs th, .vs td { padding: 8px 6px; border-top: 1px solid var(--line); text-align: left; vertical-align: middle; }
+    .vs th { color: var(--sub); font-weight: 600; font-size: 11px; letter-spacing: .06em; }
+    .vs td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .vs .barcell { width: 40%; }
+    .vs .b { height: 10px; border-radius: 5px; background: var(--sky); }
+    .vs tr.best .b { background: var(--ok); }
+    .vs tr.sel td { color: var(--amber); }
+    .tablewrap { overflow-x: auto; }
+    .callout { margin: 0; padding: 10px 12px; border-radius: 10px; background: rgba(111,211,168,.12); color: var(--ok); font-size: 13px; line-height: 1.6; }
+
+    .share { display: grid; gap: 10px; }
+    #card { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); }
+    a.btn { display: inline-block; font-weight: 700; border-radius: 12px; padding: 12px 16px; text-decoration: none; }
+    a.btn.x { background: #e8edf6; color: #0b1020; }
+
+    .health { margin: 0; font-size: 13px; line-height: 1.75; color: var(--text); background: var(--deck); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+    details.about { background: var(--deck); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 13px; line-height: 1.75; color: var(--sub); }
+    details.about summary { cursor: pointer; color: var(--text); font-weight: 600; }
+    details.about a { color: var(--sky); }
+    details.about ul { padding-left: 1.2em; margin: 6px 0; }
+
+    @media (max-width: 560px) {
+      .meter { grid-template-columns: 1fr; }
+      .pass { grid-template-columns: 1fr; }
+      .pass .stub { border-left: 0; border-top: 2px dashed #b9ae94; }
+      .lcd .big { font-size: 30px; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <div class="topbar"><a href="/">RT-Lab</a><span>おまけ：遊べるシミュレーション</span></div>
+
+  <header class="hero">
+    <div class="eyebrow">COSMIC RAY · FLIGHT DOSE</div>
+    <h1>その旅、何マイクロシーベルト？<small>海外旅行で機内に降ってくる宇宙線を、地図の上で測る</small></h1>
+    <p class="lead">飛行機が飛ぶ高さ（約11 km）では、地上より宇宙線が多くなります。しかも北極や南極に近いほど多い。行き先を選んで「飛ぶ」を押すと、飛行機が地図の上を飛び、線量計が数字を刻みます。</p>
+  </header>
+
+  <section class="mapbox" aria-label="線量率の地図">
+    <canvas id="map" width="1200" height="520" role="img" aria-label="太平洋を中心にした世界地図。高度11 kmの宇宙線の強さを色で塗り、選んだ飛行ルートを線で示す"></canvas>
+    <div class="legend">
+      <span>高度11 kmの線量率</span><span>1.3</span><span class="bar" aria-hidden="true"></span><span>4.3 μSv/h</span>
+      <span>— <b>北極・南極に近いほど高い</b>のは、地球の磁場が磁極の近くでは宇宙線を防ぎにくいから。同じ緯度でも、北米の上は日本の上より高い</span>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:10px">
+    <h2>行き先（東京・成田から）</h2>
+    <div class="dests" id="dests"></div>
+  </section>
+
+  <section id="routeBox" style="display:grid;gap:10px" hidden>
+    <h2 id="routeTitle">ルート</h2>
+    <div class="routes" id="routes"></div>
+    <div class="actions">
+      <button class="go" id="btnFly">✈ 飛ぶ</button>
+      <button class="ghost" id="btnSkip" hidden>結果まで飛ばす</button>
+    </div>
+  </section>
+
+  <section class="meter">
+    <div class="lcd">
+      <div class="big"><span id="lcdDose">0.0</span><small>μSv</small></div>
+      <div class="row"><span id="lcdRate">0.00 μSv/h</span><span id="lcdTime">00:00</span></div>
+    </div>
+    <div class="msg" id="meterMsg" aria-live="polite">行き先を選んでください。<b>直行便と乗り継ぎ便</b>がある行き先は、どちらが多いか予想してから飛んでみてください。</div>
+  </section>
+
+  <section id="result" style="display:grid;gap:14px" hidden>
+    <div class="pass" id="pass">
+      <div class="main">
+        <div class="lbl">COSMIC RAY BOARDING PASS</div>
+        <div class="codes" id="passCodes"></div>
+        <div class="cities" id="passCities"></div>
+        <div><div class="lbl">機内で受けた宇宙線（実効線量）</div><div class="dose" id="passDose"></div></div>
+        <div class="facts" id="passFacts"></div>
+      </div>
+      <div class="stub">
+        <div class="lbl">胸部X線</div>
+        <div style="font-size:26px;font-weight:800" id="stubChest"></div>
+        <div class="lbl">回分</div>
+      </div>
+    </div>
+
+    <div class="cmp" id="cmp"></div>
+
+    <div class="ladder">
+      <h2 style="margin-bottom:6px">放射線のものさし（目盛りは10倍ずつ）</h2>
+      <svg id="ladder" viewBox="0 0 720 150" role="img" aria-label="このフライトの線量を、胸部X線・CT・日本の自然放射線1年分・100ミリシーベルトと並べた対数の目盛り"></svg>
+    </div>
+
+    <div id="vsBox" style="display:grid;gap:8px" hidden>
+      <h2>ルートを比べる</h2>
+      <div class="tablewrap"><table class="vs" id="vs"></table></div>
+      <p class="callout" id="vsCallout" hidden></p>
+    </div>
+
+    <p class="health" id="health"></p>
+
+    <div class="share">
+      <h2>シェアする</h2>
+      <canvas id="card" width="1200" height="630" role="img" aria-label="結果の搭乗券の画像"></canvas>
+      <div class="actions">
+        <a class="btn x" id="btnShare" target="_blank" rel="noopener">X にポストする</a>
+        <button class="ghost" id="btnSave">画像を保存</button>
+      </div>
+    </div>
+  </section>
+
+  <details class="about">
+    <summary>計算のしかたと出典</summary>
+    <ul>
+      <li>線量率は、日本原子力研究開発機構（JAEA）の宇宙線計算モデル <a href="https://phits.jaea.go.jp/expacs/" target="_blank" rel="noopener">PARMA（EXPACS）</a> 4.19 で、高度11 km・客室内の実効線量率（ICRP 116）を地球全体で2°ごとに計算したものです。太陽活動は2025年の月平均を使った1年平均です（太陽活動が強い年ほど宇宙線は少なくなります）。</li>
+      <li>飛行ルートは出発地と到着地を結ぶ最短ルート（大円）です。実際の航路は風や空域で変わり、たとえば今の日本〜ヨーロッパ便はロシア上空を避けて飛ぶため、ここでの値は「最短ルートで飛んだ場合の目安」です。</li>
+      <li>飛行時間は距離と偏西風（東向きは速く、西向きは遅い）から見積もり、離陸後15分・着陸前20分は上昇・降下中として線量率を3割にしています。</li>
+      <li>量子科学技術研究開発機構（QST）の航路線量計算システム <a href="http://jiscard.jp/" target="_blank" rel="noopener">JISCARD</a> の12路線（24区間）と比べ、線量の差は −5%〜+16%（平均 +5%）でした。</li>
+      <li>比べるものの値は、環境省「放射線による健康影響等に関する統一的な基礎資料（令和7年度版）」によります（胸部X線正面 0.08 mSv、X線CT 0.06〜17 mSv 程度、日本平均の自然放射線 年2.1 mSv）。</li>
+      <li>これは目安を楽しむためのページで、個人の被ばく線量の評価や、乗務員の線量管理には使えません。</li>
+      <li>文献: T. Sato, PLOS ONE 10(12): e0144679 (2015); T. Sato, PLOS ONE 11(8): e0160390 (2016). 地図: Natural Earth（パブリックドメイン）。</li>
+    </ul>
+  </details>
+</main>
+
+<script src="flight-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  const C = window.FlightCore;
+  const $ = id => document.getElementById(id);
+  const URL_SELF = 'https://rt-ai-lab.com/flight-dose/';
+  // 比べるもの（scripts/flight-dose-provenance.json の comparisons と一致させる）
+  const CHEST_USV = 80;            // 胸部X線（正面）1回 0.08 mSv
+  const NATURAL_JP_USV_Y = 2100;   // 日本平均の自然放射線 年2.1 mSv
+  const CT_USV = [60, 17000];      // X線CT 0.06〜17 mSv 程度
+  const HEALTH_USV = 100000;       // 健康影響が確認されている線量 100 mSv 以上
+  const NEAR_EQUAL = 0.10;         // ルートの差がこれ未満なら「ほぼ同じ」（JISCARD との差の幅より小さい）
+
+  const W = 1200, H = 520, CENTER_LON = 150, LAT_TOP = 80, LAT_BOTTOM = -60;
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let grid, land, places, heatImg;
+  let dest = null, routeIdx = 0, results = [], anim = null, plane = null, drawnRoutes = [];
+
+  // ---- 投影（太平洋が中心の正距円筒） ----
+  const relLon = lon => ((lon - CENTER_LON + 540) % 360) - 180;          // -180..180
+  const px = lon => (relLon(lon) + 180) / 360 * W;
+  const py = lat => (LAT_TOP - lat) / (LAT_TOP - LAT_BOTTOM) * H;
+
+  function color(v) {             // 1.25..4.35 μSv/h → 色
+    const stops = [[1.25, [29, 63, 122]], [2.0, [31, 138, 154]], [2.9, [231, 211, 90]], [3.6, [240, 138, 60]], [4.35, [226, 67, 63]]];
+    for (let i = 1; i < stops.length; i++) {
+      if (v <= stops[i][0]) {
+        const [a, ca] = stops[i - 1], [b, cb] = stops[i], f = Math.max(0, (v - a) / (b - a));
+        return ca.map((c, k) => Math.round(c + (cb[k] - c) * f));
+      }
+    }
+    return stops[stops.length - 1][1];
+  }
+
+  // 格子を 1° の画像にして、地図では拡大して滑らかに描く
+  function buildHeat() {
+    const cw = 360, ch = LAT_TOP - LAT_BOTTOM;
+    const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+    const ctx = cv.getContext('2d'); const img = ctx.createImageData(cw, ch);
+    for (let j = 0; j < ch; j++) for (let i = 0; i < cw; i++) {
+      const lat = LAT_TOP - j - 0.5, lon = CENTER_LON - 180 + i + 0.5;
+      const [r, g, b] = color(C.rateAt(grid, lat, lon));
+      const o = (j * cw + i) * 4; img.data[o] = r; img.data[o + 1] = g; img.data[o + 2] = b; img.data[o + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    return cv;
+  }
+
+  // 経度の継ぎ目（地図の左右の端）で線を切る
+  function strokeLonLat(ctx, pts) {
+    ctx.beginPath();
+    let prev = null;
+    for (const p of pts) {
+      const x = px(p.lon ?? p[0]), y = py(p.lat ?? p[1]);
+      if (prev === null || Math.abs(x - prev) > W / 2) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      prev = x;
+    }
+    ctx.stroke();
+  }
+
+  function drawMap() {
+    const ctx = $('map').getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalAlpha = 0.5; ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(heatImg, 0, 0, W, H);
+    ctx.globalAlpha = 1;
+    // 陸地（継ぎ目をまたがない輪だけ塗る。輪郭は全部描く）
+    ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(232,237,246,.8)'; ctx.fillStyle = 'rgba(11,16,32,.45)';
+    for (const ring of land.rings) {
+      ctx.beginPath(); let prev = null, split = false;
+      for (const [lon, lat] of ring) {
+        const x = px(lon), y = py(lat);
+        if (prev === null) ctx.moveTo(x, y);
+        else if (Math.abs(x - prev) > W / 2) { ctx.moveTo(x, y); split = true; }
+        else ctx.lineTo(x, y);
+        prev = x;
+      }
+      if (!split) ctx.fill();
+      ctx.stroke();
+    }
+    // 緯線（北緯60°・赤道）
+    ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(232,237,246,.25)'; ctx.lineWidth = 1;
+    for (const lat of [60, 0]) { ctx.beginPath(); ctx.moveTo(0, py(lat)); ctx.lineTo(W, py(lat)); ctx.stroke(); }
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(232,237,246,.55)'; ctx.font = '13px ' + getComputedStyle(document.body).fontFamily;
+    ctx.fillText('北緯60°', 8, py(60) - 6); ctx.fillText('赤道', 8, py(0) - 6);
+    // ルート
+    drawnRoutes.forEach((r, k) => {
+      const sel = k === routeIdx;
+      ctx.strokeStyle = sel ? '#ffb547' : 'rgba(232,237,246,.45)';
+      ctx.lineWidth = sel ? 3 : 1.6; ctx.setLineDash(sel ? [] : [6, 6]);
+      for (let i = 0; i + 1 < r.length; i++) strokeLonLat(ctx, C.greatCircle(r[i], r[i + 1], 96));
+    });
+    ctx.setLineDash([]);
+    // 空港
+    const A = places.airports;
+    for (const code of Object.keys(A)) {
+      const a = A[code], x = px(a.lon), y = py(a.lat);
+      const on = dest && (code === dest.id || code === places.origin || drawnRoutes.some(r => r.includes(a)));
+      ctx.beginPath(); ctx.arc(x, y, on ? 5 : 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = on ? '#ffb547' : 'rgba(232,237,246,.85)'; ctx.fill();
+      if (on || code === places.origin) {
+        ctx.fillStyle = '#e8edf6'; ctx.font = 'bold 15px ' + getComputedStyle(document.body).fontFamily;
+        ctx.fillText(a.ja.replace(/（.*）/, ''), x + 8, y - 8);
+      }
+    }
+    // 飛行機
+    if (plane) {
+      const x = px(plane.lon), y = py(plane.lat);
+      ctx.save(); ctx.translate(x, y); ctx.rotate(plane.angle);
+      ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#0b1020'; ctx.lineWidth = 1.5;
+      ctx.beginPath();  // 上から見た機体（右向き）
+      ctx.moveTo(14, 0); ctx.lineTo(4, -2.5); ctx.lineTo(-2, -12); ctx.lineTo(-6, -12); ctx.lineTo(-3, -2.5); ctx.lineTo(-10, -2.5);
+      ctx.lineTo(-13, -7); ctx.lineTo(-15, -7); ctx.lineTo(-13, 0); ctx.lineTo(-15, 7); ctx.lineTo(-13, 7); ctx.lineTo(-10, 2.5);
+      ctx.lineTo(-3, 2.5); ctx.lineTo(-6, 12); ctx.lineTo(-2, 12); ctx.lineTo(4, 2.5); ctx.closePath();
+      ctx.stroke(); ctx.fill(); ctx.restore();
+    }
+  }
+
+  // ---- 行き先とルート ----
+  const routeLabel = codes => codes.length === 2 ? '直行便' : codes.slice(1, -1).map(c => places.airports[c].ja) .join('・') + '乗り継ぎ';
+  function renderDests() {
+    const box = $('dests'); box.innerHTML = '';
+    for (const d of places.destinations) {
+      const b = document.createElement('button');
+      b.className = 'chip'; b.type = 'button'; b.dataset.id = d.id;
+      b.setAttribute('aria-pressed', dest && dest.id === d.id ? 'true' : 'false');
+      b.innerHTML = places.airports[d.id].ja + (d.routes.length > 1 ? `<small>${d.routes.length}ルート</small>` : '');
+      b.addEventListener('click', () => selectDest(d.id));
+      box.appendChild(b);
+    }
+  }
+  function selectDest(id) {
+    stopAnim();
+    dest = places.destinations.find(d => d.id === id);
+    routeIdx = 0;
+    results = dest.routes.map(r => C.routeDose(grid, r.map(c => places.airports[c])));
+    drawnRoutes = dest.routes.map(r => r.map(c => places.airports[c]));
+    renderDests(); renderRoutes();
+    $('routeBox').hidden = false; $('result').hidden = true;
+    resetMeter();
+    $('meterMsg').innerHTML = dest.routes.length > 1
+      ? `<b>${places.airports[id].ja}</b>には ${dest.routes.length} つのルートがあります。どれが一番少ないか、予想してから飛んでください。`
+      : `<b>${places.airports[id].ja}</b>まで。「飛ぶ」を押してください。`;
+    plane = null; drawMap();
+  }
+  function renderRoutes() {
+    const box = $('routes'); box.innerHTML = '';
+    $('routeTitle').textContent = dest.routes.length > 1 ? 'ルートを選ぶ（予想してから）' : 'ルート';
+    dest.routes.forEach((codes, k) => {
+      const b = document.createElement('button');
+      b.className = 'route'; b.type = 'button';
+      b.setAttribute('aria-pressed', k === routeIdx ? 'true' : 'false');
+      b.innerHTML = `<span class="k">${routeLabel(codes)}</span><span class="v">${codes.map(c => c === places.origin ? '東京' : places.airports[c].ja).join(' → ')}</span><span class="k">約 ${C.formatHours(results[k].hours)}</span>`;
+      b.addEventListener('click', () => { stopAnim(); routeIdx = k; renderRoutes(); resetMeter(); $('result').hidden = true; plane = null; drawMap(); });
+      box.appendChild(b);
+    });
+  }
+
+  // ---- 線量計 ----
+  function setMeter(dose, rate, hours) {
+    $('lcdDose').textContent = dose.toFixed(1);
+    $('lcdRate').textContent = rate.toFixed(2) + ' μSv/h';
+    const m = Math.round(hours * 60);
+    $('lcdTime').textContent = String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  }
+  const resetMeter = () => setMeter(0, 0, 0);
+
+  // ---- 飛ぶ ----
+  function fly() {
+    stopAnim();
+    const res = results[routeIdx];
+    // 区間の samples をつなぐ（時間と累積は通し）
+    const seq = []; let t0 = 0, c0 = 0;
+    for (const leg of res.legs) {
+      for (const s of leg.samples) seq.push({ t: t0 + s.t, cum: c0 + s.cum, rate: s.rate, lat: s.lat, lon: s.lon });
+      t0 += leg.hours; c0 += leg.doseUSv;
+    }
+    const dur = reduceMotion ? 0 : Math.min(11000, 3000 + res.hours * 420);
+    $('btnSkip').hidden = dur === 0; $('result').hidden = true;
+    $('meterMsg').innerHTML = `${routeLabel(dest.routes[routeIdx])}で飛行中…　<b>北極に近づくと</b>数字の進みが速くなります。`;
+    const start = performance.now();
+    const step = now => {
+      const f = dur ? Math.min(1, (now - start) / dur) : 1;
+      const T = f * res.hours;
+      let i = 1; while (i < seq.length - 1 && seq[i].t < T) i++;
+      const a = seq[i - 1], b = seq[i], g = b.t > a.t ? Math.max(0, Math.min(1, (T - a.t) / (b.t - a.t))) : 1;
+      const lat = a.lat + (b.lat - a.lat) * g;
+      let dl = b.lon - a.lon; if (dl > 180) dl -= 360; if (dl < -180) dl += 360;
+      const lon = a.lon + dl * g;
+      let dx = px(b.lon) - px(a.lon);
+      if (dx > W / 2) dx -= W; else if (dx < -W / 2) dx += W;   // 地図の左右の端をまたぐとき
+      const dy = py(b.lat) - py(a.lat);
+      const angle = (Math.abs(dx) + Math.abs(dy) < 1e-6 && plane) ? plane.angle : Math.atan2(dy, dx || 1e-6);   // 乗り継ぎの継ぎ目（同じ点が2つ）では向きを保つ
+      plane = { lat, lon, angle };
+      setMeter(a.cum + (b.cum - a.cum) * g, b.rate, T);
+      drawMap();
+      if (f < 1) anim = requestAnimationFrame(step); else { anim = null; finish(); }
+    };
+    anim = requestAnimationFrame(step);
+  }
+  function stopAnim() { if (anim) cancelAnimationFrame(anim); anim = null; $('btnSkip').hidden = true; }
+  function skip() { stopAnim(); const r = results[routeIdx]; setMeter(r.doseUSv, 0, r.hours); finish(); }
+
+  // ---- 結果 ----
+  const fmt = (v, d = 1) => v.toLocaleString('ja-JP', { minimumFractionDigits: d, maximumFractionDigits: d });
+  function finish() {
+    $('btnSkip').hidden = true;
+    const codes = dest.routes[routeIdx], res = results[routeIdx], A = places.airports;
+    const dose = res.doseUSv, last = codes[codes.length - 1];
+    plane = { lat: A[last].lat, lon: A[last].lon, angle: 0 }; drawMap();
+    setMeter(dose, 0, res.hours);
+    $('meterMsg').innerHTML = `到着！ <b>${fmt(dose)} μSv</b>（${C.formatHours(res.hours)}）でした。`;
+
+    $('passCodes').innerHTML = codes.map((c, i) => (i ? '<span class="arrow">✈</span>' : '') + c).join(' ');
+    $('passCities').textContent = codes.map(c => A[c].ja).join(' → ') + '　/　' + routeLabel(codes);
+    $('passDose').innerHTML = `${fmt(dose)}<small>μSv</small>`;
+    $('passFacts').innerHTML = `<span>飛行時間<b>${C.formatHours(res.hours)}</b></span><span>距離<b>${fmt(res.distanceKm, 0)} km</b></span><span>平均の線量率<b>${fmt(dose / res.hours, 2)} μSv/h</b></span>`;
+    $('stubChest').textContent = fmt(dose / CHEST_USV, 2);
+
+    const days = dose / (NATURAL_JP_USV_Y / 365);
+    $('cmp').innerHTML = [
+      `<div class="card"><span class="num">${fmt(dose / CHEST_USV, 2)}<small>回分</small></span><p>胸部X線（正面）1回 0.08 mSv と比べて。</p></div>`,
+      `<div class="card"><span class="num">${fmt(days)}<small>日分</small></span><p>日本で暮らして自然放射線から受ける量（年 2.1 mSv）の何日分か。</p></div>`,
+      `<div class="card"><span class="num">${fmt(HEALTH_USV / dose, 0)}<small>分の1</small></span><p>健康影響が確認されている線量（100 mSv 以上）と比べて。</p></div>`,
+    ].join('');
+    drawLadder(dose);
+    renderVs();
+    $('health').innerHTML = `人への健康影響が確認されている被ばく線量は100ミリシーベルト（＝100,000 μSv）以上と考えられていて（環境省 統一的な基礎資料）、このフライトはその<b>約${fmt(HEALTH_USV / dose, 0)}分の1</b>です。宇宙線は飛行機に乗る人みんなが受ける自然放射線で、地上でも毎日少しずつ受けています。`;
+    drawCard(codes, res);
+    const text = `${codes.map(c => A[c].ja).join('→')}（${routeLabel(codes)}）の機内で受けた宇宙線は ${fmt(dose)} μSv。胸部X線の${fmt(dose / CHEST_USV, 2)}回分、地上で暮らす${fmt(days)}日分でした。`;
+    $('btnShare').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(URL_SELF);
+    $('result').hidden = false;
+  }
+
+  function renderVs() {
+    if (dest.routes.length < 2) { $('vsBox').hidden = true; return; }
+    const max = Math.max(...results.map(r => r.doseUSv));
+    const best = results.reduce((b, r, k) => r.doseUSv < results[b].doseUSv ? k : b, 0);
+    $('vs').innerHTML = '<tr><th>ルート</th><th>飛行時間</th><th>線量</th><th class="barcell"></th></tr>' + results.map((r, k) =>
+      `<tr class="${k === best ? 'best' : ''} ${k === routeIdx ? 'sel' : ''}"><td>${routeLabel(dest.routes[k])}</td><td class="n">${C.formatHours(r.hours)}</td><td class="n">${fmt(r.doseUSv)} μSv</td><td class="barcell"><div class="b" style="width:${(r.doseUSv / max * 100).toFixed(1)}%"></div></td></tr>`).join('');
+    const direct = results[0], b = results[best];
+    const co = $('vsCallout');
+    const worst = Math.max(...results.map(r => r.doseUSv));
+    if ((worst - b.doseUSv) / worst < NEAR_EQUAL) {
+      // JISCARD との差（−5%〜+16%）より小さい違いは、どちらが少ないと言い切らない
+      co.hidden = false;
+      co.textContent = `どのルートもほぼ同じでした（差は ${fmt((1 - b.doseUSv / worst) * 100, 0)}% で、この計算の誤差の範囲です）。長く乗るぶんと、宇宙線の少ない緯度を通るぶんが打ち消し合っています。`;
+    } else if (best !== 0 && b.hours > direct.hours && dest.routes[0].length === 2) {
+      co.hidden = false;
+      co.textContent = `${routeLabel(dest.routes[best])}は直行便より ${C.formatHours(b.hours - direct.hours)} 長く乗るのに、線量は ${fmt((1 - b.doseUSv / direct.doseUSv) * 100, 0)}% 少なくなります。赤道に近い緯度を通るぶん、1時間あたりの宇宙線が少ないからです。`;
+    } else if (best !== 0) {
+      co.hidden = false;
+      co.textContent = `${routeLabel(dest.routes[best])}が一番少なくなりました。北極に近い緯度を飛ぶ時間が短いほど、宇宙線は少なくなります。`;
+    } else co.hidden = true;
+  }
+
+  // 対数の目盛り（1 μSv 〜 100 mSv）
+  function drawLadder(dose) {
+    const x0 = 30, x1 = 690, lmin = 0, lmax = 5;     // 10^0..10^5 μSv
+    const X = v => x0 + (Math.log10(v) - lmin) / (lmax - lmin) * (x1 - x0);
+    let s = `<line x1="${x0}" y1="70" x2="${x1}" y2="70" stroke="#93a0ba" stroke-width="1.5"/>`;
+    const ticks = [[1, '1 μSv'], [10, '10'], [100, '100'], [1000, '1 mSv'], [10000, '10'], [100000, '100 mSv']];
+    for (const [v, l] of ticks) s += `<line x1="${X(v)}" y1="64" x2="${X(v)}" y2="76" stroke="#93a0ba"/><text x="${X(v)}" y="92" fill="#93a0ba" font-size="12" text-anchor="middle">${l}</text>`;
+    s += `<rect x="${X(CT_USV[0])}" y="104" width="${X(CT_USV[1]) - X(CT_USV[0])}" height="8" rx="4" fill="#8ec5ff" opacity=".55"/><text x="${(X(CT_USV[0]) + X(CT_USV[1])) / 2}" y="128" fill="#8ec5ff" font-size="12" text-anchor="middle">CT 1回（0.06〜17 mSv 程度）</text>`;
+    // 基準の印は目盛りの上（y=52 の文字）、このフライトはさらに上の段（y=14 の文字）に置いて重ならないようにする
+    const mark = (v, label, color) => `<line x1="${X(v)}" y1="58" x2="${X(v)}" y2="70" stroke="${color}" stroke-width="2"/><circle cx="${X(v)}" cy="70" r="5" fill="${color}"/><text x="${X(v)}" y="52" fill="${color}" font-size="12" text-anchor="middle">${label}</text>`;
+    s += mark(CHEST_USV, '胸部X線', '#e8edf6');
+    s += mark(NATURAL_JP_USV_Y, '自然放射線1年', '#6fd3a8');
+    s += `<line x1="${X(HEALTH_USV)}" y1="20" x2="${X(HEALTH_USV)}" y2="112" stroke="#e2433f" stroke-width="2" stroke-dasharray="4 3"/><text x="${X(HEALTH_USV) - 4}" y="142" fill="#e2433f" font-size="12" text-anchor="end">健康影響が確認されている線量</text>`;
+    s += `<text x="${X(dose)}" y="14" fill="#ffb547" font-size="13" font-weight="700" text-anchor="middle">このフライト</text><polygon points="${X(dose) - 7},20 ${X(dose) + 7},20 ${X(dose)},32" fill="#ffb547"/><line x1="${X(dose)}" y1="32" x2="${X(dose)}" y2="70" stroke="#ffb547" stroke-width="2"/><circle cx="${X(dose)}" cy="70" r="7" fill="#ffb547"/>`;
+    $('ladder').innerHTML = s;
+  }
+
+  // シェア用の搭乗券（1200×630）
+  function drawCard(codes, res) {
+    const cv = $('card'), ctx = cv.getContext('2d'), A = places.airports, F = getComputedStyle(document.body).fontFamily;
+    ctx.fillStyle = '#0b1020'; ctx.fillRect(0, 0, 1200, 630);
+    ctx.globalAlpha = 0.5; ctx.drawImage($('map'), 0, 0, W, H, 0, 40, 1200, 520); ctx.globalAlpha = 1;
+    const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
+    ctx.fillStyle = '#f4f1e8'; rr(70, 120, 1060, 400, 28); ctx.fill();
+    ctx.fillStyle = '#e3dccb'; rr(870, 120, 260, 400, 28); ctx.fill(); ctx.fillRect(870, 120, 30, 400);
+    ctx.strokeStyle = '#b9ae94'; ctx.setLineDash([10, 8]); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(870, 140); ctx.lineTo(870, 500); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#6b6450'; ctx.font = '600 20px ' + F; ctx.fillText('COSMIC RAY BOARDING PASS', 110, 170);
+    ctx.fillStyle = '#1b2233'; ctx.font = '800 64px ui-monospace, Menlo, monospace';
+    ctx.fillText(codes.join(' › '), 110, 250);
+    ctx.font = '500 24px ' + F; ctx.fillStyle = '#4b4f5c';
+    ctx.fillText(codes.map(c => A[c].ja).join(' → ') + '　' + routeLabel(codes) + '　' + C.formatHours(res.hours), 110, 295);
+    ctx.fillStyle = '#6b6450'; ctx.font = '600 20px ' + F; ctx.fillText('機内で受けた宇宙線', 110, 360);
+    ctx.fillStyle = '#1b2233'; ctx.font = '800 96px ' + F; const dtext = fmt(res.doseUSv);
+    ctx.fillText(dtext, 110, 455); const w = ctx.measureText(dtext).width; ctx.font = '700 36px ' + F; ctx.fillText('μSv', 120 + w, 455);
+    ctx.fillStyle = '#6b6450'; ctx.font = '600 20px ' + F; ctx.textAlign = 'center';
+    ctx.fillText('胸部X線', 1000, 260); ctx.fillStyle = '#1b2233'; ctx.font = '800 64px ' + F; ctx.fillText(fmt(res.doseUSv / CHEST_USV, 2), 1000, 340);
+    ctx.fillStyle = '#6b6450'; ctx.font = '600 20px ' + F; ctx.fillText('回分', 1000, 375);
+    ctx.fillText('地上で暮らす', 1000, 430); ctx.fillStyle = '#1b2233'; ctx.font = '700 30px ' + F; ctx.fillText(fmt(res.doseUSv / (NATURAL_JP_USV_Y / 365)) + ' 日分', 1000, 470);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#e8edf6'; ctx.font = '700 26px ' + F; ctx.fillText('その旅、何マイクロシーベルト？', 70, 80);
+    ctx.fillStyle = '#93a0ba'; ctx.font = '500 18px ' + F; ctx.fillText('rt-ai-lab.com/flight-dose　PARMA（JAEA）で計算・2025年の太陽活動・最短ルートでの目安', 70, 580);
+  }
+  function saveCard() {
+    $('card').toBlob(b => {
+      if (!b) return;
+      const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+      a.download = 'flight-dose-' + dest.routes[routeIdx].join('-') + '.png';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }, 'image/png');
+  }
+
+  // 地図クリックで近い行き先を選ぶ
+  $('map').addEventListener('click', e => {
+    if (!places) return;   // データを読み込む前
+    const r = $('map').getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * W, y = (e.clientY - r.top) / r.height * H;
+    let best = null, bd = 30 * 30;
+    for (const d of places.destinations) { const a = places.airports[d.id]; const dd = (px(a.lon) - x) ** 2 + (py(a.lat) - y) ** 2; if (dd < bd) { bd = dd; best = d.id; } }
+    if (best) selectDest(best);
+  });
+  $('btnFly').addEventListener('click', fly);
+  $('btnSkip').addEventListener('click', skip);
+  $('btnSave').addEventListener('click', saveCard);
+
+  Promise.all(['doserate-2025.json', 'land-110m.json', 'places.json'].map(f => fetch(f).then(r => { if (!r.ok) throw new Error(f + ' ' + r.status); return r.json(); })))
+    .then(([g, l, p]) => { grid = g; land = l; places = p; heatImg = buildHeat(); renderDests(); drawMap(); })
+    .catch(err => { $('meterMsg').textContent = 'データを読み込めませんでした。ページを再読み込みしてください。（' + err.message + '）'; });
+})();
+</script>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>

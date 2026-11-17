@@ -1,0 +1,140 @@
+{
+ "_about": "海外旅行の被ばく線量（flight-dose）の数値と原典の照合表。2026-11-17。数値を変えるときはここを先に直す。check: text＝原典のテキストで照合、image＝原典の図表の画像を目で読んで照合（独立レビューで再取得して確かめる）、calc＝計算プログラムの出力、api＝JISCARD の計算結果（画面と同じ問い合わせ）",
+ "sources": {
+  "PARMA": {
+   "title": "PARMA 4.19 (C++ version, 2026-11-05), Japan Atomic Energy Agency",
+   "url": "https://phits.jaea.go.jp/expacs/data/parma_cpp.zip",
+   "sha256": "b1f9c68a41cb120070c232d875c9d55fde85a32aa928053e08bf0ecf716456a8",
+   "license": "EXPACS 及び EXPACS-V 利用許諾条件（https://phits.jaea.go.jp/expacs/download.htm）: 改変・再配布可。成果を公開するときは下の論文2本と URL を参照し、nsed-expacs@jaea.go.jp に報告する",
+   "cite": [
+    "T. Sato, Analytical model for estimating terrestrial cosmic ray fluxes nearly anytime and anywhere in the world: Extension of PARMA/EXPACS, PLOS ONE 10(12): e0144679 (2015)",
+    "T. Sato, Analytical Model for Estimating the Zenith Angle Dependence of Terrestrial Cosmic Ray Fluxes, PLOS ONE 11(8): e0160390 (2016)",
+    "https://phits.jaea.go.jp/expacs/"
+   ]
+  },
+  "JISCARD": {
+   "title": "航路線量計算システム JISCARD（量子科学技術研究開発機構）r02 版",
+   "url": "http://jiscard.jp/jiscard_r02/",
+   "note": "サイト規程により出力の複製・転載は不可。計算結果そのものはリポジトリに入れず（ローカルの照合専用ファイル ~/Documents/Claude/plan/2026-11-17-flight-dose-jiscard-legs.json）、ここには自前の計算との比の要約だけを残す。問い合わせ日 2026-11-17、計算日 2025-07-01、高度 11 km"
+  },
+  "ENV_R7": {
+   "title": "環境省「放射線による健康影響等に関する統一的な基礎資料（令和7年度版）」第2章 2.5 身の回りの放射線",
+   "urls": {
+    "02-05-01": "https://www.env.go.jp/chemi/rhm/current/02-05-01.html",
+    "02-05-03": "https://www.env.go.jp/chemi/rhm/current/02-05-03.html",
+    "02-05-14": "https://www.env.go.jp/chemi/rhm/current/02-05-14.html",
+    "02-05-15": "https://www.env.go.jp/chemi/rhm/current/02-05-15.html"
+   },
+   "revised": "02-05-03・02-05-14 は 2026-03-31 改訂"
+  }
+ },
+ "doseRateGrid": {
+  "file": "flight-dose/doserate-2025.json",
+  "source": "PARMA",
+  "check": "calc",
+  "altKm": 11,
+  "geometry": "客室 g=-11",
+  "doseQuantity": "実効線量 ICRP 116（dcc/ICRP116.inp）",
+  "solar": "2025 年の月平均 W-index（PARMA 付属の日別値の平均）で 12 か月の線量率を平均。年平均 W は 108.33",
+  "grid": "2°×2°（16,380 点）",
+  "range_uSvh": [
+   1.258,
+   4.313
+  ],
+  "checks": [
+   "PARMA 付属サンプル Tokyo-Smin の 42 行を完全に再現（2026-11-17）",
+   "月平均 W で12回平均と、年平均 W で1回の差は 0.1% 未満（北緯69.6°・35°・1.3°）"
+  ]
+ },
+ "rampFactor": {
+  "value": 0.3,
+  "source": "PARMA",
+  "check": "calc",
+  "note": "高度 0→11 km を直線で上がったときの平均線量率 ÷ 巡航中の線量率。北緯35.8°: 0.311、北緯64°: 0.275、北緯1.3°: 0.322"
+ },
+ "flightTime": {
+  "speedKmh": 865,
+  "windKmh": 50,
+  "groundH": 0.8,
+  "source": "JISCARD",
+  "check": "api",
+  "note": "下の 24 区間の飛行時間に最小二乗で合わせた（相対誤差の RMS 3.7%）。飛行時間 = 大円距離 ÷（865 + 50 × 東向きの割合）+ 0.8 時間"
+ },
+ "jiscardComparison": {
+  "check": "api（要約のみ）",
+  "routes": [
+   "NRT-JFK",
+   "NRT-HNL",
+   "NRT-LAX",
+   "NRT-LHR",
+   "NRT-SIN",
+   "NRT-BKK",
+   "NRT-SYD",
+   "NRT-DXB",
+   "DXB-LHR",
+   "NRT-ICN",
+   "NRT-HEL",
+   "LAX-JFK"
+  ],
+  "nLegs": 24,
+  "doseRatio": {
+   "min": 0.955,
+   "max": 1.161,
+   "mean": 1.053
+  },
+  "flightTimeRmsRel": 0.037,
+  "pageText": "差は −5%〜+16%（平均 +5%）",
+  "note": "線量の比 = 自前（flight-core.js）÷ JISCARD。+10% を超えるのはドバイ線・シドニー線で、JISCARD が往復を同じ飛行時間で計算しているため（線量率の差ではない）"
+ },
+ "stage0": {
+  "note": "成田→JFK、JISCARD の航路上75点で同じ点の線量率を比較。2025-11-17・客室 g=-11 で PARMA/JISCARD = 1.06〜1.07。2026-11-17 は PARMA の太陽活動データ（2026-03-26まで）が切れて W=0 になり 1.12〜1.32"
+ },
+ "comparisons": {
+  "chestXray": {
+   "label": "胸部X線（正面）1回",
+   "mSv": 0.08,
+   "source": "ENV_R7",
+   "page": "02-05-14（放射線診断で受ける被ばく線量、表『実際の被ばく線量（代表的な実効線量）』一般撮影：胸部正面。脚注2: UNSCEAR 2020/2021 Report Vol. I Annex A）",
+   "check": "image"
+  },
+  "ctRange": {
+   "label": "X線CT検査 1回",
+   "mSvMin": 0.06,
+   "mSvMax": 17,
+   "source": "ENV_R7",
+   "page": "02-05-14（同じ表、X線CT検査 0.06–17 mSv程度）",
+   "check": "image"
+  },
+  "naturalJapan": {
+   "label": "日本平均の自然放射線（年間）",
+   "mSv": 2.1,
+   "source": "ENV_R7",
+   "page": "02-05-01 本文『日本平均では2.1ミリシーベルト』／02-05-03 図",
+   "check": "text"
+  },
+  "naturalWorld": {
+   "label": "世界平均の自然放射線（年間）",
+   "mSv": 2.4,
+   "source": "ENV_R7",
+   "page": "02-05-01 本文『世界平均では2.4ミリシーベルト』",
+   "check": "text"
+  },
+  "cosmicJapan": {
+   "label": "日本平均の宇宙線（年間、航空機利用を含む）",
+   "mSv": 0.31,
+   "source": "ENV_R7",
+   "page": "02-05-03 図（※宇宙線からの被ばくと航空機利用に伴う被ばくの合計値）",
+   "check": "image"
+  },
+  "health100": {
+   "label": "健康影響が確認されている被ばく線量",
+   "mSv": 100,
+   "source": "ENV_R7",
+   "page": "02-05-15 本文『人への健康影響が確認されている被ばく線量は、100ミリシーベルト以上であると考えられています』",
+   "check": "text"
+  }
+ },
+ "notUsed": {
+  "banana": "体内のカリウムは量が一定に保たれるので「バナナ1本分の線量」は物理的に誤解を招く。使わない"
+ }
+}

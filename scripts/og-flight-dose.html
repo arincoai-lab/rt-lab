@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1200px;height:630px;overflow:hidden;background:#0b1020}
+  iframe{position:absolute;left:-3000px;top:0;width:1000px;height:2400px;border:0}
+  #out{position:absolute;left:0;top:0}
+</style></head>
+<body>
+<canvas id="out" width="1200" height="630"></canvas>
+<iframe id="g" src="/flight-dose/"></iframe>
+<script>
+// 「その旅、何マイクロシーベルト？」の共有用画像（assets/og/flight-dose.png, 1200x630）を、
+// ページが描くシェア用の搭乗券（ロンドン・ドバイ乗り継ぎ）からそのまま作る。
+// 作り直し方: python3 -m http.server 8080 を動かしたまま
+//   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+//     --force-device-scale-factor=1 --virtual-time-budget=10000 --window-size=1200,630 \
+//     --screenshot=assets/og/flight-dose.png http://localhost:8080/scripts/og-flight-dose.html
+// scripts/ はデプロイされない。
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function main() {
+  const f = document.getElementById('g');
+  await new Promise(r => f.complete || f.addEventListener('load', r));
+  const d = f.contentWindow.document;
+  for (let i = 0; i < 50 && !d.querySelector('.chip'); i++) await sleep(100);
+  [...d.querySelectorAll('.chip')].find(b => b.dataset.id === 'LHR').click();
+  await sleep(100);
+  d.querySelectorAll('.route')[1].click();
+  d.getElementById('btnFly').click();
+  await sleep(100);
+  d.getElementById('btnSkip').click();
+  await sleep(300);
+  document.getElementById('out').getContext('2d').drawImage(d.getElementById('card'), 0, 0);
+}
+main();
+</script>
+</body></html>
