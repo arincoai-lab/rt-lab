@@ -120,10 +120,34 @@
     .field select { width: auto; max-width: 11em; text-align: left; }
     .field .hint { grid-column: 1 / -1; font-size: 0.7rem; color: #718096; font-weight: 400; margin-top: -3px; }
     .field input:focus-visible, .field select:focus-visible { outline: 2px solid #90cdf4; outline-offset: 1px; }
-    .wall-grid { display: grid; grid-template-columns: 3.2em 1fr 4.6em 4.6em; gap: 4px; align-items: center; font-size: 0.74rem; }
-    .wall-grid .h { color: #718096; font-weight: 700; font-size: 0.68rem; }
-    .wall-grid select, .wall-grid input { width: 100%; padding: 3px 4px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.74rem; font-family: inherit; text-align: right; }
-    .wall-grid select { text-align: left; }
+    .wall-list-head { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 0.8rem; }
+    .wall-list { display: grid; gap: 6px; margin-top: 6px; }
+    .wall-row { border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px; display: grid; gap: 4px; font-size: 0.72rem; }
+    .wall-row .r1 { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; }
+    .wall-row .wname { font-weight: 700; color: #2d3748; }
+    .wall-row .r2, .wall-row .r3 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; align-items: center; }
+    .wall-row select, .wall-row input { width: 100%; min-width: 0; padding: 3px 4px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.72rem; font-family: inherit; text-align: right; background: #fff; color: #2d3748; }
+    .wall-row select { text-align: left; grid-column: span 2; }
+    .wall-row .k { color: #718096; font-size: 0.66rem; text-align: right; }
+    .mini-btn { font: inherit; font-size: 0.72rem; padding: 2px 9px; border: 1px solid #cbd5e0; border-radius: 999px; background: #fff; color: #2d3748; cursor: pointer; }
+    .mini-btn:hover, .mini-btn:focus-visible { border-color: #1a56db; color: #1a56db; outline: none; }
+    .hint-line { font-size: 0.7rem; color: #718096; margin-top: 4px; }
+    .map-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 6px; }
+    .tool-btn { font: inherit; font-size: 0.78rem; padding: 4px 12px; border: 1px solid #1a56db; border-radius: 999px; background: #fff; color: #1a56db; cursor: pointer; }
+    .tool-btn[aria-pressed="true"] { background: #1a56db; color: #fff; }
+    .tool-btn:focus-visible { outline: 2px solid #90cdf4; outline-offset: 1px; }
+    .draw-msg { font-size: 0.74rem; color: #2a4365; }
+    .tool-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .plan-panel { border: 1px solid #bee3f8; background: #f5fbff; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; font-size: 0.78rem; color: #2d3748; display: grid; gap: 6px; }
+    .plan-panel .step { font-weight: 700; color: #1a365d; }
+    #plan-body { display: grid; gap: 6px; }
+    #plan-status:empty { display: none; }
+    .plan-panel .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+    .plan-panel input[type=number] { width: 6.5em; padding: 3px 6px; border: 1px solid #cbd5e0; border-radius: 6px; font: inherit; text-align: right; }
+    .plan-panel select { padding: 2px 4px; border: 1px solid #cbd5e0; border-radius: 6px; font: inherit; }
+    .plan-panel input[type=range] { width: 9em; }
+    .plan-panel .privacy { font-size: 0.7rem; color: #4a5568; }
+    .plan-panel .perr { color: #9b2c2c; font-weight: 700; }
     .checkline { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #4a5568; margin-top: 6px; }
     .hidden { display: none !important; }
     .bad { outline: 2px solid #e53e3e !important; outline-offset: 1px; }
@@ -229,7 +253,7 @@
       <div class="panel" id="controls">
         <h2>部屋のひな形</h2>
         <div class="presets" id="presets" role="group" aria-label="部屋のひな形"></div>
-        <p class="howto">ひな形を選び、地図の上の患者・管球・測定点をドラッグします。<b>壁をタップすると</b>、材質と厚さを変えられます（キーボードでは「詳細設定」の壁の表で変えられます）。</p>
+        <p class="howto">ひな形を選び、地図の上の患者・管球・測定点をドラッグします。<b>壁をタップすると</b>、材質と厚さを変えられます。壁を足すときは地図の上の「＋ 壁を描く」（キーボードでは「詳細設定」の壁の一覧で変えられます）。</p>
 
         <h3>装置と件数</h3>
         <div class="field">
@@ -250,8 +274,9 @@
         </div>
 
         <h3>部屋</h3>
-        <div class="field"><span class="flabel">大きさ 幅 × 奥行き（m）</span><span class="pos-row"><input type="number" id="room-w" min="2" max="15" step="0.1" aria-label="部屋の幅（m）"><span>×</span><input type="number" id="room-d" min="2" max="15" step="0.1" aria-label="部屋の奥行き（m）"></span></div>
-        <div class="checkline"><input type="checkbox" id="partition-on"><label for="partition-on">仕切り壁（操作室など）を置く</label></div>
+        <div class="field" id="rect-fields"><span class="flabel">大きさ 幅 × 奥行き（m）</span><span class="pos-row"><input type="number" id="room-w" min="2" max="15" step="0.1" aria-label="部屋の幅（m）"><span>×</span><input type="number" id="room-d" min="2" max="15" step="0.1" aria-label="部屋の奥行き（m）"></span></div>
+        <p class="hint-line hidden" id="free-shape">自由な形（壁を描いた・動かした部屋）。ひな形を選び直すと長方形に戻ります。</p>
+        <p class="hint-line">L字の部屋・操作室・隣室は、地図の上の「＋ 壁を描く」で壁を足して作れます。壁の角はドラッグで動かせます。</p>
 
         <h3>地図の高さ</h3>
         <div class="seg seg-wide" id="evalz-seg" role="group" aria-label="地図の高さ"><button type="button" data-z="1">胴 1.0 m</button><button type="button" data-z="1.55">目 1.55 m</button></div>
@@ -273,12 +298,9 @@
             <div class="field"><label>アイソセンタの位置 x, y（m）</label><span class="pos-row"><input type="number" id="iso-x" step="0.05" aria-label="アイソセンタの位置 x（m）"><input type="number" id="iso-y" step="0.05" aria-label="アイソセンタの位置 y（m）"></span></div>
           </div>
           <div class="field"><label for="ceiling">天井の高さ（m）</label><input type="number" id="ceiling" min="2" max="6" step="0.1"></div>
-          <div class="wall-grid" id="wall-grid" aria-label="壁の材質と厚さ">
-            <span class="h">壁</span><span class="h">材質</span><span class="h">厚さ mm</span><span class="h">鉛の内張り mm</span>
-          </div>
-          <div class="field" id="partition-fields"><label for="partition-mm">仕切り壁の鉛当量（mm）</label><input type="number" id="partition-mm" min="0" max="10" step="0.1"><span class="hint">鉛ガラス・鉛入りの仕切りは鉛当量で入れる。両端は地図でドラッグか、下の欄で</span>
-            <label>端1 x, y（m）</label><span class="pos-row"><input type="number" id="part-x1" step="0.05" aria-label="仕切り壁の端1 x（m）"><input type="number" id="part-y1" step="0.05" aria-label="仕切り壁の端1 y（m）"></span>
-            <label>端2 x, y（m）</label><span class="pos-row"><input type="number" id="part-x2" step="0.05" aria-label="仕切り壁の端2 x（m）"><input type="number" id="part-y2" step="0.05" aria-label="仕切り壁の端2 y（m）"></span></div>
+          <div class="wall-list-head"><span class="flabel">壁の一覧</span><button type="button" id="wall-add" class="mini-btn">壁を追加</button></div>
+          <p class="hint" style="font-size:0.7rem;color:#718096">材質が「鉛」の壁（鉛ガラス・鉛入りの仕切り）は、厚さに鉛当量を入れる。端の座標は部屋の左上の角が (0, 0)</p>
+          <div id="wall-list" class="wall-list" role="group" aria-label="壁の一覧"></div>
           <div class="field"><label for="eval-z">地図の高さ（m）</label><input type="number" id="eval-z" min="0" max="3" step="0.05"><span class="hint">床から 1.0 m＝胴、1.55 m＝目の高さの目安</span></div>
           <div id="xray-method"><div class="field"><label for="leak-limit">漏れ線の上限</label><select id="leak-limit"><option value="japan">日本の法令 1.0 mGy/h</option><option value="ncrp">NCRP 147 の前提 0.876 mGy/h</option></select></div>
           <div class="field"><label for="dist-mode">距離のとり方</label><select id="dist-mode"><option value="separate">散乱線と漏れ線で別々</option><option value="ncrp">NCRP の簡略化（短いほうにそろえる）</option></select><span class="hint">NCRP の簡略化は壁の向こうを安全側に見積もる方法。部屋の中では管球のまわりが実際より高く出る。測定点の表には両方の値を並べる</span></div></div>
@@ -292,18 +314,20 @@
           <h2>週あたりの空気カーマの地図</h2>
           <span class="unit">単位: mGy/週（空気カーマ）・高さ <span id="eval-z-label"></span> m</span>
         </div>
+        <div class="map-tools">
+          <button type="button" id="draw-toggle" class="tool-btn" aria-pressed="false">＋ 壁を描く</button>
+          <button type="button" id="plan-load" class="tool-btn">図面を読み込む</button>
+          <input type="file" id="plan-file" class="hidden" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" aria-label="図面のファイル（PDF・PNG・JPG）">
+          <span class="draw-msg" id="draw-msg" role="status"></span>
+        </div>
+        <div id="plan-panel" class="plan-panel hidden"><div id="plan-status" class="step" role="status" tabindex="-1"></div><div id="plan-body"></div></div>
         <div class="map-wrap"><canvas id="map" aria-label="部屋の線量分布の地図" role="img" tabindex="-1"></canvas>
           <div id="wall-pop" class="wall-pop hidden" role="dialog" aria-labelledby="wp-title" tabindex="-1">
             <div class="wp-title" id="wp-title"></div>
-            <div id="wp-wall">
-              <div class="field"><label for="wp-mat">材質</label><select id="wp-mat"></select></div>
-              <div class="field"><label for="wp-mm">厚さ（mm）</label><input type="number" id="wp-mm" min="0" step="1"></div>
-              <div class="field"><label for="wp-lead">鉛の内張り（mm）</label><input type="number" id="wp-lead" min="0" step="0.1"></div>
-            </div>
-            <div id="wp-part">
-              <div class="field"><label for="wp-pmm">鉛当量（mm）</label><input type="number" id="wp-pmm" min="0" step="0.1"></div>
-            </div>
-            <div class="wp-actions"><button type="button" id="wp-remove">仕切り壁を外す</button><button type="button" id="wp-close">閉じる</button></div>
+            <div class="field"><label for="wp-mat">材質</label><select id="wp-mat"></select></div>
+            <div class="field"><label for="wp-mm" id="wp-mm-label">厚さ（mm）</label><input type="number" id="wp-mm" min="0" step="1"></div>
+            <div class="field" id="wp-lead-row"><label for="wp-lead">鉛の内張り（mm）</label><input type="number" id="wp-lead" min="0" step="0.1"></div>
+            <div class="wp-actions"><button type="button" id="wp-remove">この壁を消す</button><button type="button" id="wp-close">閉じる</button></div>
           </div>
         </div>
         <div id="cursor-readout">地図の上にカーソルを置くか、タップすると、その点の値を表示します。</div>
@@ -314,7 +338,7 @@
           <span><span class="sw sw-primary"></span>一次線の方向（計算に含まない）</span>
           <span><span class="sw sw-near"></span>線源から 0.3 m 以内（表示しない）</span>
         </div>
-        <p class="drag-hint">地図の上で、患者（●）・管球（■）・測定点（A〜C）・仕切り壁の両端をドラッグできます。壁（黒い線）や仕切り壁（青い線）をタップすると、材質と厚さを変えられます。細い線は1桁ごとの等線量線です。</p>
+        <p class="drag-hint">地図の上で、患者（●）・管球（■）・測定点（A〜C）・壁の角（小さな点）をドラッグできます。壁（黒い線、鉛の壁は青い線）をタップすると、材質と厚さを変えたり消したりできます。細い線は1桁ごとの等線量線です。</p>
         <div id="error-box" class="hidden" role="alert"></div>
 
         <h2 style="margin-top:14px">測定点の値</h2>
@@ -439,10 +463,12 @@
   </main>
 
   <script src="scatter-core.js"></script>
+  <script src="scatter-room.js"></script>
+  <script src="floorplan.js"></script>
   <script>
   (function () {
     'use strict';
-    var C = window.ScatterCore;
+    var C = window.ScatterCore, R = window.ScatterRoom;
 
     var ROOM_LABELS = {
       rad_room_all: '一般撮影室（全方向）',
@@ -467,7 +493,6 @@
       ct: 'κ × DLP（NCRP 147 Eq. 5.10）。散乱は等方'
     };
     var MATERIALS = { concrete: 'コンクリート', gypsum: '石こうボード', lead: '鉛' };
-    var SIDES = [['N', '上'], ['S', '下'], ['W', '左'], ['E', '右']];
 
     function wall(material, mm, lead) { return { material: material, mm: mm, lead: lead || 0 }; }
 
@@ -507,6 +532,7 @@
 
     var state = null;
     var MARGIN = 1.6; // 部屋の外も見せる幅（m）
+    var COORD_MIN = -30, COORD_MAX = 100; // 座標の範囲（m）。桁違いの入力で地図が極端に広がるのを止める
 
     function clone(o) { return JSON.parse(JSON.stringify(o)); }
     function $(id) { return document.getElementById(id); }
@@ -523,23 +549,101 @@
       b.addEventListener('click', function () { loadPreset(p.id); });
       presetBox.appendChild(b);
     });
-    var wallGrid = $('wall-grid');
-    SIDES.forEach(function (sd) {
-      var lab = document.createElement('span'); lab.textContent = sd[1]; wallGrid.appendChild(lab);
-      var sel = document.createElement('select'); sel.id = 'wall-' + sd[0] + '-mat'; sel.setAttribute('aria-label', sd[1] + 'の壁の材質');
-      Object.keys(MATERIALS).forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = MATERIALS[m]; sel.appendChild(o); });
-      wallGrid.appendChild(sel);
-      var mm = document.createElement('input'); mm.type = 'number'; mm.min = '0'; mm.step = '1'; mm.id = 'wall-' + sd[0] + '-mm'; mm.setAttribute('aria-label', sd[1] + 'の壁の厚さ（mm）');
-      wallGrid.appendChild(mm);
-      var ld = document.createElement('input'); ld.type = 'number'; ld.min = '0'; ld.step = '0.1'; ld.id = 'wall-' + sd[0] + '-lead'; ld.setAttribute('aria-label', sd[1] + 'の壁の鉛の内張り（mm）');
-      wallGrid.appendChild(ld);
+    // ---------- 壁の一覧（詳細設定）。キーボードだけでも壁を全部操作できる入口。値は state.walls が正で、欄は描くたびに合わせる
+    var wallList = $('wall-list');
+    var WALL_KEYS = ['x1', 'y1', 'x2', 'y2', 'mm', 'lead'];
+    function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function buildWallRows() {
+      wallList.innerHTML = state.walls.map(function (w, i) {
+        var n = esc(w.label);
+        var sel = '<select data-wall="' + i + '" data-k="material" aria-label="' + n + 'の材質">' + Object.keys(MATERIALS).map(function (m) {
+          return '<option value="' + m + '">' + MATERIALS[m] + '</option>';
+        }).join('') + '</select>';
+        function inp(k, step, aria) { return '<input type="number" step="' + step + '" data-wall="' + i + '" data-k="' + k + '" aria-label="' + n + 'の' + aria + '">'; }
+        return '<div class="wall-row"><div class="r1"><span class="wname">' + n + '</span><button type="button" class="mini-btn" data-del="' + i + '" aria-label="' + n + 'を消す">消す</button></div>' +
+          '<div class="r2"><span class="k" style="grid-column:span 2;text-align:left">材質</span><span class="k">厚さ mm</span><span class="k">鉛の内張り</span>' +
+          sel + inp('mm', 1, '厚さ（mm）') + inp('lead', 0.1, '鉛の内張り（mm）') + '</div>' +
+          '<div class="r3"><span class="k" style="grid-column:span 2;text-align:left">端1 x, y（m）</span><span class="k" style="grid-column:span 2;text-align:left">端2 x, y（m）</span>' +
+          inp('x1', 0.05, '端1 x（m）') + inp('y1', 0.05, '端1 y（m）') + inp('x2', 0.05, '端2 x（m）') + inp('y2', 0.05, '端2 y（m）') + '</div></div>';
+      }).join('') || '<p class="hint-line">壁がありません。「壁を追加」か、地図の「＋ 壁を描く」で足せます。</p>';
+      wallRowsFor = state.walls.length;
+    }
+    var wallRowsFor = -1;
+    function syncWallRows() {
+      if (wallRowsFor !== state.walls.length) buildWallRows();
+      var isCT = state.room === 'ct';
+      state.walls.forEach(function (w, i) {
+        var sel = wallList.querySelector('select[data-wall="' + i + '"]');
+        setIfIdle(sel, w.material);
+        Array.prototype.forEach.call(sel.options, function (o) { o.disabled = isCT && o.value === 'gypsum' && w.material !== 'gypsum'; });
+        WALL_KEYS.forEach(function (k) { setIfIdle(wallList.querySelector('input[data-wall="' + i + '"][data-k="' + k + '"]'), isFinite(w[k]) ? w[k] : ''); });
+      });
+    }
+    // 外壁（長方形のひな形の壁）の形を変えたら「自由な形」にする（幅×奥行きの欄と食い違わないように）
+    function touchShape(wallIdx) {
+      if (state.rect && (wallIdx === undefined || state.walls[wallIdx].side)) state.rect = null;
+      unpressPresets();
+    }
+    function unpressPresets() { Array.prototype.forEach.call(presetBox.children, function (b) { b.setAttribute('aria-pressed', 'false'); }); }
+    // 新しい壁の既定は遮へいの弱い側（材質を変え忘れても、壁の向こうを低く見積もらないため）。
+    // X線室は石こうボード 12.5 mm、CT 室は石こうの係数が無いのでコンクリート 50 mm
+    function newWallProps() {
+      return state.room === 'ct' ? { material: 'concrete', mm: 50, lead: 0 } : { material: 'gypsum', mm: 12.5, lead: 0 };
+    }
+    function removeWall(i) {
+      drag = null; if (!draw.on) frozenExt = null; // ドラッグ中に消されたら、つかんでいた端の番号がずれるので止める
+      touchShape(i);
+      state.walls.splice(i, 1);
+      closeWallPop();
+      updateVisibility();
+      buildWallRows(); syncWallRows(); // フォーカスを移す先の行を先に作り直す
+      schedule();
+    }
+    function nextWallLabel() { state.wallSeq = (state.wallSeq || 0) + 1; return '壁' + state.wallSeq; }
+    wallList.addEventListener('input', function (e) {
+      var t = e.target, i = t.getAttribute('data-wall'), k = t.getAttribute('data-k');
+      if (i === null || t.tagName !== 'INPUT') return;
+      state.walls[+i][k] = t.value === '' ? NaN : Number(t.value);
+      if (/^[xy][12]$/.test(k)) touchShape(+i);
+      updateVisibility();
+    });
+    wallList.addEventListener('change', function (e) {
+      var t = e.target, i = t.getAttribute('data-wall');
+      if (i === null || t.tagName !== 'SELECT') return;
+      state.walls[+i].material = t.value;
+    });
+    wallList.addEventListener('click', function (e) {
+      var d = e.target.getAttribute && e.target.getAttribute('data-del');
+      if (d !== null && d !== undefined) {
+        removeWall(+d);
+        var dels = wallList.querySelectorAll('[data-del]');
+        (dels[Math.min(+d, dels.length - 1)] || $('wall-add')).focus();
+      }
+    });
+    $('wall-add').addEventListener('click', function () {
+      // 何も遮らない位置（既存の壁・線源・測定点を囲む範囲の下の外）に置く。部屋の真ん中に置くと、座標を直す前の値が低く出る
+      var fin = state.walls.filter(function (w) { return [w.x1, w.y1, w.x2, w.y2].every(isFinite); });
+      var ex = R.extent(fin, markerPoints(), 0) || { x0: 0, y0: 0, x1: 1, y1: 0 };
+      var y = Math.round((ex.y1 + 0.8) * 20) / 20, x0 = Math.round(ex.x0 * 20) / 20;
+      state.walls.push(Object.assign({ x1: x0, y1: y, x2: x0 + 1, y2: y, label: nextWallLabel() }, newWallProps()));
+      touchShape();
+      updateVisibility();
+      buildWallRows(); syncWallRows();
+      var first = wallList.querySelector('select[data-wall="' + (state.walls.length - 1) + '"]'); if (first) first.focus();
+      schedule();
     });
 
     function loadPreset(id) {
       var p = PRESETS.filter(function (q) { return q.id === id; })[0];
       var base = { leakLimit: 'japan', distMode: 'separate', obliquity: false };
-      state = Object.assign(base, clone(p.s));
-      if (!state.patient) { state.patient = { x: state.W / 2, y: state.D / 2, z: 1 }; state.tube = { x: state.W / 2, y: state.D / 2, z: 0.45 }; state.patients = 20; }
+      var s = clone(p.s);
+      state = Object.assign(base, s);
+      state.rect = { W: s.W, D: s.D };
+      state.walls = R.rectWalls(s.W, s.D, s.walls, s.partition);
+      state.wallSeq = 0;
+      delete state.W; delete state.D; delete state.partition;
+      if (draw.on) setDraw(false);
+      if (!state.patient) { state.patient = { x: s.W / 2, y: s.D / 2, z: 1 }; state.tube = { x: s.W / 2, y: s.D / 2, z: 0.45 }; state.patients = 20; }
       if (!state.iso) { state.iso = { x: state.patient.x, y: state.patient.y, z: 1 }; state.kvp = '120'; state.head = 30; state.dlpHead = 1200; state.body = 150; state.dlpBody = 550; }
       Array.prototype.forEach.call(presetBox.children, function (b) { b.setAttribute('aria-pressed', b.dataset.id === id ? 'true' : 'false'); });
       writeInputs();
@@ -555,12 +659,9 @@
       $('patient-z').value = state.patient.z;
       $('ct-kvp').value = state.kvp; $('ct-head').value = state.head; $('ct-dlp-head').value = state.dlpHead;
       $('ct-body').value = state.body; $('ct-dlp-body').value = state.dlpBody; $('iso-z').value = state.iso.z;
-      $('room-w').value = state.W; $('room-d').value = state.D; $('ceiling').value = state.ceiling;
-      SIDES.forEach(function (sd) {
-        var w = state.walls[sd[0]];
-        $('wall-' + sd[0] + '-mat').value = w.material; $('wall-' + sd[0] + '-mm').value = w.mm; $('wall-' + sd[0] + '-lead').value = w.lead;
-      });
-      $('partition-on').checked = state.partition.on; $('partition-mm').value = state.partition.mm;
+      if (state.rect) { $('room-w').value = state.rect.W; $('room-d').value = state.rect.D; }
+      $('ceiling').value = state.ceiling;
+      wallRowsFor = -1;
       $('eval-z').value = state.evalZ;
       $('leak-limit').value = state.leakLimit; $('dist-mode').value = state.distMode; $('obliquity').checked = state.obliquity;
       updateVisibility();
@@ -580,16 +681,14 @@
       var zPressed = false;
       Array.prototype.forEach.call($('evalz-seg').children, function (b) { var on = Math.abs(Number(b.dataset.z) - state.evalZ) < 1e-9; zPressed = zPressed || on; b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
       $('evalz-now').textContent = zPressed || !isFinite(state.evalZ) ? '' : '今の高さ: ' + state.evalZ + ' m（詳細設定で変えられます）';
-      $('partition-fields').classList.toggle('hidden', !state.partition.on);
+      $('rect-fields').classList.toggle('hidden', !state.rect);
+      $('free-shape').classList.toggle('hidden', !!state.rect);
       $('eval-z-label').textContent = $('eval-z').value || '—';
-      Array.prototype.forEach.call(document.querySelectorAll('#wall-grid select option[value=gypsum]'), function (o) { o.disabled = isCT; });
     }
     function writePositions() {
       $('patient-x').value = state.patient.x; $('patient-y').value = state.patient.y;
       $('tube-x').value = state.tube.x; $('tube-y').value = state.tube.y;
       $('iso-x').value = state.iso.x; $('iso-y').value = state.iso.y;
-      $('part-x1').value = state.partition.x1; $('part-y1').value = state.partition.y1;
-      $('part-x2').value = state.partition.x2; $('part-y2').value = state.partition.y2;
     }
 
     // 入力欄 → state。空欄・不正な値はそのまま渡し、計算側の検査でエラーを表示する（黙って0にしない）
@@ -620,13 +719,12 @@
       state.tube.z = readNum('tube-z'); state.patient.z = readNum('patient-z');
       state.kvp = $('ct-kvp').value; state.head = readNum('ct-head'); state.dlpHead = readNum('ct-dlp-head');
       state.body = readNum('ct-body'); state.dlpBody = readNum('ct-dlp-body'); state.iso.z = readNum('iso-z');
-      state.W = readNum('room-w'); state.D = readNum('room-d');
+      if (state.rect) {
+        // 長方形のままなら外壁を作り直す（範囲外の値は外壁を動かさず、検査でエラーにする）
+        state.rect.W = readNum('room-w'); state.rect.D = readNum('room-d');
+        if (state.rect.W >= 2 && state.rect.W <= 15 && state.rect.D >= 2 && state.rect.D <= 15) state.walls = R.resizeRect(state.walls, state.rect.W, state.rect.D);
+      }
       state.ceiling = readNum('ceiling');
-      SIDES.forEach(function (sd) {
-        state.walls[sd[0]] = { material: $('wall-' + sd[0] + '-mat').value, mm: readNum('wall-' + sd[0] + '-mm'), lead: readNum('wall-' + sd[0] + '-lead') };
-      });
-      state.partition.on = $('partition-on').checked; state.partition.mm = readNum('partition-mm');
-      state.partition.x1 = readNum('part-x1'); state.partition.y1 = readNum('part-y1'); state.partition.x2 = readNum('part-x2'); state.partition.y2 = readNum('part-y2');
       state.evalZ = readNum('eval-z');
       state.leakLimit = $('leak-limit').value; state.distMode = $('dist-mode').value; state.obliquity = $('obliquity').checked;
       Array.prototype.forEach.call(presetBox.children, function (b) { b.setAttribute('aria-pressed', 'false'); });
@@ -638,27 +736,25 @@
       function rng(v, lo, hi, name, field) {
         if (typeof v !== 'number' || !isFinite(v) || v < lo || v > hi) { var er = new Error(name + 'は ' + lo + '〜' + hi + ' の範囲で入れてください'); er.field = field; throw er; }
       }
-      rng(state.W, 2, 15, '部屋の幅', '#room-w'); rng(state.D, 2, 15, '部屋の奥行き', '#room-d'); rng(state.ceiling, 2, 6, '天井の高さ', '#ceiling');
+      if (state.rect) { rng(state.rect.W, 2, 15, '部屋の幅', '#room-w'); rng(state.rect.D, 2, 15, '部屋の奥行き', '#room-d'); }
+      rng(state.ceiling, 2, 6, '天井の高さ', '#ceiling');
       rng(state.evalZ, 0, state.ceiling, '地図の高さ（m）', '#eval-z');
       var isCT = state.room === 'ct';
       if (isCT) rng(state.iso.z, 0, state.ceiling, 'アイソセンタの高さ（m）', '#iso-z');
       else { rng(state.patient.z, 0, state.ceiling, '照射中心の高さ（m）', '#patient-z'); rng(state.tube.z, 0, state.ceiling, '管球の高さ（m）', '#tube-z'); }
-      SIDES.forEach(function (sd) {
-        var w = state.walls[sd[0]];
-        rng(w.mm, 0, 1000, sd[1] + 'の壁の厚さ（mm）', '#wall-' + sd[0] + '-mm'); rng(w.lead, 0, 20, sd[1] + 'の壁の鉛の内張り（mm）', '#wall-' + sd[0] + '-lead');
-        if (isCT && w.material === 'gypsum') { var eg = new Error('CT の二次線には石こうボードの透過の係数がありません（NCRP 147 は鉛とコンクリートのみ）。' + sd[1] + 'の壁の材質を変えてください'); eg.field = '#wall-' + sd[0] + '-mat'; throw eg; }
+      state.walls.forEach(function (w, i) {
+        function f(k) { return '[data-wall="' + i + '"][data-k="' + k + '"]'; }
+        ['x1', 'y1', 'x2', 'y2'].forEach(function (k) { rng(w[k], COORD_MIN, COORD_MAX, w.label + 'の' + (k.charAt(1) === '1' ? '端1' : '端2') + ' ' + k.charAt(0), f(k)); });
+        if (w.material === 'lead') rng(w.mm, 0, 20, w.label + 'の鉛当量（mm）', f('mm'));
+        else rng(w.mm, 0, 1000, w.label + 'の厚さ（mm）', f('mm'));
+        rng(w.lead, 0, 20, w.label + 'の鉛の内張り（mm）', f('lead'));
+        if (Math.hypot(w.x2 - w.x1, w.y2 - w.y1) < 0.01) { var ez = new Error(w.label + 'の長さが 0 です。消すか、端の座標を直してください'); ez.field = f('x2'); throw ez; }
+        if (isCT && w.material === 'gypsum') { var eg = new Error('CT の二次線には石こうボードの透過の係数がありません（NCRP 147 は鉛とコンクリートのみ）。' + w.label + 'の材質を変えてください'); eg.field = f('material'); throw eg; }
       });
-      if (state.partition.on) {
-        rng(state.partition.mm, 0, 20, '仕切り壁の鉛当量（mm）', '#partition-mm');
-        rng(state.partition.x1, -MARGIN, state.W + MARGIN, '仕切り壁の端1 の x', '#part-x1'); rng(state.partition.y1, -MARGIN, state.D + MARGIN, '仕切り壁の端1 の y', '#part-y1');
-        rng(state.partition.x2, -MARGIN, state.W + MARGIN, '仕切り壁の端2 の x', '#part-x2'); rng(state.partition.y2, -MARGIN, state.D + MARGIN, '仕切り壁の端2 の y', '#part-y2');
-      }
-      if (isCT) { rng(state.iso.x, -MARGIN, state.W + MARGIN, 'アイソセンタの x', '#iso-x'); rng(state.iso.y, -MARGIN, state.D + MARGIN, 'アイソセンタの y', '#iso-y'); }
-      else {
-        rng(state.patient.x, -MARGIN, state.W + MARGIN, '患者の x', '#patient-x'); rng(state.patient.y, -MARGIN, state.D + MARGIN, '患者の y', '#patient-y');
-        rng(state.tube.x, -MARGIN, state.W + MARGIN, '管球の x', '#tube-x'); rng(state.tube.y, -MARGIN, state.D + MARGIN, '管球の y', '#tube-y');
-      }
-      state.probes.forEach(function (pr, i) { rng(pr.x, -MARGIN, state.W + MARGIN, pr.name + 'の x', '[data-probe-x="' + i + '"]'); rng(pr.y, -MARGIN, state.D + MARGIN, pr.name + 'の y', '[data-probe-y="' + i + '"]'); });
+      function xy(p, name, fx, fy) { rng(p.x, COORD_MIN, COORD_MAX, name + 'の x', fx); rng(p.y, COORD_MIN, COORD_MAX, name + 'の y', fy); }
+      if (isCT) xy(state.iso, 'アイソセンタ', '#iso-x', '#iso-y');
+      else { xy(state.patient, '患者', '#patient-x', '#patient-y'); xy(state.tube, '管球', '#tube-x', '#tube-y'); }
+      state.probes.forEach(function (pr, i) { xy(pr, pr.name, '[data-probe-x="' + i + '"]', '[data-probe-y="' + i + '"]'); });
     }
     // 管球の向き。下から・上から＝患者の真下・真上、横から＝同じ高さで水平に離す（立位撮影の SID 1.8 m）。
     // 斜めの配置はどのボタンにも当たらないので、押されていない表示にする。数値は詳細設定で細かく変えられる
@@ -676,7 +772,7 @@
       msg.textContent = '';
       if (!dir) return;
       var P = state.patient;
-      if (![P.x, P.y, P.z, state.ceiling, state.W, state.D].every(isFinite)) { msg.textContent = '先に入力のエラーを直してください'; return; }
+      if (![P.x, P.y, P.z, state.ceiling].every(isFinite)) { msg.textContent = '先に入力のエラーを直してください'; return; }
       var tx, ty, tz;
       if (dir === 'side') {
         tz = P.z;
@@ -685,8 +781,9 @@
         var ux, uy;
         if (h >= 0.05) { ux = hx / h; uy = hy / h; }
         else {
-          var room = [[0, 1, state.D - P.y], [0, -1, P.y], [1, 0, state.W - P.x], [-1, 0, P.x]].sort(function (a, b) { return b[2] - a[2]; })[0];
-          ux = room[0]; uy = room[1];
+          var finite = state.walls.filter(function (w) { return [w.x1, w.y1, w.x2, w.y2].every(isFinite); });
+          var dir2 = R.farthestDirection(P, finite, 30);
+          ux = dir2[0]; uy = dir2[1];
         }
         tx = round2(P.x + ux * SIDE_SID); ty = round2(P.y + uy * SIDE_SID);
       } else {
@@ -709,25 +806,7 @@
     $('controls').addEventListener('change', function (e) { if (e.target.type !== 'number') { readInputs(e.target); schedule(); } });
 
     // ---------- 計算の入力
-    function buildWalls() {
-      var W = state.W, D = state.D, w = state.walls;
-      function layers(s) {
-        var L = [{ material: s.material, mm: s.mm }];
-        if (s.lead !== 0) L.push({ material: 'lead', mm: s.lead }); // NaN も渡して検査させる
-        return L;
-      }
-      var walls = [
-        { x1: 0, y1: 0, x2: W, y2: 0, layers: layers(w.N) },
-        { x1: 0, y1: D, x2: W, y2: D, layers: layers(w.S) },
-        { x1: 0, y1: 0, x2: 0, y2: D, layers: layers(w.W) },
-        { x1: W, y1: 0, x2: W, y2: D, layers: layers(w.E) }
-      ];
-      if (state.partition.on) {
-        var p = state.partition;
-        walls.push({ x1: p.x1, y1: p.y1, x2: p.x2, y2: p.y2, layers: [{ material: 'lead', mm: p.mm }] });
-      }
-      return walls;
-    }
+    function buildWalls() { return R.toCoreWalls(state.walls); }
     function buildSetup() {
       var base = { ceiling: state.ceiling, obliquity: state.obliquity };
       if (state.room === 'ct') {
@@ -738,7 +817,7 @@
 
     // ---------- 地図
     var canvas = $('map'), ctx = canvas.getContext('2d');
-    var view = { x0: 0, y0: 0, scale: 50, w: 600, h: 600 };
+    var view = { x0: 0, y0: 0, scale: 50, w: 600, h: 600, offX: 0, dpr: 1 };
     var LOG_MIN = -4, LOG_MAX = 2; // 0.0001〜100 mGy/週
     var STOPS = [[0, [33, 64, 154]], [0.25, [32, 144, 185]], [0.5, [94, 189, 103]], [0.7, [240, 210, 70]], [0.85, [240, 140, 50]], [1, [200, 40, 40]]];
     function color(t) {
@@ -757,15 +836,34 @@
       $('legend-range').textContent = '0.0001〜100 mGy/週（対数）';
     })();
 
+    // 地図の範囲＝壁・線源・測定点を囲む長方形＋余白。ドラッグ中と壁を描いているあいだは止める（範囲が動いて手元がずれないように）
+    var frozenExt = null;
+    function markerPoints() {
+      var pts = state.room === 'ct' ? [state.iso] : [state.patient, state.tube];
+      return pts.concat(state.probes).filter(function (p) { return p.x >= COORD_MIN && p.x <= COORD_MAX && p.y >= COORD_MIN && p.y <= COORD_MAX; });
+    }
+    function unionExt(a, b) { return a && b ? { x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) } : a || b; }
+    function currentExtent() {
+      // 図面の縮尺合わせ・範囲選びのあいだは、図面そのもの（単位は図面の px）を見せる
+      if (planSetup()) { var pad = Math.max(plan.wPx, plan.hPx) * 0.02; return { x0: -pad, y0: -pad, x1: plan.wPx + pad, y1: plan.hPx + pad }; }
+      if (frozenExt) return frozenExt;
+      var walls = state.walls.filter(function (w) { return [w.x1, w.y1, w.x2, w.y2].every(function (v) { return v >= COORD_MIN && v <= COORD_MAX; }); });
+      // 壁には余白 1.6 m、線源・測定点には 0.6 m（ひな形では旧版と同じ範囲になる）。図面を敷いていれば、選んだ範囲も入れる
+      var ew = R.extent(walls, [], MARGIN), em = R.extent([], markerPoints(), 0.6);
+      var ex = unionExt(unionExt(ew, em), planCropWorld()) || { x0: -MARGIN, y0: -MARGIN, x1: 5 + MARGIN, y1: 6 + MARGIN };
+      // 小さすぎる範囲（壁が無く点が1つ等）は 4 m 四方まで広げる
+      var cx = (ex.x0 + ex.x1) / 2, cy = (ex.y0 + ex.y1) / 2, hw = Math.max(2, (ex.x1 - ex.x0) / 2), hh = Math.max(2, (ex.y1 - ex.y0) / 2);
+      return { x0: cx - hw, y0: cy - hh, x1: cx + hw, y1: cy + hh };
+    }
     function resize() {
       var cssW = canvas.parentElement.clientWidth;
-      var Wv = state.W >= 2 && state.W <= 15 ? state.W : 5, Dv = state.D >= 2 && state.D <= 15 ? state.D : 6;
-      var worldW = Wv + 2 * MARGIN, worldH = Dv + 2 * MARGIN;
+      var ex = currentExtent();
+      var worldW = ex.x1 - ex.x0, worldH = ex.y1 - ex.y0;
       var scale = cssW / worldW;
       var cssH = Math.min(worldH * scale, 720);
       scale = Math.min(scale, cssH / worldH);
       var dpr = window.devicePixelRatio || 1;
-      view = { x0: -MARGIN, y0: -MARGIN, scale: scale, w: worldW * scale, h: worldH * scale, dpr: dpr };
+      view = { x0: ex.x0, y0: ex.y0, scale: scale, w: worldW * scale, h: worldH * scale, dpr: dpr };
       canvas.style.height = view.h + 'px';
       canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(view.h * dpr);
       view.offX = (cssW - view.w) / 2;
@@ -794,18 +892,21 @@
         if (inAdv && !adv.open) { adv.open = true; $('probe-table').classList.add('show-pos'); }
         el.classList.add('bad');
         if (inAdv) where = '「詳細設定」の赤い枠の欄で直せます。';
-        if (/^#wall-/.test(field)) where += '地図の壁をタップしても変えられます。';
+        if (/data-wall/.test(field)) where = '「詳細設定」の壁の一覧の赤い枠の欄で直せます。地図の壁をタップしても変えられます。';
         if (/data-probe/.test(field)) where = '測定点の表の赤い枠の欄（座標）で直せます。';
       }
       box.textContent = '計算できません: ' + msg + '。' + (where || '入力を確かめてください。');
       box.classList.remove('hidden');
     }
 
+    var baseImage = null; // 線量の地図を描き終えた絵（壁を描くときの下書きの線を、地図を計算し直さずに重ねるため）
     function render() {
+      syncWallRows();
       resize();
       var dpr = view.dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (planSetup()) { renderPlanSetup(); return; }
       var walls, setup, z = state.evalZ;
       try {
         validate();
@@ -818,10 +919,16 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         updateProbes(null);
         showError(e.message, e.field);
-        if (state.W >= 2 && state.W <= 15 && state.D >= 2 && state.D <= 15) { try { drawRoom(); drawMarkers(); } catch (e2) { /* 部屋も描けない入力 */ } }
+        try { drawPlanUnder(); drawRoom(); drawMarkers(); } catch (e2) { /* 部屋も描けない入力 */ }
+        saveBase();
         return;
       }
-      drawRoom(); drawMarkers();
+      drawPlanUnder(); drawRoom(); drawMarkers();
+      saveBase();
+    }
+    function saveBase() {
+      try { baseImage = ctx.getImageData(0, 0, canvas.width, canvas.height); } catch (e) { baseImage = null; }
+      drawOverlay();
     }
 
     function renderGrid(setup, walls, z) {
@@ -855,42 +962,46 @@
       ctx.stroke();
     }
 
+    function leadOf(w) { return (w.material === 'lead' && w.mm > 0 ? w.mm : 0) + (w.lead > 0 ? w.lead : 0); }
     function drawRoom() {
-      var walls = buildWalls();
-      walls.forEach(function (w, idx) {
+      state.walls.forEach(function (w) {
         var a = toPx(w.x1, w.y1), b = toPx(w.x2, w.y2);
-        var leadMm = w.layers.reduce(function (s, l) { return s + (l.material === 'lead' && l.mm > 0 ? l.mm : 0); }, 0);
-        ctx.strokeStyle = idx === 4 ? '#2c5282' : '#1a202c';
-        ctx.lineWidth = Math.min(10, 3 + leadMm * 2);
+        ctx.strokeStyle = w.material === 'lead' ? '#2c5282' : '#1a202c';
+        ctx.lineWidth = Math.min(10, 3 + leadOf(w) * 2);
         ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
       });
-      drawWallLabels(walls);
-      // 1 m の目盛り
-      var o = toPx(state.W - 1, state.D + 0.35), e = toPx(state.W, state.D + 0.35);
+      drawWallLabels();
+      // 1 m の目盛り（地図の右下）
+      var ex = currentExtent();
+      var o = toPx(ex.x1 - 1.3, ex.y1 - 0.3), e = toPx(ex.x1 - 0.3, ex.y1 - 0.3);
       ctx.strokeStyle = '#1a202c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
       ctx.fillStyle = '#1a202c'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('1 m', (o[0] + e[0]) / 2, o[1] - 4);
     }
 
-    function wallText(i) {
-      if (i === 4) return '仕切り 鉛 ' + state.partition.mm + ' mm';
-      var w = state.walls[SIDES[i][0]];
+    function wallText(w) {
+      if (!isFinite(w.mm) || !isFinite(w.lead)) return '厚さが未入力';
+      if (w.material === 'lead') return '鉛 ' + w.mm + ' mm' + (w.lead > 0 ? '＋鉛 ' + w.lead + ' mm' : '');
       return MATERIALS[w.material] + ' ' + w.mm + ' mm' + (w.lead > 0 ? '＋鉛 ' + w.lead + ' mm' : '');
     }
-    // 壁の外側に材質と厚さを書く（タップで変えられることの手がかり）
-    function drawWallLabels(walls) {
+    // 壁の、線源と反対の側に材質と厚さを書く（タップで変えられることの手がかり）。短くて収まらない壁には書かない
+    function drawWallLabels() {
+      var src = state.room === 'ct' ? state.iso : state.patient;
       ctx.save();
       ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.fillStyle = '#2d3748';
-      var off = 12 / view.scale; // 壁から約12px 外側
-      walls.forEach(function (w, i) {
-        var mx = (w.x1 + w.x2) / 2, my = (w.y1 + w.y2) / 2, ang = 0;
-        if (i === 0) my -= off; else if (i === 1) my += off;
-        else if (i === 2) { mx -= off; ang = -Math.PI / 2; } else if (i === 3) { mx += off; ang = Math.PI / 2; }
-        else { var dx = w.x2 - w.x1, dy = w.y2 - w.y1, L = Math.hypot(dx, dy) || 1; mx += -dy / L * off; my += dx / L * off; ang = Math.atan2(dy, dx); if (ang > Math.PI / 2 || ang < -Math.PI / 2) ang += Math.PI; }
-        var q = toPx(mx, my);
+      var off = 12 / view.scale; // 壁から約12px
+      state.walls.forEach(function (w) {
+        var dx = w.x2 - w.x1, dy = w.y2 - w.y1, L = Math.hypot(dx, dy);
+        if (!(L > 0)) return;
+        var t = wallText(w);
+        if (ctx.measureText(t).width > L * view.scale + 16) return;
+        var nx = -dy / L, ny = dx / L, mx = (w.x1 + w.x2) / 2, my = (w.y1 + w.y2) / 2;
+        if (isFinite(src.x) && isFinite(src.y) && nx * (src.x - mx) + ny * (src.y - my) > 0) { nx = -nx; ny = -ny; }
+        var ang = Math.atan2(dy, dx);
+        if (ang > Math.PI / 2 + 1e-9 || ang <= -Math.PI / 2 + 1e-9) ang += Math.PI;
+        var q = toPx(mx + nx * off, my + ny * off);
         ctx.save(); ctx.translate(q[0], q[1]); ctx.rotate(ang);
-        var t = wallText(i);
         ctx.strokeText(t, 0, 0); ctx.fillText(t, 0, 0);
         ctx.restore();
       });
@@ -902,10 +1013,8 @@
       if (state.room === 'ct') h.push({ id: 'iso', p: state.iso, label: 'CT', shape: 'gantry' });
       else { h.push({ id: 'patient', p: state.patient, label: '患者', shape: 'circle' }); h.push({ id: 'tube', p: state.tube, label: '管球', shape: 'square' }); }
       state.probes.forEach(function (pr, i) { h.push({ id: 'probe' + i, p: pr, label: pr.name.charAt(0), shape: 'probe' }); });
-      if (state.partition.on) {
-        h.push({ id: 'part1', p: { x: state.partition.x1, y: state.partition.y1 }, shape: 'end' });
-        h.push({ id: 'part2', p: { x: state.partition.x2, y: state.partition.y2 }, shape: 'end' });
-      }
+      // 壁の角・端（重なる端は1つにまとめ、ドラッグでつながった壁が一緒に動く）
+      R.vertices(state.walls).forEach(function (v, k) { h.push({ id: 'v' + k, p: { x: v.x, y: v.y }, ends: v.ends, shape: 'end' }); });
       return h;
     }
     function drawMarkers() {
@@ -925,7 +1034,7 @@
           ctx.fillStyle = '#fff'; ctx.strokeStyle = '#1a365d'; ctx.beginPath(); ctx.arc(q[0], q[1], 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
           ctx.fillStyle = '#1a365d'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(h.label, q[0], q[1] + 0.5); ctx.textBaseline = 'alphabetic';
         }
-        else if (h.shape === 'end') { ctx.fillStyle = '#2c5282'; ctx.beginPath(); ctx.arc(q[0], q[1], 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+        else if (h.shape === 'end') { ctx.lineWidth = 1.5; ctx.fillStyle = '#fff'; ctx.strokeStyle = '#2c5282'; ctx.beginPath(); ctx.arc(q[0], q[1], 4.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
       });
     }
 
@@ -941,16 +1050,9 @@
         inside: '部屋の中: 防護衣を考慮しない空間線量。参考線の対象外' };
       return flags.map(function (f) { return '<span class="flag' + (f === 'primary-direction' ? ' primary' : f === 'inside' ? ' inside' : '') + '">' + map[f] + '</span>'; }).join('');
     }
-    function segCross(a, b, c, d) {
-      function o(p, q, r) { return (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x); }
-      return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0;
-    }
-    // 部屋の中で、線源との間に仕切り壁が無い点（仕切りの向こうの操作室は含めない）
+    // 線源から壁を1枚も通らずに届く点＝部屋の中（仕切りの向こうの操作室・外壁の向こうは含めない）
     function isInside(pr) {
-      if (!(pr.x > 0 && pr.x < state.W && pr.y > 0 && pr.y < state.D)) return false;
-      if (!state.partition.on) return true;
-      var src = state.room === 'ct' ? state.iso : state.patient, P = state.partition;
-      return !segCross(src, pr, { x: P.x1, y: P.y1 }, { x: P.x2, y: P.y2 });
+      return R.reachesWithoutWall(state.room === 'ct' ? state.iso : state.patient, pr, state.walls);
     }
     var tbody = document.querySelector('#probe-table tbody');
     // 行は一度だけ作り、値のセルだけ書き換える（入力中の欄のフォーカスを奪わない）
@@ -1013,41 +1115,147 @@
         var q = toPx(h.p.x, h.p.y);
         if (h.shape === 'square' && Math.abs(h.p.x - state.patient.x) < 0.05 && Math.abs(h.p.y - state.patient.y) < 0.05) q = [q[0] + 14, q[1]];
         var d = Math.hypot(q[0] - px, q[1] - py);
+        if (h.shape === 'end' && d > 10) return; // 壁の角は 10 px（短い壁の真ん中をタップしたら小窓を開けるように）
         if (d < bd) { bd = d; best = h; }
       });
       return best;
     }
     function clampWorld(x, y) {
-      return [Math.max(-MARGIN + 0.1, Math.min(state.W + MARGIN - 0.1, x)), Math.max(-MARGIN + 0.1, Math.min(state.D + MARGIN - 0.1, y))];
+      var ex = currentExtent();
+      return [Math.max(ex.x0 + 0.1, Math.min(ex.x1 - 0.1, x)), Math.max(ex.y0 + 0.1, Math.min(ex.y1 - 0.1, y))];
     }
-    function moveHandle(id, w) {
+    var SNAP_PX = 10; // 壁の端・線に吸着する距離（画面の px）
+    function moveHandle(h, w) {
+      var id = h.id;
+      if (id.charAt(0) === 'v') {
+        // 壁の角: ほかの壁の端・線、なければ 5 cm の格子に吸着。つながった端をまとめて動かす
+        var own = h.ends.map(function (e) { return e[0]; });
+        var s = R.snapPoint({ x: w[0], y: w[1] }, { tol: SNAP_PX / view.scale, walls: state.walls, exclude: own, extra: planSnapPoints(w[0], w[1], SNAP_PX / view.scale) });
+        h.ends.forEach(function (e) {
+          var wl = state.walls[e[0]];
+          if (wl['x' + e[1]] === s.x && wl['y' + e[1]] === s.y) return; // 触れただけでは「自由な形」にしない
+          wl['x' + e[1]] = s.x; wl['y' + e[1]] = s.y; touchShape(e[0]);
+        });
+        return;
+      }
       var x = Math.round(w[0] * 20) / 20, y = Math.round(w[1] * 20) / 20; // 5 cm 刻み
       if (id === 'patient') { var dx = x - state.patient.x, dy = y - state.patient.y; state.patient.x = x; state.patient.y = y; state.tube.x += dx; state.tube.y += dy; }
       else if (id === 'tube') { state.tube.x = x; state.tube.y = y; }
       else if (id === 'iso') { state.iso.x = x; state.iso.y = y; }
-      else if (id === 'part1') { state.partition.x1 = x; state.partition.y1 = y; }
-      else if (id === 'part2') { state.partition.x2 = x; state.partition.y2 = y; }
       else if (id.indexOf('probe') === 0) { var pr = state.probes[+id.slice(5)]; pr.x = x; pr.y = y; }
     }
+    function endDrag() {
+      if (!drag) return;
+      drag = null;
+      if (!draw.on) frozenExt = null;
+      updateVisibility();
+      schedule();
+    }
     canvas.addEventListener('pointerdown', function (e) {
-      var p = evtPos(e), h = hit(p[0], p[1]);
-      if (h) { closeWallPop(); drag = h.id; canvas.setPointerCapture(e.pointerId); e.preventDefault(); }
+      var p = evtPos(e);
+      if (planSetup()) { e.preventDefault(); planDown(p); return; }
+      if (draw.on) { e.preventDefault(); drawDown(p); return; }
+      var h = hit(p[0], p[1]);
+      if (h) { closeWallPop(); frozenExt = currentExtent(); drag = h; canvas.setPointerCapture(e.pointerId); e.preventDefault(); }
       else { var wi = hitWall(p[0], p[1]); if (wi >= 0) { e.preventDefault(); openWallPop(wi, p); } else closeWallPop(); }
       readout(p);
     });
     canvas.addEventListener('pointermove', function (e) {
       var p = evtPos(e);
+      if (planSetup()) { planMove(p); return; }
+      if (draw.on) { drawMove(p); readout(p); return; }
       if (drag) { moveHandle(drag, clampWorld.apply(null, toWorld(p[0], p[1]))); writePositions(); schedule(); }
       else canvas.style.cursor = hit(p[0], p[1]) ? 'grab' : 'crosshair';
       readout(p);
     });
-    // スマートフォン: 動かせる印に触れたときだけページのスクロールを止める（それ以外は地図の上でもスクロールできる）
+    // スマートフォン: 動かせる印に触れたとき・壁を描いているときだけページのスクロールを止める（それ以外は地図の上でもスクロールできる）
     canvas.addEventListener('touchstart', function (e) {
       var r = canvas.getBoundingClientRect(), t = e.touches[0];
-      if (t && hit(t.clientX - r.left, t.clientY - r.top)) e.preventDefault();
+      if (draw.on || planSetup() || (t && hit(t.clientX - r.left, t.clientY - r.top))) e.preventDefault();
     }, { passive: false });
-    canvas.addEventListener('pointerup', function () { drag = null; });
-    canvas.addEventListener('pointercancel', function () { drag = null; });
+    canvas.addEventListener('pointerup', function (e) { if (planSetup()) planUp(evtPos(e)); else if (draw.on) drawUp(evtPos(e)); else endDrag(); });
+    canvas.addEventListener('pointercancel', function () { if (draw.on) draw.downPx = null; else endDrag(); });
+    canvas.addEventListener('pointerleave', function () { if (draw.on && !draw.start) { draw.hover = null; drawOverlay(); } });
+
+    // ---------- 壁を描く: 点を順にタップすると壁がつながって引ける。同じ点をもう一度タップするか、ボタンをもう一度押すと終わり。
+    // ドラッグ（押して離す）でも1本引ける。吸着: 壁の端 → 壁の線の上 → ほぼ水平・垂直 → 5 cm の格子
+    var draw = { on: false, start: null, hover: null, downPx: null };
+    var MIN_WALL_M = 0.05;
+    function setDraw(on) {
+      if (on && planSetup()) return; // 図面の縮尺が決まるまでは壁を描かない（でたらめな大きさで値を出さない）
+      draw.on = on; draw.start = null; draw.hover = null; draw.downPx = null;
+      var b = $('draw-toggle');
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+
+      canvas.style.touchAction = on ? 'none' : '';
+      canvas.style.cursor = 'crosshair';
+      frozenExt = on ? currentExtent() : null;
+      closeWallPop();
+      drawMsg();
+      schedule();
+    }
+    function drawMsg() {
+      $('draw-msg').textContent = !draw.on ? '' : draw.start
+        ? '次の点をタップ（同じ点をもう一度タップで、つなげるのを終える。Esc で取り消し）'
+        : '壁の始まりの点をタップ（壁の角や線にくっつきます）。新しい壁は遮へいの弱い' + (state.room === 'ct' ? 'コンクリート 50 mm' : '石こうボード 12.5 mm') + 'で置くので、あとでタップして材質と厚さを合わせてください。終えるときは「＋ 壁を描く」をもう一度押す';
+    }
+    function snapAt(p) {
+      var w = toWorld(p[0], p[1]);
+      return R.snapPoint({ x: w[0], y: w[1] }, { tol: SNAP_PX / view.scale, walls: state.walls, start: draw.start, extra: planSnapPoints(w[0], w[1], SNAP_PX / view.scale) });
+    }
+    function drawDown(p) {
+      var s = snapAt(p);
+      if (!draw.start) { draw.start = s; draw.downPx = p; draw.hover = null; drawMsg(); drawOverlay(); return; }
+      finishSegment(s);
+      draw.downPx = null; // ドラッグで1本引く扱いは、その押下で始点を置いたときだけ（指のずれで余分な壁を作らない）
+    }
+    function drawUp(p) {
+      // 押した点から離れた所で離したら、そこまでの1本（ドラッグで描く）
+      if (draw.start && draw.downPx && Math.hypot(p[0] - draw.downPx[0], p[1] - draw.downPx[1]) > 8) finishSegment(snapAt(p));
+      draw.downPx = null;
+    }
+    function drawMove(p) { draw.hover = snapAt(p); drawOverlay(); }
+    function finishSegment(s) {
+      var a = draw.start;
+      if (Math.hypot(s.x - a.x, s.y - a.y) < MIN_WALL_M) { draw.start = null; draw.hover = null; drawMsg(); drawOverlay(); return; }
+      state.walls.push(Object.assign({ x1: a.x, y1: a.y, x2: s.x, y2: s.y, label: nextWallLabel() }, newWallProps()));
+      touchShape();
+      updateVisibility();
+      draw.start = s; draw.hover = null;
+      drawMsg();
+      schedule();
+    }
+    // 下書きの線と吸着の印を、計算済みの地図の上に重ねる
+    function drawOverlay() {
+      if (!draw.on || !baseImage) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.putImageData(baseImage, 0, 0);
+      ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+      var h = draw.hover;
+      if (draw.start) {
+        var a = toPx(draw.start.x, draw.start.y);
+        ctx.fillStyle = '#1a56db'; ctx.beginPath(); ctx.arc(a[0], a[1], 5, 0, Math.PI * 2); ctx.fill();
+        if (h) {
+          var b = toPx(h.x, h.y);
+          ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = '#1a56db'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.restore();
+          var L = Math.hypot(h.x - draw.start.x, h.y - draw.start.y);
+          ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left'; ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.fillStyle = '#1a365d';
+          ctx.strokeText(L.toFixed(2) + ' m', b[0] + 10, b[1] - 10); ctx.fillText(L.toFixed(2) + ' m', b[0] + 10, b[1] - 10);
+        }
+      }
+      if (h) {
+        var q = toPx(h.x, h.y);
+        ctx.lineWidth = 2; ctx.strokeStyle = h.snap === 'vertex' ? '#2f855a' : h.snap === 'wall' ? '#c05621' : '#1a56db';
+        ctx.beginPath(); ctx.arc(q[0], q[1], h.snap === 'grid' ? 4 : 8, 0, Math.PI * 2); ctx.stroke();
+      }
+    }
+    $('draw-toggle').addEventListener('click', function () { setDraw(!draw.on); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape' || !draw.on || popWall >= 0) return;
+      if (draw.start) { draw.start = null; draw.hover = null; drawMsg(); drawOverlay(); }
+      else setDraw(false);
+    });
     function readout(p) {
       var w = toWorld(p[0], p[1]), out = $('cursor-readout');
       try {
@@ -1059,11 +1267,323 @@
       } catch (err) { out.textContent = ''; }
     }
 
-    // ---------- 壁をタップして材質と厚さを変える（値は詳細設定の欄に書き、そこから読む。入口を1つにするため）
+    // ---------- 図面の下敷き（floorplan.js で読む。ファイルは外部に送らず、保存もしない）
+    // 手順: calib（2点をタップして実際の長さを入れる。または図面の横幅を入れる）→ confirm（図面全体の大きさで確かめる）
+    //       → crop（部屋のまわりを囲む）→ done
+    // calib・confirm・crop のあいだは、地図の単位は図面の px。done では m に直し、範囲の左上（plan.origin）を世界の (0, 0) にする
+    // （大きな図面の右下の部屋でも、座標が部屋の近くの小さな値になるように）
+    var FP = window.FloorPlan;
+    var plan = null;
+    var loadSeq = 0; // 読み込み・ページ切り替えの番号。古い結果が後から届いても捨てる
+    function planSetup() { return !!plan && (plan.step === 'calib' || plan.step === 'confirm' || plan.step === 'crop'); }
+    function scene() { return { walls: state.walls, patient: state.patient, tube: state.tube, iso: state.iso, probes: state.probes }; }
+    function planCropWorld() {
+      if (!plan || !plan.placed || !plan.crop) return null;
+      var a = FP.pxToWorld(plan.crop.x0, plan.crop.y0, plan.origin, plan.mPerPx), b = FP.pxToWorld(plan.crop.x1, plan.crop.y1, plan.origin, plan.mPerPx);
+      return { x0: a.x, y0: a.y, x1: b.x, y1: b.y };
+    }
+    // 図面の線の端（ベクタの PDF のみ）のうち、点 (x, y) m から r m 以内のもの（m の座標で返す）
+    function planSnapPoints(x, y, r) {
+      if (!plan || !plan.placed || !plan.index) return [];
+      var m = plan.mPerPx, o = plan.origin, a = plan.index.near(x / m + o.x, y / m + o.y, r / m), out = [];
+      for (var i = 0; i < a.length; i += 2) { var w = FP.pxToWorld(a[i], a[i + 1], o, m); out.push({ x: Math.round(w.x * 1e4) / 1e4, y: Math.round(w.y * 1e4) / 1e4 }); }
+      return out;
+    }
+    // 線量の地図の下に図面を重ねる（乗算: 図面の白は地図の色のまま、線だけが暗く見える）
+    function drawPlanUnder() {
+      if (!plan || !plan.placed) return;
+      var m = plan.mPerPx, w0 = FP.pxToWorld(0, 0, plan.origin, m), a = toPx(w0.x, w0.y);
+      ctx.save();
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.globalAlpha = plan.opacity;
+      ctx.drawImage(plan.canvas, a[0], a[1], plan.wPx * m * view.scale, plan.hPx * m * view.scale);
+      ctx.restore();
+    }
+    function fmtM(v) { return v >= 10 ? v.toFixed(1) : v.toFixed(2); }
+
+    // 縮尺合わせ・範囲選びの画面（線量は計算しない）
+    function renderPlanSetup() {
+      updateProbes(null);
+      showError(null);
+      ctx.fillStyle = '#edf2f7'; ctx.fillRect(0, 0, view.w + 2 * view.offX, view.h);
+      var a = toPx(0, 0);
+      ctx.drawImage(plan.canvas, a[0], a[1], plan.wPx * view.scale, plan.hPx * view.scale);
+      var pts = plan.calib, h = plan.hover;
+      ctx.lineWidth = 2;
+      if (plan.step === 'calib' || plan.step === 'confirm') {
+        if (pts.length === 2) {
+          var p0 = toPx(pts[0].x, pts[0].y), p1 = toPx(pts[1].x, pts[1].y);
+          ctx.strokeStyle = '#c53030'; ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke();
+        } else if (pts.length === 1 && h) {
+          var q0 = toPx(pts[0].x, pts[0].y), q1 = toPx(h.x, h.y);
+          ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = '#c53030'; ctx.beginPath(); ctx.moveTo(q0[0], q0[1]); ctx.lineTo(q1[0], q1[1]); ctx.stroke(); ctx.restore();
+        }
+        pts.forEach(function (p) { var q = toPx(p.x, p.y); ctx.fillStyle = '#c53030'; ctx.beginPath(); ctx.arc(q[0], q[1], 5, 0, Math.PI * 2); ctx.fill(); });
+      }
+      if (plan.step === 'crop') {
+        var c = plan.cropDraft || (plan.cropStart && h ? { x0: Math.min(plan.cropStart.x, h.x), y0: Math.min(plan.cropStart.y, h.y), x1: Math.max(plan.cropStart.x, h.x), y1: Math.max(plan.cropStart.y, h.y) } : null);
+        if (c) {
+          var c0 = toPx(c.x0, c.y0), c1 = toPx(c.x1, c.y1);
+          ctx.save(); ctx.fillStyle = 'rgba(26,86,219,0.12)'; ctx.fillRect(c0[0], c0[1], c1[0] - c0[0], c1[1] - c0[1]);
+          ctx.setLineDash([6, 4]); ctx.strokeStyle = '#1a56db'; ctx.strokeRect(c0[0], c0[1], c1[0] - c0[0], c1[1] - c0[1]); ctx.restore();
+        }
+        if (plan.cropStart) { var s0 = toPx(plan.cropStart.x, plan.cropStart.y); ctx.fillStyle = '#1a56db'; ctx.beginPath(); ctx.arc(s0[0], s0[1], 5, 0, Math.PI * 2); ctx.fill(); }
+      }
+      if (h && plan.step !== 'confirm') {
+        var hq = toPx(h.x, h.y);
+        ctx.strokeStyle = h.snap ? '#2f855a' : '#1a56db';
+        ctx.beginPath(); ctx.arc(hq[0], hq[1], h.snap ? 8 : 4, 0, Math.PI * 2); ctx.stroke();
+      }
+      baseImage = null;
+    }
+    // 図面の px の点。ベクタの PDF なら線の端に吸着（画面で 10 px 以内）
+    function planPt(p) {
+      var w = toWorld(p[0], p[1]), r = SNAP_PX / view.scale;
+      var x = Math.max(0, Math.min(plan.wPx, w[0])), y = Math.max(0, Math.min(plan.hPx, w[1]));
+      if (plan.index) {
+        var a = plan.index.near(x, y, r), best = null, bd = r;
+        for (var i = 0; i < a.length; i += 2) { var d = Math.hypot(a[i] - x, a[i + 1] - y); if (d <= bd) { bd = d; best = { x: a[i], y: a[i + 1], snap: true }; } }
+        if (best) return best;
+      }
+      return { x: x, y: y, snap: false };
+    }
+    function planDown(p) {
+      var q = planPt(p);
+      if (plan.step === 'calib') {
+        if (plan.calib.length >= 2) plan.calib = [];
+        plan.calib.push({ x: q.x, y: q.y });
+        plan.err = '';
+        renderPlanPanel(plan.calib.length === 2 ? 'plan-len' : null);
+      } else if (plan.step === 'crop') {
+        if (!plan.cropStart || plan.cropDraft) { plan.cropStart = { x: q.x, y: q.y }; plan.cropDraft = null; plan.downPx = p; }
+        else finishCrop(q);
+        renderPlanPanel();
+      }
+      schedule();
+    }
+    function planMove(p) { plan.hover = planPt(p); schedule(); }
+    function planUp(p) {
+      // 範囲は、押して引いて離す（ドラッグ）でも、2つの角のタップでも選べる
+      if (plan.step === 'crop' && plan.cropStart && !plan.cropDraft && plan.downPx && Math.hypot(p[0] - plan.downPx[0], p[1] - plan.downPx[1]) > 8) { finishCrop(planPt(p)); renderPlanPanel(); schedule(); }
+      if (plan) plan.downPx = null;
+    }
+    function finishCrop(q) {
+      var s = plan.cropStart;
+      var c = { x0: Math.min(s.x, q.x), y0: Math.min(s.y, q.y), x1: Math.max(s.x, q.x), y1: Math.max(s.y, q.y) };
+      var err = FP.checkCrop(c, plan.mPerPx);
+      if (err) { plan.err = err; plan.cropStart = null; return; }
+      plan.cropDraft = c; plan.err = '';
+    }
+
+    function setPlanStep(step) {
+      plan.step = step; plan.hover = null; plan.err = '';
+      if (step === 'calib') plan.calib = [];
+      if (step === 'crop') { plan.cropStart = null; plan.cropDraft = null; }
+      if (draw.on) setDraw(false);
+      closeWallPop();
+      canvas.style.touchAction = planSetup() ? 'none' : '';
+      $('draw-toggle').disabled = planSetup();
+      renderPlanPanel();
+      schedule();
+    }
+    function calibLenPx() { var c = plan.calib; return c.length === 2 ? Math.hypot(c[1].x - c[0].x, c[1].y - c[0].y) : 0; }
+    function proposeScale(mPerPx, how, relErr) {
+      var err = FP.checkPlanSize(plan.wPx, plan.hPx, mPerPx);
+      if (err) { plan.err = err; renderPlanPanel(); return; }
+      plan.pending = { mPerPx: mPerPx, how: how, relErr: relErr };
+      setPlanStep('confirm');
+    }
+    function applyScale() {
+      var newM = plan.pending.mPerPx, oldM = plan.mPerPx;
+      plan.mPerPx = newM; plan.pending = null;
+      if (plan.placed && oldM && oldM !== newM) {
+        // 縮尺を合わせ直したら、壁・線源・測定点も図面に合わせて伸び縮みさせる（原点は範囲の左上のまま。管球は患者からのずれを保つ）
+        FP.rescaleScene(scene(), newM / oldM);
+        touchShape(); writePositions(); updateVisibility();
+        var ce = FP.checkCrop(plan.crop, newM);
+        if (ce) { setPlanStep('crop'); plan.err = '縮尺を変えたので、今の範囲は使えません: ' + ce; renderPlanPanel(); return; }
+      }
+      setPlanStep(plan.placed ? 'done' : 'crop');
+    }
+    // 範囲を決める。範囲の左上を世界の (0, 0) にする
+    function applyCrop(c) {
+      var m = plan.mPerPx, first = !plan.placed;
+      if (first) {
+        // 初めて: 今の壁は消し（図面と合わないため）、線源・測定点を範囲の中へ同じ並びで移す
+        var old = R.extent(state.walls.filter(function (w) { return [w.x1, w.y1, w.x2, w.y2].every(isFinite); }), [], 0) || R.extent([], markerPoints(), 0.5) || { x0: 0, y0: 0, x1: 1, y1: 1 };
+        FP.layoutIntoBox(scene(), old, { x0: 0, y0: 0, x1: (c.x1 - c.x0) * m, y1: (c.y1 - c.y0) * m });
+        state.walls = []; state.rect = null;
+        unpressPresets();
+      } else {
+        // 選び直し: 原点を新しい範囲の左上へ移し、壁・線源・測定点も同じだけずらす（図面の上の位置は変えない）
+        var dx = (c.x0 - plan.origin.x) * m, dy = (c.y0 - plan.origin.y) * m;
+        FP.shiftScene(scene(), dx, dy);
+      }
+      plan.origin = { x: c.x0, y: c.y0 };
+      plan.crop = c; plan.placed = true;
+      writePositions(); updateVisibility();
+      setPlanStep('done');
+      if (first) { setDraw(true); $('draw-msg').textContent = '図面の壁をなぞってください。' + $('draw-msg').textContent; }
+    }
+    function destroyPlan(p) { if (p && p.doc) { try { p.doc.destroy(); } catch (e) { /* 破棄の失敗は無視 */ } } }
+    function removePlan() {
+      destroyPlan(plan); plan = null; loadSeq++;
+      $('draw-toggle').disabled = false;
+      canvas.style.touchAction = draw.on ? 'none' : '';
+      if (!draw.on) frozenExt = null;
+      renderPlanPanel(); schedule();
+      $('plan-load').focus();
+    }
+
+    function btn(act, label) { return '<button type="button" class="mini-btn" data-act="' + act + '">' + label + '</button>'; }
+    // パネルを描き直す。focusId（欄の id）か、直前に押したボタンと同じ働きのボタンへフォーカスを戻す（描き直しで body に落ちないように）
+    function renderPlanPanel(focusId) {
+      var el = $('plan-panel');
+      var hadFocus = !!document.activeElement && el.contains(document.activeElement);
+      var prevAct = hadFocus ? document.activeElement.getAttribute('data-act') : null;
+      if (!plan) {
+        el.classList.toggle('hidden', !planNotice);
+        $('plan-status').textContent = '';
+        $('plan-body').innerHTML = planNotice ? '<div class="perr" role="alert">' + esc(planNotice) + '</div><div class="row"><button type="button" class="mini-btn" data-act="notice-close">閉じる</button></div>' : '';
+        return;
+      }
+      el.classList.remove('hidden');
+      var html = '', m = plan.mPerPx, status = '';
+      if (plan.loading) status = '図面を読み込んでいます…';
+      else if (plan.step === 'calib') {
+        status = '① 縮尺を合わせる: 長さの分かる2点をタップ（' + plan.calib.length + '/2）';
+        html = '<div>寸法線の両端や、長さの分かる壁の両端など。画面の上で離れた2点ほど正確です。' + (plan.index ? '図面の線の端にくっつきます。' : '') + '</div>';
+        if (plan.calib.length === 2) html += '<div class="row"><label for="plan-len">この2点の実際の長さ</label><input type="number" id="plan-len" min="0.1" max="1000" step="0.01" inputmode="decimal"> m ' + btn('len', '決定') + btn('redo', '点を打ち直す') + '</div>';
+        html += '<div class="row"><label for="plan-width">または、図面に描かれた範囲全体の実際の横幅（用紙の寸法ではなく）</label><input type="number" id="plan-width" min="2" max="1000" step="0.1" inputmode="decimal"> m ' + btn('width', '決定') + '</div>';
+        if (plan.hints && plan.hints.length && plan.paperMPerPx) {
+          html += '<div class="row">図面にある縮尺の表記' + (plan.paper ? '（用紙 ' + plan.paper + '）' : '') + ': ' + plan.hints.slice(0, 4).map(function (n) { return btn('hint-' + n, '1:' + n + ' で合わせる'); }).join('') + '</div>' +
+            '<div class="hint-line">表記で合わせるのは、印刷・書き出しで拡大縮小していないときだけ。キープラン（位置を示す小さな図）など、本図と違う縮尺の表記もあります。</div>';
+        }
+      } else if (plan.step === 'confirm') {
+        var pd = plan.pending, pm = pd.mPerPx;
+        status = '縮尺の確認';
+        html = '<div>この縮尺だと、図面全体は <b>横 約 ' + fmtM(plan.wPx * pm) + ' m × 縦 約 ' + fmtM(plan.hPx * pm) + ' m</b>' +
+          (pd.how === 'points' ? '、2点の間は ' + fmtM(calibLenPx() * pm) + ' m（タップのずれによる誤差の目安 ±' + Math.max(1, Math.round(pd.relErr * 100)) + '%）' : '') + 'です。建物の大きさとして合っていますか？</div>' +
+          (pd.how === 'hint' ? '<div class="perr">表記の縮尺で合わせました。図面の中の分かっている長さ（部屋の幅など）と合うかを確かめるには「2点で確かめる」を押してください。</div>' : '') +
+          (plan.placed ? '<div>決定すると、描いた壁・患者・測定点も同じ比で伸び縮みします。</div>' : '') +
+          '<div class="row">' + btn('ok', '合っている（次へ）') + (pd.how === 'hint' ? btn('back', '2点で確かめる') : btn('back', 'やり直す')) + '</div>';
+      } else if (plan.step === 'crop') {
+        status = '② 部屋のまわりを囲む: 2つの角をタップ（またはドラッグ）';
+        html = '<div>計算するのは囲んだ範囲です（' + FP.MAX_CROP_M + ' m 四方まで）。部屋と、線量を見たい隣の部屋・廊下まで含めてください。' + (plan.placed ? '' : '決めると、今の壁は消え、患者・管球・測定点はこの範囲の中に移ります。') + '</div>';
+        if (plan.cropDraft) {
+          var cd = plan.cropDraft;
+          html += '<div class="row">横 ' + fmtM((cd.x1 - cd.x0) * m) + ' m × 縦 ' + fmtM((cd.y1 - cd.y0) * m) + ' m ' + btn('crop-ok', 'この範囲で決定') + btn('crop-redo', '囲み直す') + '</div>';
+        }
+        html += '<div class="row">' + btn('crop-all', '図面全体を使う') + '</div>';
+      } else {
+        status = '図面を下に敷いています';
+        var opts = '';
+        for (var i = 1; i <= Math.min(plan.pages || 1, 500); i++) opts += '<option value="' + i + '"' + (i === plan.page ? ' selected' : '') + '>' + i + '</option>';
+        html = '<div class="row">' + ((plan.pages || 1) > 1 ? '<label for="plan-page">ページ</label><select id="plan-page">' + opts + '</select>' : '') +
+          '<label for="plan-opacity">図面の濃さ</label><input type="range" id="plan-opacity" min="0.15" max="1" step="0.05" value="' + plan.opacity + '"></div>' +
+          '<div class="row">' + btn('recalib', '縮尺を合わせ直す') + btn('recrop', '範囲を選び直す') + '</div>' +
+          '<div>縮尺: 図面 1 px = ' + (m * 1000).toFixed(1) + ' mm。' + (plan.index ? '図面の線の端（' + plan.nSegs.toLocaleString() + ' 本の線）にくっつきます。' : '画像の図面なので、くっつくのは描いた壁の端と線だけです。') +
+          (plan.segsTruncated ? '線が多いため、一部の線にはくっつきません。' : '') + '</div>';
+      }
+      // 「やめる」は、今の範囲がそのまま使えるときだけ（縮尺を変えて範囲が上限を超えたあとは出さない）
+      if (!plan.loading && plan.step !== 'done' && plan.placed && !FP.checkCrop(plan.crop, plan.mPerPx)) html += '<div class="row">' + btn('cancel', 'やめる（今の縮尺・範囲のまま）') + '</div>';
+      html += '<div class="row">' + btn('remove', '図面を外す') + '</div>';
+      if (plan.err) html += '<div class="perr" role="alert">' + esc(plan.err) + '</div>';
+      html += '<div class="privacy">図面はこの端末のブラウザの中だけで表示し、外部に送りません。保存もしません（ページを閉じると消えます）。PDF のときは、読むための部品（pdf.js と文字の対応表）だけをインターネットから取得します。</div>';
+      // 読み上げは手順の文だけ。手順の文の要素は置いたまま中身だけ替える（作り直すと読み上げられないことがある）
+      if ($('plan-status').textContent !== status) $('plan-status').textContent = status;
+      $('plan-body').innerHTML = html;
+      // フォーカス: 指定の欄 → 押したボタンと同じ働きのボタン → 手順の文（次へ進むボタンには移さない。Enter の押し続けで確かめずに進まないように）
+      var f = focusId ? $(focusId) : hadFocus ? (prevAct && el.querySelector('[data-act="' + prevAct + '"]')) || $('plan-status') : null;
+      if (f) f.focus({ preventScroll: true });
+    }
+    var planNotice = '';
+    $('plan-panel').addEventListener('click', function (e) {
+      var act = e.target.getAttribute && e.target.getAttribute('data-act');
+      if (act === 'notice-close') { planNotice = ''; renderPlanPanel(); $('plan-load').focus(); return; }
+      if (!act || !plan) return;
+      if (act === 'len') {
+        var r = FP.scaleFromPoints(plan.calib[0], plan.calib[1], readNum('plan-len'), calibLenPx() * view.scale);
+        if (r.err) { plan.err = r.err; renderPlanPanel(); return; }
+        proposeScale(r.mPerPx, 'points', r.relErr);
+      } else if (act === 'width') {
+        var W = readNum('plan-width'), we = FP.checkPlanWidth(W, plan.paperMPerPx ? plan.wPx * plan.paperMPerPx * 1000 : null);
+        if (we) { plan.err = we; renderPlanPanel('plan-width'); return; }
+        proposeScale(W / plan.wPx, 'width', 0);
+      } else if (act.indexOf('hint-') === 0) { proposeScale(plan.paperMPerPx * Number(act.slice(5)), 'hint', 0); }
+      else if (act === 'redo') { plan.calib = []; plan.err = ''; renderPlanPanel(); schedule(); }
+      else if (act === 'ok') applyScale();
+      else if (act === 'back') { plan.pending = null; setPlanStep('calib'); }
+      else if (act === 'crop-ok') applyCrop(plan.cropDraft);
+      else if (act === 'crop-redo') { plan.cropStart = null; plan.cropDraft = null; renderPlanPanel(); schedule(); }
+      else if (act === 'crop-all') {
+        var all = { x0: 0, y0: 0, x1: plan.wPx, y1: plan.hPx }, ce = FP.checkCrop(all, plan.mPerPx);
+        if (ce) { plan.err = ce; renderPlanPanel(); return; }
+        applyCrop(all);
+      }
+      else if (act === 'cancel') { plan.pending = null; setPlanStep('done'); }
+      else if (act === 'recalib') setPlanStep('calib');
+      else if (act === 'recrop') setPlanStep('crop');
+      else if (act === 'remove') removePlan();
+    });
+    $('plan-panel').addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      var act = e.target.id === 'plan-len' ? 'len' : e.target.id === 'plan-width' ? 'width' : null;
+      if (act) { e.preventDefault(); $('plan-panel').querySelector('[data-act="' + act + '"]').click(); }
+    });
+    $('plan-panel').addEventListener('input', function (e) {
+      if (e.target.id === 'plan-opacity' && plan) { plan.opacity = Number(e.target.value); schedule(); }
+    });
+    $('plan-panel').addEventListener('change', function (e) {
+      if (e.target.id !== 'plan-page' || !plan || !plan.doc) return;
+      var n = Number(e.target.value), doc = plan.doc, my = ++loadSeq, target = plan;
+      plan.loading = true; renderPlanPanel();
+      FP.renderPdfPage(doc, n).then(function (pg) {
+        if (my !== loadSeq || plan !== target) return; // 途中で図面を外した・別のファイルにした
+        // 別のページは別の図面: 縮尺・範囲は前のページのものを使わない（描いた壁は、範囲を決めるときに消える）
+        Object.assign(plan, pg, { page: n, loading: false, placed: false, crop: null, origin: null, mPerPx: null, pending: null, index: pg.nSegs ? FP.endpointIndex(pg.segs, 20) : null });
+        setPlanStep('calib');
+      }, function (err) {
+        if (my !== loadSeq || plan !== target) return;
+        plan.loading = false; plan.err = 'ページを読み込めませんでした: ' + err.message; renderPlanPanel();
+      });
+    });
+    $('plan-load').addEventListener('click', function () { $('plan-file').value = ''; $('plan-file').click(); });
+    $('plan-file').addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      if (!f) return;
+      var my = ++loadSeq;
+      if (draw.on) setDraw(false);
+      planNotice = '';
+      destroyPlan(plan);
+      plan = { loading: true, step: 'loading', calib: [], opacity: 0.6, placed: false };
+      $('draw-toggle').disabled = true;
+      renderPlanPanel(); schedule();
+      FP.loadFile(f).then(function (pg) {
+        if (my !== loadSeq) { destroyPlan(pg); return; } // 後から選んだファイルが先に読み終わっていたら、古いほうは捨てる
+        plan = Object.assign({ calib: [], opacity: 0.6, placed: false, mPerPx: null, crop: null, origin: null, err: '' }, pg);
+        plan.index = pg.nSegs ? FP.endpointIndex(pg.segs, 20) : null;
+        setPlanStep('calib');
+      }, function (err) {
+        if (my !== loadSeq) return;
+        plan = null;
+        planNotice = '図面を読み込めませんでした: ' + err.message;
+        $('draw-toggle').disabled = false;
+        canvas.style.touchAction = draw.on ? 'none' : ''; // 前の図面の手順のあいだに止めていたスクロールを戻す
+        renderPlanPanel(); schedule();
+      });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape' || !planSetup() || popWall >= 0) return;
+      if (plan.step === 'calib') plan.calib = [];
+      if (plan.step === 'crop') { plan.cropStart = null; plan.cropDraft = null; }
+      renderPlanPanel(); schedule();
+    });
+
+    // ---------- 壁をタップして材質と厚さを変える・消す（state.walls を直接書き換え、詳細設定の一覧は描くときに合わせる）
     function hitWall(px, py) {
-      var walls; try { walls = buildWalls(); } catch (e) { return -1; }
       var best = -1, bd = 10;
-      walls.forEach(function (w, i) {
+      state.walls.forEach(function (w, i) {
         var a = toPx(w.x1, w.y1), b = toPx(w.x2, w.y2);
         var vx = b[0] - a[0], vy = b[1] - a[1], L2 = vx * vx + vy * vy;
         var t = L2 ? Math.max(0, Math.min(1, ((px - a[0]) * vx + (py - a[1]) * vy) / L2)) : 0;
@@ -1075,19 +1595,18 @@
     var pop = $('wall-pop'), popWall = -1;
     var wpMat = $('wp-mat');
     Object.keys(MATERIALS).forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = MATERIALS[m]; wpMat.appendChild(o); });
+    function popLabels() {
+      var w = state.walls[popWall];
+      $('wp-mm-label').textContent = w.material === 'lead' ? '鉛当量（mm）' : '厚さ（mm）';
+    }
     function openWallPop(i, p) {
       popWall = i;
-      var isPart = i === 4;
-      $('wp-title').textContent = isPart ? '仕切り壁' : SIDES[i][1] + 'の壁';
-      $('wp-wall').classList.toggle('hidden', isPart);
-      $('wp-part').classList.toggle('hidden', !isPart);
-      $('wp-remove').classList.toggle('hidden', !isPart);
-      if (isPart) $('wp-pmm').value = $('partition-mm').value;
-      else {
-        var sd = SIDES[i][0];
-        Array.prototype.forEach.call(wpMat.options, function (o) { o.disabled = state.room === 'ct' && o.value === 'gypsum'; });
-        wpMat.value = $('wall-' + sd + '-mat').value; $('wp-mm').value = $('wall-' + sd + '-mm').value; $('wp-lead').value = $('wall-' + sd + '-lead').value;
-      }
+      var w = state.walls[i];
+      $('wp-title').textContent = w.label;
+      Array.prototype.forEach.call(wpMat.options, function (o) { o.disabled = state.room === 'ct' && o.value === 'gypsum' && w.material !== 'gypsum'; });
+      wpMat.value = w.material;
+      $('wp-mm').value = isFinite(w.mm) ? w.mm : ''; $('wp-lead').value = isFinite(w.lead) ? w.lead : '';
+      popLabels();
       pop.classList.remove('hidden');
       var wrap = canvas.parentElement.clientWidth, pw = pop.offsetWidth, ph = pop.offsetHeight;
       pop.style.left = Math.max(4, Math.min(wrap - pw - 4, p[0] + 12)) + 'px';
@@ -1097,16 +1616,16 @@
       setTimeout(function () { if (popWall >= 0 && !pop.contains(document.activeElement)) pop.focus(); }, 50);
     }
     function closeWallPop() { if (popWall >= 0) { pop.classList.add('hidden'); popWall = -1; } }
-    // 触った欄だけを詳細設定に書き戻す（ほかの欄を古い値で上書きしない）
+    // 触った欄だけを壁に書き戻す（ほかの欄を古い値で上書きしない）。空欄は NaN のまま渡し、検査でエラーにする
     function syncFromPop(e) {
       if (popWall < 0) return;
-      var t = e.target, sd = popWall === 4 ? null : SIDES[popWall][0];
-      if (t.id === 'wp-pmm') $('partition-mm').value = t.value;
-      else if (sd && t.id === 'wp-mat') $('wall-' + sd + '-mat').value = t.value;
-      else if (sd && t.id === 'wp-mm') $('wall-' + sd + '-mm').value = t.value;
-      else if (sd && t.id === 'wp-lead') $('wall-' + sd + '-lead').value = t.value;
+      var t = e.target, w = state.walls[popWall];
+      if (t.id === 'wp-mat') { w.material = t.value; popLabels(); }
+      else if (t.id === 'wp-mm') w.mm = t.value === '' ? NaN : Number(t.value);
+      else if (t.id === 'wp-lead') w.lead = t.value === '' ? NaN : Number(t.value);
       else return;
-      readInputs(null); schedule();
+      Array.prototype.forEach.call(presetBox.children, function (b) { b.setAttribute('aria-pressed', 'false'); });
+      schedule();
     }
     pop.addEventListener('input', syncFromPop);
     pop.addEventListener('change', syncFromPop);
@@ -1115,7 +1634,7 @@
     // 小窓の外（左の欄）で入力が変わったら、古い内容を見せ続けないよう閉じる
     $('controls').addEventListener('input', closeWallPop);
     $('controls').addEventListener('change', closeWallPop);
-    $('wp-remove').addEventListener('click', function () { $('partition-on').checked = false; readInputs(null); schedule(); closeWallPop(); });
+    $('wp-remove').addEventListener('click', function () { var i = popWall; if (i >= 0) { removeWall(i); canvas.focus(); } });
     pop.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
 
     window.addEventListener('resize', schedule);
