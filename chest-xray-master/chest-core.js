@@ -174,14 +174,51 @@
     return { total: items.reduce((a, b) => a + b.pt, 0), items };
   }
 
-  // ---- 文言（日本語。英語は段階②で足す）----
+  // ---- 5人のラウンド・揺れ・称号 ----
+  const ROUND_ORDER = ['office', 'stiff', 'large', 'elderly', 'nervous'];   // 易しい順
+  function makeRound(seed) {
+    const rng = makeRng(seed);
+    return ROUND_ORDER.map(id => makePatient(id, rng));
+  }
+  // 落ち着かない人は、入室からの秒数 t に応じて立ち位置が左右にゆれる（振幅 drift×5 cm）
+  function swayX(p, t) { return p.drift ? p.drift * 5 * Math.sin(0.9 * t) : 0; }
+  function livePatient(p, t) { return p.drift ? { ...p, baseX: p.baseX + swayX(p, t) } : p; }
+
+  // 称号は点数（5人の平均）と時間（1人あたりの平均秒）の両方で決める。上から順に最初に当てはまるもの
+  const TITLE_RULES = [
+    { key: 'takumi',  minAvg: 90, maxSec: 20 },
+    { key: 'veteran', minAvg: 90, maxSec: Infinity },
+    { key: 'ace',     minAvg: 70, maxSec: 20 },
+    { key: 'solid',   minAvg: 70, maxSec: Infinity },
+    { key: 'rookie',  minAvg: 50, maxSec: Infinity },
+    { key: 'student', minAvg: 0,  maxSec: Infinity },
+  ];
+  function roundResult(scores, times) {
+    const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    const totalSec = times.reduce((a, b) => a + b, 0), avgSec = totalSec / times.length;
+    const rule = TITLE_RULES.find(r => avg >= r.minAvg && avgSec <= r.maxSec);
+    return { avg, totalSec, avgSec, titleKey: rule.key };
+  }
+  // X に投稿する文面（点数・時間・称号だけ。名前や操作の記録は入れない）
+  function shareText(lang, res) {
+    return t(lang, 'share', { avg: res.avg, sec: res.totalSec.toFixed(1), title: t(lang, 'title_' + res.titleKey) });
+  }
+  // 言語: 保存した選択 → ブラウザの言語（ja で始まれば日本語）→ 英語
+  function detectLang(navLang, stored) {
+    if (stored === 'ja' || stored === 'en') return stored;
+    return /^ja\b/i.test(navLang || '') ? 'ja' : 'en';
+  }
+
+  // ---- 文言 ----
   const I18N = {
     ja: {
       title: '息を吸って止めてください！',
       titleSub: '胸部X線写真の匠',
-      lead: '検診の胸部X線。患者さんの立ち方と呼吸を整えて、きれいな1枚を素早く撮る。',
-      start: '撮影をはじめる',
-      disclaimer: '教育・娯楽用のゲームです。実際の撮影手順や画質評価の基準ではありません。点数や操作はどこにも送信しません。',
+      lead: '検診の胸部X線。患者さん5人の立ち方と呼吸を整えて、きれいな1枚を素早く撮る。',
+      start: '撮影をはじめる（5人）',
+      practice: '練習する',
+      practiceNote: '練習では肺の位置が背中に表示され、何度でも撮り直せます。本番は1人1回の一発勝負です。',
+      disclaimer: '教育・娯楽用のゲームです。実際の撮影手順や画質評価の基準ではありません。採点の基準は欧州委員会の胸部正面の画質基準（EUR 16260）を単純化したものです。点数や操作はどこにも送信しません。',
       breathe: '大きく吸って、止めてください',
       shoot: '曝射',
       hint: '患者さんの体・肩・肘、パネルの取っ手をつかんで動かせます',
@@ -190,8 +227,15 @@
       sayHoldEnd: '（そろそろ苦しい……）', sayRelease: 'ぷはっ',
       patient_office: '30代・会社員', patient_stiff: '50代・肩こりがひどい', patient_large: '40代・体格が大きい',
       patient_elderly: '80代・背中が丸い', patient_nervous: '20代・緊張している',
-      time: '撮影まで', points: '点',
-      again: '次の患者さん',
+      practiceTag: '練習', time: '撮影まで', points: '点', sec: '秒',
+      next: '次の患者さん', toFinal: '結果を見る',
+      retry: 'もう一度（同じ患者さん）', otherPatient: '別の患者さん', toTitle: 'タイトルへ',
+      finalHead: '5人の結果', avgLabel: '平均', totalTime: '合計時間', yourTitle: '称号',
+      takumiRule: '「匠」の条件: 平均90点以上、かつ1人あたり20秒以内',
+      share: '「息を吸って止めてください！胸部X線写真の匠」で平均{avg}点（5人で{sec}秒）。称号は「{title}」でした。 #胸部X線写真の匠',
+      shareBtn: 'X で結果をシェア', playAgain: 'もう一度挑戦する',
+      title_takumi: '胸部X線写真の匠', title_veteran: '丁寧なベテラン', title_ace: '検診車のエース',
+      title_solid: '頼れる技師', title_rookie: '新人技師', title_student: '実習生',
       item_rot: '体のねじれ', item_center: '中心', item_coverage: '肺が全部入っているか',
       item_scapula: '肩甲骨', item_inspiration: '吸気の深さ', item_motion: 'ブレ',
       d_rot_ok: '左右の鎖骨の内側の端が、背骨から等距離です',
@@ -203,6 +247,45 @@
       d_inspiration_ok: '横隔膜の上に後ろの肋骨が{ribs}本。十分に吸えています',
       d_inspiration_ng: '横隔膜の上に後ろの肋骨が{ribs}本（目標は10本）',
       d_motion_ok: '止まっています', d_motion_ng: '胸が動いている最中に撮りました',
+      roomLabel: 'X線撮影室。患者さんを背中側から見た図', filmLabel: '撮影したX線画像',
+    },
+    en: {
+      title: 'Breathe In, Hold It!',
+      titleSub: 'Chest X-ray Master',
+      lead: 'A screening chest X-ray. Line up five patients and time their breath to take one clean image each, as fast as you can.',
+      start: 'Start (5 patients)',
+      practice: 'Practice',
+      practiceNote: 'In practice the lungs are outlined on the patient’s back and you can retake as often as you like. The real round gives you one exposure per patient.',
+      disclaimer: 'An educational game. It is not a clinical protocol or an image-quality standard. Scoring is a simplified version of the European Commission’s quality criteria for PA chest radiographs (EUR 16260). Your score and actions are never sent anywhere.',
+      breathe: 'Take a deep breath in… and hold it',
+      shoot: 'Expose',
+      hint: 'Drag the patient’s body, shoulders, elbows, or the panel handle',
+      grabTorso: 'Position ↔', grabShoulder: 'Rotation ↔', grabElbow: 'Elbows forward', grabPanel: 'Panel ↕',
+      sayTidal: 'Breathing normally', sayInhale: '(breathing in…)', sayHold: '(holding breath)',
+      sayHoldEnd: '(running out of breath…)', sayRelease: '(exhales)',
+      patient_office: 'Office worker, 30s', patient_stiff: 'Stiff shoulders, 50s', patient_large: 'Large build, 40s',
+      patient_elderly: 'Rounded back, 80s', patient_nervous: 'Nervous, 20s',
+      practiceTag: 'Practice', time: 'Time', points: 'pts', sec: 's',
+      next: 'Next patient', toFinal: 'See results',
+      retry: 'Retake (same patient)', otherPatient: 'Another patient', toTitle: 'Back to title',
+      finalHead: 'Your round', avgLabel: 'Average', totalTime: 'Total time', yourTitle: 'Rank',
+      takumiRule: '“Master” rank: average 90 or higher and 20 s or less per patient',
+      share: 'I scored {avg} on “Breathe In, Hold It! Chest X-ray Master” (5 patients in {sec} s). Rank: {title}. #ChestXrayMaster',
+      shareBtn: 'Share on X', playAgain: 'Play again',
+      title_takumi: 'Chest X-ray Master', title_veteran: 'Meticulous Veteran', title_ace: 'Screening Bus Ace',
+      title_solid: 'Reliable Radiographer', title_rookie: 'Rookie Radiographer', title_student: 'Student',
+      item_rot: 'Rotation', item_center: 'Centering', item_coverage: 'Lungs fully included',
+      item_scapula: 'Scapulae', item_inspiration: 'Inspiration', item_motion: 'Motion',
+      d_rot_ok: 'The medial ends of the clavicles are equidistant from the spinous process',
+      d_rot_ng: 'Rotated about {deg}°: the medial clavicle ends are not equidistant from the spinous process',
+      d_center_ok: 'The spine is centered on the panel', d_center_ng: 'The spine is {cm} cm off center',
+      d_coverage_ok: 'Apices to costophrenic angles are included', d_coverage_ng: '{where} cut off ({cm} cm)',
+      cut_top: 'Apices', cut_bottom: 'Costophrenic angles', cut_left: 'Patient’s left side', cut_right: 'Patient’s right side', sep: ', ',
+      d_scapula_ok: 'The scapulae are clear of the lung fields', d_scapula_ng: 'The scapulae overlap the lungs by {cm} cm. Bring the elbows further forward',
+      d_inspiration_ok: '{ribs} posterior ribs above the diaphragm: full inspiration',
+      d_inspiration_ng: '{ribs} posterior ribs above the diaphragm (target: 10)',
+      d_motion_ok: 'No motion', d_motion_ng: 'Taken while the chest was moving',
+      roomLabel: 'X-ray room. The patient seen from behind', filmLabel: 'The exposed X-ray image',
     },
   };
   function t(lang, key, vars) {
@@ -230,7 +313,8 @@
   }
 
   return {
-    I18N, t, detail,
+    I18N, t, detail, detectLang,
+    ROUND_ORDER, makeRound, swayX, livePatient, TITLE_RULES, roundResult, shareText,
     PANEL, POSTERIOR_RIBS_FULL, CONTROL_RANGE, PATIENT_TYPES,
     makeRng, makePatient, geom, ribLevel,
     newBreath, startInhale, breathStep,

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>息を吸って止めてください！胸部X線写真の匠 | RT-Lab</title>
-  <meta name="description" content="検診の胸部X線を撮るブラウザゲーム。患者さんの立ち位置・体のひねり・肩、パネルの高さを手で合わせ、「吸って、止めて」で曝射。欧州の画質基準（EUR 16260）に沿って100点満点で採点します。">
+  <meta name="description" content="検診の胸部X線を撮るブラウザゲーム。患者さん5人の立ち位置・体のひねり・肩、パネルの高さを手で合わせ、「吸って、止めて」で曝射。欧州の画質基準（EUR 16260）に沿って100点満点で採点し、撮影までの時間も測ります。日本語・英語対応。">
   <link rel="canonical" href="https://rt-ai-lab.com/chest-xray-master/">
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
@@ -23,37 +23,41 @@
     .wrap { max-width: 520px; margin: 0 auto; padding: 12px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 12px; }
     .topbar { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--sub); }
     .topbar a { color: var(--sub); text-decoration: none; }
+    .lang { display: flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+    .lang button { background: transparent; color: var(--sub); padding: 4px 10px; border-radius: 0; font-size: 12px; font-weight: 600; }
+    .lang button[aria-pressed="true"] { background: var(--line); color: var(--text); }
     [hidden] { display: none !important; }
 
     /* タイトル */
-    #title { display: grid; gap: 16px; padding-top: 6vh; }
+    #title { display: grid; gap: 14px; padding-top: 5vh; }
     .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: var(--lamp); }
     h1 { margin: 0; font-size: clamp(26px, 7.4vw, 36px); line-height: 1.25; text-wrap: balance; }
     h1 small { display: block; font-size: .62em; color: var(--sub); font-weight: 600; margin-top: 6px; letter-spacing: .06em; }
     .lead { margin: 0; color: var(--sub); line-height: 1.7; font-size: 14px; }
     .note { margin: 0; color: var(--sub); font-size: 12px; line-height: 1.7; }
 
-    button { font: inherit; font-weight: 700; border: 0; border-radius: 12px; padding: 14px 16px; cursor: pointer; }
-    button:focus-visible { outline: 2px solid var(--hot); outline-offset: 2px; }
+    button, .btn { font: inherit; font-weight: 700; border: 0; border-radius: 12px; padding: 14px 16px; cursor: pointer; text-align: center; text-decoration: none; display: block; }
+    button:focus-visible, .btn:focus-visible { outline: 2px solid var(--hot); outline-offset: 2px; }
     button:disabled { opacity: .4; cursor: default; }
     .primary { background: var(--lamp); color: #1d1404; font-size: 16px; }
     .ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+    .share { background: #e6ebf1; color: #0d1116; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
     /* 撮影 */
     #play { display: grid; gap: 10px; }
     .hud { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
     .who { font-weight: 700; font-size: 15px; }
-    .who span { color: var(--sub); font-weight: 500; font-size: 12px; margin-right: 6px; }
-    .clock { font-family: var(--mono); font-size: 20px; font-variant-numeric: tabular-nums; color: var(--lamp); }
+    .who span { color: var(--sub); font-weight: 500; font-size: 12px; margin-right: 6px; font-family: var(--mono); }
+    .clock { font-family: var(--mono); font-size: 20px; font-variant-numeric: tabular-nums; color: var(--lamp); white-space: nowrap; }
     .clock small { font-family: var(--font); font-size: 11px; color: var(--sub); margin-right: 6px; }
     canvas { display: block; width: 100%; height: auto; border-radius: 10px; }
     #room { touch-action: none; background: #1a222c; }
     .say { margin: 0; min-height: 1.5em; font-size: 14px; }
-    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     #btnBreath { background: #243245; color: var(--text); }
     .hint { margin: 0; font-size: 12px; color: var(--sub); text-align: center; }
 
-    /* 結果 */
+    /* 1人の結果 */
     #result { display: grid; gap: 12px; }
     .scoreline { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
     .total { font-size: 48px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -64,17 +68,37 @@
     td.pt { text-align: right; white-space: nowrap; font-family: var(--mono); font-weight: 700; }
     .d { color: var(--sub); font-size: 12px; margin-top: 2px; line-height: 1.5; }
     .full { color: var(--ok); } .low { color: var(--ng); }
+
+    /* 5人の結果 */
+    #final { display: grid; gap: 14px; padding-top: 3vh; }
+    .rank { border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 6px; background: var(--panel); }
+    .rank .lbl { font-size: 12px; color: var(--sub); }
+    .rank .name { font-size: clamp(24px, 7vw, 32px); font-weight: 800; color: var(--lamp); line-height: 1.25; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat { border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+    .stat .lbl { font-size: 12px; color: var(--sub); }
+    .stat .v { font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .stat .v small { font-size: 13px; color: var(--sub); font-weight: 500; margin-left: 3px; }
+    #finalList td:last-child, #finalList td:nth-child(2) { text-align: right; font-family: var(--mono); white-space: nowrap; }
   </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="topbar"><a href="/">RT-Lab</a><span id="ver">β</span></div>
+  <div class="topbar">
+    <a href="/">RT-Lab</a>
+    <div class="lang" role="group" aria-label="Language">
+      <button id="lgJa" type="button" lang="ja">日本語</button>
+      <button id="lgEn" type="button" lang="en">English</button>
+    </div>
+  </div>
 
   <section id="title">
     <div class="eyebrow">CHEST PA · STANDING</div>
     <h1 id="tTitle"></h1>
     <p class="lead" id="tLead"></p>
-    <button class="primary" id="btnStart"></button>
+    <button class="primary" id="btnStart" type="button"></button>
+    <button class="ghost" id="btnPractice" type="button"></button>
+    <p class="note" id="tPracticeNote"></p>
     <p class="note" id="tNote"></p>
   </section>
 
@@ -83,20 +107,39 @@
       <div class="who" id="who"></div>
       <div class="clock"><small id="tTime"></small><span id="clock">0.0</span></div>
     </div>
-    <canvas id="room" width="480" height="560" aria-label="X線撮影室。患者さんを背中側から見た図"></canvas>
+    <canvas id="room" width="480" height="560"></canvas>
     <p class="say" id="say"></p>
-    <div class="actions">
-      <button id="btnBreath"></button>
-      <button class="primary" id="btnShoot"></button>
+    <div class="row2">
+      <button id="btnBreath" type="button"></button>
+      <button class="primary" id="btnShoot" type="button"></button>
     </div>
     <p class="hint" id="tHint"></p>
   </section>
 
   <section id="result" hidden>
-    <canvas id="film" width="430" height="430" aria-label="撮影したX線画像"></canvas>
+    <div class="who" id="whoResult"></div>
+    <canvas id="film" width="430" height="430"></canvas>
     <div class="scoreline"><div class="total" id="total"></div><div class="took" id="took"></div></div>
     <table id="tbl"></table>
-    <button class="ghost" id="btnAgain"></button>
+    <button class="primary" id="btnNext" type="button"></button>
+    <div class="row2" id="practiceBtns">
+      <button class="ghost" id="btnRetry" type="button"></button>
+      <button class="ghost" id="btnOther" type="button"></button>
+    </div>
+    <button class="ghost" id="btnTitle1" type="button"></button>
+  </section>
+
+  <section id="final" hidden>
+    <div class="eyebrow" id="tFinalHead"></div>
+    <div class="rank"><div class="lbl" id="tRank"></div><div class="name" id="rankName"></div><div class="note" id="tRule"></div></div>
+    <div class="stats">
+      <div class="stat"><div class="lbl" id="tAvg"></div><div class="v" id="avg"></div></div>
+      <div class="stat"><div class="lbl" id="tTotal"></div><div class="v" id="totalTime"></div></div>
+    </div>
+    <table id="finalList"></table>
+    <a class="btn share" id="btnShare" target="_blank" rel="noopener"></a>
+    <button class="primary" id="btnAgain" type="button"></button>
+    <button class="ghost" id="btnTitle2" type="button"></button>
   </section>
 </div>
 
@@ -106,35 +149,100 @@
   'use strict';
   const C = window.ChestCore;
   const $ = id => document.getElementById(id);
-  const lang = 'ja';
+  const URL_SELF = 'https://rt-ai-lab.com/chest-xray-master/';
+  const LS_KEY = 'chestxm.lang';
+
+  // ---- 言語（保存はその人のブラウザだけ。使えないブラウザでも動く）----
+  let stored = null;
+  try { stored = localStorage.getItem(LS_KEY); } catch (e) { stored = null; }
+  let lang = C.detectLang(navigator.language, stored);
   const T = (k, v) => C.t(lang, k, v);
 
   // ---- 状態 ----
-  let P, ctl, br, t0, running = false, shotTaken = false, seed = (Date.now() % 100000) + 1;
+  // mode: 'round'（本番5人）| 'practice'
+  let mode = 'round', round = [], idx = 0, scores = [], times = [];
+  let P, ctl, br, t0, running = false, shotTaken = false;
+  let lastShot = null;     // 1人の結果を言語切り替えで描き直すため
+  let screen = 'title';
+  let seed = (Date.now() % 1000003) + 1;
 
-  // ---- 文言 ----
-  $('tTitle').innerHTML = `${T('title')}<small>${T('titleSub')}</small>`;
-  $('tLead').textContent = T('lead');
-  $('btnStart').textContent = T('start');
-  $('tNote').textContent = T('disclaimer');
-  $('btnBreath').textContent = T('breathe');
-  $('btnShoot').textContent = T('shoot');
-  $('tHint').textContent = T('hint');
-  $('tTime').textContent = T('time');
-  $('btnAgain').textContent = T('again');
+  function show(id) { screen = id; for (const s of ['title', 'play', 'result', 'final']) $(s).hidden = s !== id; window.scrollTo({ top: 0 }); }
+  const elapsed = () => (performance.now() - t0) / 1000;
+  const live = () => C.livePatient(P, running ? elapsed() : (lastShot ? lastShot.sec : 0));
 
-  function show(id) { for (const s of ['title', 'play', 'result']) $(s).hidden = s !== id; }
+  // ---- 文言の差し込み ----
+  function applyTexts() {
+    document.documentElement.lang = lang;
+    $('lgJa').setAttribute('aria-pressed', String(lang === 'ja'));
+    $('lgEn').setAttribute('aria-pressed', String(lang === 'en'));
+    $('tTitle').innerHTML = `${T('title')}<small>${T('titleSub')}</small>`;
+    $('tLead').textContent = T('lead');
+    $('btnStart').textContent = T('start');
+    $('btnPractice').textContent = T('practice');
+    $('tPracticeNote').textContent = T('practiceNote');
+    $('tNote').textContent = T('disclaimer');
+    $('btnBreath').textContent = T('breathe');
+    $('btnShoot').textContent = T('shoot');
+    $('tHint').textContent = T('hint');
+    $('tTime').textContent = T('time');
+    $('btnRetry').textContent = T('retry');
+    $('btnOther').textContent = T('otherPatient');
+    $('btnTitle1').textContent = T('toTitle');
+    $('btnTitle2').textContent = T('toTitle');
+    $('btnAgain').textContent = T('playAgain');
+    $('tFinalHead').textContent = T('finalHead');
+    $('tRank').textContent = T('yourTitle');
+    $('tRule').textContent = T('takumiRule');
+    $('tAvg').textContent = T('avgLabel');
+    $('tTotal').textContent = T('totalTime');
+    $('room').setAttribute('aria-label', T('roomLabel'));
+    $('film').setAttribute('aria-label', T('filmLabel'));
+    if (P) $('who').innerHTML = whoLabel();
+    if (screen === 'result' && lastShot) renderResult();
+    if (screen === 'final') renderFinal();
+  }
+  function setLang(l) {
+    lang = l;
+    try { localStorage.setItem(LS_KEY, l); } catch (e) { /* 保存できなくても続ける */ }
+    applyTexts();
+  }
+  $('lgJa').onclick = () => setLang('ja');
+  $('lgEn').onclick = () => setLang('en');
+  function whoLabel() {
+    const tag = mode === 'practice' ? T('practiceTag') : `${idx + 1}/5`;
+    return `<span>${tag}</span>${T('patient_' + P.type)}`;
+  }
 
-  function newPatient() {
-    const type = C.PATIENT_TYPES[seed % C.PATIENT_TYPES.length].id;   // 段階①は順番に1人ずつ
-    P = C.makePatient(type, C.makeRng(seed++));
+  // ---- 進行 ----
+  function enter(patient) {
+    P = patient;
     ctl = C.defaultControls(P);
     br = C.newBreath();
-    t0 = performance.now(); running = true; shotTaken = false;
-    $('who').innerHTML = `<span>1/1</span>${T('patient_' + P.type)}`;
+    t0 = performance.now(); running = true; shotTaken = false; lastShot = null;
+    $('who').innerHTML = whoLabel();
     $('btnShoot').disabled = false;
     show('play');
   }
+  function startRound() {
+    mode = 'round'; round = C.makeRound(seed++); idx = 0; scores = []; times = [];
+    enter(round[0]);
+  }
+  function startPractice(type) {
+    mode = 'practice';
+    const types = C.ROUND_ORDER;
+    const id = type || types[Math.floor(Math.random() * types.length)];
+    enter(C.makePatient(id, C.makeRng(seed++)));
+  }
+  $('btnStart').onclick = startRound;
+  $('btnAgain').onclick = startRound;
+  $('btnPractice').onclick = () => startPractice();
+  $('btnRetry').onclick = () => enter(P);          // 同じ患者さんをもう一度（練習だけ）
+  $('btnOther').onclick = () => startPractice();
+  $('btnTitle1').onclick = $('btnTitle2').onclick = () => { running = false; show('title'); };
+  $('btnNext').onclick = () => {
+    if (idx < 4) { idx++; enter(round[idx]); }
+    else { renderFinal(); show('final'); }
+  };
 
   // ---- 操作画面（技師の位置＝患者の背中側から見た図。患者の左が画面の左）----
   const room = $('room'), rc = room.getContext('2d');
@@ -142,21 +250,20 @@
   const sx = x => CX - x * K, sy = y => (y + TOP) * K;
   let hot = null, drag = null;
 
-  // つかめる場所（画面の座標）
   function handles(g) {
     const px = (lx, z) => sx(g.rx(lx, z)), py = ly => sy(g.wy(ly));
     const el = 27 - 3 * ctl.roll;
     return {
       panel: { x: sx(-C.PANEL / 2) + 16, y: sy(ctl.panelY), r: 22 },
-      elbowL: { x: px(el, -4 * ctl.roll), y: py(24), r: 22, sg: 1 },
-      elbowR: { x: px(-el, -4 * ctl.roll), y: py(24), r: 22, sg: -1 },
+      elbowL: { x: px(el, -4 * ctl.roll), y: py(24), r: 22 },
+      elbowR: { x: px(-el, -4 * ctl.roll), y: py(24), r: 22 },
       shoulderL: { x: px(14, 4), y: py(4), r: 30 },
       shoulderR: { x: px(-14, 4), y: py(4), r: 30 },
       torso: { x0: px(15, 0), x1: px(-15, 0), y0: py(14), y1: py(66) },
     };
   }
   function hitTest(x, y) {
-    const h = handles(C.geom(P, ctl, br.lvl)), d = (a) => Math.hypot(x - a.x, y - a.y) <= a.r;
+    const h = handles(C.geom(live(), ctl, br.lvl)), d = a => Math.hypot(x - a.x, y - a.y) <= a.r;
     if (d(h.panel)) return 'panel';
     if (d(h.elbowL)) return 'elbowL';
     if (d(h.elbowR)) return 'elbowR';
@@ -174,6 +281,7 @@
     const p = toCanvas(e), what = hitTest(p.x, p.y);
     if (!what) return;
     drag = { what, x: p.x, y: p.y, c: { ...ctl } };
+    hot = what;
     room.setPointerCapture(e.pointerId);
     e.preventDefault();
   });
@@ -186,7 +294,6 @@
     else if (drag.what === 'panel') c.panelY = drag.c.panelY + dy / K;
     else { const sg = drag.what === 'elbowL' ? 1 : -1; c.roll = drag.c.roll + sg * dx / 70; } // 肘を内側（背骨側）へ
     ctl = C.clampControls(c);
-    hot = drag.what.startsWith('elbow') ? drag.what : drag.what;
     room.style.cursor = 'grabbing';
   });
   const endDrag = () => { drag = null; room.style.cursor = hot ? 'grab' : 'default'; };
@@ -194,30 +301,41 @@
   room.addEventListener('pointercancel', endDrag);
   room.addEventListener('pointerleave', () => { if (!drag) hot = null; });
 
+  // 肺の輪郭（X線画像と練習の表示で共用）
+  function lungPath(c, g, sg, ix, iy) {
+    const s = g.s, w = sg > 0 ? g.wL : g.wR, bot = sg > 0 ? g.botL : g.botR, a = g.apexY, L = bot - a;
+    const x = lx => ix(g.X + s * sg * lx);
+    c.moveTo(x(2.2), iy(a + 3 * s));
+    c.quadraticCurveTo(x(2.2), iy(a), x(4.2), iy(a));
+    c.bezierCurveTo(x(w * 0.8), iy(a), x(w), iy(a + 0.22 * L), x(w), iy(a + 0.5 * L));
+    c.lineTo(x(w), iy(bot));
+    c.quadraticCurveTo(x(w * 0.45), iy(bot - 5.5 * s), x(2.2), iy(bot - 3.5 * s));
+    c.closePath();
+  }
+
   function drawRoom() {
-    const g = C.geom(P, ctl, br.lvl), s = g.s;
+    const LP = live(), g = C.geom(LP, ctl, br.lvl), s = g.s;
     const px = (lx, z) => sx(g.rx(lx, z)), py = ly => sy(g.wy(ly));
     rc.clearRect(0, 0, room.width, room.height);
     rc.fillStyle = '#1a222c'; rc.fillRect(0, 0, room.width, room.height);
     rc.fillStyle = '#131a22'; rc.fillRect(0, sy(68), room.width, room.height);           // 床
     rc.fillStyle = '#334255'; rc.fillRect(sx(4), 0, 8 * K, sy(68));                      // 撮影台の支柱
-    // パネル
     const pt = sy(ctl.panelY - C.PANEL / 2), pl = sx(C.PANEL / 2), pw = C.PANEL * K;
-    rc.fillStyle = '#0e1318'; rc.fillRect(pl, pt, pw, pw);
+    rc.fillStyle = '#0e1318'; rc.fillRect(pl, pt, pw, pw);                               // パネル
     rc.strokeStyle = '#61738a'; rc.lineWidth = 2; rc.strokeRect(pl, pt, pw, pw);
     // 患者（背中）
-    const body = '#86a6bd', shade = '#6f8fa6';
-    rc.fillStyle = shade;
+    rc.fillStyle = '#6f8fa6';
     for (const sg of [1, -1]) {                                                          // 腕（肘を前に出すと内側へ）
       const el = 27 - 3 * ctl.roll;
       rc.beginPath(); rc.moveTo(px(sg * 17, 0), py(2)); rc.lineTo(px(sg * 21, 0), py(3)); rc.lineTo(px(sg * el, -4 * ctl.roll), py(24));
       rc.lineTo(px(sg * 16, -6), py(36)); rc.lineTo(px(sg * 14, -6), py(31)); rc.lineTo(px(sg * (el - 5), -4 * ctl.roll), py(22)); rc.closePath(); rc.fill();
     }
-    rc.fillStyle = body;                                                                 // 胴
+    rc.fillStyle = '#86a6bd';                                                            // 胴
     rc.beginPath(); rc.moveTo(px(-5, 3), py(-4)); rc.lineTo(px(5, 3), py(-4)); rc.lineTo(px(19, 0), py(1.5)); rc.lineTo(px(20, 0), py(6));
     rc.lineTo(px(15.5, 0), py(34)); rc.lineTo(px(17, 0), py(52)); rc.lineTo(px(17, 0), py(70)); rc.lineTo(px(-17, 0), py(70)); rc.lineTo(px(-17, 0), py(52));
     rc.lineTo(px(-15.5, 0), py(34)); rc.lineTo(px(-20, 0), py(6)); rc.lineTo(px(-19, 0), py(1.5)); rc.closePath(); rc.fill();
-    rc.fillStyle = '#3a2e29'; rc.beginPath(); rc.ellipse(px(0, 2), py(-13), 9 * s * K, 10.5 * s * K, 0, 0, 7); rc.fill();   // 頭
+    rc.fillStyle = LP.type === 'elderly' ? '#b9b4ad' : '#3a2e29';                       // 頭（高齢の人は白髪）
+    rc.beginPath(); rc.ellipse(px(0, 2), py(-13), 9 * s * K, 10.5 * s * K, 0, 0, 7); rc.fill();
     // 背中の目印（背骨の溝・肩甲骨）— ひねりと肩の位置はここで読む
     rc.strokeStyle = 'rgba(25,45,65,.6)'; rc.lineWidth = 2;
     rc.beginPath(); rc.moveTo(px(0, 9), py(0)); rc.lineTo(px(0, 9), py(48)); rc.stroke();
@@ -225,6 +343,11 @@
     for (const sg of [1, -1]) {
       const m = sg * g.scapM;
       rc.beginPath(); rc.moveTo(px(m, 8), py(4)); rc.lineTo(px(m + sg * 1.5, 8), py(19)); rc.lineTo(px(m + sg * 10, 6), py(5)); rc.stroke();
+    }
+    // 練習: 肺の位置を背中に表示
+    if (mode === 'practice') {
+      rc.save(); rc.strokeStyle = 'rgba(143,208,255,.85)'; rc.lineWidth = 1.5; rc.setLineDash([5, 4]);
+      rc.beginPath(); lungPath(rc, g, 1, sx, sy); lungPath(rc, g, -1, sx, sy); rc.stroke(); rc.restore();
     }
     // 投光器の光（パネルの範囲と中心の十字が背中に映る）
     rc.fillStyle = 'rgba(240,180,76,.10)'; rc.fillRect(pl, pt, pw, pw);
@@ -239,6 +362,7 @@
     const glow = (a, label) => {
       rc.strokeStyle = 'rgba(143,208,255,.9)'; rc.lineWidth = 2; rc.setLineDash([4, 4]);
       rc.beginPath(); rc.arc(a.x, a.y, a.r, 0, 7); rc.stroke(); rc.setLineDash([]);
+      if (!label) return;
       rc.font = 'bold 12px sans-serif'; rc.textAlign = 'center';
       rc.fillStyle = 'rgba(13,17,22,.85)'; const w = rc.measureText(label).width + 12;
       rc.fillRect(a.x - w / 2, a.y - a.r - 24, w, 18); rc.fillStyle = '#cfe8ff'; rc.fillText(label, a.x, a.y - a.r - 11);
@@ -254,7 +378,7 @@
     rc.fillStyle = '#8fd0ff'; rc.fillRect(mx, mt + mh * (1 - br.lvl), 14, mh * br.lvl);
   }
 
-  // ---- 呼吸と時計 ----
+  // ---- 呼吸 ----
   function sayText() {
     if (br.mode === 'tidal') return T('sayTidal');
     if (br.mode === 'inhale') return T('sayInhale');
@@ -265,28 +389,23 @@
 
   // ---- 撮影 ----
   $('btnShoot').onclick = () => {
-    if (!running || shotTaken) return;          // 2回目は無視（撮り直しなし）
+    if (!running || shotTaken) return;          // 2回目は無視（本番は撮り直しなし）
     shotTaken = true; running = false;
+    const sec = elapsed();
+    const patient = C.livePatient(P, sec);      // 撮った瞬間の立ち位置で採点
     const shot = { controls: { ...ctl }, lvl: br.lvl, v: br.v };
-    const sec = (performance.now() - t0) / 1000;
-    showResult(shot, sec);
+    const res = C.score(patient, shot);
+    lastShot = { patient, shot, res, sec };
+    if (mode === 'round') { scores.push(res.total); times.push(sec); }
+    renderResult();
+    show('result');
   };
 
   const film = $('film'), fc = film.getContext('2d');
   const off = document.createElement('canvas'); off.width = off.height = 430; const oc = off.getContext('2d');
-  function lungPath(c, g, sg, ix, iy) {
-    const s = g.s, w = sg > 0 ? g.wL : g.wR, bot = sg > 0 ? g.botL : g.botR, a = g.apexY, L = bot - a;
-    const x = lx => ix(g.X + s * sg * lx);
-    c.moveTo(x(2.2), iy(a + 3 * s));
-    c.quadraticCurveTo(x(2.2), iy(a), x(4.2), iy(a));
-    c.bezierCurveTo(x(w * 0.8), iy(a), x(w), iy(a + 0.22 * L), x(w), iy(a + 0.5 * L));
-    c.lineTo(x(w), iy(bot));
-    c.quadraticCurveTo(x(w * 0.45), iy(bot - 5.5 * s), x(2.2), iy(bot - 3.5 * s));
-    c.closePath();
-  }
   // X線画像（向かい合って見る向き：患者の右が画面の左）
-  function drawFilm(shot, res) {
-    const c = oc, g = C.geom(P, shot.controls, shot.lvl), s = g.s;
+  function drawFilm(patient, shot, res) {
+    const c = oc, g = C.geom(patient, shot.controls, shot.lvl), s = g.s;
     const ix = wx => 215 + 10 * wx, iy = y => 215 + 10 * (y - shot.controls.panelY);
     const X = lx => ix(g.rx(lx, 0)), Y = ly => iy(g.wy(ly));
     c.fillStyle = '#050505'; c.fillRect(0, 0, 430, 430);
@@ -339,26 +458,40 @@
     fc.fillText(by.inspiration.info.ribs, ix(g.lungR) - 18, iy(g.botR) + 4);
     if (by.coverage.pt < by.coverage.max) {                                                      // 欠けた所
       fc.fillStyle = 'rgba(255,127,110,.35)'; const cut = by.coverage.info.cut;
-      if (cut.top) fc.fillRect(0, 0, 430, 10); if (cut.bottom) fc.fillRect(0, 420, 430, 10);
-      if (cut.left) fc.fillRect(420, 0, 10, 430); if (cut.right) fc.fillRect(0, 0, 10, 430);
+      if (cut.top) fc.fillRect(0, 0, 430, 10);
+      if (cut.bottom) fc.fillRect(0, 420, 430, 10);
+      if (cut.left) fc.fillRect(420, 0, 10, 430);
+      if (cut.right) fc.fillRect(0, 0, 10, 430);
     }
     fc.fillStyle = 'rgba(255,255,255,.85)'; fc.font = 'bold 18px sans-serif'; fc.fillText('R', 12, 28);
   }
 
-  function showResult(shot, sec) {
-    const res = C.score(P, shot);
-    drawFilm(shot, res);
-    $('total').innerHTML = `${res.total}<small>/ 100${T('points')}</small>`;
-    $('took').textContent = `⏱ ${sec.toFixed(1)}s`;
+  function renderResult() {
+    const { patient, shot, res, sec } = lastShot;
+    drawFilm(patient, shot, res);
+    $('whoResult').innerHTML = whoLabel();
+    $('total').innerHTML = `${res.total}<small>/ 100 ${T('points')}</small>`;
+    $('took').textContent = `⏱ ${sec.toFixed(1)}${T('sec')}`;
     $('tbl').innerHTML = res.items.map(i =>
       `<tr><td>${T('item_' + i.key)}<div class="d">${C.detail(lang, i)}</div></td>` +
       `<td class="pt ${i.pt === i.max ? 'full' : i.pt < i.max * 0.6 ? 'low' : ''}">${i.pt} / ${i.max}</td></tr>`).join('');
-    show('result');
-    window.scrollTo({ top: 0 });
+    const practice = mode === 'practice';
+    $('btnNext').hidden = practice;
+    $('practiceBtns').hidden = !practice;
+    $('btnTitle1').hidden = !practice;
+    $('btnNext').textContent = idx < 4 ? T('next') : T('toFinal');
   }
 
-  $('btnStart').onclick = newPatient;
-  $('btnAgain').onclick = newPatient;
+  function renderFinal() {
+    const r = C.roundResult(scores, times);
+    $('rankName').textContent = T('title_' + r.titleKey);
+    $('avg').innerHTML = `${r.avg}<small>${T('points')}</small>`;
+    $('totalTime').innerHTML = `${r.totalSec.toFixed(1)}<small>${T('sec')}</small>`;
+    $('finalList').innerHTML = round.map((p, i) =>
+      `<tr><td>${i + 1}. ${T('patient_' + p.type)}</td><td class="${scores[i] === 100 ? 'full' : scores[i] < 60 ? 'low' : ''}">${scores[i]}${T('points')}</td><td>${times[i].toFixed(1)}${T('sec')}</td></tr>`).join('');
+    $('btnShare').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(C.shareText(lang, r)) + '&url=' + encodeURIComponent(URL_SELF);
+    $('btnShare').textContent = T('shareBtn');
+  }
 
   // ---- ループ ----
   let last = performance.now();
@@ -368,13 +501,15 @@
       br = C.breathStep(br, P, dt);
       $('say').textContent = sayText();
       $('btnBreath').disabled = br.mode !== 'tidal';
-      $('clock').textContent = ((now - t0) / 1000).toFixed(1);
+      $('clock').textContent = elapsed().toFixed(1);
       drawRoom();
     }
     requestAnimationFrame(loop);
   }
+  applyTexts();
   requestAnimationFrame(loop);
-  window.__chest = { get P() { return P; }, get ctl() { return ctl; }, set ctl(v) { ctl = v; }, get br() { return br; }, set br(v) { br = v; }, hitTest, handles: () => handles(C.geom(P, ctl, br.lvl)) };   // 動作確認用
+  // 動作確認用
+  window.__chest = { get P() { return P; }, get ctl() { return ctl; }, set ctl(v) { ctl = v; }, get br() { return br; }, set br(v) { br = v; }, live, elapsed, get state() { return { mode, idx, scores, times, screen }; }, handles: () => handles(C.geom(live(), ctl, br.lvl)) };
 })();
 </script>
 </body>
