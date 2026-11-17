@@ -67,6 +67,7 @@
 | CT臓器線量推定ツール | 📋 計画中 | 未作成 |
 
 **おまけ（余興・業務ツールとは別枠）**: 1.2億分の1.2億 〜無事に老衰できるか〜（人生シミュレーション）— `rousui/index.html`（生成物。原本は `~/rt-lab/disease-life-sim`、`SITE_URL=https://rt-ai-lab.com/rousui/ OUTHTML=../release/index.html node prototype/build.mjs` で作り `release/` の2ファイルをコピー）。トップでは「ツール一覧」ではなく `#games`「おまけ：遊べるシミュレーション」に置く
+- 息を吸って止めてください！胸部X線写真の匠（検診の胸部X線のポジショニングゲーム・日英）— `chest-xray-master/index.html`（採点は `chest-core.js`、採点基準と EUR 16260 の照合表は `scripts/chest-xray-provenance.json`、テストは `scripts/test-chest-xray.js`、共有用画像は `scripts/og-chest-xray.html` で作る）。`#games` に置き、`test-onpage.js` の `NON_TOOL` に入れて関連リンク網からは外す
 
 ---
 
