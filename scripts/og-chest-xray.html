@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1200px;height:630px;overflow:hidden;background:#0d1116}
+  iframe{position:absolute;left:-3000px;top:0;width:520px;height:1400px;border:0}
+  #out{position:absolute;left:0;top:0}
+</style></head>
+<body>
+<canvas id="out" width="1200" height="630"></canvas>
+<iframe id="g" src="/chest-xray-master/"></iframe>
+<script>
+// 胸部X線写真の匠の共有用画像（assets/og/chest-xray-master.png, 1200x630）を、ゲームの実際の画面から組み立てる。
+// 作り直し方: python3 -m http.server 8080 を動かしたまま
+//   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+//     --force-device-scale-factor=1 --virtual-time-budget=10000 --window-size=1200,630 \
+//     --screenshot=assets/og/chest-xray-master.png http://localhost:8080/scripts/og-chest-xray.html
+// 患者は毎回ランダムなので、絵は少しずつ変わる。scripts/ はデプロイされない。
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const FONT = "-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif";
+async function main() {
+  const f = document.getElementById('g');
+  await new Promise(r => f.complete || f.addEventListener('load', r));
+  await sleep(300);
+  const w = f.contentWindow, d = w.document, C = w.ChestCore, ch = w.__chest;
+  d.getElementById('btnPractice').click();
+  await sleep(200);
+  // 患者の絵（肘は少し前・パネルは高すぎ＝操作途中の絵）
+  const P = ch.P, id = C.ideal(P).controls;
+  ch.ctl = { ...id, roll: 0.75, panelY: id.panelY + 2 };
+  ch.draw();
+  const room = d.getElementById('room') || d.querySelector('canvas');
+  const roomImg = room.toDataURL();
+  // 満点の写真
+  // 息止めの最中に曝射する（headless では描画のループが進まないことがあるので、状態を直接置く）
+  ch.ctl = { ...C.ideal(ch.live ? ch.live() : P).controls };
+  ch.br = { mode: 'hold', t: 0.3, lvl: 1, v: 0, from: 1 };
+  d.getElementById('btnShoot').click();
+  await sleep(600);
+  const film = d.getElementById('film');
+  const filmImg = film.toDataURL();
+  const load = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src; });
+  const [ri, fi] = await Promise.all([load(roomImg), load(filmImg)]);
+
+  const o = document.getElementById('out').getContext('2d');
+  o.fillStyle = '#0d1116'; o.fillRect(0, 0, 1200, 630);
+  // 写真（右）
+  const fs = 560, fx = 1200 - fs - 36, fy = 35;
+  o.drawImage(fi, fx, fy, fs, fs);
+  o.strokeStyle = '#283342'; o.lineWidth = 2; o.strokeRect(fx, fy, fs, fs);
+  // 患者（写真の左に重ねる）
+  const rh = 330, rw = rh * ri.width / ri.height, rx = fx - rw * 0.55, ry = 630 - rh - 36;
+  o.save(); o.shadowColor = 'rgba(0,0,0,.6)'; o.shadowBlur = 24;
+  o.drawImage(ri, rx, ry, rw, rh); o.restore();
+  o.strokeStyle = '#3a4a5e'; o.strokeRect(rx, ry, rw, rh);
+  // 文字（左）
+  o.fillStyle = '#f0b44c'; o.font = `700 26px ${FONT}`; o.fillText('息を吸って止めてください！', 52, 92);
+  o.fillStyle = '#e6ebf1'; o.font = `800 54px ${FONT}`; o.fillText('胸部X線写真', 50, 162); o.fillText('の匠', 50, 228);
+  o.fillStyle = '#8e9bad'; o.font = `500 20px ${FONT}`;
+  o.fillText('検診の胸部X線を撮るブラウザゲーム', 52, 272);
+  o.fillText('100点満点で採点・英語対応', 52, 302);
+  o.fillStyle = '#e6ebf1'; o.font = `300 24px ${FONT}`; o.fillText('RT-Lab', 52, 594);
+  document.title = 'ready';
+}
+main();
+</script>
+</body></html>
