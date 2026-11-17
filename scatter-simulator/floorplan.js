@@ -21,8 +21,8 @@
   var WORKER_SRI = 'sha512-BbrZ76UNZq5BhH7LL7pn9A4TKQpQeNCHOo65/akfelcIBbcVvYWOFQKPXIrykE3qZxYjmDX573oa4Ywsc7rpTw==';
   var CMAP_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@' + PDFJS_VER + '/cmaps/';
   var MAX_SIDE_PX = 3000;     // 描画する図面の長辺（px）の上限
-  var MAX_SEGS = 200000;
-  var MAX_FILE_BYTES = 60 * 1048576; // 読み込むファイルの上限（巨大な画像の展開でタブが落ちないように）      // 吸着に使う線分の上限（ハッチの多い図面で止まらないように）
+  var MAX_SEGS = 200000;               // 吸着に使う線分の上限（ハッチの多い図面で止まらないように）
+  var MAX_FILE_BYTES = 60 * 1048576;   // 読み込むファイルの上限（巨大な画像の展開でタブが落ちないように）
 
   // 建築図面でよく使う縮尺。これ以外（日付の 1/20・時刻の 1:30・図番の 1/12 など）は候補にしない
   var COMMON_SCALES = [10, 20, 25, 30, 50, 60, 100, 150, 200, 250, 300, 400, 500, 600, 1000, 1200, 1500, 2000, 2500, 3000, 5000];
@@ -30,7 +30,7 @@
    *  印刷の拡大縮小で崩れるので、候補を出すだけで確定はユーザー */
   function scaleHints(text) {
     var seen = {};
-    var re = /(?:^|[^\d.\/:：／-])1\s*[:：/／]\s*(\d{1,4})(?![\d.\/:：／])/g, m;
+    var re = /(?:^|[^\d.\/／-])1\s*[:：/／]\s*(\d{1,4})(?![\d.\/:：／])/g, m;
     while ((m = re.exec(text))) {
       var n = Number(m[1]);
       if (COMMON_SCALES.indexOf(n) >= 0) seen[n] = true;
@@ -65,7 +65,9 @@
       if (fn === OPS.endAnnotation) { if (annot) annot--; continue; }
       if (fn === OPS.paintFormXObjectBegin) { stack.push(ctm.slice()); if (args && isMatrix(args[0])) ctm = mul(ctm, args[0]); continue; }
       if (fn === OPS.paintFormXObjectEnd) { if (stack.length) ctm = stack.pop(); continue; }
-      if (fn === OPS.beginGroup) { stack.push(ctm.slice()); if (args && args[0] && isMatrix(args[0].matrix)) ctm = mul(ctm, args[0].matrix); continue; }
+      // グループの行列は、pdf.js が続けて出す paintFormXObjectBegin が同じものをかける（canvas の beginGroup は範囲の計算にしか使わない）。
+      // ここでかけると2回かかって吸着点がずれる（独立レビュー 11/17 N1）。積むだけにする
+      if (fn === OPS.beginGroup) { stack.push(ctm.slice()); continue; }
       if (fn === OPS.endGroup) { if (stack.length) ctm = stack.pop(); continue; }
       if (fn === OPS.save) stack.push(ctm.slice());
       else if (fn === OPS.restore) { if (stack.length) ctm = stack.pop(); }
@@ -110,6 +112,21 @@
     if (!(px > 0) || !(screenPx >= MIN_CALIB_SCREEN_PX)) return { err: '2点が近すぎます。画面の上で離れた2点（寸法線の両端など）をタップしてください' };
     return { mPerPx: lengthM / px, relErr: 1 / screenPx }; // relErr: タップの ±1 画面 px による縮尺の誤差の目安
   }
+  /** 「図面全体の横幅（m）」の検査。用紙の横幅の mm 数（A3 なら 420）を m のつもりで入れたら止める（距離が10倍・線量が約1/100になる）。
+   *  paperWidthMm は PDF のときだけ分かる（画像は null） */
+  function checkPlanWidth(widthM, paperWidthMm) {
+    if (!(widthM >= 2 && widthM <= 1000)) return '図面全体の横幅は 2〜1000 m の範囲で入れてください（単位は m）';
+    if (paperWidthMm > 0 && Math.abs(widthM - paperWidthMm) <= paperWidthMm * 0.03)
+      return '入れた ' + widthM + ' は、用紙の横幅（約 ' + Math.round(paperWidthMm) + ' mm）と同じです。用紙の寸法ではなく、図面に描かれた範囲の実際の横幅を m で入れてください';
+    return '';
+  }
+  /** 範囲を選び直したとき、原点を (dx, dy) m 動かした分だけ、壁・管球・患者・アイソセンタ・測定点を逆にずらす（図面の上の位置は変えない） */
+  function shiftScene(sc, dx, dy) {
+    var r4 = function (v) { return Math.round(v * 1e4) / 1e4; };
+    sc.walls.forEach(function (w) { w.x1 = r4(w.x1 - dx); w.x2 = r4(w.x2 - dx); w.y1 = r4(w.y1 - dy); w.y2 = r4(w.y2 - dy); });
+    [sc.patient, sc.tube, sc.iso].concat(sc.probes).forEach(function (p) { p.x = r4(p.x - dx); p.y = r4(p.y - dy); });
+  }
+
   /** 範囲（図面の px）の検査 */
   function checkCrop(c, mPerPx) {
     var w = (c.x1 - c.x0) * mPerPx, h = (c.y1 - c.y0) * mPerPx;
@@ -252,7 +269,7 @@
     PDFJS_URL: PDFJS_URL, PDFJS_SRI: PDFJS_SRI, WORKER_URL: WORKER_URL, WORKER_SRI: WORKER_SRI, CMAP_URL: CMAP_URL,
     scaleHints: scaleHints, segmentsFromOperators: segmentsFromOperators, applyTransform: applyTransform, endpointIndex: endpointIndex,
     checkPlanSize: checkPlanSize, scaleFromPoints: scaleFromPoints, checkCrop: checkCrop, pxToWorld: pxToWorld,
-    rescaleScene: rescaleScene, layoutIntoBox: layoutIntoBox, MAX_CROP_M: MAX_CROP_M, MIN_CALIB_SCREEN_PX: MIN_CALIB_SCREEN_PX,
+    rescaleScene: rescaleScene, layoutIntoBox: layoutIntoBox, checkPlanWidth: checkPlanWidth, shiftScene: shiftScene, MAX_CROP_M: MAX_CROP_M, MIN_CALIB_SCREEN_PX: MIN_CALIB_SCREEN_PX,
     loadFile: loadFile, renderPdfPage: renderPdfPage
   };
 });

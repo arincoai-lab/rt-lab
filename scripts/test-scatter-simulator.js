@@ -519,16 +519,28 @@ const D = core.doseAtPoint;
     check(JSON.stringify(segs.slice(0, 4)) === JSON.stringify([0, 200, 20, 200]), '最初の線は viewport の変換を通る: ' + segs.slice(0, 4));
     check(JSON.stringify(segs.slice(12, 16)) === JSON.stringify([100, 200, 108, 200]), 'transform で平行移動した長方形: ' + segs.slice(12, 16));
     check(JSON.stringify(segs.slice(28, 32)) === JSON.stringify([6, 180, 12, 180]), 'restore で変換が戻り、曲線の終点から直線が続く: ' + segs.slice(28, 32));
-    // 図面の中の部品（Form XObject）・グループの行列をかける。注釈の中の線は拾わない（独立レビュー 11/17 H2）
+    // 図面の中の部品（Form XObject）の行列をかける。注釈の中の線は拾わない（独立レビュー 11/17 H2）。
+    // 透明グループ付きの部品は、pdf.js が beginGroup と paintFormXObjectBegin に同じ行列を並べる。かけるのは1回だけ（同 N1）
     const OPS2 = Object.assign({ paintFormXObjectBegin: 74, paintFormXObjectEnd: 75, beginGroup: 76, endGroup: 77, beginAnnotation: 80, endAnnotation: 81 }, OPS);
     const r2 = FP.segmentsFromOperators(
-      [OPS2.paintFormXObjectBegin, OPS2.constructPath, OPS2.paintFormXObjectEnd, OPS2.beginGroup, OPS2.constructPath, OPS2.endGroup, OPS2.beginAnnotation, OPS2.constructPath, OPS2.endAnnotation, OPS2.constructPath],
+      [OPS2.paintFormXObjectBegin, OPS2.constructPath, OPS2.paintFormXObjectEnd,
+       OPS2.beginGroup, OPS2.paintFormXObjectBegin, OPS2.constructPath, OPS2.paintFormXObjectEnd, OPS2.endGroup,
+       OPS2.beginAnnotation, OPS2.constructPath, OPS2.endAnnotation, OPS2.constructPath],
       [[[1, 0, 0, 1, 100, 0], [0, 0, 10, 10]], [[OPS.moveTo, OPS.lineTo], [0, 0, 5, 0], null], null,
-       [{ matrix: [2, 0, 0, 2, 0, 0] }], [[OPS.moveTo, OPS.lineTo], [1, 1, 2, 1], null], null,
+       [{ matrix: [2, 0, 0, 2, 0, 0] }], [[2, 0, 0, 2, 0, 0], null], [[OPS.moveTo, OPS.lineTo], [1, 1, 2, 1], null], null, null,
        [], [[OPS.moveTo, OPS.lineTo], [0, 0, 9, 9], null], null,
        [[OPS.moveTo, OPS.lineTo], [0, 0, 1, 0], null]],
       OPS2, [1, 0, 0, 1, 0, 0]);
-    check(JSON.stringify(Array.from(r2.segs)) === JSON.stringify([100, 0, 105, 0, 2, 2, 4, 2, 0, 0, 1, 0]), '部品・グループの行列をかけ、終わったら戻し、注釈は飛ばす: ' + Array.from(r2.segs));
+    check(JSON.stringify(Array.from(r2.segs)) === JSON.stringify([100, 0, 105, 0, 2, 2, 4, 2, 0, 0, 1, 0]), '部品の行列をかけ（グループ付きでも1回だけ）、終わったら戻し、注釈は飛ばす: ' + Array.from(r2.segs));
+    // 用紙の寸法（mm）を m のつもりで入れたら止める（独立レビュー 11/17 N2）
+    check(/用紙の横幅/.test(FP.checkPlanWidth(420, 420.0)) && /用紙の横幅/.test(FP.checkPlanWidth(410, 420)), 'A3 の 420 を横幅に入れたら止める');
+    check(FP.checkPlanWidth(42, 420) === '' && FP.checkPlanWidth(420, null) === '' && /2〜1000/.test(FP.checkPlanWidth(NaN, 420)), '実際の横幅は通す・空欄は止める');
+    // 範囲の選び直し: 原点を動かした分だけずらす
+    const scn3 = { walls: [{ x1: 8.2, y1: 16.95, x2: 9.2, y2: 16.95 }], patient: { x: 1, y: 1 }, tube: { x: 1, y: 1 }, iso: { x: 1, y: 1 }, probes: [] };
+    FP.shiftScene(scn3, 2.97, 1.485);
+    check(scn3.walls[0].x1 === 5.23 && scn3.walls[0].y1 === 15.465 && scn3.tube.x === -1.97, '範囲の選び直しで壁・点を同じだけずらし、0.1 mm に丸める: ' + JSON.stringify(scn3.walls[0]));
+    // 表題欄の書き方（独立レビュー 11/17 N9）
+    check(JSON.stringify(FP.scaleHints('縮尺：1/100 S:1/200 A1:1/100 A3:1/200')) === '[100,200]', '「縮尺：1/100」「A1:1/100」も候補にする: ' + JSON.stringify(FP.scaleHints('縮尺：1/100 S:1/200 A1:1/100 A3:1/200')));
 
     // 縮尺・範囲・座標の換算（独立レビュー 11/17 H3・M1・M5・M7）
     check(FP.checkPlanSize(3000, 2120, 0.0099) === '', 'A4 の 1:100（約 30 m）は通る');
