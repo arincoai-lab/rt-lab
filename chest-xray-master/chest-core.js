@@ -4,6 +4,8 @@
  *
  * 座標は cm。x の正の向き = 患者の左、y は下向きが正（首の付け根付近が 0）。
  * パネルは 43×43 cm で、左右の中心は x = 0 に固定。上下の中心が controls.panelY。
+ * 長さはパネルに写る大きさ（拡大率込み）。標準体型で肺野の幅と高さがおよそ 30 cm、
+ * 大柄な人は肺野の幅がおよそ 38〜40 cm になり、左右の余白は 2 cm 前後しか残らない（ゲーム用の概算）。
  *
  * 採点の項目と点は scripts/chest-xray-provenance.json（EUR 16260 の Chest PA 画質基準との照合表）
  * と一致していなければならない（scripts/test-chest-xray.js が検査する）。
@@ -37,14 +39,14 @@
   }
 
   // 難しさは「人」で変える。易しい順。
-  //   s: 体格、hold: 息を止めていられる秒数、scapBase: 肩を前に出していないときの肩甲骨の内側の縁（小さいほど肩が硬い）
+  //   s: 体格（拡大率込み。1 で肺野の高さ 27 cm）、wide: 胸郭の横幅の倍率（肺野と肩甲骨の左右の広がりに掛かる）、hold: 息を止めていられる秒数、scapBase: 肩を前に出していないときの肩甲骨の内側の縁（小さいほど肩が硬い）
   //   apexUp: 肺尖が高い分（cm）、drift: 落ち着かず立ち位置がずれる速さ（cm/秒、画面側で使う）
   const PATIENT_TYPES = [
-    { id: 'office',  s: [0.95, 1.02], hold: [6, 8],     scapBase: 6.0, apexUp: 0, drift: 0 },
-    { id: 'stiff',   s: [0.97, 1.05], hold: [5, 7],     scapBase: 4.6, apexUp: 0, drift: 0 },
-    { id: 'large',   s: [1.08, 1.12], hold: [4.5, 6],   scapBase: 6.0, apexUp: 0, drift: 0 },
-    { id: 'elderly', s: [0.92, 0.98], hold: [2.5, 2.5], scapBase: 5.5, apexUp: 1, drift: 0 },
-    { id: 'nervous', s: [0.95, 1.03], hold: [4, 6],     scapBase: 6.0, apexUp: 0, drift: 0.25 },
+    { id: 'office',  s: [1.05, 1.12], wide: 1.00, hold: [6, 8],     scapBase: 6.0, apexUp: 0, drift: 0 },
+    { id: 'stiff',   s: [1.07, 1.15], wide: 1.00, hold: [5, 7],     scapBase: 4.6, apexUp: 0, drift: 0 },
+    { id: 'large',   s: [1.22, 1.28], wide: 1.15, hold: [4.5, 6],   scapBase: 6.0, apexUp: 0, drift: 0 },
+    { id: 'elderly', s: [1.01, 1.08], wide: 1.00, hold: [2.5, 2.5], scapBase: 5.5, apexUp: 1, drift: 0 },
+    { id: 'nervous', s: [1.04, 1.13], wide: 0.97, hold: [4, 6],     scapBase: 6.0, apexUp: 0, drift: 0.25 },
   ];
 
   function makePatient(typeId, rng) {
@@ -55,6 +57,7 @@
     return {
       type: T.id,
       s: r(T.s[0], T.s[1]),
+      wide: T.wide,
       c7: half(r(-3, 3)),                      // 首の付け根の高さ（身長の差）
       baseRot: sign() * half(r(3, 8)),         // 立ったときの体のねじれ（度）
       baseX: sign() * half(r(3, 6)),           // 立ち位置のずれ（cm）
@@ -72,11 +75,12 @@
     const X = p.baseX - c.x;                           // 背骨の左右位置（パネル中心が 0）
     const rx = (lx, z) => X + s * (lx * cs + z * sn);  // 体をひねったときの見かけの x（z: 背中側が正）
     const wy = ly => p.c7 + s * ly;
-    const W = 12.5, L = 19 + 8 * lvl;                  // 肺の半幅と、肺尖から横隔膜までの長さ
+    const wide = p.wide || 1;
+    const W = 13.5 * wide, L = 19 + 8 * lvl;           // 肺の半幅と、肺尖から横隔膜までの長さ
     const wL = W * (1 + 0.8 * sn), wR = W * (1 - 0.8 * sn);
-    const scapM = p.scapBase + 8.5 * c.roll;           // 肩甲骨の内側の縁（背骨から）
+    const scapM = (p.scapBase + 8.5 * c.roll) * W / 12.5;   // 肩甲骨の内側の縁（背骨から。胸郭が広いほど外）
     return {
-      s, th, sn, X, rx, wy, W, L, wL, wR, scapM,
+      s, th, sn, X, rx, wy, W, L, wL, wR, scapM, wide,
       apexY: wy(2) - p.apexUp,
       botL: wy(2 + L), botR: wy(2 + L - 1.2),          // 右の横隔膜は少し高い
       lungL: X + s * wL, lungR: X - s * wR,            // 肺の外側の端
