@@ -46,3 +46,4 @@ CLAUDE.md から 2026-11-16 に移した。毎セッションは読み込まれ�
 - 2026-11-16 コンセプトの文（どんな環境でも・どんな機種でも・世界水準・自分に合った働き方）をトップと About に反映（依頼台帳 T14 D1）。検索の28日基準は content-hub/metrics/2026-11-16-gsc-28d.md（511クリック・月1,000は未達）
 - 2026-11-17 胸部X線写真の匠（/chest-xray-master/）段階1: chest-core.js（採点6項目・EUR 16260 照合表 scripts/chest-xray-provenance.json・テスト46,318件）と、ドラッグで1人撮れる画面。ブランチ claude/chest-xray-master（未PR）。設計 ~/Documents/Claude/plan/2026-11-17-rt-lab-chest-xray-game-design.md
 - 2026-11-17 胸部X線写真の匠 段階2: 5人のラウンド・時間・称号・X投稿・練習モード・英語。テスト70,755件。ブランチ claude/chest-xray-master（未PR）
+- 2026-11-17 胸部X線写真の匠: 採点を緩める（大まか82点・何もせず40点）、上から見た図でひねりを示す、X線画像を描き直す（64ms）。ユーザーの指摘3点への対応
