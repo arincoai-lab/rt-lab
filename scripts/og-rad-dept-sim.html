@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1200px;height:630px;overflow:hidden;background:#0f1318}
+  iframe{position:absolute;left:-3000px;top:0;width:420px;height:900px;border:0}
+  #out{position:absolute;left:0;top:0}
+</style></head>
+<body>
+<canvas id="out" width="1200" height="630"></canvas>
+<iframe id="g" src="/rad-dept-sim/"></iframe>
+<script>
+// 「放射線科の多忙な一日」の共有用画像（assets/og/rad-dept-sim.png, 1200x630）を、
+// ゲームの結果画面が描くシェア画像（上手な采配の自動プレイ）からそのまま作る。
+// 作り直し方: python3 -m http.server 8080 を動かしたまま
+//   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+//     --force-device-scale-factor=1 --virtual-time-budget=10000 --window-size=1200,630 \
+//     --screenshot=assets/og/rad-dept-sim.png http://localhost:8080/scripts/og-rad-dept-sim.html
+// scripts/ はデプロイされない。
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+(async () => {
+  const f = document.getElementById('g');
+  await new Promise(r => f.addEventListener('load', r, { once: true }));
+  await sleep(200);
+  const w = f.contentWindow, R = w.RadCore;
+  w.document.getElementById('go').click();
+  // 試合の運び: 至急→早めに→通常、短い検査から。救急の電話が来たら、間に合わない CT は入れない
+  const G = R.newGame();
+  const O = { red: 0, yellow: 1, green: 2 };
+  for (let n = 0; n < 20000 && !G.ended; n++) {
+    const call = R.incomingCall(G);
+    for (const p of R.waiting(G).sort((a, b) => O[a.sev] - O[b.sev] || R.EX[R.curEx(a)][1] - R.EX[R.curEx(b)][1])) {
+      const [ty] = R.EX[R.curEx(p)];
+      if (ty === 'CT' && call && p.sev !== 'red' && R.examPlan(p).mins > call.t - G.t) continue;
+      const r = G.rooms.find(r => !r.p && R.canTake(G, r.id, p.id));
+      if (r) R.assign(G, p.id, r.id);
+    }
+    R.step(G, 0.5);
+  }
+  w.drawCard(R.result(G));
+  document.getElementById('out').getContext('2d').drawImage(w.document.getElementById('card'), 0, 0);
+})();
+</script>
+</body></html>

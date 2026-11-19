@@ -52,6 +52,10 @@ jobs:
       - name: Flight dose model checks
         run: node scripts/test-flight-dose.js
 
+      # 放射線科の多忙な一日（再現性・判断が点に効く・予約の決まり・キャラの効果）
+      - name: Radiology department game checks
+        run: node scripts/test-rad-dept-sim.js
+
       - name: Generated blocks are up to date
         run: |
           node scripts/generate-related.js --check
