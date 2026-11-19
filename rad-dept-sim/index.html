@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>放射線科の多忙な一日 〜放射線科運営シミュレータ〜 | RT-Lab</title>
+  <meta name="description" content="救急、入院、外来の患者さんが次々に来る放射線科を、リーダー技師としてさばくブラウザゲーム。一般撮影・CT・MRI の部屋へ患者さんをドラッグし、救急に備え、全体の待ち時間を短くして12時までに終わらせよう。おしゃべり好きのおばあちゃんなど、くせのある患者さんも登場します。">
+  <link rel="canonical" href="https://rt-ai-lab.com/rad-dept-sim/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="RT-Lab">
+  <meta property="og:url" content="https://rt-ai-lab.com/rad-dept-sim/">
+  <meta property="og:title" content="放射線科の多忙な一日 〜放射線科運営シミュレータ〜">
+  <meta property="og:description" content="救急・入院・外来の患者さんを、一般撮影・CT・MRI へ振り分けるリアルタイムの采配ゲーム。救急の電話に備え、待ち時間を短く、12時までに終わらせよう。">
+  <meta property="og:image" content="https://rt-ai-lab.com/assets/og/rad-dept-sim.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="放射線科の多忙な一日 〜放射線科運営シミュレータ〜">
+  <meta name="twitter:description" content="救急・入院・外来の患者さんを、一般撮影・CT・MRI へ振り分けるリアルタイムの采配ゲーム。救急の電話に備え、待ち時間を短く、12時までに終わらせよう。">
+  <meta name="twitter:image" content="https://rt-ai-lab.com/assets/og/rad-dept-sim.png">
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/assets/site.css">
+  <style>
+    /* 夜明け前の操作卓の暗さ。単一の暗い見た目で固定（ゲーム） */
+    :root {
+      --bg: #0f1318; --panel: #18202a; --line: #2a3644; --text: #e8edf2; --sub: #93a0b1;
+      --red: #ff5f5f; --yellow: #f4c152; --ok: #5fd39b; --lamp: #f0b44c;
+      --xr: #5aa9ff; --ct: #ff9f43; --mri: #b98cff;
+      --font: -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", system-ui, sans-serif;
+      --mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
+    body { -webkit-user-select: none; user-select: none; }
+    [hidden] { display: none !important; }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 10px max(12px, env(safe-area-inset-right, 0px)) 40px max(12px, env(safe-area-inset-left, 0px)); display: grid; gap: 10px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--sub); }
+    .topbar a { color: var(--sub); text-decoration: none; }
+    h1 { font-size: 21px; margin: 2px 0 0; line-height: 1.35; }
+    h1 small { display: block; font-size: 12px; color: var(--sub); font-weight: 600; margin-top: 2px; }
+    .lead { font-size: 12px; color: var(--sub); margin: 0; line-height: 1.6; }
+
+    .hud { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 4px 0 8px; display: grid; gap: 8px; border-bottom: 1px solid var(--line); }
+    .bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .clock { font: 800 26px var(--mono); min-width: 84px; font-variant-numeric: tabular-nums; }
+    .clock.ot { color: var(--red); }
+    .spd { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .spd button { background: var(--panel); color: var(--sub); border: 0; padding: 8px 9px; font: 700 12px var(--font); cursor: pointer; }
+    .spd button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+    .stats { margin-left: auto; font-size: 11px; color: var(--sub); text-align: right; line-height: 1.4; }
+    .stats b { color: var(--text); font: 700 14px var(--mono); }
+    .call { background: #3a1c1c; border: 2px solid var(--red); color: #ffd4d4; border-radius: 10px; padding: 8px 12px; font-size: 14px; font-weight: 800; animation: blink .6s infinite alternate; }
+    .news { background: #2b2414; border: 1px solid var(--lamp); color: #ffe7b8; border-radius: 10px; padding: 6px 12px; font-size: 13px; font-weight: 700; }
+    @keyframes blink { from { opacity: 1 } to { opacity: .55 } }
+
+    /* 検査室 */
+    .rooms { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .room { --c: var(--xr); background: var(--panel); border: 2px solid color-mix(in srgb, var(--c) 45%, transparent); border-radius: 12px; padding: 6px 8px 8px; position: relative; overflow: hidden; }
+    .room.CT { --c: var(--ct); } .room.MRI { --c: var(--mri); }
+    .room h3 { margin: 0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+    .chip { --c: var(--xr); display: inline-block; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 999px; background: var(--c); color: #10151b; white-space: nowrap; }
+    .chip.CT { --c: var(--ct); } .chip.MRI { --c: var(--mri); }
+    .room.ok { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 35%, transparent); }
+    .room.ng { opacity: .35; }
+    .scene { display: block; width: 100%; height: 60px; }
+    .room .info { display: flex; justify-content: space-between; gap: 6px; font-size: 11px; color: var(--sub); min-height: 15px; }
+    .room .info b { color: var(--text); }
+    .prog { height: 6px; background: #0b0f14; border-radius: 3px; overflow: hidden; margin-top: 3px; }
+    .prog i { display: block; height: 100%; width: 0; background: var(--c); }
+    .nx { margin-top: 5px; min-height: 26px; border: 1.5px dashed color-mix(in srgb, var(--c) 45%, transparent); border-radius: 8px; padding: 3px 6px; font-size: 11px; color: var(--sub); display: flex; align-items: center; gap: 5px; }
+    .room:not(.busy) .nx { border-color: transparent; }
+    .nx.has { border-style: solid; background: color-mix(in srgb, var(--c) 14%, #0f151c); color: var(--text); cursor: grab; touch-action: none; }
+    .nx.has.red { border-color: var(--red); }
+    .nx.has.sel { outline: 3px solid var(--text); }
+    .nx b { font-size: 12px; } .nx .f { margin-left: auto; font-size: 15px; white-space: nowrap; }
+    .nx .f small { font: 10px var(--mono); color: var(--sub); }
+    .room.ok.busy .nx { border-color: var(--c); color: var(--text); }
+    .bubble { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); background: #fff; color: #1a1f26; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 10px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .2s; }
+    .bubble.show { opacity: 1; }
+    .toast { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 8px; font: 900 15px var(--font); color: var(--ok); background: rgba(15,19,24,.82); opacity: 0; transition: opacity .25s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+    /* イラストの動き */
+    .idle .pt, .idle .beam, .idle .say { display: none; }
+    .idle .machine { opacity: .45; }
+    .beam { animation: flash 2.4s infinite; opacity: 0; }
+    @keyframes flash { 0%, 70% { opacity: 0 } 74% { opacity: .9 } 80%, 100% { opacity: 0 } }
+    .say { animation: blink 1.2s infinite alternate; }
+    .slide { animation: slide 3.2s ease-in-out infinite alternate; }
+    @keyframes slide { from { transform: translateX(-18px) } to { transform: translateX(14px) } }
+    .spin { transform-origin: 70px 34px; animation: spin 1.1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg) } }
+    .buzz { animation: buzz .18s infinite; }
+    @keyframes buzz { 50% { transform: translate(1px, -1px) } }
+    @media (prefers-reduced-motion: reduce) { .beam, .slide, .spin, .buzz, .say, .call, .card.sev-red, .card.ch-impatient { animation: none !important; } .beam { opacity: .5; } }
+
+    /* 待合 */
+    .sec { font-size: 12px; color: var(--sub); margin: 2px 0 -4px; display: flex; justify-content: space-between; }
+    .waiting { min-height: 92px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 8px 8px; display: flex; flex-wrap: wrap; gap: 10px 6px; align-content: flex-start; }
+    .waiting.drop { outline: 2px dashed var(--text); }
+    .waiting .empty { color: var(--sub); font-size: 12px; padding: 6px; }
+    .card { --c: var(--xr); width: calc(50% - 3px); background: color-mix(in srgb, var(--c) 13%, #0f151c); border: 2px solid color-mix(in srgb, var(--c) 55%, transparent); border-radius: 10px; padding: 6px 8px; cursor: grab; touch-action: none; position: relative; display: grid; grid-template-columns: 34px 1fr auto; gap: 0 6px; align-items: center; }
+    @media (min-width: 560px) { .card { width: calc(33.33% - 4px); } }
+    .card.CT { --c: var(--ct); } .card.MRI { --c: var(--mri); }
+    .card .who { font-size: 26px; line-height: 1; grid-row: span 2; text-align: center; }
+    .card .who small { display: block; font-size: 9px; color: var(--sub); margin-top: 2px; }
+    .card .ex { font-weight: 800; font-size: 15px; line-height: 1.2; }
+    .card .meta { font-size: 11px; color: var(--sub); }
+    .card .mood { font-size: 24px; grid-row: span 2; text-align: center; line-height: 1; }
+    .card .mood small { display: block; font-size: 10px; color: var(--sub); font-family: var(--mono); margin-top: 2px; }
+    .card .tag { position: absolute; top: -9px; right: 6px; font-size: 10px; font-weight: 900; padding: 1px 6px; border-radius: 999px; }
+    .card.sev-red { border-color: var(--red); animation: alarm .7s infinite alternate; }
+    .card.sev-red .tag { background: var(--red); color: #fff; }
+    .card.sev-yellow .tag { background: var(--yellow); color: #1a1205; }
+    @keyframes alarm { from { box-shadow: 0 0 0 0 rgba(255,95,95,0) } to { box-shadow: 0 0 0 4px rgba(255,95,95,.55) } }
+    .card .ch { grid-column: 1 / 4; font-size: 11px; font-weight: 700; color: #ffe7b8; margin-top: 3px; padding-top: 3px; border-top: 1px dashed var(--line); }
+    .card.ch-impatient { animation: jitter .25s infinite; }
+    @keyframes jitter { 50% { transform: translateX(1px) } }
+    .card .next { grid-column: 2 / 4; font-size: 10px; color: var(--sub); }
+    .card.sel { outline: 3px solid var(--text); }
+    .card.angry { background: color-mix(in srgb, var(--red) 18%, #0f151c); }
+    .ghost { position: fixed; pointer-events: none; z-index: 50; opacity: .92; width: 180px; }
+    .legend { font-size: 11px; color: var(--sub); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .log { font-size: 11px; color: var(--sub); max-height: 84px; overflow: auto; background: #0c1117; border-radius: 8px; padding: 6px 8px; line-height: 1.6; }
+    .note { font-size: 11px; color: var(--sub); line-height: 1.6; margin: 0; }
+
+    .modal { position: fixed; inset: 0; background: rgba(5,8,11,.86); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+    .box { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; max-width: 460px; width: 100%; display: grid; gap: 10px; max-height: 92vh; overflow: auto; }
+    .box h2 { margin: 0; font-size: 20px; }
+    .box p { font-size: 13px; color: var(--sub); line-height: 1.6; margin: 0; }
+    .howto { display: grid; gap: 6px; font-size: 13px; }
+    .howto div { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .cast { display: grid; gap: 4px; font-size: 12px; background: #11171e; border-radius: 10px; padding: 8px 10px; }
+    .cast b { color: #ffe7b8; }
+    .grade { font: 900 64px var(--mono); text-align: center; color: var(--lamp); line-height: 1; }
+    .box table { width: 100%; font-size: 13px; border-collapse: collapse; }
+    .box td { padding: 4px 0; border-bottom: 1px solid var(--line); }
+    .box td:last-child { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    .met { display: grid; gap: 4px; font-size: 12px; }
+    .met div { background: #11171e; border-radius: 8px; padding: 5px 8px; }
+    #card { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); }
+    .btn { background: var(--lamp); color: #1a1205; border: 0; border-radius: 12px; padding: 12px; font: 800 16px var(--font); cursor: pointer; width: 100%; text-align: center; text-decoration: none; display: block; }
+    .btn.sub { background: transparent; color: var(--text); border: 1px solid var(--line); font-size: 14px; padding: 9px; }
+    .btn.x { background: #e8edf2; color: #0f1318; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button:focus-visible, a:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <div class="topbar"><a href="/">RT-Lab</a><span>おまけ：遊べるシミュレーション</span></div>
+  <h1>放射線科の多忙な一日<small>〜放射線科運営シミュレータ〜</small></h1>
+  <p class="lead">待合の患者さんを、<b>同じ色の部屋</b>へドラッグ。<b>至急</b>の人を待たせず、全体の待ち時間を短く、12:00 までに終わらせよう。</p>
+
+  <div class="hud">
+    <div class="bar">
+      <div class="clock" id="clock">8:30</div>
+      <div class="spd" role="group" aria-label="時間の速さ">
+        <button type="button" data-s="0" aria-label="一時停止">⏸</button>
+        <button type="button" data-s="0.5">🐢 0.5倍</button>
+        <button type="button" data-s="1">▶ 1倍</button>
+        <button type="button" data-s="2">⏩ 2倍</button>
+      </div>
+      <div class="stats">平均待ち <b id="sAvg">0</b>分<br>至急の待ち <b id="sRed">0</b>分</div>
+    </div>
+    <div class="call" id="call" hidden></div>
+    <div class="news" id="news" hidden></div>
+    <div class="rooms" id="rooms"></div>
+  </div>
+
+  <div class="sec"><span>待合</span><span id="wcount"></span></div>
+  <div class="waiting" id="waiting"></div>
+  <div class="legend">
+    <span class="chip">一般撮影</span><span class="chip CT">CT</span><span class="chip MRI">MRI</span>
+    <span>🚶外来　🛏️入院　🚑救急</span>
+  </div>
+  <div class="log" id="log" aria-live="polite"></div>
+  <p class="note">検査時間・待てる時間・患者さんの来方は、ゲーム用の目安です。実際の病院の診療時間や待ち時間を表すものではありません。登場する人物は架空です。</p>
+</main>
+
+<div class="modal" id="start">
+  <div class="box">
+    <h2>月曜の午前、開始します</h2>
+    <p>あなたは放射線科のリーダー技師。8:30 から、外来・入院・救急の患者さんが次々にやってきます。</p>
+    <div class="howto">
+      <div><span class="chip">一般撮影</span><span class="chip CT">CT</span><span class="chip MRI">MRI</span> カードと同じ色の部屋へ</div>
+      <div><span class="chip" style="--c:var(--red);color:#fff">🚨 至急</span> すぐ撮らないと危険</div>
+      <div><span class="chip" style="--c:var(--yellow)">⏱ 早めに</span> 長く待たせないで</div>
+      <div>🙂 → 😐 → 😠　待たせると怒ります</div>
+      <div>📞 救急車は着く 10 分前に電話が来ます</div>
+      <div>検査中の部屋にドラッグすると「次」に予約（1部屋1人）。待合に戻せば取り消し</div>
+      <div>一度始めた検査は止められません</div>
+    </div>
+    <div class="cast" id="cast"></div>
+    <p>初めてなら 🐢 0.5倍 がおすすめ。⏸ で止めて考えてもOK。</p>
+    <button class="btn" id="go" type="button">始める（1倍）</button>
+    <button class="btn sub" id="goSlow" type="button">🐢 ゆっくり始める（0.5倍）</button>
+  </div>
+</div>
+
+<div class="modal" id="end" hidden>
+  <div class="box">
+    <h2>午前の部、終了！</h2>
+    <div class="grade" id="grade">A</div>
+    <table id="endTable"></table>
+    <p id="endMsg"></p>
+    <div class="met" id="met"></div>
+    <canvas id="card" width="1200" height="630" role="img" aria-label="結果のシェア用画像"></canvas>
+    <div class="row2">
+      <a class="btn x" id="btnShare" target="_blank" rel="noopener">X にポストする</a>
+      <button class="btn sub" id="btnSave" type="button">画像を保存</button>
+    </div>
+    <button class="btn" id="again" type="button">もう一度</button>
+  </div>
+</div>
+
+<script src="rad-core.js"></script>
+<script>
+'use strict';
+const R = window.RadCore;
+const URL_SELF = 'https://rt-ai-lab.com/rad-dept-sim/';
+const ICON = { '外来': '🚶', '入院': '🛏️', '救急': '🚑' };
+const TAG = { red: '🚨 至急', yellow: '⏱ 早めに', green: '' };
+const FACE = { green: ['🙂', '😐', '😠'], yellow: ['🙂', '😐', '😠'], red: ['😣', '😰', '😵'] };
+const $ = id => document.getElementById(id);
+
+// ===== 部屋のイラスト（SVG） =====
+const PERSON = '#e8c9a8', GOWN = '#9fb3c8';
+const SCENE = {
+  XR: `<svg class="scene" viewBox="0 0 160 64" aria-hidden="true">
+    <g class="machine"><rect x="12" y="10" width="24" height="15" rx="3" fill="#cfd8e3"/><rect x="22" y="0" width="4" height="10" fill="#7d8897"/>
+    <rect x="122" y="4" width="11" height="56" rx="2" fill="#5aa9ff33" stroke="#5aa9ff" stroke-width="2"/></g>
+    <polygon class="beam" points="36,14 36,22 122,6 122,58" fill="#fff59d"/>
+    <g class="pt"><circle cx="108" cy="14" r="7" fill="${PERSON}"/><rect x="100" y="22" width="16" height="30" rx="6" fill="${GOWN}"/><rect x="102" y="50" width="5" height="12" fill="${GOWN}"/><rect x="109" y="50" width="5" height="12" fill="${GOWN}"/></g>
+    <text class="say" x="44" y="62" font-size="9" fill="#e8edf2">はい吸って…止めて！</text></svg>`,
+  CT: `<svg class="scene" viewBox="0 0 160 64" aria-hidden="true">
+    <g class="machine"><circle cx="70" cy="34" r="25" fill="none" stroke="#ff9f43" stroke-width="10"/>
+    <rect x="14" y="50" width="136" height="5" rx="2" fill="#5b6675"/><rect x="40" y="55" width="8" height="9" fill="#5b6675"/></g>
+    <circle class="spin pt" cx="70" cy="34" r="25" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="10 147"/>
+    <g class="slide pt"><ellipse cx="66" cy="45" rx="34" ry="5.5" fill="${GOWN}"/><circle cx="104" cy="43" r="6" fill="${PERSON}"/></g></svg>`,
+  MRI: `<svg class="scene" viewBox="0 0 160 64" aria-hidden="true">
+    <g class="machine"><rect x="34" y="6" width="90" height="52" rx="26" fill="#2a2140" stroke="#b98cff" stroke-width="7"/>
+    <rect x="10" y="44" width="140" height="5" rx="2" fill="#5b6675"/></g>
+    <g class="pt"><ellipse cx="72" cy="40" rx="30" ry="5.5" fill="${GOWN}"/><circle cx="106" cy="38" r="6" fill="${PERSON}"/></g>
+    <text class="buzz pt" x="56" y="24" font-size="11" font-weight="900" fill="#e0ccff">ガガガ…</text></svg>`,
+};
+
+// ===== 状態 =====
+let G, speed = 1, selected = null, drag = null, started = false;
+let roomEls = {}, waitKey = '', cardEls = {}, logKey = '', newsUntil = 0;
+const bubbles = {}; // roomId -> {text, until}
+const toasts = {};  // roomId -> {text, until}
+
+function newGameUI() {
+  G = R.newGame();
+  selected = null; drag = null; waitKey = ''; logKey = ''; newsUntil = 0;
+  for (const k of Object.keys(bubbles)) delete bubbles[k];
+  for (const k of Object.keys(toasts)) delete toasts[k];
+  buildRooms();
+  render();
+}
+function setSpeed(s) {
+  speed = s;
+  document.querySelectorAll('.spd button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.s === s)));
+}
+
+function buildRooms() {
+  const box = $('rooms'); box.innerHTML = ''; roomEls = {};
+  for (const r of G.rooms) {
+    const d = document.createElement('div');
+    d.className = `room ${r.type}`; d.dataset.room = r.id;
+    d.innerHTML = `<h3>${r.name}<span class="chip ${r.type}">${R.TYPE_NAME[r.type]}</span></h3>
+      <div class="sc idle">${SCENE[r.type]}</div>
+      <div class="info"><span class="who">空き — ここへドラッグ</span><span class="left"></span></div>
+      <div class="prog"><i></i></div><div class="nx"></div><div class="bubble"></div><div class="toast"></div>`;
+    box.appendChild(d);
+    roomEls[r.id] = { el: d, sc: d.querySelector('.sc'), who: d.querySelector('.who'), left: d.querySelector('.left'),
+      bar: d.querySelector('.prog i'), nx: d.querySelector('.nx'), bubble: d.querySelector('.bubble'), toast: d.querySelector('.toast'),
+      shown: undefined, nxShown: undefined, nxSel: false };
+  }
+}
+
+const chLine = p => p.char ? `<div class="ch">${R.CHARS[p.char].icon} ${R.CHARS[p.char].name}<br><span style="font-weight:400;color:var(--sub)">${R.CHARS[p.char].hint}${p.char === 'child' ? (p.escort ? '（付き添いあり）' : '（付き添いなし）') : ''}</span></div>` : '';
+function face(p) { return FACE[p.sev][R.moodLevel(G, p)]; }
+function cardHTML(p) {
+  const [type] = R.EX[R.curEx(p)];
+  const mins = R.examPlan(p).mins;
+  const rest = p.exams.slice(p.step + 1);
+  return `<div class="card ${type} sev-${p.sev}${p.char ? ' ch-' + p.char : ''}${selected === p ? ' sel' : ''}" data-id="${p.id}">
+    ${TAG[p.sev] ? `<span class="tag">${TAG[p.sev]}</span>` : ''}
+    <div class="who">${ICON[p.src]}<small>${p.src}</small></div>
+    <div class="ex">${R.curEx(p)}</div>
+    <div class="mood"><span class="face">${R.isAway(G, p) ? '🚻' : face(p)}</span><small class="wt">${Math.floor(R.waitNow(G, p))}分</small></div>
+    <div class="meta">${R.TYPE_NAME[type]}・${mins}分</div>
+    ${rest.length ? `<div class="next">このあと → ${rest.join('→')}</div>` : ''}
+    ${chLine(p)}
+  </div>`;
+}
+
+function render() {
+  $('clock').textContent = R.fmt(G.t);
+  $('clock').classList.toggle('ot', G.t > R.CLOSE);
+  const call = R.incomingCall(G);
+  $('call').hidden = !call;
+  if (call) $('call').textContent = `📞 救急から電話！ 約${Math.max(1, Math.ceil(call.t - G.t))}分後に到着：${call.exams.join('→')}（${R.TYPE_NAME[R.EX[call.exams[0]][0]]}を空けておく？）`;
+  $('news').hidden = performance.now() > newsUntil;
+
+  const holding = selected || (drag && drag.moved ? drag.p : null);
+  const ms = performance.now();
+  for (const r of G.rooms) {
+    const e = roomEls[r.id];
+    if (e.shown !== r.p) {
+      e.shown = r.p;
+      e.sc.className = 'sc' + (r.p ? '' : ' idle');
+      e.who.innerHTML = r.p ? `<b>${ICON[r.p.src]} ${R.curEx(r.p)}</b>${r.p.char ? ' ' + R.CHARS[r.p.char].icon : ''}` : '空き — ここへドラッグ';
+      if (r.p && r.p.char === 'chatty') bubbles[r.id] = { text: '💬 あら〜、今日はいい天気ねぇ', until: ms + 2600 };
+    }
+    e.left.textContent = r.p ? `残り ${Math.ceil(r.left)}分` : '';
+    e.bar.style.width = r.p ? `${100 * (1 - r.left / r.total)}%` : '0';
+    const take = !!holding && R.canTake(G, r.id, holding.id);
+    e.el.classList.toggle('ok', take);
+    e.el.classList.toggle('busy', !!r.p);
+    e.el.classList.toggle('ng', !!holding && !take);
+    const nxSel = !!(r.next && selected === r.next);
+    if (e.nxShown !== r.next || e.nxSel !== nxSel) {
+      e.nxShown = r.next; e.nxSel = nxSel;
+      e.nx.className = 'nx' + (r.next ? ' has' + (r.next.sev === 'red' ? ' red' : '') + (nxSel ? ' sel' : '') : '');
+      if (r.next) e.nx.dataset.id = r.next.id; else delete e.nx.dataset.id;
+      e.nx.innerHTML = r.next ? `次：<span>${ICON[r.next.src]}</span><b>${R.curEx(r.next)}</b>${r.next.char ? R.CHARS[r.next.char].icon : ''}<span class="f"></span>` : '';
+    }
+    if (r.next) {
+      const away = R.isAway(G, r.next);
+      e.nx.querySelector('.f').innerHTML = away ? '🚻 <small>トイレ中</small>' : `${face(r.next)} <small>${Math.floor(R.waitNow(G, r.next))}分</small>`;
+    } else e.nx.textContent = r.p ? (take ? 'ここに予約できます' : '次：（予約なし）') : '';
+    const b = bubbles[r.id], tt = toasts[r.id];
+    const showB = !!(b && ms < b.until && r.p);
+    if (showB) e.bubble.textContent = b.text;
+    e.bubble.classList.toggle('show', showB);
+    const showT = !!(tt && ms < tt.until);
+    if (showT) e.toast.textContent = tt.text;
+    e.toast.classList.toggle('show', showT);
+  }
+
+  // 待合：顔ぶれ・順番が変わったときだけ作り直す
+  $('waiting').classList.toggle('drop', !!(holding && holding.reservedFor));
+  const ws = R.waiting(G);
+  const key = ws.map(p => p.id + ':' + p.step).join(',') + '|' + (selected ? selected.id : '');
+  if (key !== waitKey) {
+    waitKey = key;
+    $('waiting').innerHTML = ws.length ? ws.map(cardHTML).join('') : '<div class="empty">待っている人はいません</div>';
+    cardEls = {};
+    for (const c of $('waiting').querySelectorAll('.card')) cardEls[c.dataset.id] = { el: c, face: c.querySelector('.face'), wt: c.querySelector('.wt') };
+  }
+  for (const p of ws) {
+    const c = cardEls[p.id]; if (!c) continue;
+    c.face.textContent = R.isAway(G, p) ? '🚻' : face(p);
+    c.wt.textContent = `${Math.floor(R.waitNow(G, p))}分`;
+    c.el.classList.toggle('angry', R.moodLevel(G, p) === 2);
+  }
+  $('wcount').textContent = G.patients.length ? `${G.patients.length}人待ち（予約を含む）` : '';
+  const st = R.liveStats(G);
+  $('sAvg').textContent = st.avg.toFixed(0);
+  $('sRed').textContent = st.redWait.toFixed(0);
+  const lk = G.log.length + ':' + (G.log[0] || '');
+  if (lk !== logKey) { logKey = lk; $('log').innerHTML = G.log.map(s => `<div>${s}</div>`).join(''); }
+}
+
+function onEvents(ev) {
+  const ms = performance.now();
+  for (const e of ev) {
+    if (e.type === 'retake' || e.type === 'pause') bubbles[e.roomId] = { text: e.text, until: ms + 2600 };
+    if (e.type === 'finish') toasts[e.roomId] = { text: e.thanks ? `✓「${e.thanks}」` : e.nextExam ? `✓ 次は ${e.nextExam} へ` : '✓ おわり！ ありがとう', until: ms + (e.thanks ? 2200 : 1300) };
+    if (e.type === 'toilet') { $('news').textContent = `🚻 ${R.CHARS.toilet.name}がトイレに行きました（予約は残っています）`; newsUntil = ms + 3500; }
+    if (e.type === 'spread') { $('news').textContent = `💢 ${R.CHARS.impatient.name}が受付で声を荒げています。待合の空気が悪くなった…`; newsUntil = ms + 3500; }
+    if (e.type === 'end') finish();
+  }
+}
+
+function assignTo(p, roomId) {
+  if (R.assign(G, p.id, roomId)) { selected = null; }
+  render();
+}
+function cancel(p) { if (R.unreserve(G, p.id)) selected = null; render(); }
+
+// ===== 操作：ドラッグ or タップ→部屋 =====
+document.addEventListener('pointerdown', e => {
+  if (!started || G.ended) return;
+  const c = e.target.closest && e.target.closest('.waiting .card, .nx.has');
+  if (!c) return;
+  // 誰かを選んでいるときに予約の欄を押したら、それは「この部屋へ」の操作（選び直しにしない）
+  if (selected && c.classList.contains('nx') && +c.dataset.id !== selected.id) return;
+  const p = G.patients.find(x => x.id === +c.dataset.id);
+  if (p) drag = { p, x0: e.clientX, y0: e.clientY, moved: false, ghost: null };
+});
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 8) {
+    drag.moved = true; selected = null;
+    const g = document.createElement('div'); g.className = 'ghost'; g.innerHTML = cardHTML(drag.p);
+    document.body.appendChild(g); drag.ghost = g; render();
+  }
+  if (drag.ghost) { drag.ghost.style.left = (e.clientX - 90) + 'px'; drag.ghost.style.top = (e.clientY - 30) + 'px'; }
+});
+function endDrag(e, cancelled) {
+  if (drag && drag.moved) {
+    drag.ghost.remove();
+    const p = drag.p; drag = null;
+    if (!cancelled) {
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const roomEl = el && el.closest('.room');
+      if (roomEl) assignTo(p, roomEl.dataset.room);
+      else if (el && el.closest('.waiting') && p.reservedFor) cancel(p);
+    }
+    render(); return true;
+  }
+  return false;
+}
+document.addEventListener('pointercancel', e => { endDrag(e, true); drag = null; });
+document.addEventListener('pointerup', e => {
+  if (endDrag(e, false)) return;
+  if (drag) { selected = selected === drag.p ? null : drag.p; drag = null; render(); return; }
+  if (!selected || !started || G.ended) return;
+  const roomEl = e.target.closest && e.target.closest('.room');
+  if (roomEl) assignTo(selected, roomEl.dataset.room);
+  else if (selected.reservedFor && e.target.closest && e.target.closest('.waiting')) cancel(selected);
+});
+
+// ===== ループ =====
+let last = 0;
+function loop(now) {
+  const dt = last ? Math.min(0.1, (now - last) / 1000) : 0; last = now;
+  if (started && !G.ended) { if (speed > 0) onEvents(R.step(G, dt * speed)); render(); }
+  requestAnimationFrame(loop);
+}
+document.querySelectorAll('.spd button').forEach(b => b.addEventListener('click', () => setSpeed(+b.dataset.s)));
+function begin(s) { $('start').hidden = true; started = true; setSpeed(s); }
+$('go').addEventListener('click', () => begin(1));
+$('goSlow').addEventListener('click', () => begin(0.5));
+$('again').addEventListener('click', () => { $('end').hidden = true; newGameUI(); started = true; setSpeed(speed || 1); });
+
+// ===== 結果 =====
+let lastRes = null;
+function finish() {
+  render();
+  const res = R.result(G); lastRes = res;
+  $('grade').textContent = res.grade;
+  $('endTable').innerHTML = [
+    ['患者さん', `${res.patients}人`], ['平均の待ち時間', `${res.avg.toFixed(1)}分`], ['一番長く待たせた', `${res.maxWait.toFixed(0)}分`],
+    ['至急の人を待たせた時間', `${res.redWait.toFixed(1)}分`], ['怒らせた人', `${res.angry}人`],
+    ['終了時刻', `${res.endTime}${res.overtime > 0 ? `（残業 ${res.overtime.toFixed(0)}分）` : ''}`], ['点数', `${res.score}点`],
+  ].map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  $('endMsg').textContent = res.advice;
+  $('met').innerHTML = res.met.map(m => `<div>${m.icon} <b>${m.name}</b>「${m.thanks}」</div>`).join('');
+  drawCard(res);
+  const text = `放射線科の多忙な一日、評価 ${res.grade}（${res.score}点）。平均の待ち ${res.avg.toFixed(1)}分、至急の待ち ${res.redWait.toFixed(1)}分、終了 ${res.endTime}。`;
+  $('btnShare').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(URL_SELF) + '&hashtags=' + encodeURIComponent('RTLab');
+  $('end').hidden = false;
+}
+
+function drawCard(res) {
+  const c = $('card'), x = c.getContext('2d');
+  const F = '"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif';
+  x.fillStyle = '#0f1318'; x.fillRect(0, 0, 1200, 630);
+  // 部屋の色の帯
+  [['#5aa9ff', '一般撮影'], ['#ff9f43', 'CT'], ['#b98cff', 'MRI']].forEach(([col], i) => { x.fillStyle = col; x.fillRect(0, i * 210, 14, 210); });
+  x.fillStyle = '#93a0b1'; x.font = `600 28px ${F}`; x.fillText('RT-Lab　おまけ：遊べるシミュレーション', 60, 70);
+  x.fillStyle = '#e8edf2'; x.font = `800 60px ${F}`; x.fillText('放射線科の多忙な一日', 60, 150);
+  x.fillStyle = '#93a0b1'; x.font = `600 30px ${F}`; x.fillText('〜放射線科運営シミュレータ〜　月曜の午前', 60, 196);
+  x.fillStyle = '#f0b44c'; x.font = `900 230px ui-monospace,Menlo,monospace`; x.fillText(res.grade, 870, 420);
+  x.font = `800 44px ${F}`; x.fillText(`${res.score}点`, 900, 480);
+  const rows = [['平均の待ち時間', `${res.avg.toFixed(1)}分`], ['至急の人を待たせた', `${res.redWait.toFixed(1)}分`], ['怒らせた人', `${res.angry}人`], ['終了時刻', res.endTime]];
+  rows.forEach(([k, v], i) => {
+    const y = 290 + i * 62;
+    x.fillStyle = '#93a0b1'; x.font = `600 32px ${F}`; x.fillText(k, 60, y);
+    x.fillStyle = '#e8edf2'; x.font = `800 40px ${F}`; x.fillText(v, 420, y);
+  });
+  x.font = `40px ${F}`;
+  x.fillText(res.met.map(m => m.icon).join(' '), 60, 570);
+  x.fillStyle = '#93a0b1'; x.font = `600 26px ${F}`; x.fillText('rt-ai-lab.com/rad-dept-sim/', 760, 590);
+}
+$('btnSave').addEventListener('click', () => {
+  $('card').toBlob(b => {
+    if (!b) return;
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+    a.download = `rad-dept-sim-${lastRes ? lastRes.grade : ''}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  });
+});
+
+// 開始画面のキャラ紹介
+$('cast').innerHTML = '<b>今日の気になる患者さん</b>' + Object.values(R.CHARS).map(c => `<div>${c.icon} ${c.name}：${c.hint}</div>`).join('');
+
+setSpeed(1);
+newGameUI();
+requestAnimationFrame(loop);
+</script>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>
